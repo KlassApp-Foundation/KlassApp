@@ -224,6 +224,38 @@ stateDiagram-v2
 
 The writer allows Not started, Returned, and Reopened. The writer refuses Submitted, Approved, and Locked.
 
+### Phase 4 flow
+
+Exams and marks opens one combined sheet. The person chooses a class, a term, and one sitting (one exam type). A whole-term sheet is later. The sheet is the whole class. A class with streams has a stream column and a stream filter. Whole class is the default. A chosen stream narrows the rows.
+
+`ResultsService` is the only place that works out the total, the average, the aggregate, the position, and the "of" count. The page and the download print those fields. A stream filter uses that stream's position and its "of" count. The whole class uses the class position and the class "of" count. The same pool is what a later release reads.
+
+Each subject column shows the Phase 3 submission state for that subject: Not started, Submitted, Returned, Approved, Locked, or Reopened.
+
+The learners are the ones enrolled in that class for the term, plus anyone who has a mark on that sitting. An in-place promotion moves the academic row, so the old class is no longer their current section. The sitting still lists them from the marks. When the class had one stream, that stream stays on the row. When it had more than one, the old stream was not stored, so the stream cell is blank and a stream filter does not include them. They stay on the whole-class sheet.
+
+The teacher's Combined Marksheet opens this same sheet for a class they hold or a class where they have an exam. The download of this sheet is the same `ResultSheet`. The older term workbook download is unchanged.
+
+The old filter action that rendered the page without its variables is no longer the address. The PDF that looked up the year by the description "Current Academic Year" is no longer the download. The grid does not add the marks up a second time.
+
+```mermaid
+flowchart TD
+  menu["Exams and marks"]
+  pick["Choose class, term, and one sitting"]
+  stream{"Stream filter"}
+  service["ResultsService sheet"]
+  roster["Current class plus learners who sat this sitting"]
+  grid["One sheet: stream column, subject state, total, average, position of N"]
+  teacher["Class teacher opens the same sheet"]
+  export["Download uses the same sheet"]
+
+  menu --> pick --> service
+  stream --> service
+  service --> roster --> grid
+  teacher --> service
+  grid --> export
+```
+
 Before a phone can be used for any phase, the menu button and the search button each take their own tap ([#1159](https://github.com/KlassApp-Foundation/KlassApp/pull/1159)).
 
 ## WhatsApp results templates

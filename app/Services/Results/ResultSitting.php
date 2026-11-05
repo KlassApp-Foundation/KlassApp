@@ -5,7 +5,7 @@ namespace App\Services\Results;
 final class ResultSitting
 {
     /**
-     * @param list<array{id: int, name: string, code: string}> $subjects
+     * @param list<array{id: int, name: string, code: string, submission: string}> $subjects
      * @param list<ResultStudent> $students
      * @param string $periodKey calendar month `Y-m` when a non-contributing type is split, otherwise empty
      * @param string $periodLabel month name for that sitting, otherwise empty

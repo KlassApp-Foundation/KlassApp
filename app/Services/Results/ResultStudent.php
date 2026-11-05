@@ -11,6 +11,7 @@ final class ResultStudent
         public readonly int $studentId,
         public readonly string $name,
         public readonly int $standardLinkId,
+        public readonly string $stream,
         public readonly int $standardId,
         public readonly array $cells,
         public readonly ?float $total,
@@ -30,5 +31,20 @@ final class ResultStudent
     public function cell(int $subjectId): ?ResultCell
     {
         return $this->cells[$subjectId] ?? null;
+    }
+
+    /**
+     * The place already worked out for this sheet.
+     * A stream filter uses that stream's pool. The whole class uses the class pool.
+     */
+    public function placeLabel(bool $byStream): string
+    {
+        $position = $byStream ? $this->streamPosition : $this->classPosition;
+        $outOf = $byStream ? $this->streamOutOf : $this->classOutOf;
+        if ($position === null) {
+            return '—';
+        }
+
+        return $position.' of '.$outOf;
     }
 }

@@ -21,6 +21,7 @@ use App\Services\MarksImport\MarksImportService;
 use App\Services\ExamMarksheetService;
 use App\Services\GradingSystemService;
 use App\Services\Marks\ExamMarkWriter;
+use App\Services\Results\CombinedSheetPage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -432,6 +433,31 @@ public function combinedMarksheet(StandardLink $stdLink)
     return Excel::download(
         new CombinedMarksheetExport($stdLink, $term),
         "combined_marksheet_{$className}.xlsx"
+    );
+}
+
+public function combinedSheet(Request $request, CombinedSheetPage $sheets)
+{
+    $teacher = Auth::user();
+
+    return view('teacher.marks.sheet', $sheets->viewData(
+        (int) $teacher->school_id,
+        $request,
+        $sheets->sectionIdsFor($teacher),
+        'teacher.marks.sheet',
+        'teacher.marks.sheet.download',
+        false,
+    ));
+}
+
+public function downloadCombinedSheet(Request $request, CombinedSheetPage $sheets)
+{
+    $teacher = Auth::user();
+
+    return $sheets->download(
+        (int) $teacher->school_id,
+        $request,
+        $sheets->sectionIdsFor($teacher),
     );
 }
 
