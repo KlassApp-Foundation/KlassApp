@@ -10,6 +10,7 @@ use App\Models\Plan;
 use App\Models\School;
 use App\Models\Section;
 use App\Models\Subject;
+use App\Mail\TeacherInviteLinkMail;
 use App\Models\TeacherInvite;
 use App\Models\Teacherlink;
 use App\Models\User;
@@ -173,9 +174,9 @@ class WizardTeacherUploadResultTest extends TestCase
                 ->exists()
         );
 
-        Mail::assertNothingSent();
-        Mail::assertNothingQueued();
-        $this->assertSame(0, TeacherInvite::count());
+        $this->assertNull($ada->password);
+        Mail::assertQueued(TeacherInviteLinkMail::class, 3);
+        $this->assertSame(3, TeacherInvite::query()->whereNull('revoked_at')->whereNull('claimed_at')->count());
 
         $serial = UploadedFile::fake()->createWithContent(
             'serial.csv',
@@ -234,8 +235,8 @@ class WizardTeacherUploadResultTest extends TestCase
         $this->assertNull(User::where('email', 'bad-phone@upload.sch.ug')->first());
         $this->assertNull(User::where('email', 'missing-name@upload.sch.ug')->first());
 
-        Mail::assertNothingSent();
-        Mail::assertNothingQueued();
+        Mail::assertQueued(TeacherInviteLinkMail::class, 2);
+        $this->assertNull(User::where('email', 'good-one@upload.sch.ug')->first()->password);
     }
 
     public function test_teacher_template_headings_round_trip(): void
@@ -281,6 +282,7 @@ class WizardTeacherUploadResultTest extends TestCase
         $this->assertTrue(
             Teacherlink::where('school_id', $this->school->id)->where('teacher_id', $teacher->id)->exists()
         );
-        Mail::assertNothingSent();
+        $this->assertNull($teacher->password);
+        Mail::assertQueued(TeacherInviteLinkMail::class, 1);
     }
 }

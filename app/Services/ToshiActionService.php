@@ -24,7 +24,6 @@ use App\Models\User;
 use App\Models\Userprofile;
 use App\Models\WhatsAppUser;
 use App\Helpers\SiteHelper;
-use App\Mail\TeacherInviteMail;
 use App\Support\UserProvisioning;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -432,16 +431,18 @@ class ToshiActionService
     // ── Teacher ──
 
     /**
-     * Add a teacher: creates User + Userprofile, emails a link to set their own password (never a password).
-     * Optional class name sets class-teacher assignment and is named in the invite.
+     * Invite a teacher through the same invite service the wizard and admin
+     * screens use. No user row and no password are stored. The teacher gets
+     * an invite link only. An optional class name attaches the invite to that
+     * class in this school.
      */
     public static function addTeacher(User $admin, array $data): array
     {
         if (! self::can($admin, 'add_teacher')) {
             return self::result(false, 'You do not have permission to add teachers.');
         }
-        $schoolId = $admin->school_id;
-        if (! $schoolId) {
+        $schoolId = (int) $admin->school_id;
+        if ($schoolId === 0) {
             return self::result(false, 'You are not assigned to a school.');
         }
 
@@ -462,117 +463,83 @@ class ToshiActionService
         if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return self::result(false, 'Invalid email format.');
         }
-        if (User::where('email', $email)->exists()) {
-            return self::result(false, "A user with email **{$email}** already exists.");
+        if (! app(TeacherAccountInviteService::class)->emailIsUsable($email)) {
+            return self::result(false, 'Add a real email address. A placeholder address cannot be invited.');
         }
 
         $phone = trim($data['phone'] ?? '');
         $classRaw = trim((string) ($data['class'] ?? $data['classes'] ?? ''));
         $className = $classRaw !== '' ? trim(explode(',', $classRaw)[0]) : null;
 
-        $school = School::find($schoolId);
-        $academicYear = SiteHelper::getAcademicYear($schoolId);
-        if (! $academicYear) {
-            return self::result(false, 'No academic year configured for this school.');
-        }
-
-        $schoolName = $school?->name ?? 'your school';
         $standardLink = null;
         if ($className !== null) {
-            $standardLink = StandardLink::where('school_id', $schoolId)
-                ->whereHas('section', function ($q) use ($className) {
-                    $q->where('name', 'LIKE', '%'.$className.'%');
-                })
-                ->first();
-            if ($standardLink) {
-                $className = $standardLink->section?->name ?? $className;
+            $academicYear = SiteHelper::getAcademicYear($schoolId);
+            if (! $academicYear) {
+                return self::result(false, 'No academic year configured for this school.');
             }
-        }
 
-        try {
-            DB::beginTransaction();
+            $needle = self::classNameKey($className);
+            $sectionIds = Section::query()
+                ->where('school_id', $schoolId)
+                ->get()
+                ->filter(fn (Section $section) => self::classNameKey((string) $section->name) === $needle)
+                ->pluck('id');
 
-            // FLAGGED(product-decision): adding a teacher stores a random password. see docs/onboarding-engine-plan.md
-            $credentials = UserProvisioning::randomPasswordAttributes();
+            $standardLink = $needle === '' || $sectionIds->isEmpty()
+                ? null
+                : StandardLink::query()
+                    ->where('school_id', $schoolId)
+                    ->where('academic_year_id', $academicYear->id)
+                    ->whereIn('section_id', $sectionIds)
+                    ->where(function ($query) {
+                        $query->where('status', 1)->orWhere('status', '1');
+                    })
+                    ->first();
 
-            $teacher = User::create([
-                'school_id' => $schoolId,
-                'usergroup_id' => 5,
-                'name' => $name,
+            if (! $standardLink) {
+                return self::result(false, "No class named **{$className}** in this school.");
+            }
+
+            $className = $standardLink->section?->name ?? $className;
+            $result = \App\Services\ClassTeacherInviteService::invite($admin, $standardLink, [
                 'email' => $email,
-                'password' => $credentials['password'],
-                'is_reset' => $credentials['is_reset'],
-                'status' => 'active',
-                'email_verified' => 1,
-                'mobile_no' => $phone !== '' ? $phone : null,
+                'name' => $name,
+                'phone' => $phone,
+                'confirmed' => true,
             ]);
-
-            Userprofile::create([
-                'school_id' => $schoolId,
-                'user_id' => $teacher->id,
-                'usergroup_id' => 5,
-                'firstname' => $name,
-                'lastname' => '',
-                'profession' => 'teacher',
-                'status' => 'active',
-                'alternate_no' => $phone !== '' ? $phone : null,
+        } else {
+            $result = app(\App\Services\ClassTeacherAssignmentService::class)->inviteWithoutClass($admin, [
+                'email' => $email,
+                'name' => $name,
+                'phone' => $phone,
             ]);
-
-            if ($standardLink) {
-                $standardLink->class_teacher_id = $teacher->id;
-                $standardLink->save();
-
-                if ($standardLink->section) {
-                    $standardLink->section->class_teacher_id = $teacher->id;
-                    $standardLink->section->save();
-                }
-            }
-
-            DB::commit();
-
-            try {
-                $issued = \App\Support\SetPasswordLink::issue($teacher);
-                Mail::to($email)->queue(new TeacherInviteMail(
-                    $name,
-                    $email,
-                    $schoolName,
-                    $className,
-                    inviteUrl: $issued['url'],
-                    expiresAt: $issued['expires_at'],
-                    expiresInMinutes: $issued['minutes'],
-                ));
-            } catch (\Exception $e) {
-                Log::warning('ToshiAction: teacher invite email failed', [
-                    'email' => $email,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-
-            $roleLine = $className !== null
-                ? "as class teacher for **{$className}**"
-                : 'as a teacher';
-
-            $msg = "Teacher **{$name}** added {$roleLine}. An invite email was sent to **{$email}** with a link to set their password.";
-            if ($notice = self::planLimitNotice($schoolId, 'teachers')) {
-                $msg .= ' '.$notice;
-            }
-
-            return self::result(
-                true,
-                $msg,
-                [
-                    'user_id' => $teacher->id,
-                    'email' => $email,
-                    'class' => $className,
-                    'standardLink_id' => $standardLink?->id,
-                ]
-            );
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('ToshiAction: addTeacher failed', ['error' => $e->getMessage()]);
-
-            return self::result(false, 'Failed to add teacher: '.$e->getMessage());
         }
+
+        if (! ($result['success'] ?? false)) {
+            return self::result(false, (string) ($result['message'] ?? 'Could not invite the teacher.'));
+        }
+
+        $msg = (string) ($result['message'] ?? '');
+        if ($notice = self::planLimitNotice($schoolId, 'teachers')) {
+            $msg .= ' '.$notice;
+        }
+
+        return self::result(true, $msg, [
+            'email' => mb_strtolower($email),
+            'class' => $className,
+            'standardLink_id' => $standardLink?->id,
+        ]);
+    }
+
+    /**
+     * Compare class names without case, spaces, or dots. "p7", "P7", "P 7"
+     * and "P.7" are the same name. This is not a partial match.
+     */
+    public static function classNameKey(string $name): string
+    {
+        $stripped = preg_replace('/[\s.]+/u', '', mb_strtolower(trim($name)));
+
+        return $stripped ?? '';
     }
 
     // ── Co-Admin ──

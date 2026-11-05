@@ -7,6 +7,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Services\EmailVerificationGate;
+use App\Services\TeacherAccountInviteService;
+use App\Support\PendingPassword;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Foundation\Auth\ResetsPasswords;
 use Illuminate\Http\JsonResponse;
@@ -43,6 +45,8 @@ class ResetPasswordController extends Controller
      */
     private bool $pendingVerificationAfterReset = false;
 
+    private bool $refusedUnsetPassword = false;
+
     /**
      * Create a new controller instance.
      *
@@ -77,6 +81,15 @@ class ResetPasswordController extends Controller
      */
     protected function resetPassword($user, $password)
     {
+        if (PendingPassword::isUnset($user)) {
+            $this->refusedUnsetPassword = true;
+            if ((int) $user->usergroup_id === 5) {
+                app(TeacherAccountInviteService::class)->inviteIfNeeded($user, null);
+            }
+
+            return;
+        }
+
         $this->setUserPassword($user, $password);
 
         $user->setRememberToken(Str::random(60));
@@ -99,7 +112,18 @@ class ResetPasswordController extends Controller
     protected function sendResetResponse(Request $request, $response)
     {
         if ($request->wantsJson()) {
+            if ($this->refusedUnsetPassword) {
+                return new JsonResponse([
+                    'message' => 'This account has not finished setup. Use the link in your email to set a password.',
+                ], 422);
+            }
+
             return new JsonResponse(['message' => trans($response)], 200);
+        }
+
+        if ($this->refusedUnsetPassword) {
+            return redirect()->route('password.email')
+                ->withErrors(['email' => 'This account has not finished setup. Use the link in your email to set a password.']);
         }
 
         if ($this->pendingVerificationAfterReset) {

@@ -197,7 +197,7 @@ class PeopleListTest extends TestCase
         $this->assertStringContainsString('Primary 5', $html);
         $this->assertStringContainsString('Invited', $html);
         $this->assertStringContainsString('/admin/teacher/show/'.$teacher->name, $html);
-        $this->assertStringContainsString('Send invite', $html);
+        $this->assertStringContainsString('Resend setup link', $html);
         $this->assertStringContainsString('Assign classes', $html);
     }
 

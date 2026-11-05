@@ -8,10 +8,13 @@ use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
 use App\Models\User;
+use App\Mail\TeacherInviteLinkMail;
 use App\Traits\RegisterUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -75,8 +78,9 @@ class RegisterUserProvisioningTest extends TestCase
         ]);
     }
 
-    public function test_create_teacher_uses_random_password_and_is_reset(): void
+    public function test_create_teacher_sends_a_setup_link_and_stores_no_password(): void
     {
+        Mail::fake();
         $harness = new class
         {
             use RegisterUser;
@@ -87,8 +91,10 @@ class RegisterUserProvisioningTest extends TestCase
         $user = $harness->CreateTeacher($data, $this->school->id, $this->year, '', 5);
 
         $this->assertInstanceOf(User::class, $user);
-        $this->assertFalse(Hash::check('password', $user->password));
-        $this->assertSame(1, (int) $user->is_reset);
+        $this->assertNull($user->password);
+        $this->assertSame(0, (int) $user->is_reset);
+        $this->assertFalse(Auth::attempt(['email' => 'teacher-prov@test.sch.ug', 'password' => 'password']));
+        Mail::assertQueued(TeacherInviteLinkMail::class);
     }
 
     public function test_create_user_student_uses_random_password_and_is_reset(): void

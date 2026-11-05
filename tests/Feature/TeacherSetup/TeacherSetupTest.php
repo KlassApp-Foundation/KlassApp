@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\TeacherSetup;
 
+use App\Http\Middleware\VerifyCsrfToken;
 use App\Livewire\TeacherSetup\TeacherClassSetup;
 use App\Models\AcademicYear;
 use App\Models\School;
@@ -12,8 +13,10 @@ use App\Models\StandardLink;
 use App\Models\Subject;
 use App\Models\Teacherlink;
 use App\Models\User;
+use App\Models\Userprofile;
 use App\Services\TeacherSetup\TeacherSetupLinkService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
@@ -119,6 +122,39 @@ class TeacherSetupTest extends TestCase
         $this->get('/teacher/setup/'.$token)->assertSee('doesn’t work');
     }
 
+    public function test_setup_password_signs_in_to_the_teacher_dashboard(): void
+    {
+        $this->withoutMiddleware(VerifyCsrfToken::class);
+        config(['settings.login_status' => 1]);
+
+        Userprofile::create([
+            'school_id' => $this->school->id,
+            'user_id' => $this->teacher->id,
+            'usergroup_id' => 5,
+            'firstname' => 'Class',
+            'lastname' => 'Teacher',
+            'status' => 'active',
+        ]);
+
+        $token = app(TeacherSetupLinkService::class)->issueFor($this->teacher, $this->admin);
+
+        $this->post('/teacher/setup/'.$token, [
+            'password' => 'StrongPass1',
+            'password_confirmation' => 'StrongPass1',
+        ])->assertRedirect('/teacher/class-setup');
+
+        $this->assertSame(0, (int) $this->teacher->fresh()->is_reset);
+
+        Auth::logout();
+
+        $this->post('/login', [
+            'email' => 'class-teacher@schools.test',
+            'password' => 'StrongPass1',
+        ])->assertRedirect('/teacher/dashboard');
+
+        $this->assertAuthenticatedAs($this->teacher->fresh());
+    }
+
     public function test_the_staff_link_matches_a_teacher_by_email_and_queues_a_stranger(): void
     {
         Mail::fake();
@@ -157,15 +193,17 @@ class TeacherSetupTest extends TestCase
             'status' => 'pending',
         ]);
 
+        Mail::fake();
         $this->post('/admin/class-setup/requests/'.$request->id.'/approve')->assertRedirect();
 
         $this->assertSame('approved', $request->fresh()->status);
-        $this->assertDatabaseHas('users', [
-            'school_id' => $this->school->id,
-            'email' => 'new-teacher@schools.test',
-            'usergroup_id' => 5,
-        ]);
-        $this->assertNotNull(session('teacher_setup_url'));
+        $created = User::query()->where('email', 'new-teacher@schools.test')->first();
+        $this->assertNotNull($created);
+        $this->assertSame((int) $this->school->id, (int) $created->school_id);
+        $this->assertSame(5, (int) $created->usergroup_id);
+        $this->assertNull($created->password);
+        $this->assertNull(session('teacher_setup_url'));
+        Mail::assertQueued(\App\Mail\TeacherInviteLinkMail::class);
     }
 
     public function test_the_class_page_confirms_subjects_and_subject_teachers(): void

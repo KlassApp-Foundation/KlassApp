@@ -17,6 +17,7 @@ use App\Models\User;
 use App\Models\Userprofile;
 use App\Support\UserProvisioning;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -212,6 +213,7 @@ class TeacherLinkImportMatchesExistingTeacherTest extends TestCase
     {
         $schoolId = $this->school->id;
 
+        Mail::fake();
         $response = $this->runImport("Amina Nabukeera | Mathematics | P.1 | +256700333444\n");
 
         $this->assertTrue($response->isRedirect());
@@ -219,6 +221,8 @@ class TeacherLinkImportMatchesExistingTeacherTest extends TestCase
 
         $teacher = User::where('school_id', $schoolId)->where('usergroup_id', 5)->first();
         $this->assertNotNull($teacher);
+        $this->assertNull($teacher->password);
+        Mail::assertNothingQueued();
         $this->assertSame('Amina Nabukeera', $teacher->name);
         $this->assertDoesNotMatchRegularExpression('/\d/', $teacher->name);
         $this->assertSame(1, Teacherlink::where('teacher_id', $teacher->id)->count());

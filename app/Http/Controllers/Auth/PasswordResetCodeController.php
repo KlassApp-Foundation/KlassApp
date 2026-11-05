@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Authentication;
 use App\Models\User;
+use App\Services\TeacherAccountInviteService;
+use App\Support\PendingPassword;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -43,6 +45,14 @@ class PasswordResetCodeController extends Controller
         ]);
 
         $user = User::where('email', $request->email)->first();
+
+        if ($user && PendingPassword::isUnset($user)) {
+            if ((int) $user->usergroup_id === 5) {
+                app(TeacherAccountInviteService::class)->inviteIfNeeded($user, null);
+            }
+
+            return back()->withErrors(['code' => 'Invalid or expired code. Please request a new one.']);
+        }
 
         $auth = $user
             ? Authentication::where('user_id', $user->id)
@@ -85,6 +95,14 @@ class PasswordResetCodeController extends Controller
         }
 
         $user = User::where('email', $email)->first();
+        if ($user && PendingPassword::isUnset($user)) {
+            if ((int) $user->usergroup_id === 5) {
+                app(TeacherAccountInviteService::class)->inviteIfNeeded($user, null);
+            }
+
+            return redirect()->route('password.reset.code', ['email' => $email])
+                ->with('status', 'A new code has been sent to your email.');
+        }
         if ($user) {
             // Invalidate old codes
             Authentication::where('user_id', $user->id)
