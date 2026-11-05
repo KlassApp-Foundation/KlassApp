@@ -22,7 +22,7 @@
                         @foreach ($group['children'] as $child)
                             <li class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-gray-100 pb-3 last:border-0 last:pb-0">
                                 <div>
-                                    <p class="font-semibold" style="color: var(--d-text);">{{ $child['name'] }}</p>
+                                    <p class="font-semibold" style="color: var(--d-text);">{{ \App\Support\DisplayName::title($child['name']) }}</p>
                                     <p class="text-sm" style="color: var(--d-muted);">{{ $child['class'] }}</p>
                                 </div>
                                 <div class="flex flex-wrap gap-2">

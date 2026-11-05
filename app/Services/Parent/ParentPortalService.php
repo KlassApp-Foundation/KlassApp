@@ -4,6 +4,7 @@ namespace App\Services\Parent;
 
 use App\Contracts\Results\ReleaseGate;
 use App\Helpers\SiteHelper;
+use App\Models\AcademicYear;
 use App\Models\Academics\Exam;
 use App\Models\Attendance;
 use App\Models\FeePayment;
@@ -256,6 +257,20 @@ class ParentPortalService
             ];
         }
 
+        return [
+            'success' => true,
+            'data' => $this->feeSummary($student, $schoolId),
+        ];
+    }
+
+    /**
+     * Fee structure, amount paid, and balance for one student at one school.
+     * Parent and student pages both read this so the figures cannot drift.
+     *
+     * @return array<string, mixed>
+     */
+    public function feeSummary(User $student, int $schoolId): array
+    {
         $fees = app(StudentFeeResolver::class);
         // One balance for the term in progress. A fee with no term still counts.
         $categories = $fees->forStudent($student, $schoolId, $fees->currentTermId($schoolId));
@@ -274,15 +289,17 @@ class ParentPortalService
         ])->values()->all();
 
         return [
-            'success' => true,
-            'data' => [
-                'student_id' => $student->id,
-                'student_name' => $student->displayName ?: $student->name,
-                'school_id' => $schoolId,
-                'total_fees' => $totalFees,
-                'total_paid' => $totalPaid,
-                'total_balance' => $totalBalance,
-                'categories' => $categoryRows,
+            'student_id' => $student->id,
+            'student_name' => $student->displayName ?: $student->name,
+            'school_id' => $schoolId,
+            'total_fees' => $totalFees,
+            'total_paid' => $totalPaid,
+            'total_balance' => $totalBalance,
+            'categories' => $categoryRows,
+            'chart' => [
+                'labels' => ['Paid', 'Due'],
+                'paid' => $totalPaid,
+                'due' => $totalBalance,
             ],
         ];
     }
@@ -301,30 +318,66 @@ class ParentPortalService
         $student = $resolved['student'];
         $schoolId = $this->schoolIdForLinkedChild($parent, $student);
 
+        return [
+            'success' => true,
+            'data' => $this->attendanceSummary($student, $schoolId),
+        ];
+    }
+
+    /**
+     * Last-month attendance for one student. Parent and student pages share this.
+     *
+     * @return array<string, mixed>
+     */
+    public function attendanceSummary(User $student, ?int $schoolId): array
+    {
+        $since = Carbon::now()->subMonth();
         $records = Attendance::query()
             ->when($schoolId !== null, fn ($q) => $q->where('school_id', $schoolId))
             ->where('user_id', $student->id)
-            ->where('date', '>=', Carbon::now()->subMonth())
-            ->orderByDesc('date')
+            ->where('date', '>=', $since->toDateString())
+            ->orderBy('date')
             ->get();
 
         $present = $records->where('status', 1)->count();
         $absent = $records->where('status', 0)->count();
-        $recentAbsences = $records->where('status', '!=', 1)->take(5)->map(fn ($r) => [
+        $late = $records->where('status', 2)->count();
+
+        $buckets = [];
+        foreach ($records as $record) {
+            $label = Carbon::parse($record->date)->startOfWeek()->format('d M');
+            $buckets[$label] ??= ['present' => 0, 'absent' => 0];
+            if ((int) $record->status === 1) {
+                $buckets[$label]['present']++;
+            } elseif ((int) $record->status === 0) {
+                $buckets[$label]['absent']++;
+            }
+        }
+
+        $recentAbsences = $records->where('status', '!=', 1)->sortByDesc('date')->take(5)->map(fn ($r) => [
             'date' => Carbon::parse($r->date)->format('d M Y'),
             'reason' => (int) $r->status === 2 ? 'Late' : 'Absent',
         ])->values()->all();
 
         return [
-            'success' => true,
-            'data' => [
-                'student_id' => $student->id,
-                'student_name' => $student->displayName ?: $student->name,
-                'school_id' => $schoolId,
-                'present' => $present,
-                'absent' => $absent,
-                'total' => $records->count(),
-                'recent_absences' => $recentAbsences,
+            'student_id' => $student->id,
+            'student_name' => $student->displayName ?: $student->name,
+            'school_id' => $schoolId,
+            'present' => $present,
+            'absent' => $absent,
+            'late' => $late,
+            'total' => $records->count(),
+            'since' => $since->format('d M Y'),
+            'recent_absences' => $recentAbsences,
+            'recent' => $records->sortByDesc('date')->take(20)->map(fn ($r) => [
+                'date' => Carbon::parse($r->date)->format('d M Y'),
+                'session' => ucfirst((string) $r->session),
+                'status' => (int) $r->status === 1 ? 'Present' : ((int) $r->status === 2 ? 'Late' : 'Absent'),
+            ])->values()->all(),
+            'chart' => [
+                'labels' => array_keys($buckets),
+                'present' => array_values(array_map(fn ($row) => $row['present'], $buckets)),
+                'absent' => array_values(array_map(fn ($row) => $row['absent'], $buckets)),
             ],
         ];
     }
@@ -332,7 +385,7 @@ class ParentPortalService
     /**
      * @return array{success: bool, message?: string, denied?: bool, data?: array<string, mixed>}
      */
-    public function grades(User $parent, ?string $childName = null, ?int $studentId = null): array
+    public function grades(User $parent, ?string $childName = null, ?int $studentId = null, string|int|null $year = null): array
     {
         $resolved = $this->resolveChild($parent, $childName, $studentId);
         if (! $resolved['ok']) {
@@ -349,37 +402,98 @@ class ParentPortalService
             ];
         }
 
-        $academicYear = SiteHelper::getAcademicYear($schoolId);
-        $examQuery = Exam::whereHas('marks', fn ($q) => $q->where('student_id', $student->id))
+        $pack = $this->releasedResults($student, $schoolId, $year);
+        $name = $student->displayName ?: $student->name;
+
+        return [
+            'success' => true,
+            'data' => $pack,
+            'message' => $pack['exam_groups'] === []
+                ? "No results published yet for {$name}."
+                : null,
+        ];
+    }
+
+    /**
+     * Every released exam and test set for one student.
+     *
+     * Nothing unreleased is included: the release gate is applied before the
+     * year filter and there is no row cap. `$year` null or "current" selects
+     * the school's current academic year. "all" returns every year. An id
+     * selects that year when it belongs to the school.
+     *
+     * @return array<string, mixed>
+     */
+    public function releasedResults(User $student, int $schoolId, string|int|null $year = null): array
+    {
+        $emptyChart = ['labels' => [], 'scores' => []];
+        $name = $student->displayName ?: $student->name;
+        $years = $schoolId > 0
+            ? AcademicYear::query()
+                ->where('school_id', $schoolId)
+                ->orderByDesc('start_date')
+                ->orderByDesc('id')
+                ->get()
+            : collect();
+        $current = $schoolId > 0 ? SiteHelper::getAcademicYear($schoolId) : null;
+        $currentId = $current ? (int) $current->id : null;
+        $yearRows = $years->map(fn (AcademicYear $row) => [
+            'id' => (int) $row->id,
+            'name' => (string) $row->name,
+            'current' => $currentId !== null && (int) $row->id === $currentId,
+        ])->values()->all();
+        $selected = $this->resolveResultsYear($year, $currentId, array_column($yearRows, 'id'));
+
+        $base = [
+            'student_id' => $student->id,
+            'student_name' => $name,
+            'school_id' => $schoolId > 0 ? $schoolId : null,
+            'exam_groups' => [],
+            'years' => $yearRows,
+            'selected_year' => $selected,
+            'current_year_id' => $currentId,
+            'chart' => $emptyChart,
+        ];
+
+        if ($schoolId <= 0) {
+            return $base;
+        }
+
+        $examQuery = Exam::query()
             ->where('school_id', $schoolId)
+            ->whereHas('marks', fn ($q) => $q->where('school_id', $schoolId)->where('student_id', $student->id))
             ->with([
-                'marks' => fn ($q) => $q->where('student_id', $student->id)->with('subject'),
+                'marks' => fn ($q) => $q->where('school_id', $schoolId)->where('student_id', $student->id)->with('subject'),
                 'examType',
                 'subject',
+                'academicYear',
+                'academicTerm',
             ])
-            ->latest('id');
+            ->orderBy('id');
 
-        if ($academicYear) {
-            $examQuery->where('academic_year_id', $academicYear->id);
-        }
-
+        // Release gate stays exactly as it is. The year filter never widens it.
         $this->releases->applyToExams($examQuery, $student);
-        $exams = $examQuery->take(15)->get();
-        if ($exams->isEmpty()) {
-            return [
-                'success' => true,
-                'data' => [
-                    'student_id' => $student->id,
-                    'student_name' => $student->displayName ?: $student->name,
-                    'school_id' => $schoolId,
-                    'exam_groups' => [],
-                ],
-                'message' => "No results published yet for ".($student->displayName ?: $student->name).".",
-            ];
+
+        if ($selected !== 'all') {
+            $examQuery->where('academic_year_id', $selected);
         }
+
+        $exams = $examQuery->get()->sortBy(function (Exam $exam) {
+            $yearStart = (string) ($exam->academicYear?->start_date ?? '');
+            $termStart = (string) ($exam->academicTerm?->starts_on ?? '');
+
+            return $yearStart.'|'.$termStart.'|'.str_pad((string) $exam->id, 10, '0', STR_PAD_LEFT);
+        })->values();
 
         $examGroups = [];
-        foreach ($exams->groupBy(fn ($e) => $e->examType?->name ?? 'Exam') as $typeName => $typeExams) {
+        foreach ($exams->groupBy(function (Exam $exam) {
+            return implode('|', [
+                (string) ($exam->academic_year_id ?? ''),
+                (string) ($exam->academic_term_id ?? ''),
+                (string) ($exam->exam_type_id ?? $exam->examType?->name ?? 'Exam'),
+            ]);
+        }) as $typeExams) {
+            $first = $typeExams->first();
             $subjects = [];
             foreach ($typeExams as $exam) {
                 foreach ($exam->marks as $mark) {
@@ -392,21 +506,52 @@ class ParentPortalService
                 }
             }
 
+            $label = implode(' · ', array_filter([
+                $first->academicYear?->name,
+                $first->academicTerm?->name,
+                $first->examType?->name ?? 'Exam',
+            ], fn ($part) => $part !== null && $part !== ''));
+
+            $average = $subjects === []
+                ? 0.0
+                : round(array_sum(array_column($subjects, 'score')) / count($subjects), 1);
+
             $examGroups[] = [
-                'exam_type' => (string) $typeName,
+                'exam_type' => $label !== '' ? $label : 'Exam',
+                'year_id' => $first->academic_year_id ? (int) $first->academic_year_id : null,
                 'subjects' => $subjects,
+                'average' => $average,
             ];
         }
 
-        return [
-            'success' => true,
-            'data' => [
-                'student_id' => $student->id,
-                'student_name' => $student->displayName ?: $student->name,
-                'school_id' => $schoolId,
-                'exam_groups' => $examGroups,
-            ],
+        $base['exam_groups'] = $examGroups;
+        $base['chart'] = [
+            'labels' => array_column($examGroups, 'exam_type'),
+            'scores' => array_map(fn ($group) => $group['average'], $examGroups),
         ];
+
+        return $base;
+    }
+
+    /**
+     * @param  list<int>  $schoolYearIds
+     */
+    private function resolveResultsYear(string|int|null $year, ?int $currentYearId, array $schoolYearIds): string|int
+    {
+        if ($year === null || $year === '' || $year === 'current') {
+            return $currentYearId ?? 'all';
+        }
+
+        if ($year === 'all') {
+            return 'all';
+        }
+
+        $id = (int) $year;
+        if ($id > 0 && in_array($id, $schoolYearIds, true)) {
+            return $id;
+        }
+
+        return $currentYearId ?? 'all';
     }
 
     /**

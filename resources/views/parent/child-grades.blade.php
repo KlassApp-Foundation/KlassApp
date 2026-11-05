@@ -15,7 +15,10 @@
         @endif
     </p>
 
-    <x-card title="Grades" padding="none" class="parent-panel" data-testid="parent-grades-panel">
+    @include('portal.partials.results-year-filter', ['grades' => $grades])
+    @include('portal.partials.performance-chart', ['grades' => $grades])
+
+    <x-card title="Grades" padding="none" class="parent-panel mt-4" data-testid="parent-grades-panel">
         @include('parent.partials.grades-panel', ['grades' => $grades, 'emptyMessage' => $message])
     </x-card>
 </div>

@@ -15,7 +15,9 @@
         @endif
     </p>
 
-    <x-card title="Fee Balance" padding="none" class="parent-panel" data-testid="parent-fees-panel">
+    @include('portal.partials.fees-chart', ['fees' => $fees])
+
+    <x-card title="Fee Balance" padding="none" class="parent-panel mt-4" data-testid="parent-fees-panel">
         @include('parent.partials.fees-panel', ['fees' => $fees])
     </x-card>
 </div>
