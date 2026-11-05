@@ -6,6 +6,7 @@ use App\Contracts\Results\ReleaseGate;
 use App\Models\AcademicYear;
 use App\Models\Academics\Exam;
 use App\Models\ReportGeneration;
+use App\Models\Section;
 use App\Models\StandardLink;
 use App\Models\StudentAcademic;
 use App\Models\User;
@@ -63,9 +64,11 @@ class ClassReportScreen
      */
     public function sittings(int $schoolId, int $sectionId): array
     {
+        $sectionIds = $this->sectionIdsFor($schoolId, $sectionId);
+
         return Exam::query()
             ->where('school_id', $schoolId)
-            ->where('section_id', $sectionId)
+            ->whereIn('section_id', $sectionIds)
             ->whereNull('deleted_at')
             ->whereNotNull('exam_type_id')
             ->with(['examType', 'academicTerm'])
@@ -97,9 +100,14 @@ class ClassReportScreen
      */
     public function build(int $schoolId, array $class, array $sitting, ?int $streamLinkId = null, string $sort = 'position'): array
     {
-        $linkIds = array_column($class['links'], 'id');
-        $streams = array_column($class['links'], 'stream', 'id');
-        $releasedLinks = $this->releasedLinks($schoolId, $class, $sitting);
+        // A class exam sits on the class's own section; its students are enrolled
+        // in the class's streams. So both the links and the sheet follow the
+        // exam, not the picker row.
+        $links = $this->classLinks($schoolId, $class);
+        $linkIds = array_column($links, 'id');
+        $streams = array_column($links, 'stream', 'id');
+        $exam = $this->examForSitting($schoolId, (int) $class['id'], $sitting);
+        $releasedLinks = $this->releasedLinks($schoolId, $class, $sitting, $links, $exam);
 
         $base = [
             'class' => $class['label'],
@@ -113,8 +121,20 @@ class ClassReportScreen
             return $base + ['state' => 'unreleased', 'rows' => [], 'subjects' => [], 'kpis' => null, 'divisions' => [], 'subject_averages' => [], 'generations' => []];
         }
 
-        $sheet = $this->results->sheet(new ResultsQuery($schoolId, $class['id'], $sitting['term_id'], null, $sitting['exam_type_id']));
-        $students = array_values(array_filter($sheet->students, fn ($s) => in_array($s->standardLinkId, $releasedLinks, true)));
+        $sheet = $this->results->sheet(new ResultsQuery(
+            $schoolId,
+            $exam?->section_id ?? (int) $class['id'],
+            $sitting['term_id'],
+            null,
+            $sitting['exam_type_id'],
+        ));
+
+        // The sheet is built on the class section, so it reports the class link for
+        // every student. Their own stream is where they are enrolled.
+        $enrollment = $this->enrollmentLinks($schoolId, $sheet->students, $linkIds);
+        $linkOf = fn ($student) => $enrollment[(int) $student->studentId] ?? (int) $student->standardLinkId;
+
+        $students = array_values(array_filter($sheet->students, fn ($s) => in_array($linkOf($s), $releasedLinks, true)));
         if ($students === []) {
             return $base + ['state' => 'empty', 'rows' => [], 'subjects' => [], 'kpis' => null, 'divisions' => [], 'subject_averages' => [], 'generations' => []];
         }
@@ -145,29 +165,31 @@ class ClassReportScreen
             $subjectAverages[] = ['name' => $subject['name'], 'value' => $marks === [] ? null : round(array_sum($marks) / count($marks), 1)];
         }
 
-        $shown = array_values(array_filter($students, fn ($s) => $streamLinkId === null || $s->standardLinkId === $streamLinkId));
+        $shown = array_values(array_filter($students, fn ($s) => $streamLinkId === null || $linkOf($s) === $streamLinkId));
         usort($shown, $sort === 'name'
             ? fn ($a, $b) => strcasecmp($a->name, $b->name)
             : fn ($a, $b) => ($a->classPosition ?? PHP_INT_MAX) <=> ($b->classPosition ?? PHP_INT_MAX) ?: strcasecmp($a->name, $b->name));
 
-        $rows = array_map(function ($s) use ($subjects, $streams, $class, $sitting) {
+        $rows = array_map(function ($s) use ($subjects, $streams, $class, $sitting, $linkOf) {
+            $linkId = $linkOf($s);
+
             return [
                 'student_id' => $s->studentId,
                 'name' => $s->name,
                 'position' => $s->classPosition,
                 'out_of' => $s->classOutOf,
-                'stream' => $streams[$s->standardLinkId] ?? '',
+                'stream' => $streams[$linkId] ?? '',
                 'marks' => array_map(fn (array $sub) => ($c = $s->cell($sub['id'])) && $c->mark !== null ? $this->number($c->mark) : '—', $subjects),
                 'total' => $s->displayTotal !== null ? $this->number($s->displayTotal) : '—',
                 'aggregate' => $s->aggregate ?? '—',
                 'division' => $s->division !== null ? (self::DIVISION_LABELS[$s->division] ?? $s->division) : '—',
-                'download_url' => url('/admin/reports/cards/'.$s->standardLinkId.'/student/'.$s->studentId.'/download?term='.$sitting['term_id']),
+                'download_url' => url('/admin/reports/cards/'.$linkId.'/student/'.$s->studentId.'/download?term='.$sitting['term_id']),
             ];
         }, $shown);
 
         return $base + [
             'state' => 'ready',
-            'link_counts' => array_count_values(array_map(fn ($s) => $s->standardLinkId, $students)),
+            'link_counts' => array_count_values(array_map(fn ($s) => $linkOf($s), $students)),
             'rows' => $rows,
             'subjects' => $subjects,
             'subject_averages' => $subjectAverages,
@@ -179,32 +201,140 @@ class ClassReportScreen
                 'division_one' => $divisions['1'],
                 'ungraded' => $divisions['U'],
             ],
-            'generations' => $this->generations($schoolId, array_values(array_intersect($linkIds, $releasedLinks)), $sitting['term_id']),
+            'generations' => $this->generations($schoolId, $releasedLinks, $sitting['term_id']),
         ];
     }
 
     /**
-     * Streams of the class whose sitting is released. One enrolled student stands for the stream:
-     * a class release names the stream, a school release covers all of them.
+     * A section and, when it is a stream, its class's section. Exam sets create
+     * exams on the class; a stream reads its class's sitting.
      *
      * @return list<int>
      */
-    private function releasedLinks(int $schoolId, array $class, array $sitting): array
+    private function sectionIdsFor(int $schoolId, int $sectionId): array
     {
-        $exam = Exam::query()
+        $sectionIds = [$sectionId];
+        $section = Section::query()->where('school_id', $schoolId)->find($sectionId);
+        if ($section !== null) {
+            $base = app(\App\Services\ClassStructureService::class)->resolveBaseSection($section);
+            $sectionIds[] = (int) $base->id;
+        }
+
+        return array_values(array_unique(array_map('intval', $sectionIds)));
+    }
+
+    /**
+     * Each student's own enrolment link among the class's links (their stream).
+     * The results sheet reports the class link for everyone, so this is where the
+     * real stream comes from.
+     *
+     * @param  array<int, mixed>  $students
+     * @param  list<int>  $linkIds
+     * @return array<int, int>
+     */
+    private function enrollmentLinks(int $schoolId, array $students, array $linkIds): array
+    {
+        $userIds = array_values(array_unique(array_map(fn ($s) => (int) $s->studentId, $students)));
+        if ($userIds === [] || $linkIds === []) {
+            return [];
+        }
+
+        return StudentAcademic::query()
             ->where('school_id', $schoolId)
-            ->where('section_id', $class['id'])
+            ->whereNull('deleted_at')
+            ->whereIn('user_id', $userIds)
+            ->whereIn('standardLink_id', $linkIds)
+            ->orderBy('id')
+            ->get(['user_id', 'standardLink_id'])
+            ->mapWithKeys(fn ($row) => [(int) $row->user_id => (int) $row->standardLink_id])
+            ->all();
+    }
+
+    /**
+     * The class's own link plus the links of its streams. A class exam sits on the
+     * class section ("Primary Seven") and its students are enrolled in the streams
+     * ("Primary Seven E" / "W"), so the screen has to look at both.
+     *
+     * @param  array{id:int, label:string, links:list<array{id:int, stream:string}>}  $class
+     * @return list<array{id:int, stream:string}>
+     */
+    private function classLinks(int $schoolId, array $class): array
+    {
+        $links = $class['links'] ?? [];
+        $label = trim((string) ($class['label'] ?? ''));
+        if ($label === '') {
+            return $links;
+        }
+
+        $sections = Section::query()->where('school_id', $schoolId)->get(['id', 'name']);
+        $streamSectionIds = $sections
+            ->filter(fn ($section) => str_starts_with(trim((string) $section->name), $label.' '))
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        if ($streamSectionIds === []) {
+            return $links;
+        }
+
+        $streamLinks = StandardLink::query()
+            ->with('section')
+            ->where('school_id', $schoolId)
+            ->whereIn('section_id', $streamSectionIds)
+            ->whereIn('academic_year_id', AcademicYear::query()->where('school_id', $schoolId)->where('status', 1)->pluck('id'))
+            ->orderBy('id')
+            ->get();
+
+        $existing = array_map('intval', array_column($links, 'id'));
+        foreach ($streamLinks as $link) {
+            if (in_array((int) $link->id, $existing, true)) {
+                continue;
+            }
+
+            $name = trim((string) ($link->section->name ?? ''));
+            $stream = $name !== '' && str_starts_with($name, $label.' ')
+                ? trim(substr($name, strlen($label)))
+                : trim((string) ($link->stream ?? ''));
+
+            $links[] = ['id' => (int) $link->id, 'stream' => $stream];
+        }
+
+        return $links;
+    }
+
+    /**
+     * The exam behind a sitting for this class: it sits on the class's section.
+     *
+     * @param  array{exam_type_id:int, term_id:int}  $sitting
+     */
+    private function examForSitting(int $schoolId, int $sectionId, array $sitting): ?Exam
+    {
+        return Exam::query()
+            ->where('school_id', $schoolId)
+            ->whereIn('section_id', $this->sectionIdsFor($schoolId, $sectionId))
             ->where('exam_type_id', $sitting['exam_type_id'])
             ->where('academic_term_id', $sitting['term_id'])
             ->whereNull('deleted_at')
             ->orderBy('id')
             ->first();
+    }
+
+    /**
+     * Streams of the class whose sitting is released. One enrolled student stands for the stream:
+     * a class release names the stream, a school release covers all of them. A class exam sits on
+     * the class's section, so a stream's student answers for that stream.
+     *
+     * @param  list<array{id:int, stream:string}>  $links
+     * @return list<int>
+     */
+    private function releasedLinks(int $schoolId, array $class, array $sitting, array $links, ?Exam $exam): array
+    {
         if (! $exam) {
             return [];
         }
 
         $released = [];
-        foreach ($class['links'] as $link) {
+        foreach ($links as $link) {
             $studentId = StudentAcademic::query()
                 ->where('school_id', $schoolId)
                 ->where('standardLink_id', $link['id'])
