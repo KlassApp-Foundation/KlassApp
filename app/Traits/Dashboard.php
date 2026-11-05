@@ -331,10 +331,7 @@ trait Dashboard
         $total              =   $attendanceRows->count();
         $present            =   $attendanceRows->where('status', 1)->count();
         $absent             =   $attendanceRows->where('status', 0)->count();
-        $presentDays        =   $attendanceRows->where('status', 1)
-            ->map(fn ($row) => Carbon::parse($row->date)->toDateString())
-            ->unique()
-            ->count();
+        $presentDays        =   \App\Support\AttendanceDays::present($attendanceRows);
         $absentDays         =   $attendanceRows->where('status', 0)
             ->map(fn ($row) => Carbon::parse($row->date)->toDateString())
             ->unique()
@@ -380,11 +377,9 @@ trait Dashboard
         {
             $array['absentPercentage']  = number_format((float)( $absent / $total )*100);
         }
-        // A day is one calendar date. Each session is its own row, and a
-        // half day is stored as status 1 (present) on that one session — the
-        // column has no fraction. Counting dates keeps "1 day" instead of 0.5,
-        // and two sessions on the same date stay one day.
-        $array['presentDay']        = $presentDays === 1 ? '1 day' : $presentDays.' days';
+        // Morning and afternoon are separate rows. Both present is one day.
+        // One present session out of the two is a half day.
+        $array['presentDay']        = \App\Support\AttendanceDays::phrase($presentDays);
         $array['absentDay']         = $absentDays;
         $array['noticeboard']       = NoticeBoard::where([['school_id',$school_id],['academic_year_id',$academic_year->id],['type','!=','teacher']])->orWhere('standardLink_id',$standardLink_id)->orderBy('created_at','DESC')->take(5)->get();
         $array['upcomingeventCount']  = Events::where([['school_id',$school_id],['standard_id',$standardLink_id],['end_date','>',$date],['category','!=','holidays']])->count();

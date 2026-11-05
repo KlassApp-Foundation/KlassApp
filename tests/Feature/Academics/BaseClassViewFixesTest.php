@@ -226,7 +226,7 @@ class BaseClassViewFixesTest extends TestCase
         $studentPage->assertSee('SOCIAL STUDIES');
         $studentPage->assertSee('>4<', false);
         $studentPage->assertDontSee('ART');
-        $studentPage->assertSee('1 day');
+        $studentPage->assertSee('½ day present');
         $studentPage->assertDontSee('>0.5<', false);
 
         $parentPage = $this->actingAs($parent)->get('/parent/dashboard')->assertOk();
@@ -247,7 +247,7 @@ class BaseClassViewFixesTest extends TestCase
             'status' => 1,
             'recorded_by' => $admin->id,
         ]);
-        $this->actingAs($student)->get('/student/dashboard')->assertOk()->assertSee('1 day')->assertDontSee('2 days');
+        $this->actingAs($student)->get('/student/dashboard')->assertOk()->assertSee('1 day present')->assertDontSee('2 days')->assertDontSee('½ day present');
 
         $this->assertNotNull($hidden);
     }
