@@ -456,6 +456,11 @@
                     "active": [
                         "marks",
                         "mark"
+                    ],
+                    "paths": [
+                        "student/marks",
+                        "student/marks/*",
+                        "student/report"
                     ]
                 },
                 {
@@ -553,10 +558,20 @@
                     ]
                 },
                 {
-                    "label": "Children",
-                    "route": "parent.children",
+                    "label": "Marks",
+                    "resolver": "parent_child",
+                    "child_path": "grades",
                     "paths": [
-                        "parent/children"
+                        "parent/children/*/grades",
+                        "parent/children/*/report"
+                    ]
+                },
+                {
+                    "label": "Attendance",
+                    "resolver": "parent_child",
+                    "child_path": "attendance",
+                    "paths": [
+                        "parent/children/*/attendance"
                     ]
                 },
                 {
@@ -568,19 +583,10 @@
                     ]
                 },
                 {
-                    "label": "Grades",
-                    "resolver": "parent_child",
-                    "child_path": "grades",
+                    "label": "Children",
+                    "route": "parent.children",
                     "paths": [
-                        "parent/children/*/grades"
-                    ]
-                },
-                {
-                    "label": "Attendance",
-                    "resolver": "parent_child",
-                    "child_path": "attendance",
-                    "paths": [
-                        "parent/children/*/attendance"
+                        "parent/children"
                     ]
                 }
             ]

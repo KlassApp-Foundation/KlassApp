@@ -139,10 +139,11 @@ class StudentRecordsScopeTest extends TestCase
 
         $r->assertOk();
         $content = $r->getContent();
-        // own rows: 2 present, 1 absent, 3 total. The other student's row must not count.
-        $this->assertStringContainsString('>2<', $content);
-        $this->assertStringContainsString('>3<', $content);
-        $this->assertStringNotContainsString('>4<', $content, 'total must exclude other students rows');
+        // Own rows are two half days (one session each, on different dates),
+        // which add up to one day, plus one missed day. The other student
+        // is not included.
+        $this->assertStringContainsString('1 day present', $content);
+        $this->assertStringNotContainsString('1½ days present', $content);
     }
 
     public function test_crafted_id_in_the_query_string_is_ignored(): void

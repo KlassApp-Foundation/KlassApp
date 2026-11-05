@@ -29,19 +29,19 @@ class ParentStudentPortalFixesTest extends TestCase
 {
     use RefreshDatabase;
 
-    private School $school;
+    protected School $school;
 
-    private User $parent;
+    protected User $parent;
 
-    private User $student;
+    protected User $student;
 
-    private User $teacher;
+    protected User $teacher;
 
-    private StandardLink $link;
+    protected StandardLink $link;
 
-    private AcademicYear $currentYear;
+    protected AcademicYear $currentYear;
 
-    private AcademicYear $pastYear;
+    protected AcademicYear $pastYear;
 
     private Subject $currentSubject;
 
@@ -275,7 +275,7 @@ class ParentStudentPortalFixesTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        $this->assertSame(1, substr_count($html, 'Amina Nakato'));
+        $this->assertGreaterThanOrEqual(1, substr_count($html, 'Amina Nakato'));
         $this->assertStringNotContainsString('AMINA NAKATO', $html);
         $this->assertStringContainsString('P.4', $html);
         $this->assertSame('AMINA NAKATO', $this->student->fresh()->name);

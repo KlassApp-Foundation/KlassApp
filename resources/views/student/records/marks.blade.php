@@ -2,17 +2,14 @@
 @extends('layouts.student.layout')
 
 @section('content')
-<div class="dashboard-shell px-4 md:px-6 py-4" data-testid="student-marks-page">
-    @include('layouts.partials.page-header', [
-        'title' => 'My marks',
-        'subtitle' => 'Released results for every year. Only your own marks are shown here.',
-    ])
-
-    @include('portal.partials.results-year-filter', ['grades' => $grades])
-    @include('portal.partials.performance-chart', ['grades' => $grades])
-
-    <div class="mt-4">
-        @include('parent.partials.grades-panel', ['grades' => $grades, 'emptyMessage' => $message ?? null])
-    </div>
+<div class="family-page" data-testid="student-marks-page">
+    <main class="family-main" style="width:100% !important;margin-left:0 !important;margin-right:0 !important;">
+        <a class="family-back" href="{{ $links['dashboard'] }}">← {{ $childName }}</a>
+        @include('partials.message')
+        @include('portal.partials.family-states', ['loading' => $loading, 'panel' => 'marks', 'childName' => $childName, 'bundle' => $bundle])
+        @if(!$loading)
+            @include('portal.partials.family-marks', ['bundle' => $bundle, 'links' => $links])
+        @endif
+    </main>
 </div>
 @endsection
