@@ -253,7 +253,7 @@ class ClassTeacherExamCustodianTest extends TestCase
                 ],
             ]);
 
-        $response->assertRedirect(route('teacher.exam.marks'));
+        $response->assertRedirect(route('teacher.exam.marks.enter', $this->subjectOwnedExam));
         $this->assertDatabaseHas('marks', [
             'exam_id' => $this->subjectOwnedExam->id,
             'student_id' => $this->student->id,
@@ -290,7 +290,7 @@ class ClassTeacherExamCustodianTest extends TestCase
                 ],
             ]);
 
-        $response->assertRedirect(route('teacher.exam.marks'));
+        $response->assertRedirect(route('teacher.exam.marks.enter', $this->subjectOwnedExam));
         $this->assertDatabaseHas('marks', [
             'exam_id' => $this->subjectOwnedExam->id,
             'student_id' => $this->student->id,

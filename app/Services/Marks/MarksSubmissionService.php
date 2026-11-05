@@ -2,8 +2,11 @@
 
 namespace App\Services\Marks;
 
+use App\Helpers\GradingHelper;
 use App\Models\Academics\Exam;
 use App\Models\Academics\ExamMarksSubmission;
+use App\Models\Academics\Marks;
+use App\Models\Academics\NurseryAssessment;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
 
@@ -13,6 +16,30 @@ use Illuminate\Validation\ValidationException;
  */
 final class MarksSubmissionService
 {
+    /**
+     * Submit for review needs a saved numeric mark, or a nursery rating.
+     * An empty grid is not something to submit.
+     */
+    public function hasWorkToSubmit(Exam $exam): bool
+    {
+        $exam->loadMissing('standard');
+        $level = $exam->standard ? GradingHelper::levelTypeForStandard($exam->standard) : null;
+
+        if ($level === 'nursery') {
+            return NurseryAssessment::query()
+                ->where('exam_id', $exam->id)
+                ->where('academic_term_id', $exam->academic_term_id)
+                ->exists();
+        }
+
+        return Marks::query()
+            ->where('school_id', $exam->school_id)
+            ->where('exam_id', $exam->id)
+            ->where('subject_id', $exam->subject_id)
+            ->whereNotNull('marks')
+            ->exists();
+    }
+
     public function submit(Exam $exam, User $teacher): ExamMarksSubmission
     {
         $existing = ExamMarksSubmission::query()

@@ -2,8 +2,10 @@
 
 namespace Tests\Feature\Teacher;
 
+use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\Attendance;
+use App\Models\Academics\Exam;
 use App\Models\Country;
 use App\Models\Homework;
 use App\Models\School;
@@ -119,6 +121,57 @@ class DashboardTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('No classes yet');
         $response->assertSee('When the school assigns you a class or a subject');
+    }
+
+    public function test_upcoming_exams_counts_open_exams_this_person_can_mark(): void
+    {
+        $standard = Standard::create([
+            'school_id' => $this->school->id, 'name' => 'primary', 'order' => 1, 'status' => 1,
+        ]);
+        $section = Section::create([
+            'school_id' => $this->school->id, 'name' => 'P.4', 'status' => 1,
+        ]);
+        $term = AcademicTerm::create([
+            'school_id' => $this->school->id,
+            'academic_year_id' => $this->academicYear->id,
+            'name' => 'Term 1',
+            'status' => 'current',
+            'starts_on' => now()->startOfYear()->toDateString(),
+            'ends_on' => now()->startOfYear()->addMonths(3)->toDateString(),
+        ]);
+        $subject = Subject::create([
+            'school_id' => $this->school->id,
+            'standard_id' => $standard->id,
+            'section_id' => $section->id,
+            'academic_year_id' => $this->academicYear->id,
+            'name' => 'Mathematics',
+            'type' => 'core',
+            'status' => 1,
+        ]);
+        DB::table('exam_types')->insert([
+            'id' => 1, 'name' => 'Mid Term', 'code' => 'MID', 'contributes_to_report_total' => 0,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        Exam::create([
+            'school_id' => $this->school->id,
+            'academic_year_id' => $this->academicYear->id,
+            'academic_term_id' => $term->id,
+            'standard_id' => $standard->id,
+            'section_id' => $section->id,
+            'subject_id' => $subject->id,
+            'teacher_id' => $this->teacher->id,
+            'exam_type_id' => 1,
+            'status' => 'undone',
+        ]);
+
+        $html = $this->actingAs($this->teacher)->get('/teacher/dashboard')->assertOk()->getContent();
+
+        $this->assertMatchesRegularExpression(
+            // The tile is the admin's dv2 card after #1265; the older ds-kpi card
+            // is accepted too, so this holds whichever of the two lands first.
+            '/data-testid="(?:upcoming-exams-count|kpi-upcoming-exams)"[\s\S]{0,2500}(?:ds-kpi-value|dv2-kpi-value)">\s*1\s*</',
+            $html
+        );
     }
 
     public function test_dashboard_shows_marks_entry_banner(): void

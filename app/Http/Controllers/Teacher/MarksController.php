@@ -120,6 +120,12 @@ public function submitMarks(Exam $exam, MarksSubmissionService $submissions)
     }
     $this->examAuthorization->authorizeOrAbort($teacher, $exam, 'You are not authorized to submit marks for this exam.');
 
+    if (! $submissions->hasWorkToSubmit($exam)) {
+        return redirect()
+            ->route('teacher.exam.marks.enter', $exam)
+            ->with('failmessage', 'Save marks before submitting them for review.');
+    }
+
     $submissions->submit($exam, $teacher);
 
     return redirect()
@@ -141,14 +147,15 @@ public function enterExamMarks(Exam $exam)
      $allStudents = $this->examRoster($exam, $schoolId);
      $total = $allStudents->count();
 
-     // How many marks are already saved for this exam: shown as a note with a link
-     // to the marks view. The entry form itself stays blank (no prefill).
-     $savedMarkCount = Marks::query()
+     $savedMarks = Marks::query()
          ->where('exam_id', $exam->id)
          ->where('subject_id', $exam->subject_id)
          ->where('school_id', $schoolId)
          ->whereNotNull('marks')
-         ->count();
+         ->get(['student_id', 'marks'])
+         ->mapWithKeys(fn ($row) => [(int) $row->student_id => $this->markForInput($row->marks)])
+         ->all();
+     $savedMarkCount = count($savedMarks);
 
     $exam = $exam->load("academicTerm", "section", "subject", "teacher", "standard");
 
@@ -182,6 +189,8 @@ public function enterExamMarks(Exam $exam)
         'existingAssessments' => $existingAssessments,
         'correctionReasonRequired' => $this->correctionReasonRequired($exam),
         'savedMarkCount' => $savedMarkCount,
+        'savedMarks' => $savedMarks,
+        'canSubmit' => app(MarksSubmissionService::class)->hasWorkToSubmit($exam),
     ]);
 }
 
@@ -289,7 +298,7 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
         $this->logMarksActivity($request, $exam, $user, 'marks.saved', $affectedMarkCount, $reason);
 
         return redirect()
-            ->route('teacher.exam.marks')
+            ->route('teacher.exam.marks.enter', $exam)
             ->with('successmessage', 'Nursery assessments saved!');
     }
 
@@ -313,8 +322,8 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
     $this->logMarksActivity($request, $exam, $user, 'marks.saved', $affectedMarkCount);
 
     return redirect()
-        ->route('teacher.exam.marks')
-        ->with('successmessage', ' marks saved!');
+        ->route('teacher.exam.marks.enter', $exam)
+        ->with('successmessage', 'Marks saved!');
 }
 
 // view examMarks
@@ -483,6 +492,17 @@ public function updateMark(Request $request, Exam $exam, User $student, GradingS
     return redirect()
         ->route('teacher.exam.marks')
         ->with('successmessage', ($student->displayName ?: $student->name) . "'s ". '  Marks updated!');
+}
+
+private function markForInput(mixed $mark): string
+{
+    if ($mark === null || $mark === '') {
+        return '';
+    }
+
+    $text = rtrim(rtrim(number_format((float) $mark, 2, '.', ''), '0'), '.');
+
+    return $text === '' ? '0' : $text;
 }
 
 private function logMarksActivity(
