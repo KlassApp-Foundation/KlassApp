@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Helpers\AuthRedirectHelper;
 use App\Http\Controllers\Controller;
 use App\Services\EmailVerificationCodeService;
 use Illuminate\Http\Request;
@@ -55,7 +56,7 @@ class EmailConfirmLinkController extends Controller
             Auth::login($user);
             $request->session()->regenerate();
 
-            return redirect('/admin/dashboard')
+            return redirect(AuthRedirectHelper::dashboardPathForUser($user))
                 ->with('open_toshi_onboarding', true)
                 ->with('successmessage', "Email confirmed. Welcome to KlassApp! Let's set up your school.");
         }
