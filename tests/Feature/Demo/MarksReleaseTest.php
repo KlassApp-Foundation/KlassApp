@@ -472,13 +472,13 @@ class MarksReleaseTest extends TestCase
         $html = $response->getContent();
 
         $this->assertStringContainsString('data-testid="marks-release-controls"', $html);
-        $this->assertStringContainsString('.mr-bar { display: flex; flex-wrap: nowrap;', $html);
-        $this->assertStringContainsString('.mr-control:has(select[name="exam_id"]) { flex: 2 1 12rem; min-width: 10rem; max-width: none; }', $html);
-        $this->assertStringContainsString('.mr-when-at { flex: 0 1 12.5rem; min-width: 11.5rem; max-width: 14rem; }', $html);
+        $this->assertStringContainsString('data-testid="release-aside"', $html);
+        $this->assertStringContainsString('.mr-page { display: grid;', $html);
+        $this->assertStringContainsString('minmax(0, 1fr) minmax(240px, 340px)', $html);
+        $this->assertStringNotContainsString('flex-wrap: nowrap', $html);
         $this->assertMatchesRegularExpression(
-            '/@media \(max-width: 1100px\) \{ \.mr-bar \{ flex-wrap: wrap; \} \}/',
+            '/@media \(max-width: 767px\) \{\s*\.mr-page \{ grid-template-columns: minmax\(0, 1fr\);/',
             $html,
-            'Only the compact breakpoint should wrap the release bar',
         );
     }
 

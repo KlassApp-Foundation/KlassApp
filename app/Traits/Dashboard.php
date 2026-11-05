@@ -17,6 +17,7 @@ use App\Models\Teacherlink;
 use App\Models\NoticeBoard;
 use App\Models\Userprofile;
 use App\Models\ActivityLog;
+use App\Contracts\Results\ReleaseGate;
 use App\Helpers\SiteHelper;
 use App\Helpers\DashboardCache;
 use App\Services\DashboardV2DataService;
@@ -323,12 +324,18 @@ trait Dashboard
         $array = [];
 
         $academic_year      =   SiteHelper::getAcademicYear($school_id);
-        $attendanceBase     =   Attendance::query()->where('school_id', $school_id)->where('user_id', $user_id->id);
-        $total              =   (clone $attendanceBase)->count();
-        $present            =   (clone $attendanceBase)->where('status', 1)->count();
-        $absent             =   (clone $attendanceBase)->where('status', 0)->count();
-        $presentDays        =   (int) (clone $attendanceBase)->where('status', 1)->distinct()->count('date');
-        $absentDays         =   (int) (clone $attendanceBase)->where('status', 0)->distinct()->count('date');
+        $attendanceRows     =   Attendance::query()
+            ->where('school_id', $school_id)
+            ->where('user_id', $user_id->id)
+            ->get(['date', 'status']);
+        $total              =   $attendanceRows->count();
+        $present            =   $attendanceRows->where('status', 1)->count();
+        $absent             =   $attendanceRows->where('status', 0)->count();
+        $presentDays        =   \App\Support\AttendanceDays::present($attendanceRows);
+        $absentDays         =   $attendanceRows->where('status', 0)
+            ->map(fn ($row) => Carbon::parse($row->date)->toDateString())
+            ->unique()
+            ->count();
 
         $date=date('Y-m-d H:i:s');
 
@@ -370,20 +377,55 @@ trait Dashboard
         {
             $array['absentPercentage']  = number_format((float)( $absent / $total )*100);
         }
-        // One calendar day, even when the register has a morning and an afternoon row.
-        $array['presentDay']        = $presentDays;
+        // Morning and afternoon are separate rows. Both present is one day.
+        // One present session out of the two is a half day.
+        $array['presentDay']        = \App\Support\AttendanceDays::phrase($presentDays);
         $array['absentDay']         = $absentDays;
         $array['noticeboard']       = NoticeBoard::where([['school_id',$school_id],['academic_year_id',$academic_year->id],['type','!=','teacher']])->orWhere('standardLink_id',$standardLink_id)->orderBy('created_at','DESC')->take(5)->get();
         $array['upcomingeventCount']  = Events::where([['school_id',$school_id],['standard_id',$standardLink_id],['end_date','>',$date],['category','!=','holidays']])->count();
         $array['upcomingholidayCount']  = Events::where([['school_id',$school_id],['end_date','>=',$date],['category','=','holidays']])->count();
 
-        if(class_exists('Gegok12\Exam\Models\Mark'))
-        {
-            $array['marks']             = $marks->take(5)->get();
-        }
-
+        // Same release gate as the parent portal: only sittings the school has
+        // released. Unreleased marks stay off this page.
+        $array['marks'] = $this->releasedMarksForStudent($school_id, $user_id, $academic_year);
 
         return $array;
+    }
+
+    /**
+     * Released subject marks for this student, the same source the parent
+     * portal counts. School-scoped. An unreleased sitting is excluded.
+     *
+     * @return \Illuminate\Support\Collection<int, \App\Models\Academics\Marks>
+     */
+    private function releasedMarksForStudent(int $schoolId, User $student, $academicYear)
+    {
+        $examQuery = \App\Models\Academics\Exam::query()
+            ->where('school_id', $schoolId)
+            ->whereHas('marks', fn ($q) => $q->where('school_id', $schoolId)->where('student_id', $student->id))
+            ->with([
+                'marks' => fn ($q) => $q->where('school_id', $schoolId)->where('student_id', $student->id)->with('subject'),
+                'examType',
+                'subject',
+            ])
+            ->latest('id');
+
+        if ($academicYear) {
+            $examQuery->where('academic_year_id', $academicYear->id);
+        }
+
+        app(ReleaseGate::class)->applyToExams($examQuery, $student);
+        $exams = $examQuery->take(15)->get();
+
+        $marks = collect();
+        foreach ($exams as $exam) {
+            foreach ($exam->marks as $mark) {
+                $mark->setRelation('exam', $exam);
+                $marks->push($mark);
+            }
+        }
+
+        return $marks;
     }
 
     public function teacherDashboard($school_id,$teacher_id)

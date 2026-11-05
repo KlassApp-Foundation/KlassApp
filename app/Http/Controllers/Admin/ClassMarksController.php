@@ -27,9 +27,26 @@ class ClassMarksController extends Controller
     {
         $schoolId = (int) Auth::user()->school_id;
 
-        $sections = ClassListOrder::orderSections(
-            Section::query()->where('school_id', $schoolId)
-        )->get(['sections.id', 'sections.name'])
+        // Class level order (#1269), active classes only and never a name-encoded
+        // stream such as "P.6 East" under "P.6" (#1281), then only classes that
+        // have exam marks.
+        $all = ClassListOrder::orderSections(
+            Section::query()
+                ->where('school_id', $schoolId)
+                ->where(function ($q) {
+                    $q->where('status', 1)->orWhere('status', '1');
+                })
+        )->get(['sections.id', 'sections.name', 'sections.school_id']);
+        $sections = $all->reject(function (Section $section) use ($all) {
+            foreach ($all as $other) {
+                if ((int) $other->id !== (int) $section->id
+                    && str_starts_with((string) $section->name, $other->name.' ')) {
+                    return true;
+                }
+            }
+
+            return false;
+        })
             ->filter(fn (Section $s) => LatestExamMarks::forSection($schoolId, (int) $s->id) !== null)
             ->values();
 

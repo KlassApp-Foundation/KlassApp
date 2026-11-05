@@ -441,10 +441,12 @@ class ReleaseSnapshotTest extends TestCase
 
         $this->actingAs($admin)->get($base.'&class=P.4&stream=')
             ->assertOk()
-            ->assertSee('data-testid="release-reason"', false);
+            ->assertSee('data-testid="release-reason"', false)
+            ->assertSee('P.4 was already released. Why release this sitting again?', false);
         $this->actingAs($admin)->get($base.'&class=P.5')
             ->assertOk()
-            ->assertDontSee('data-testid="release-reason"', false);
+            ->assertDontSee('data-testid="release-reason"', false)
+            ->assertDontSee('Why release this sitting again?', false);
 
         // Pre-selected by the class link on the URL.
         $this->actingAs($admin)->get($base.'&standard_link_id='.$linkId)
@@ -457,11 +459,13 @@ class ReleaseSnapshotTest extends TestCase
         $this->actingAs($admin)->get($base)
             ->assertOk()
             ->assertSee('data-testid="release-reason"', false)
+            ->assertSee('P.4 was already released. Why release this sitting again?', false)
             ->assertSee('name="class"', false)
             ->assertSee('onchange="this.form.submit()"', false);
         $this->actingAs($admin)->get($base.'&class=P.4')
             ->assertOk()
-            ->assertSee('data-testid="release-reason"', false);
+            ->assertSee('data-testid="release-reason"', false)
+            ->assertSee('P.4 was already released. Why release this sitting again?', false);
 
         // The previous URL had no class, but saving the released class demands
         // a reason and the error is on the page, with the box.
