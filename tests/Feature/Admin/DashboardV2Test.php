@@ -294,7 +294,7 @@ class DashboardV2Test extends TestCase
             ->assertSee('Add your students to get started', false)
             ->assertSee('/admin/student/add', false)
             ->assertSee('data-testid="dashboard-v2-import-students"', false)
-            ->assertSee('/admin/import', false)
+            ->assertSee('/admin/students/import', false)
             ->assertDontSee('/admin/student/import', false);
     }
 

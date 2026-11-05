@@ -85,15 +85,17 @@ final class MarksReleaseService
 
         $query = StandardLink::query()
             ->with('section')
-            ->where('school_id', $user->school_id)
-            ->whereIn('academic_year_id', $this->currentYearIds((int) $user->school_id));
+            ->where('standards_link.school_id', $user->school_id)
+            ->whereIn('standards_link.academic_year_id', $this->currentYearIds((int) $user->school_id));
 
         if ($this->isSchoolAdmin($user)) {
-            return $query->orderBy('section_id')->orderBy('stream')->get();
+            return \App\Support\ClassListOrder::orderLinks($query)->get();
         }
 
         if ((int) $user->usergroup_id === self::USERGROUP_TEACHER) {
-            return $query->where('class_teacher_id', $user->id)->orderBy('section_id')->orderBy('stream')->get();
+            return \App\Support\ClassListOrder::orderLinks(
+                $query->where('standards_link.class_teacher_id', $user->id)
+            )->get();
         }
 
         return collect();

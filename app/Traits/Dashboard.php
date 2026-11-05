@@ -398,10 +398,10 @@ trait Dashboard
         $teachersubjects = [];
         foreach ($teacherlinks as $teacherlink)
         {
-            $teachersubjects[$teacherlink->id]['subject']   = $teacherlink->subject->name;
+            $teachersubjects[$teacherlink->id]['subject']   = $teacherlink->subject->name ?? '';
             $teachersubjects[$teacherlink->id]['class']     = $teacherlink->standardLink->StandardSection;
         }
-        $standardLinks = $teacherlinks->pluck('standardLink_id')->toArray();
+        $standardLinks = $teacher->currentYearStandardLinkIds();
 
         $array['activitylog']   = $teacher->activitylog()->orderBy('id','DESC')->take(5)->get();
 
@@ -441,7 +441,24 @@ trait Dashboard
         {
             $query->where('academic_year_id',$academic_year->id);
         })->where('start_time','>=',date('Y-m-d H:i:s'))->orderBy('start_time','DESC')->take(10)->get()->groupBy('start_time');
-    }
+    } else {
+            $sectionIds = $standardLinks === []
+                ? []
+                : \App\Models\StandardLink::query()->whereIn('id', $standardLinks)->pluck('section_id')->map(fn ($id) => (int) $id)->unique()->values()->all();
+            $array['upcomingExam'] = \App\Models\Academics\Exam::query()
+                ->where('school_id', $school_id)
+                ->where('academic_year_id', $academic_year->id)
+                ->where(function ($examQuery) use ($teacher_id, $sectionIds) {
+                    $examQuery->where('teacher_id', $teacher_id);
+                    if ($sectionIds !== []) {
+                        $examQuery->orWhereIn('section_id', $sectionIds);
+                    }
+                })
+                ->where(function ($when) {
+                    $when->whereNull('scheduled_at')->orWhere('scheduled_at', '>=', now());
+                })
+                ->get();
+        }
 
         // WhatsApp stats for this school
         $array['whatsapp'] = [
@@ -454,10 +471,13 @@ trait Dashboard
         ];
 
         // Students under this teacher's classes
-        $array['myStudents'] = User::BySchool($school_id)->ByRole(6)
-            ->whereHas('studentAcademic', function ($q) use ($standardLinks) {
-                $q->whereIn('standardLink_id', $standardLinks);
-            })->count();
+        $array['myStudents'] = $standardLinks === []
+            ? 0
+            : User::BySchool($school_id)->ByRole(6)->where('status', 'active')
+                ->whereHas('studentAcademic', function ($q) use ($standardLinks, $academic_year) {
+                    $q->where('academic_year_id', $academic_year->id)
+                        ->whereIn('standardLink_id', $standardLinks);
+                })->count();
         $array['myClasses'] = count($standardLinks);
 
         // Marks this teacher still needs to act on:

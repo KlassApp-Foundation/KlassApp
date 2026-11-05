@@ -334,7 +334,7 @@ class MarksReleaseTest extends TestCase
         $this->bind(self::BOUND);
         $teacher = $this->teacher();
 
-        $this->actingAs($teacher)->get('/teacher/marks/releases/new')->assertOk()->assertSee('Release marks');
+        $this->actingAs($teacher)->get('/teacher/marks/releases/new')->assertOk()->assertSee('Marks Release');
         $this->releaseNow($teacher, $this->link()->id, 'teacher')->assertRedirect();
 
         $this->assertSame([self::BOUND], array_column($this->outbound(), 'to'));

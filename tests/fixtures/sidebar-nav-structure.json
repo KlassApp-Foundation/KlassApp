@@ -142,7 +142,7 @@
                                     ]
                                 },
                                 {
-                                    "label": "Release marks",
+                                    "label": "Marks Release",
                                     "url": "admin/marks/releases/new",
                                     "paths": [
                                         "admin/marks/releases*"

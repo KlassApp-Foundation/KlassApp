@@ -1016,6 +1016,25 @@ public function scopeStudents($query)
         return $this->hasMany('\App\Models\Teacherlink','teacher_id','id')->where('academic_year_id',$academic_year->id);
     }
 
+    /**
+     * Streams this teacher is responsible for this year. Subject allocations
+     * alone missed a class teacher who has no subject row. The ids follow
+     * RosterScopeService (stream class teacher, subject allocation, or the
+     * section's class teacher when the stream has none).
+     *
+     * @return list<int>
+     */
+    public function currentYearStandardLinkIds(): array
+    {
+        $year = SiteHelper::getAcademicYear($this->school_id);
+        if (! $year || ! $this->school_id) {
+            return [];
+        }
+
+        return app(\App\Services\RosterScopeService::class)
+            ->assignedStreamIds($this, (int) $this->school_id, (int) $year->id);
+    }
+
     public function attendanceUser()
     {
         return $this->hasMany('\App\Models\Attendance','user_id','id');
