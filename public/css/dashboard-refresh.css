@@ -5196,3 +5196,29 @@ td a.btn-danger:hover {
     .family-filters-sheet { display: none; }
     .family-filters-sheet.is-open { display: flex; flex-direction: column; align-items: stretch; position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: #fff; padding: 16px; border-radius: 16px 16px 0 0; }
 }
+
+@media (min-width: 1024px) {
+    #admin-sidebar.teacher-sidebar { width: 248px; }
+}
+.family-page { width: 100%; box-sizing: border-box; padding: 12px 16px 24px; }
+.family-main { width: 100%; box-sizing: border-box; background: #fff; border: 1px solid #E2E8F0; border-radius: 20px; padding: 28px 32px 32px; display: flex; flex-direction: column; gap: 16px; color: #1E293B; }
+.family-page-head, .teacher-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: flex-end; }
+.family-main h1 { margin: 0; font-family: Sora, sans-serif; font-size: 1.6rem; }
+.family-main h2, .family-main h3 { margin: 0; font-family: Sora, sans-serif; }
+.family-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.family-card { border: 1px solid #E2E8F0; border-radius: 14px; padding: 16px; background: #fff; color: #1E293B; text-decoration: none; display: flex; flex-direction: column; gap: 4px; }
+.family-card strong { font: 700 1.3rem Sora, sans-serif; }
+.family-empty { border: 1px dashed #CBD5E1; border-radius: 14px; padding: 28px 16px; text-align: center; }
+.family-alert { background: #FEF2F2; border: 1px solid #FECACA; border-radius: 12px; padding: 14px; color: #7F1D1D; display: flex; flex-direction: column; gap: 8px; }
+.family-sk { background: #E2E8F0; border-radius: 8px; min-height: 16px; }
+.family-table-card { border: 1px solid #E2E8F0; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+.family-kicker { margin: 0; font-size: 0.72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #64748B; }
+.family-fee-line { display: flex; justify-content: space-between; margin: 0; }
+.family-bars { display: flex; gap: 8px; align-items: flex-end; min-height: 80px; }
+.family-bar { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.family-bar__fill { width: 100%; background: #15803D; border-radius: 6px 6px 0 0; }
+.teacher-row { border-top: 1px solid #E2E8F0; padding-top: 8px; }
+@media (max-width: 767px) {
+    .family-page { padding: 0; }
+    .family-main { border-radius: 0; border-left: 0; border-right: 0; padding: 16px; }
+}
