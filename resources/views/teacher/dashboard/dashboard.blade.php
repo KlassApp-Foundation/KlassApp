@@ -31,13 +31,13 @@
                 </div>
                 <div class="teacher-actions" data-testid="teacher-quick-actions">
                     <a class="ds-btn ds-btn-primary" href="{{ $board['attendance_url'] }}">Take attendance{{ $board['head_class'] ? ' · '.$board['head_class'] : '' }}</a>
-                    <a class="ds-btn ds-btn-outline" href="{{ $board['marks_url'] }}">Enter marks</a>
+                    <a class="ds-btn ds-btn-outline" href="{{ route('teacher.exam.marks') }}">Enter marks</a>
                 </div>
             </div>
             <div class="family-cards teacher-kpis">
                 <div class="family-card"><strong>{{ $board['class_count'] }}</strong><span>my classes · {{ implode(', ', $board['class_names']) }}</span></div>
                 <div class="family-card"><strong data-testid="teacher-students">{{ $board['student_count'] }}</strong><span>my students</span></div>
-                <a class="family-card" href="{{ $board['marks_url'] }}"><strong>{{ $board['to_mark'] }}</strong><span>exams to mark</span></a>
+                <a class="family-card" href="{{ route('teacher.exam.marks') }}"><strong>{{ $board['to_mark'] }}</strong><span>exams to mark</span></a>
                 <div class="family-card"><strong>{{ $board['returned'] }}</strong><span>returned for fixing</span></div>
             </div>
             <section class="family-table-card" data-testid="teacher-attention">
