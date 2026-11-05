@@ -355,26 +355,26 @@ class DashboardV2Test extends TestCase
             ->assertDontSee('UNEB centre number', false);
     }
 
-    public function test_currency_without_a_setting_shows_no_symbol_and_a_quiet_hint(): void
+    public function test_currency_defaults_to_the_school_country_and_can_switch_to_usd(): void
     {
         $school = $this->makeSchool(['name' => 'Currency School']);
         $admin = $this->makeAdmin($school);
         $this->completeAllSteps($school, $admin);
 
-        // No currency set: amounts carry no symbol and the hint appears.
+        // Uganda: UGX applies without anyone setting it, so there is no hint.
         $this->render(User::findOrFail($admin->id))->assertOk()
-            ->assertSee('data-testid="dashboard-v2-currency-hint"', false)
-            ->assertSee('Set your currency', false);
+            ->assertDontSee('Set your currency', false)
+            ->assertSee('UGX', false);
 
-        // Setting the school currency: symbols appear, the hint goes away.
+        // Switching to USD is an explicit setting and still silences the hint.
         \Illuminate\Support\Facades\DB::table('school_details')->insert([
-            'school_id' => $school->id, 'meta_key' => 'currency', 'meta_value' => 'UGX',
+            'school_id' => $school->id, 'meta_key' => 'currency', 'meta_value' => 'USD',
             'created_at' => now(), 'updated_at' => now(),
         ]);
 
-        $response = $this->render(User::findOrFail($admin->id))->assertOk();
-        $response->assertDontSee('data-testid="dashboard-v2-currency-hint"', false);
-        $this->assertMatchesRegularExpression('/UGX\s[0-9]/', $response->getContent());
+        $this->render(User::findOrFail($admin->id))->assertOk()
+            ->assertSee('USD', false)
+            ->assertDontSee('Set your currency', false);
     }
 
     public function test_first_screen_has_no_carousel_connected_tools_or_toshi_promo(): void

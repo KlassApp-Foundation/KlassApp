@@ -150,7 +150,9 @@ class OnboardingProgressTest extends TestCase
             ->get('/admin/dashboard')
             ->assertOk()
             ->assertSee('data-testid="dashboard-v2-setup-summary"', false)
-            ->assertSee('School name: Kisubi Primary School', false);
+            // The banner lists the completed step labels, not the playbook sentences.
+            ->assertSee('School name', false)
+            ->assertDontSee('School name: Kisubi Primary School', false);
     }
 
     public function test_toshi_dock_has_the_summary_bar_and_the_modal_list_does_not(): void
