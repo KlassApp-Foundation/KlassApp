@@ -277,10 +277,13 @@ class OnboardingProgressTest extends TestCase
                 ->assertSee('School name', false)
                 ->assertDontSee('School name: Kisubi Primary School', false);
         } elseif ($surface === 'wizard') {
+            // The wizard's panel counts the same list as its step card, which
+            // includes the synthetic review step the progress object never has.
+            $wizardCount = 'Setup '.$running['done'].' of '.($running['total'] + 1);
             $this->actingAs($this->admin);
             Livewire::test(ManualOnboardingWizard::class)
                 ->assertSeeHtml('data-testid="wizard-running-summary"')
-                ->assertSee($count)
+                ->assertSee($wizardCount)
                 ->assertSee('School name')
                 ->assertDontSee('Nothing saved yet.')
                 ->assertDontSee('School name: Kisubi Primary School');

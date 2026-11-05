@@ -51,6 +51,12 @@ class ManualOnboardingWizard extends Component
     public int $stepIndex = 0;
 
     /**
+     * The current step's key, bound to ?step= so the URL, the card counter and
+     * the side panel all describe the same step. Written only by setStepIndex.
+     */
+    public ?string $stepKey = null;
+
+    /**
      * Steps unlocked by the last answer. The applicable step list grows as answers
      * arrive (country unlocks EMIS, a UNEB curriculum unlocks UNEB centre and school
      * category), so surface the growth instead of letting the counter jump.
@@ -1056,6 +1062,18 @@ class ManualOnboardingWizard extends Component
         return count($this->steps);
     }
 
+    /** Completed steps in the same list the card counts, so both agree. */
+    public function getDoneCountProperty(): int
+    {
+        return collect($this->steps)->where('is_complete', true)->count();
+    }
+
+    /** The step on screen — what the side panel's "Now:" must name. */
+    public function getNowLabelProperty(): ?string
+    {
+        return $this->currentStep['label'] ?? null;
+    }
+
     /**
      * Active plans for the visible plan_selection step.
      *
@@ -1174,7 +1192,7 @@ class ManualOnboardingWizard extends Component
         }
     }
 
-    public function next(): void
+    public function next()
     {
         $this->errorMessage = '';
         // Read steps[] directly — do not touch $this->currentStep here.
@@ -1246,6 +1264,20 @@ class ManualOnboardingWizard extends Component
         // Do NOT auto-assign Freemium on every Next — plan_selection must remain a
         // visible decision step. Assignment happens only in savePlan() when confirmed.
         $this->refreshSteps();
+
+        // The school name and the year list are rendered in the page chrome
+        // (layouts/partials/navigation + the nav-bar selector), outside this
+        // component. Re-rendering the component alone leaves the old name and a
+        // stale year dropdown, so these two saves take a full reload.
+        if (in_array($step['key'], ['school_name', 'academic_year'], true)
+            && $this->returnToStepIndex === null
+            && $this->returnToStepKey === null) {
+            // A full reload (not a Livewire navigate): the header's school name and
+            // the academic-year selector are rendered outside this component and
+            // only a fresh page load re-reads them. The advance below still runs, so
+            // the reload lands on the step Continue would have shown.
+            $this->js('window.location.reload()');
+        }
 
         if ($this->returnToStepIndex !== null || $this->returnToStepKey !== null) {
             $this->returnToReviewAfterEdit();
@@ -1410,7 +1442,12 @@ class ManualOnboardingWizard extends Component
     private function setStepIndex(int $index): void
     {
         $this->stepIndex = $index;
+        $this->stepKey = (string) ($this->steps[$index]['key'] ?? '');
         unset($this->currentStep);
+
+        // Keep ?step= on the URL for the step the card actually shows. The key is
+        // written here and nowhere else, so it cannot drift from the card.
+        $this->dispatch('wizard-url', step: $this->stepKey);
 
         $key = $this->currentKey();
         if (in_array($key, ['standards', 'students'], true)) {
