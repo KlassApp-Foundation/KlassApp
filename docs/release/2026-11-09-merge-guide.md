@@ -4,7 +4,7 @@
 
 ## 1. Result in one paragraph
 
-All 39 open PRs in the requested order merge onto `main` (#1273 was already in `main`; #1239 and #1262 arrived through the PRs stacked on them). 25 of the 39 needed a conflict resolved; 14 were clean. Besides the conflicts, **one silent merge break** (two PRs add the same class constant, a PHP fatal that stopped the whole test suite from starting), **one real bug that only appears in combination** (an ambiguous `class_teacher_id` in the marks release service once class ordering joins `sections`), and a handful of tests that describe screens other PRs replaced. All are fixed on the integration branch and listed in section 4 with the PR each belongs to. CI result: see section 6.
+All 39 open PRs in the requested order merge onto `main` (#1273 was already in `main`; #1239 and #1262 arrived through the PRs stacked on them). 25 of the 39 needed a conflict resolved; 14 were clean. Besides the conflicts, **one silent merge break** (two PRs add the same class constant, a PHP fatal that stopped the whole test suite from starting), **one real bug that only appears in combination** (an ambiguous `class_teacher_id` in the marks release service once class ordering joins `sections`), and a handful of tests that describe screens other PRs replaced. All are fixed on the integration branch and listed in section 4 with the PR each belongs to. CI result: green on all six checks, 3611 tests, 0 failures (section 6).
 
 ## 2. Merge order and result
 
@@ -196,7 +196,32 @@ These are the places where two PRs wanted the same file and one side's behaviour
 
 ## 6. Test results
 
-See `Test results` below (filled in after CI).
+**CI on the integration branch (commit `bae6afe4`): all six checks green.** `test-guard` ran the full suite: **3611 tests, 0 failures, 0 errors, 9 skipped**, no known-failures entries. `mysql-84-migrations`, `reference-seed` (migrate:fresh --seed and a second seed on MySQL 8.4 and SQLite), `check`, `scan` and `secret scan` also passed. I had no MySQL locally, so those two jobs are the MySQL evidence.
+
+How it got there:
+1. First run (merge only): `test-guard` produced no junit at all, because PHP fataled on the duplicate `DEFAULT_COUNTRY` constant (fix 2). Reproduced locally with `paratest`.
+2. Second run (after fix 2): **16 failures**, all from the combination, none from a PR alone. Each was fixed (section 4 and below). The same run showed `CountryDefaultTest` (12 tests) and `CountryDefaultServiceContractTest` (4 tests) pass; run on their own they report 12 and 4.
+3. Third run: green.
+
+Tests I changed on the integration branch, and the PR each belongs to (apply these to the PR branches; nothing was skipped or disabled):
+
+| Test | PR | Why it failed | Change |
+|---|---|---|---|
+| `Teacher/ClassTeacherDashboardStreamsTest` (3) | #1269 | read the old dashboard's KPI tiles; #1283 has none | read the board's "my classes" and "my students" counts; dropped the "Upcoming Exams" count |
+| `Teacher/DashboardTest::test_upcoming_exams_counts_open_exams_this_person_can_mark` | #1240 | the "Upcoming Exams" tile is gone | gives the teacher the class, asserts the board's `to_mark` is 1 |
+| `Teacher/TeacherDashboardKpiTilesTest` (first test) | #1265 | asserted the five tiles on the teacher home | asserts the page-8 board and its empty state |
+| `Parent/ParentAttendanceWeeksTest` (3) | #1277 | #1282's attendance shape (whole days need both sessions; weeks without a register are left out) | helper writes both sessions for a present day; asserts #1282's keys |
+| `Admin/ImportEntryPointTest` | #1250 | #1269 moved student import to `/admin/students/import` | asserts the new address and the `/admin/import` redirect |
+| `Admin/StudentImportFailureReportTest` | #1252 | the failures page is now the Import students page | reads `/admin/students/import` (with fix 8) |
+| `Admin/StudentListClassOrderAndFilterTest::test_report_cards_list_classes_by_level_then_stream` | #1269 | the old card list moved to `/admin/reports/cards/history` | URL only |
+| `Academics/BaseClassViewFixesTest::test_student_portal_...` | #1281 | #1282's dashboards link to Marks pages | subjects asserted on the Marks pages, attendance phrase on the dashboard |
+| `Marks/MarksFollowUpTest::test_release_page_shows_the_three_steps_and_the_audience` | #1272 | #1269 renamed the page to "Marks Release" | title text only |
+| `Exams/ExamSetServiceTest::test_a_class_teacher_only_...` | #1261/#1272 | redirect is now the set page | asserts the set page route |
+| `Admin/StudentProfileSchoolScopeTest`, `Admin/DashboardV2Test` | #1274, #1250/#1269 | resolved at merge time (section 3) | see section 3 |
+
+New tests added on the branch (all in `tests/Feature/Integration/`): `MarksReleaseTeacherLinksTest` (fails without fix 1, checked), `MarkWriterRequiresCorrectionTest`, `ImportStudentsPlanLimitTest`.
+
+Not green locally, green in CI: a full local run of the Admin, Academics, Reports, Onboarding and Auth directories had one failure that is not in CI (`Auth/SignupEmailVerificationTest::test_resend_supersedes_the_previous_code`, HTTP 429 from a rate limiter that carries state across a long sequential run; it passes alone, 11 of 11).
 
 ## 7. Migrations that will run, in order
 
