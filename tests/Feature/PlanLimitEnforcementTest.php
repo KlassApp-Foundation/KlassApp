@@ -7,6 +7,7 @@ use App\Livewire\Superadmin\Academics\SchoolDetail;
 use App\Models\CurrentPlan;
 use App\Models\Plan;
 use App\Models\School;
+use App\Models\TeacherInvite;
 use App\Models\User;
 use App\Services\OnboardingEngine;
 use App\Services\OnboardingStepsService;
@@ -425,7 +426,15 @@ class PlanLimitEnforcementTest extends TestCase
         $student = ToshiActionService::addStudent($this->admin, ['name' => 'Early Student']);
         $this->assertTrue($student['success'], (string) ($student['message'] ?? ''));
 
-        $this->assertSame(3, User::where('school_id', $this->schoolId)->where('usergroup_id', 5)->count());
+        // T-091 (#1262): Toshi's add-teacher invites by email and stores no user
+        // row until the teacher sets a password, so the invite is the proof the
+        // early-adopter plan did not block the add.
+        $this->assertSame(2, User::where('school_id', $this->schoolId)->where('usergroup_id', 5)->count());
+        $this->assertDatabaseHas('teacher_invites', [
+            'school_id' => $this->schoolId,
+            'email' => 'early.teacher@example.test',
+            'user_id' => null,
+        ]);
         $this->assertSame(3, User::where('school_id', $this->schoolId)->where('usergroup_id', 6)->count());
     }
 
