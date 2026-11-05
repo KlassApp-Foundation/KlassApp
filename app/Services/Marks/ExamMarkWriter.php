@@ -37,7 +37,7 @@ class ExamMarkWriter
             abort(403, 'Submitted student is not authorized for this school.');
         }
 
-        $this->assertNotLocked($exam);
+        $this->assertWritable($exam);
         $this->assertCorrectionReason($exam, $correctionReason);
 
         return Marks::updateOrCreate(
@@ -56,35 +56,58 @@ class ExamMarkWriter
         );
     }
 
-    private function assertNotLocked(Exam $exam): void
+    /**
+     * Submitted, approved, and locked marks stay closed. A return or a reopen
+     * is what opens them again. exams.status is not the workflow once a
+     * submission row exists; a legacy submitted exam with no open row is closed too.
+     */
+    public function writesAreRefused(Exam $exam): bool
     {
-        $submission = ExamMarksSubmission::query()
-            ->where('exam_id', $exam->id)
-            ->where('class_id', $exam->section_id)
-            ->where('subject_id', $exam->subject_id)
-            ->first();
+        $submission = $this->submission($exam);
 
+        if ($submission) {
+            if ($submission->isApproved() || $submission->isLocked() || $submission->status === 'submitted') {
+                return true;
+            }
+
+            if ($submission->status === 'reopened' || $submission->status === 'draft') {
+                return $submission->status === 'draft' && $exam->status === 'submitted';
+            }
+        }
+
+        return $exam->status === 'submitted';
+    }
+
+    public function assertWritable(Exam $exam): void
+    {
+        if (! $this->writesAreRefused($exam)) {
+            return;
+        }
+
+        $submission = $this->submission($exam);
         if ($submission && $submission->isLocked()) {
             $deadline = $submission->deadline
                 ? $submission->deadline->format('j M Y H:i')
                 : null;
             throw new MarksLockedException($deadline);
         }
+
+        throw new MarksLockedException(null, 'These marks are submitted or approved. A school admin has to return or reopen them before they can change.');
     }
 
-    public function requiresCorrection(Exam $exam): bool
+    private function submission(Exam $exam): ?ExamMarksSubmission
     {
-        if ($exam->status === 'submitted') {
-            return true;
-        }
-
         return ExamMarksSubmission::query()
             ->where('school_id', $exam->school_id)
             ->where('exam_id', $exam->id)
             ->where('class_id', $exam->section_id)
             ->where('subject_id', $exam->subject_id)
-            ->where('status', 'submitted')
-            ->exists();
+            ->first();
+    }
+
+    public function requiresCorrection(Exam $exam): bool
+    {
+        return false;
     }
 
     private function letter(Exam $exam, mixed $mark): string

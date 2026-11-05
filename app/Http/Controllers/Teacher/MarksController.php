@@ -108,6 +108,17 @@ public function teacherExamMarksList()
 
     $canCreateExams = $ctSectionIds !== [];
 
+    $submissionLabels = ExamMarksSubmission::query()
+        ->where('school_id', $schoolId)
+        ->whereIn('exam_id', $exams->pluck('id'))
+        ->get()
+        ->keyBy(fn (ExamMarksSubmission $row) => $row->exam_id.'|'.$row->class_id.'|'.$row->subject_id);
+
+    foreach ($exams as $exam) {
+        $row = $submissionLabels->get($exam->id.'|'.$exam->section_id.'|'.$exam->subject_id);
+        $exam->submission_label = $row ? $row->reviewLabel() : 'Not started';
+    }
+
     return view('teacher.marks.teacher-exam-list', compact('exams', 'examsByClass', 'assignedStdLinks', 'canCreateExams'));
 }
 
@@ -190,7 +201,10 @@ public function enterExamMarks(Exam $exam)
         'correctionReasonRequired' => $this->correctionReasonRequired($exam),
         'savedMarkCount' => $savedMarkCount,
         'savedMarks' => $savedMarks,
-        'canSubmit' => app(MarksSubmissionService::class)->hasWorkToSubmit($exam),
+        'canSubmit' => app(MarksSubmissionService::class)->hasWorkToSubmit($exam)
+            && ! app(ExamMarkWriter::class)->writesAreRefused($exam),
+        'returnNotice' => $this->returnNotice($exam, $teacher),
+        'submissionState' => $this->submissionStateLabel($exam),
     ]);
 }
 
@@ -254,6 +268,8 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
     }
 
     $this->examAuthorization->authorizeOrAbort($user, $exam);
+
+    app(ExamMarkWriter::class)->assertWritable($exam);
 
     $this->assertSubmittedStudentsBelongToSchool($request, $exam);
     $this->checkSubmissionLocked($exam);
@@ -347,12 +363,19 @@ public function viewExamMarks(Exam $exam)
         })
         ->get();
 
-    $submission = ExamMarksSubmission::where('exam_id', $exam->id)
+    $submission = ExamMarksSubmission::query()
+        ->where('school_id', $tr->school_id)
+        ->where('exam_id', $exam->id)
         ->where('class_id', $exam->section_id)
         ->where('subject_id', $exam->subject_id)
         ->first();
 
-    return view('teacher.marks.view', compact('marks', 'exam', 'submission'));
+    return view('teacher.marks.view', [
+        'marks' => $marks,
+        'exam' => $exam,
+        'submission' => $submission,
+        'returnNotice' => $tr instanceof User ? $this->returnNotice($exam, $tr) : null,
+    ]);
 }
 
 public function downloadMarksheet(Exam $exam, ExamMarksheetService $marksheets)
@@ -452,6 +475,8 @@ public function updateMark(Request $request, Exam $exam, User $student, GradingS
 
     $this->examAuthorization->authorizeOrAbort($teacher, $exam);
 
+    app(ExamMarkWriter::class)->assertWritable($exam);
+
     $schoolId = $teacher->school_id;
 
     if (
@@ -492,6 +517,47 @@ public function updateMark(Request $request, Exam $exam, User $student, GradingS
     return redirect()
         ->route('teacher.exam.marks')
         ->with('successmessage', ($student->displayName ?: $student->name) . "'s ". '  Marks updated!');
+}
+
+private function submissionStateLabel(Exam $exam): string
+{
+    $row = ExamMarksSubmission::query()
+        ->where('school_id', $exam->school_id)
+        ->where('exam_id', $exam->id)
+        ->where('class_id', $exam->section_id)
+        ->where('subject_id', $exam->subject_id)
+        ->first();
+
+    return $row ? $row->reviewLabel() : 'Not started';
+}
+
+/**
+ * A return reason is shown to the exam's teacher and to school admins.
+ */
+private function returnNotice(Exam $exam, User $viewer): ?string
+{
+    $row = ExamMarksSubmission::query()
+        ->where('school_id', $exam->school_id)
+        ->where('exam_id', $exam->id)
+        ->where('class_id', $exam->section_id)
+        ->where('subject_id', $exam->subject_id)
+        ->first();
+
+    if ($row === null || ! $row->isReturned()) {
+        return null;
+    }
+
+    $isExamTeacher = (int) $viewer->id === (int) $exam->teacher_id;
+    $isSchoolAdmin = in_array((int) $viewer->usergroup_id, [1, 2, 3], true)
+        && (int) $viewer->school_id === (int) $exam->school_id;
+
+    if (! $isExamTeacher && ! $isSchoolAdmin) {
+        return null;
+    }
+
+    $reason = trim((string) ($row->rejection_reason ?: $row->reopen_reason));
+
+    return $reason !== '' ? $reason : null;
 }
 
 private function markForInput(mixed $mark): string
@@ -569,7 +635,9 @@ private function requireCorrectionReason(Request $request, Exam $exam): ?string
 /** Was this exam's marks submission reopened by an admin? */
 private function wasReopened(Exam $exam): bool
 {
-    return ExamMarksSubmission::where('exam_id', $exam->id)
+    return ExamMarksSubmission::query()
+        ->where('school_id', $exam->school_id)
+        ->where('exam_id', $exam->id)
         ->where('class_id', $exam->section_id)
         ->where('subject_id', $exam->subject_id)
         ->where('status', 'reopened')
@@ -605,7 +673,9 @@ private function assertSubmittedStudentsBelongToSchool(Request $request, Exam $e
      */
     private function checkSubmissionLocked(Exam $exam): void
     {
-        $submission = ExamMarksSubmission::where('exam_id', $exam->id)
+        $submission = ExamMarksSubmission::query()
+            ->where('school_id', $exam->school_id)
+            ->where('exam_id', $exam->id)
             ->where('class_id', $exam->section_id)
             ->where('subject_id', $exam->subject_id)
             ->first();

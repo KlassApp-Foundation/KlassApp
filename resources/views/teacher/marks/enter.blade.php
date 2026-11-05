@@ -40,6 +40,16 @@
         </div>
     </div>
 
+    @if(!empty($submissionState))
+        <p class="mb-4 text-sm font-medium text-gray-800" data-testid="marks-entry-state">{{ $submissionState }}</p>
+    @endif
+
+    @if(!empty($returnNotice))
+        <div role="status" class="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-950" data-testid="marks-return-reason">
+            <strong>Returned.</strong> {{ $returnNotice }}
+        </div>
+    @endif
+
     @if(($savedMarkCount ?? 0) > 0)
         <div role="status" class="mb-4 rounded-lg border border-blue-300 bg-blue-50 p-4 text-blue-900" data-testid="saved-marks-note">
             <strong>{{ $savedMarkCount }}</strong> {{ \Illuminate\Support\Str::plural('mark', $savedMarkCount) }} already saved.

@@ -709,6 +709,13 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - **Tests:** the class-teacher files on PHP 8.4.27, sqlite memory: 56 tests, 310 assertions, 0 failures. Full `scripts/test-guard.sh` was not run.
 - **Status:** OPEN [#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239), branch `cursor/marks-phase-1-class-teacher-v2`, base `docs/marks-n8n-blueprint`. Not merged. No deploy. No production data.
 
+## Current Status: October 26, 2026 — **Marks Phase 3 submission state machine OPEN (stacked on [#1240](https://github.com/KlassApp-Foundation/KlassApp/pull/1240))**
+
+- `MarksSubmissionService` owns submit, approve, return with a required reason, lock, and reopen for one class, subject, and sitting. `ExamMarkWriter` refuses submitted, approved, and locked marks until a return or a reopen. Approval is the state a later release reads. The release override stays until Phase 6. Notices are the in-app bell. Flow: `docs/product/marks-flow.md` Phase 3.
+- **Tests:** `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh` — 3211 tests, 0 failures, 0 errors, 9 skipped. Guard OK. Six new tests in `tests/Feature/Marks/MarksPhase3SubmissionTest.php`.
+- Return is stored as reopened plus rejected. The screen says Returned. The admin marks grid still filters `exams.status = submitted` (Phase 4). An in-place promotion can still leave the old class grid empty.
+- **Status:** OPEN [#1241](https://github.com/KlassApp-Foundation/KlassApp/pull/1241), branch `cursor/marks-phase-3-submission`, base `cursor/marks-phase-2-entry-writer` ([#1240](https://github.com/KlassApp-Foundation/KlassApp/pull/1240)). Not merged. No deploy. No production access.
+
 ## Current Status: October 26, 2026 — **Marks Phase 2 entry form and ExamMarkWriter OPEN (stacked on [#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239))**
 
 - The entry form shows marks already saved and stays on the page after save. Submit for review is absent until a numeric mark or a nursery rating exists. Spreadsheet import (teacher and admin) and Toshi, including a class teacher, write through `ExamMarkWriter`. Upcoming Exams counts the open exams this person can mark. Nursery ratings stay on the ratings form. Flow: `docs/product/marks-flow.md` Phase 2.
@@ -3242,6 +3249,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Decision**: New class names are the canonical levels (nursery, P.1–P.7, S.1–S.6), the type preset, and names the school already uses. Arbitrary text is still rejected. A school-wide invite cap still applies inside that school; a different invite is isolated by the per-invite cap, and a different school is isolated by both.
 - **Status**: OPEN [#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239) (`cursor/marks-phase-1-class-teacher-v2`). Not merged. Production untouched. Stacked PRs #1240–#1244 and #1255 need this commit merged up. No force-push.
 - **Evidence**: With the cross-school guard removed, `test_approval_of_another_schools_email_issues_nothing_and_does_not_error` failed at the session assertion (line 578). Restored, that test passed (14 assertions). `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh`: 3207 tests, 0 failures, 0 errors, 9 skipped. Guard OK.
+
+### 2026-10-26: Marks Phase 3 submission state machine
+
+- **Work done**: `MarksSubmissionService` is the one path for submit (refuses empty), approve, return with a required reason, lock, and reopen. Each transition is school-scoped and logged with the actor and the time. `ExamMarkWriter` refuses submitted, approved, and locked marks. Lock, Return, and Approve each post their own form. The view says the submission state. The queue and both exam lists read the submission row. Notices use the in-app bell.
+- **Files touched**: `app/Services/Marks/MarksSubmissionService.php`, `app/Services/Marks/ExamMarkWriter.php`, `app/Notifications/MarksSubmissionNotification.php`, `app/Http/Controllers/Admin/ExamMarksSubmissionController.php`, `app/Http/Controllers/Teacher/MarksController.php`, `resources/views/admin/marks/submission-detail.blade.php`, `docs/product/marks-flow.md`, `tests/Feature/Marks/MarksPhase3SubmissionTest.php`, `knowledge.md`.
+- **Decision**: Return is stored as reopened plus rejected because the status values already exist. The screen says Returned. The release admin override stays until Phase 6.
+- **Status**: OPEN [#1241](https://github.com/KlassApp-Foundation/KlassApp/pull/1241) (`cursor/marks-phase-3-submission`). Not merged. No deploy. No production access.
+- **Evidence**: `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh` — 3211 tests, 0 failures, 0 errors, 9 skipped. Guard OK. Local gitleaks on the Phase 3 range found no leaks. Secret scan and MySQL 8.4 migrations are the checks on this stacked pull request. test-guard and the root check only run on pull requests into `main`.
 
 ### 2026-10-21: Mask phone numbers in WhatsApp logs; fix doActivityLog call
 

@@ -34,7 +34,7 @@ class EnterMarkTool implements Tool, VerifiableTool
             'disambiguation_confirmed' => $schema->boolean()->optional()->description('Set to true ONLY when the ambiguous-match candidate list was shown to the user AND they replied with a specific ID from that list. Never set this without showing the candidates first.'),
             'subject_name' => $schema->string()->description('Subject name, e.g. "Mathematics" or "English"'),
             'marks' => $schema->number()->min(0)->max(100)->description('Score 0-100'),
-            'correction_reason' => $schema->string()->description('Required when this exam was already submitted. At least 10 characters.')->optional(),
+            'correction_reason' => $schema->string()->description('Optional note. A submitted, approved, or locked subject stays closed until a school admin returns or reopens it.')->optional(),
         ];
     }
 
