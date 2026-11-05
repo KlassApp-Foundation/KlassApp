@@ -132,13 +132,27 @@
                             "url": "admin/exams",
                             "children": [
                                 {
+                                    "label": "Exam sets",
+                                    "url": "admin/exams/sets",
+                                    "paths": [
+                                        "admin/exams/sets",
+                                        "admin/exams/sets/*"
+                                    ]
+                                },
+                                {
                                     "label": "Exams and marks",
                                     "url": "admin/marks",
                                     "paths": [
-                                        "admin/exams*",
-                                        "admin/exam*",
                                         "admin/marks*",
-                                        "admin/mark*"
+                                        "admin/mark*",
+                                        "admin/exams",
+                                        "admin/exams/add-new",
+                                        "admin/exams/store",
+                                        "admin/exams/*/edit",
+                                        "admin/exams/*/update",
+                                        "admin/exams/*/marksheet",
+                                        "admin/exams/*/marks*",
+                                        "admin/exams/*/archive"
                                     ]
                                 },
                                 {
@@ -810,3 +824,4 @@
         }
     }
 }
+

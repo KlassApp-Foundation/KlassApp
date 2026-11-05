@@ -1,88 +1,92 @@
 @extends('layouts.teacher.layout')
 
 @section('content')
+@include('partials.ka-screen')
 <div class="dashboard-shell dashboard-shell--teacher px-4 md:px-6 py-4">
-    @include('layouts.partials.page-header', [
-        'title' => 'My Exams',
-        'subtitle' => 'Track exams assigned to you, open marks entry, and review class results.',
-    ])
-
-    <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
-        @include('partials.message')
+<main class="ka-main">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;align-items:flex-start">
+        <div>
+            <h1 class="ka-h1">Your exams to mark</h1>
+            @php
+                $firstTerm = $exams->first()?->academicTerm;
+            @endphp
+            <p class="ka-sub">@if($firstTerm){{ $firstTerm->name }} · @endif The exams assigned to you, by class and subject.</p>
+        </div>
+        @include('marks-releases._button', ['area' => 'teacher', 'class' => 'ds-btn ds-btn-outline', 'style' => 'white-space:nowrap;min-height:44px'])
     </div>
 
-    <div class="ds-card ds-card-padding-default mt-6">
-        <div class="flex items-center justify-between gap-3 border-b border-gray-200 pb-4 mb-5">
-            <div>
-                <h2 class="text-lg font-semibold" style="font-family: Sora, sans-serif; color: var(--d-text);">Exams to Mark</h2>
-            </div>
-            @include('marks-releases._button', ['area' => 'teacher', 'class' => 'ds-btn ds-btn-outline', 'style' => 'white-space:nowrap;min-height:44px'])
+    @include('partials.message')
+
+    @if($exams->isEmpty())
+        <div class="ka-empty" data-testid="teacher-marks-empty">
+            <h2 class="ka-h2">No exams waiting for your marks</h2>
+            <p class="ka-sub">No exams yet: create this term's exam set. When the school sets this term's exams, yours appear here by class and subject.</p>
+            @if($canCreateExams)
+                <a href="{{ route('teacher.exam-sets.create') }}" class="ds-btn ds-btn-primary" style="min-height:44px" data-testid="teacher-exam-set-link">Create this term's exam set</a>
+            @endif
         </div>
-
-        @if($exams->isEmpty())
-            <div class="text-center py-12">
-                <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M7 3h7l5 5v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg>
-                <p class="text-sm" style="color: var(--d-muted);" data-testid="teacher-marks-empty">No exams yet: create this term's exam set.</p>
-                @if($canCreateExams)
-                    <a href="{{ route('teacher.exam-sets.create') }}" class="ds-btn ds-btn-primary ds-btn-sm mt-4 inline-flex" data-testid="teacher-exam-set-link">Create this term's exam set</a>
-                @endif
-            </div>
-        @else
-            <div class="space-y-6">
-                @foreach($examsByClass as $sectionId => $classExams)
-                    @php $stdLink = $assignedStdLinks->get($sectionId); $className = $classExams->first()->section->name ?? ('Class #' . $sectionId); @endphp
-                    <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
-                        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-                            <h3 class="text-base font-semibold" style="color: var(--d-text);">{{ $className }}</h3>
-                            @if ($stdLink)
-                                <a href="{{ route('teacher.marks.sheet', ['class' => $stdLink->section_id, 'stream' => $stdLink->id, 'term' => $classExams->first()->academic_term_id]) }}" class="ds-btn ds-btn-warning ds-btn-sm inline-flex items-center gap-2" data-testid="combined-sheet-link">
-                                    Combined Marksheet
-                                </a>
-                            @endif
-                        </div>
-
-                        <div class="space-y-4">
-                            @foreach($classExams as $exam)
-                                @php $termPosition = $exam->academicTerm?->positionLabel() ?? '-'; @endphp
-                                <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                                    <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-                                        <div class="min-w-0">
-                                            <div class="mb-2 flex items-center gap-2 flex-wrap">
-                                                <span class="ds-badge ds-badge-sm ds-badge-info">{{ $exam->subject->name ?? 'Exam' }}</span>
-                                                <span class="ds-badge ds-badge-sm ds-badge-warning" data-testid="exam-submission-state">{{ $exam->submission_label ?? 'Not started' }}</span>
-                                            </div>
-
-                                            <div class="flex flex-wrap items-center gap-3 text-xs" style="color: var(--d-muted);">
-                                                <span>{{ $exam->section->name ?? '-' }}</span>
-                                                <span>•</span>
-                                                <span>{{ $exam->examType->name ?? '-' }}</span>
-                                                <span>•</span>
-                                                <span>{{ $termPosition }}</span>
-                                            </div>
-                                        </div>
-
-                                        <div class="flex flex-wrap items-center gap-2">
-                                            <a href="{{ route('teacher.exam.marks.enter', $exam) }}" class="ds-btn ds-btn-primary ds-btn-sm">
-                                                Enter / Edit Marks
-                                            </a>
-                                            <a href="{{ route('teacher.exam.marks.view', $exam) }}" class="ds-btn ds-btn-outline ds-btn-sm">
-                                                View Marks
-                                            </a>
-                                            <a href="{{ route('teacher.exam.marksheet', $exam) }}" class="ds-btn ds-btn-outline ds-btn-sm">
-                                                Marksheet
-                                            </a>
-                                            <a href="{{ route('teacher.exam.marks.import.page', $exam) }}" class="ds-btn ds-btn-outline ds-btn-sm" data-testid="marks-import-button">
-                                                Import from spreadsheet
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
+    @else
+        <div id="to-mark-filters" data-ka-filters>
+            <button type="button" class="ka-filter-launch ds-btn ds-btn-outline" data-ka-open-filters="to-mark-filters">Filters</button>
+            <div class="ka-filter-backdrop" data-ka-close-filters></div>
+            <div class="ka-filter-panel" role="group" aria-label="Status">
+                <h2 class="ka-h2 ka-filter-launch">Filters</h2>
+                @foreach(['All', 'Not started', 'In progress', 'Submitted', 'Returned', 'Approved'] as $status)
+                    <a class="ka-chip {{ request('status', 'All') === $status ? 'is-on' : '' }}" href="{{ request()->fullUrlWithQuery(['status' => $status === 'All' ? null : $status]) }}">{{ $status }}</a>
                 @endforeach
             </div>
-        @endif
-    </div>
+        </div>
+        @foreach($examsByClass as $sectionId => $classExams)
+            @php
+                $stdLink = $assignedStdLinks->get($sectionId);
+                $className = $classExams->first()->section->name ?? ('Class #' . $sectionId);
+                $visible = $classExams->filter(function ($exam) {
+                    $status = request('status');
+                    if (! $status || $status === 'All') return true;
+                    $label = (string) ($exam->submission_label ?? 'Not started');
+                    $shown = $label === 'Not started' && (int) ($exam->marks_entered ?? 0) > 0 ? 'In progress' : $label;
+                    return $shown === $status;
+                });
+            @endphp
+            @if($visible->isNotEmpty())
+            <section style="display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+                    <h2 class="ka-h2">{{ $className }}</h2>
+                    @if ($stdLink)
+                        <a href="{{ route('teacher.marks.sheet', ['class' => $stdLink->section_id, 'stream' => $stdLink->id, 'term' => $classExams->first()->academic_term_id]) }}" class="ds-btn ds-btn-outline" style="min-height:44px" data-testid="combined-sheet-link">My class</a>
+                    @endif
+                </div>
+                <div class="ka-card">
+                    @foreach($visible as $exam)
+                        @php
+                            $label = (string) ($exam->submission_label ?? 'Not started');
+                            $action = match ($label) {
+                                'Returned' => 'Fix and resubmit',
+                                'Submitted', 'Approved', 'Locked' => 'View marks',
+                                default => ((int) ($exam->marks_entered ?? 0) > 0 ? 'Continue' : 'Enter marks'),
+                            };
+                            $pill = match ($label) {
+                                'Approved' => 'ka-pill ka-pill-green',
+                                'Submitted', 'Locked' => 'ka-pill ka-pill-amber',
+                                'Returned' => 'ka-pill ka-pill-red',
+                                default => ((int) ($exam->marks_entered ?? 0) > 0 ? 'ka-pill ka-pill-blue' : 'ka-pill ka-pill-muted'),
+                            };
+                        @endphp
+                        <div class="ka-row">
+                            <div style="flex:2 1 220px">
+                                <div style="font-weight:700">{{ $exam->subject->name ?? 'Exam' }} · {{ $exam->examType->name ?? 'Exam' }}</div>
+                                <div style="font-size:.8rem;color:#64748B">{{ $exam->section->name ?? 'Class' }} · {{ (int) ($exam->marks_entered ?? 0) }} marks entered</div>
+                            </div>
+                            <span class="{{ $pill }}" data-testid="exam-submission-state">{{ $label === 'Not started' && (int) ($exam->marks_entered ?? 0) > 0 ? 'In progress' : $label }}</span>
+                            <a href="{{ route('teacher.exam.marks.enter', $exam) }}" class="ds-btn ds-btn-primary" style="min-height:44px;min-width:150px">{{ $action }}</a>
+                            <a href="{{ route('teacher.exam.marks.import.page', $exam) }}" class="ds-btn ds-btn-outline" style="min-height:44px" data-testid="marks-import-button">Paste or upload marks</a>
+                        </div>
+                    @endforeach
+                </div>
+            </section>
+            @endif
+        @endforeach
+    @endif
+</main>
 </div>
 @endsection

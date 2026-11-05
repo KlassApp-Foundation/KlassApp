@@ -238,6 +238,10 @@ class MarksReleaseController extends Controller
             'pastSitting' => $pastSitting,
             'needsReason' => $examId > 0 && $known && $this->needsReason($user, $examId, $targets),
             'previewMessage' => $previewMessage,
+            'audience' => ($examId && $known)
+                ? $this->releases->audienceSummary($user, $examId, $targets)
+                : ['classes' => [], 'parents' => 0, 'whatsapp' => 0],
+            'subjectsApproved' => $approvals !== [] && collect($approvals)->every(fn (array $row) => $row['state'] === 'approved'),
             'wide' => count($sheet['subjects']) > 6,
             'buttonLabel' => $verb . ' ' . $who . ' (' . $count . ' ' . $noun . ')',
             'releaseTo' => $who . ' (' . $count . ' ' . $noun . ')',

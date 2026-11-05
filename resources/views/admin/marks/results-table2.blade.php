@@ -1,4 +1,4 @@
-<div class="ds-table-wrap">
+<div class="ds-table-wrap ka-sheet-table">
     <table class="ds-grid-marks" data-testid="ds-grid-marks">
         <thead>
             <tr>
@@ -28,7 +28,9 @@
                     @foreach ($subjects as $subject)
                         @php $cell = $student->cell((int) $subject['id']); @endphp
                         <td data-testid="marks-cell">
-                            @if($cell && $cell->status === \App\Services\Results\ResultCell::MARKED && $cell->mark !== null)
+                            @if($cell && $cell->status === \App\Services\Results\ResultCell::ABSENT)
+                                <span data-testid="marks-cell-absent">AB</span>
+                            @elseif($cell && $cell->status === \App\Services\Results\ResultCell::MARKED && $cell->mark !== null)
                                 {{ rtrim(rtrim(number_format($cell->mark, 2, '.', ''), '0'), '.') }}
                                 @if($cell->grade)
                                     <span data-testid="marks-cell-grade">{{ $cell->grade }}</span>
@@ -53,4 +55,14 @@
             @endforeach
         </tbody>
     </table>
+</div>
+<div class="ka-phone-cards" data-testid="marks-phone-cards">
+    @foreach ($students as $student)
+        <article class="ka-card ka-card-pad" data-testid="marks-phone-card" style="display:flex;flex-direction:column;gap:4px">
+            <strong>{{ $student->name }}</strong>
+            <span>{{ $student->stream !== '' ? $student->stream : '—' }}</span>
+            <span>Total {{ $student->displayTotal ?? '—' }}</span>
+            <span data-testid="marks-phone-position">{{ $student->placeLabel($streamFiltered) }}</span>
+        </article>
+    @endforeach
 </div>

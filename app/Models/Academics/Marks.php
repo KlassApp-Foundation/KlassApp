@@ -14,8 +14,17 @@ class Marks extends Model
 {
     use HasFactory;
     protected $fillable=[
-        "student_id", "subject_id", "section_id", "exam_id", "teacher_id", "school_id", "marks", "grade"
+        "student_id", "subject_id", "section_id", "exam_id", "teacher_id", "school_id", "marks", "grade", "absent"
     ];
+
+    protected $casts = [
+        'absent' => 'boolean',
+    ];
+
+    public function isAbsent(): bool
+    {
+        return (bool) $this->absent || strcasecmp(trim((string) $this->grade), 'AB') === 0;
+    }
     public function student(){
         return $this->belongsTo(User::class, "student_id");
     }

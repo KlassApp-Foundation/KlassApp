@@ -270,9 +270,10 @@ final class ResultsService
             if ($exam === null || $exam->exam_type_id === null) {
                 continue;
             }
+            $absent = (bool) ($mark->absent ?? false) || strcasecmp(trim((string) $mark->grade), 'AB') === 0;
             $candidate = [
-                'mark' => (float) $mark->marks,
-                'grade' => trim((string) $mark->grade),
+                'mark' => ($absent || $mark->marks === null) ? null : (float) $mark->marks,
+                'grade' => $absent ? 'AB' : trim((string) $mark->grade),
                 'scheduled' => $exam->scheduled_at?->getTimestamp() ?? 0,
                 'examId' => (int) $exam->id,
             ];
@@ -667,6 +668,10 @@ final class ResultsService
             $label = $choice['grade'] === '' ? null : $choice['grade'];
 
             return new ResultCell($subjectId, null, $label, null, ResultCell::ABSENT);
+        }
+
+        if ($choice['mark'] === null) {
+            return new ResultCell($subjectId, null, null, null, ResultCell::MISSING);
         }
 
         $mark = $choice['mark'];

@@ -1,10 +1,16 @@
 @extends('layouts.teacher.layout')
 
 @section('content')
+@include('partials.ka-screen')
 <div class="container-fluid w-full py-3 lg:mx-2">
+<main class="ka-main">
 
       {{-- Flash Success Message --}}
-   @include('partials.message')
+    @include('partials.message')
+    @if($errors->any())
+        <div class="ka-alert ka-alert-error" role="alert" data-testid="marks-submit-error">{{ $errors->first() }}</div>
+    @endif
+    <p class="ka-sub">Type AB when a student was absent. Marks are out of 100.</p>
     <!-- Page Header -->
 
 
@@ -57,7 +63,30 @@
         </div>
     @endif
 
-    <form action="{{ route('teacher.exam.marks.save', $exam)  }}" method="POST">
+    @php
+        $life = 'saved';
+        $stateText = strtolower((string) ($submissionState ?? ''));
+        if (str_contains($stateText, 'approv')) { $life = 'approved'; }
+        elseif (str_contains($stateText, 'submit') || str_contains($stateText, 'return')) { $life = 'submitted'; }
+    @endphp
+    @include('partials.ka-lifecycle', ['current' => $life])
+
+    @if(($showStreamColumn ?? false) && count($entryStreams ?? []) > 0)
+        <div id="entry-stream-filters" data-ka-filters data-testid="marks-entry-stream-filter">
+            <button type="button" class="ka-filter-launch ds-btn ds-btn-outline" data-ka-open-filters="entry-stream-filters">Filters</button>
+            <div class="ka-filter-backdrop" data-ka-close-filters></div>
+            <div class="ka-filter-panel" role="radiogroup" aria-label="Stream">
+                <h2 class="ka-h2 ka-filter-launch">Filters</h2>
+                <span style="font-size:.85rem;font-weight:600" class="ka-filter-launch">Stream</span>
+                <a class="ka-chip {{ empty($selectedStreamId) ? 'is-on' : '' }}" href="{{ route('teacher.exam.marks.enter', $exam) }}" role="radio" aria-checked="{{ empty($selectedStreamId) ? 'true' : 'false' }}">All streams</a>
+                @foreach($entryStreams as $stream)
+                    <a class="ka-chip {{ (int) ($selectedStreamId ?? 0) === (int) $stream['id'] ? 'is-on' : '' }}" href="{{ route('teacher.exam.marks.enter', ['exam' => $exam, 'stream' => $stream['id']]) }}" role="radio" aria-checked="{{ (int) ($selectedStreamId ?? 0) === (int) $stream['id'] ? 'true' : 'false' }}">{{ $stream['label'] }}</a>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
+    <form id="marks-save-form" action="{{ route('teacher.exam.marks.save', $exam)  }}" method="POST">
         @csrf
 
         <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-200 dark:border-gray-700">
@@ -81,6 +110,9 @@
                     <thead>
                         <tr class="text-left uppercase font-semibold text-gray-700 dark:text-gray-300">
                             <th class="py-3 px-2">Student</th>
+                            @if($showStreamColumn ?? false)
+                                <th class="py-3 px-2">Stream</th>
+                            @endif
                             @foreach($domains as $domain)
                                 <th class="py-3 px-2">{{ $domain }}</th>
                             @endforeach
@@ -93,6 +125,9 @@
                                 <span>{{ $student->userprofile->firstname }}</span>
                                 <span>{{ $student->userprofile->lastname }}</span>
                             </td>
+                            @if($showStreamColumn ?? false)
+                                <td class="py-3 px-2" data-testid="mark-stream-{{ $student->id }}">{{ $student->stream_label }}</td>
+                            @endif
                             @foreach($domains as $domain)
                                 @php
                                     $existing = $existingAssessments->get($student->id)?->get($domain);
@@ -122,6 +157,9 @@
                     <thead>
                         <tr class="text-left uppercase font-semibold text-gray-700 dark:text-gray-300">
                             <th class="py-3">Student</th>
+                            @if($showStreamColumn ?? false)
+                                <th class="py-3">Stream</th>
+                            @endif
                             <th class="py-3">Marks</th>
                             <th class="py-3">Out Of</th>
                         </tr>
@@ -131,20 +169,29 @@
                         @foreach($allStudents as $student)
 
                         <tr>
-                            <td class="py-3 text-gray-900 dark:text-white flex items-center gap-2">
+                            <td class="py-3 text-gray-900 dark:text-white flex items-center gap-2" data-testid="mark-student-{{ $student->id }}">
                                 <span>{{ $student->userprofile->firstname }}</span>
                                 <span>{{ $student->userprofile->lastname }}</span>
                             </td>
+                            @if($showStreamColumn ?? false)
+                                <td class="py-3" data-testid="mark-stream-{{ $student->id }}">{{ $student->stream_label }}</td>
+                            @endif
 
                             <td>
-                                <input type="number"
+                                @php
+                                    $enteredMark = old('marks.'.$student->id, $savedMarks[$student->id] ?? '');
+                                    $aboveMaximum = is_numeric($enteredMark) && (float) $enteredMark > 100;
+                                @endphp
+                                <input type="text"
                                        name="marks[{{ $student->id }}]"
-                                       class="tw-form-control w-24"
-                                       min="0"
-                                       max="100"
-                                       step="0.01"
-                                       value="{{ old('marks.'.$student->id, $savedMarks[$student->id] ?? '') }}"
+                                       class="tw-form-control w-24 ka-mark"
+                                       inputmode="decimal"
+                                       value="{{ $enteredMark }}"
+                                       aria-invalid="{{ $aboveMaximum ? 'true' : 'false' }}"
                                        data-testid="mark-input-{{ $student->id }}">
+                                @if($aboveMaximum)
+                                    <div style="font-size:.72rem;color:#B91C1C;font-weight:700;margin-top:3px" data-testid="mark-above-maximum-{{ $student->id }}">Above 100. Check the mark.</div>
+                                @endif
                             </td>
 
                             <td>
@@ -164,7 +211,7 @@
             </div>
 
             <!-- Submit -->
-            <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end">
+            <div class="ka-sticky">
 
                 @if($correctionReasonRequired ?? false)
                 <div class="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
@@ -178,9 +225,8 @@
                 </div>
                 @endif
 
-                <button type="submit"
-                        class="py-2 px-5 rounded text-white bg-green-500 hover:bg-green-600">
-                    {{ $isNursery ? 'Save Assessments' : 'Save Marks' }}
+                <button type="submit" class="ds-btn ds-btn-outline" style="min-height:48px">
+                    {{ $isNursery ? 'Save Assessments' : 'Save draft' }}
                 </button>
 
             </div>
@@ -189,5 +235,6 @@
 
     </form>
 
+</main>
 </div>
 @endsection

@@ -1,18 +1,25 @@
 @extends($layout)
 
 @section('content')
+@include('partials.ka-screen')
 <div class="dashboard-shell px-4 md:px-6 py-4" data-testid="exam-set-create">
     @include('partials.message')
-
-    <div class="ds-page-head">
-        <div>
-            <h1 class="ds-page-head-title">Create this term's exam set</h1>
-            <p class="ds-page-head-sub">
-                One action creates an exam for every subject in the classes you pick. Exams that already exist are skipped,
-                so it is safe to run again after adding a subject.
-            </p>
-        </div>
+    <main class="ka-main">
+    <nav class="ka-crumb" aria-label="Breadcrumb">
+        <a href="{{ $isTeacher ? route('teacher.exam-sets.index') : route('admin.exam-sets.index') }}">Exam sets</a><span aria-hidden="true">/</span><span>New set</span>
+    </nav>
+    <div>
+        <h1 class="ka-h1">New exam set</h1>
+        <p class="ka-sub">Create this term's exam set. One set creates every exam for the term, class by class. Teachers then enter marks under Marks.</p>
     </div>
+    @if($errors->any())
+        <div class="ka-alert ka-alert-error" role="alert" data-testid="exam-set-error">
+            <div>
+                <strong>The exams weren't created</strong>
+                <p style="margin:4px 0 0">{{ $errors->first() }} Nothing partial was kept from this attempt, so trying again won't make duplicates of exams that already exist.</p>
+            </div>
+        </div>
+    @endif
 
     @if($terms->isEmpty())
         <div class="ds-card ds-card-padding-default mt-6" data-testid="exam-set-no-terms">
@@ -114,8 +121,19 @@
                 @error('standard_ids') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
             </fieldset>
 
-            <button type="submit" class="ds-btn ds-btn-primary" data-testid="exam-set-submit">Create exam set</button>
+            <button type="submit" class="ds-btn ds-btn-primary" data-testid="exam-set-submit" style="min-height:44px">Create exam set</button>
+            <div id="exam-set-creating" hidden data-testid="exam-set-creating" aria-busy="true">
+                <div class="ka-sk on" style="height:26px;width:55%"></div>
+                <p class="ka-sub">Creating this term's exams… this takes a few seconds. You can leave this page.</p>
+            </div>
         </form>
+        <script>
+        document.querySelector('[data-testid="exam-set-form"]')?.addEventListener('submit', function () {
+            var node = document.getElementById('exam-set-creating');
+            if (node) node.hidden = false;
+        });
+        </script>
     @endif
+    </main>
 </div>
 @endsection

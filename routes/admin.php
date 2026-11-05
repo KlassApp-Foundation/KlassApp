@@ -913,8 +913,11 @@ Route::delete('/exams/{examId}/archive', 'ExamController@archive')->name('admin.
 
 
 // Exam sets — one action creates a term's exams for every class and subject.
+Route::get('/exams/sets', [\App\Http\Controllers\Admin\ExamSetController::class, 'index'])->name('admin.exam-sets.index');
 Route::get('/exams/sets/create', [\App\Http\Controllers\Admin\ExamSetController::class, 'create'])->name('admin.exam-sets.create');
 Route::post('/exams/sets', [\App\Http\Controllers\Admin\ExamSetController::class, 'store'])->name('admin.exam-sets.store');
+Route::get('/exams/sets/{batch}', [\App\Http\Controllers\Admin\ExamSetController::class, 'show'])->whereNumber('batch')->name('admin.exam-sets.show');
+Route::delete('/exams/sets/{batch}/exams/{exam}', [\App\Http\Controllers\Admin\ExamSetController::class, 'destroyExam'])->whereNumber('batch')->whereNumber('exam')->name('admin.exam-sets.exams.destroy');
 
 Route::get('/marks', 'MarksController@classExamOverview')->name('admin.marks');
 Route::get('/marks/filter', 'MarksController@classExamOverview')->name('admin.marks.filter');
@@ -935,6 +938,7 @@ Route::get('/marks/submissions', 'ExamMarksSubmissionController@index')->name('a
 Route::get('/marks/submissions/{exam}', 'ExamMarksSubmissionController@show')->name('admin.marks.submissions.show');
 Route::post('/marks/submissions/{exam}/lock', 'ExamMarksSubmissionController@lock')->name('admin.marks.submissions.lock');
 Route::post('/marks/submissions/{exam}/reopen', 'ExamMarksSubmissionController@reopen')->name('admin.marks.submissions.reopen');
+Route::post('/marks/submissions/approve-selected', [\App\Http\Controllers\Admin\ExamMarksSubmissionController::class, 'approveSelected'])->name('admin.marks.submissions.approve-selected');
 Route::post('/marks/submissions/{exam}/approve', 'ExamMarksSubmissionController@approve')->name('admin.marks.submissions.approve');
 Route::post('/marks/submissions/{exam}/reject', 'ExamMarksSubmissionController@reject')->name('admin.marks.submissions.reject');
 

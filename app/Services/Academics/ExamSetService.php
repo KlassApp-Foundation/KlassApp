@@ -3,6 +3,7 @@
 namespace App\Services\Academics;
 
 use App\Models\Academics\Exam;
+use App\Models\Academics\ExamSet;
 use App\Models\AcademicTerm;
 use App\Models\School;
 use App\Models\Subject;
@@ -20,7 +21,7 @@ class ExamSetService
     /**
      * @param  list<int>  $typeIds
      * @param  list<int>|null  $standardIds  classes; null = the whole school
-     * @return array{created:int, skipped:int, sections:int, subjects:int}
+     * @return array{created:int, skipped:int, sections:int, subjects:int, set_id:int}
      */
     public function create(School $school, AcademicTerm $term, array $typeIds, ?array $standardIds, User $actor): array
     {
@@ -31,8 +32,17 @@ class ExamSetService
 
         $created = 0;
         $skipped = 0;
+        $setId = 0;
 
-        DB::transaction(function () use ($school, $term, $typeIds, $subjects, $actor, &$created, &$skipped) {
+        DB::transaction(function () use ($school, $term, $typeIds, $subjects, $actor, &$created, &$skipped, &$setId) {
+            $set = ExamSet::create([
+                'school_id' => $school->id,
+                'academic_year_id' => $term->academic_year_id,
+                'academic_term_id' => $term->id,
+                'created_by' => $actor->id,
+            ]);
+            $setId = (int) $set->id;
+
             foreach ($subjects as $subject) {
                 $teacherId = $this->teacherFor($school, $term, $subject) ?? (int) $actor->id;
 
@@ -60,6 +70,7 @@ class ExamSetService
                         'subject_id' => $subject->id,
                         'teacher_id' => $teacherId,
                         'exam_type_id' => $typeId,
+                        'exam_set_id' => $set->id,
                         'status' => 'undone',
                     ]);
 
@@ -73,6 +84,7 @@ class ExamSetService
             'skipped' => $skipped,
             'sections' => $subjects->pluck('section_id')->unique()->count(),
             'subjects' => $subjects->count(),
+            'set_id' => $setId,
         ];
     }
 

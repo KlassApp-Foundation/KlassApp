@@ -46,9 +46,11 @@ class SittingSheetExport implements FromArray, WithHeadings, WithTitle
             $row = [$student->name, $student->stream];
             foreach ($this->sheet->subjects as $subject) {
                 $cell = $student->cell((int) $subject['id']);
-                $row[] = ($cell !== null && $cell->status === ResultCell::MARKED && $cell->mark !== null)
-                    ? $cell->mark
-                    : '';
+                $row[] = ($cell !== null && $cell->status === ResultCell::ABSENT)
+                    ? 'AB'
+                    : (($cell !== null && $cell->status === ResultCell::MARKED && $cell->mark !== null)
+                        ? $cell->mark
+                        : '');
             }
             $row[] = $student->displayTotal;
             $row[] = $student->displayAverage;

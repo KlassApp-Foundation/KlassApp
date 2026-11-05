@@ -13,16 +13,42 @@
     $selectedClass = (string) ($old['class'] ?? '');
     $selectedStream = (string) ($old['stream'] ?? '');
 @endphp
+@include('partials.ka-screen')
 <div class="mr" data-testid="marks-release-create">
+    @if(($area ?? '') === 'admin')
+        <h1 class="ka-h1">Marks</h1>
+        @include('partials.ka-marks-nav', ['marksNav' => 'release'])
+        @include('partials.ka-lifecycle', ['current' => 'approved'])
+    @endif
     <h1>Marks Release</h1>
     <p class="mr-sub">Choose the exam and who receives it. The sheet shows the marks that will be sent.</p>
+    @if(!empty($exams) && $exams->isNotEmpty())
+        <ol class="ka-life" data-testid="release-steps" aria-label="Release steps">
+            <li class="{{ ($subjectsApproved ?? false) ? 'is-done' : 'is-now' }}"><span>1</span><span><strong>All subjects approved</strong><br><span style="font-size:.75rem;color:#475569">{{ collect($approvals ?? [])->where('state', 'approved')->count() }} of {{ count($approvals ?? []) }} approved</span></span></li>
+            <li class="{{ ($confirming ?? false) ? 'is-now' : '' }}"><span>2</span><span><strong>Preview</strong><br><span style="font-size:.75rem;color:#475569">Check the sheet and the message</span></span></li>
+            <li><span>3</span><span><strong>Release</strong><br><span style="font-size:.75rem;color:#475569">Families are told only from this step</span></span></li>
+        </ol>
+        <aside class="ka-card ka-card-pad" data-testid="release-audience" style="display:flex;flex-direction:column;gap:8px">
+            <h2 class="ka-h2">Who will be told</h2>
+            <p class="ka-sub" style="margin:0">This list is only a count. Nothing is sent until you release, and KlassApp does not message a parent first.</p>
+            @forelse(($audience['classes'] ?? []) as $classRow)
+                <div data-testid="release-audience-class">{{ $classRow['name'] }} · {{ $classRow['parents'] }} {{ \Illuminate\Support\Str::plural('parent', $classRow['parents']) }} · {{ $classRow['whatsapp'] }} on WhatsApp</div>
+            @empty
+                <div>No students in this selection yet.</div>
+            @endforelse
+            <div><strong>{{ $audience['parents'] ?? 0 }}</strong> parents · <strong>{{ $audience['whatsapp'] ?? 0 }}</strong> reachable on WhatsApp</div>
+        </aside>
+    @endif
 
     @if($exams->isEmpty())
         <div class="mr-card"><p style="margin:0">No exam has marks in your classes yet.</p></div>
     @else
     <div class="mr-head">
-        <div class="mr-bar" data-testid="marks-release-controls">
-            <form class="mr-scope" method="GET" action="{{ route($area.'.marks.releases.create') }}">
+        <div class="mr-bar" data-testid="marks-release-controls" id="release-filters" data-ka-filters>
+            <button type="button" class="ka-filter-launch ds-btn ds-btn-outline" data-ka-open-filters="release-filters" data-testid="marks-filters-open">Filters</button>
+            <div class="ka-filter-backdrop" data-ka-close-filters></div>
+            <form class="mr-scope ka-filter-panel" method="GET" action="{{ route($area.'.marks.releases.create') }}">
+                <h2 class="ka-h2 ka-filter-launch">Filters</h2>
                 <label class="mr-control">
                     <span>Exam</span>
                     <select name="exam_id" onchange="this.form.submit()">

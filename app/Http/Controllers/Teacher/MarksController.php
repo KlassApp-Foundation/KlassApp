@@ -15,6 +15,7 @@ use App\Models\StandardLink;
 use App\Models\StudentAcademic;
 use App\Models\User;
 use App\Models\Userprofile;
+use App\Services\Academics\BaseClassExamRoster;
 use App\Services\ExamAuthorization;
 use App\Services\Marks\MarksSubmissionService;
 use App\Services\MarksImport\MarksImportService;
@@ -37,8 +38,10 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class MarksController extends Controller
 {
-    public function __construct(private ExamAuthorization $examAuthorization)
-    {
+    public function __construct(
+        private ExamAuthorization $examAuthorization,
+        private BaseClassExamRoster $roster,
+    ) {
     }
 
     /**
@@ -115,9 +118,18 @@ public function teacherExamMarksList()
         ->get()
         ->keyBy(fn (ExamMarksSubmission $row) => $row->exam_id.'|'.$row->class_id.'|'.$row->subject_id);
 
+    $entered = Marks::query()
+        ->where('school_id', $schoolId)
+        ->whereIn('exam_id', $exams->pluck('id'))
+        ->whereNotNull('marks')
+        ->selectRaw('exam_id, count(*) as aggregate')
+        ->groupBy('exam_id')
+        ->pluck('aggregate', 'exam_id');
+
     foreach ($exams as $exam) {
         $row = $submissionLabels->get($exam->id.'|'.$exam->section_id.'|'.$exam->subject_id);
         $exam->submission_label = $row ? $row->reviewLabel() : 'Not started';
+        $exam->marks_entered = (int) ($entered[$exam->id] ?? 0);
     }
 
     return view('teacher.marks.teacher-exam-list', compact('exams', 'examsByClass', 'assignedStdLinks', 'canCreateExams'));
@@ -152,20 +164,24 @@ public function enterExamMarks(Exam $exam)
     if (! $teacher instanceof User) {
         abort(403, 'Not Authorized');
     }
-    $this->examAuthorization->authorizeOrAbort($teacher, $exam, 'You are not authorized to enter marks for this exam.');
+    $this->authorizeEntry($teacher, $exam);
 
     $schoolId = $teacher->school_id;
+    $coversStreams = $this->roster->coversStreams($exam);
+    $streamId = $coversStreams && request()->filled('stream') ? (int) request()->query('stream') : null;
 
-     $allStudents = $this->examRoster($exam, $schoolId);
+     $allStudents = $this->roster->students($exam, $teacher, $streamId);
      $total = $allStudents->count();
 
      $savedMarks = Marks::query()
          ->where('exam_id', $exam->id)
          ->where('subject_id', $exam->subject_id)
          ->where('school_id', $schoolId)
-         ->whereNotNull('marks')
-         ->get(['student_id', 'marks'])
-         ->mapWithKeys(fn ($row) => [(int) $row->student_id => $this->markForInput($row->marks)])
+         ->where(function ($query) {
+             $query->whereNotNull('marks')->orWhere('absent', true);
+         })
+         ->get(['student_id', 'marks', 'absent', 'grade'])
+         ->mapWithKeys(fn ($row) => [(int) $row->student_id => ($row->isAbsent() ? 'AB' : $this->markForInput($row->marks))])
          ->all();
      $savedMarkCount = count($savedMarks);
 
@@ -206,27 +222,54 @@ public function enterExamMarks(Exam $exam)
             && ! app(ExamMarkWriter::class)->writesAreRefused($exam),
         'returnNotice' => $this->returnNotice($exam, $teacher),
         'submissionState' => $this->submissionStateLabel($exam),
+        'showStreamColumn' => $coversStreams,
+        'entryStreams' => $coversStreams ? $this->roster->streamOptions($exam, $teacher) : [],
+        'selectedStreamId' => $streamId,
     ]);
 }
 
 /**
- * The class roster for an exam: students of this school whose latest
- * standard-link matches the exam's standard + section (same rule as the
- * entry page). Shared by enterExamMarks and downloadTemplate so the
- * template's rows always equal the entry page's rows.
+ * A base-class exam opens to the class head and to each stream's subject
+ * teacher. A stream-level exam keeps the subject-teacher and class-teacher check.
  */
-private function examRoster(Exam $exam, int $schoolId)
+private function authorizeEntry(User $actor, Exam $exam): void
 {
-    return User::with(["school", "marks", "studentAcademic.standardLink"])
-        ->where("usergroup_id", 6)
-        ->where("school_id", $schoolId)
-        ->whereHas("studentAcademic", function ($q) use ($exam) {
-            $q->whereHas("standardLink", function ($q2) use ($exam) {
-                $q2->where("standard_id", $exam->standard_id)
-                    ->where("section_id", $exam->section_id);
-            });
-        })
-        ->get();
+    if ($this->roster->coversStreams($exam)) {
+        $this->roster->assertCanEnter($actor, $exam);
+
+        return;
+    }
+
+    $this->examAuthorization->authorizeOrAbort($actor, $exam, 'You are not authorized to enter marks for this exam.');
+}
+
+/**
+ * Student ids in this save that actually carry a mark or a rating.
+ *
+ * @return list<int>
+ */
+private function submittedMarkStudentIds(Request $request): array
+{
+    $ids = [];
+    foreach ($request->input('marks', []) as $studentId => $mark) {
+        if ($mark === null || trim((string) $mark) === '') {
+            continue;
+        }
+        $ids[] = (int) $studentId;
+    }
+    foreach ($request->input('assessments', []) as $studentId => $domainRatings) {
+        if (! is_array($domainRatings)) {
+            continue;
+        }
+        foreach ($domainRatings as $rating) {
+            if ($rating !== null && trim((string) $rating) !== '') {
+                $ids[] = (int) $studentId;
+                break;
+            }
+        }
+    }
+
+    return array_values(array_unique($ids));
 }
 
 /**
@@ -268,11 +311,12 @@ public function saveExamMarks(Request $request, Exam $exam, GradingSystemService
         abort(403, 'Not Authorized');
     }
 
-    $this->examAuthorization->authorizeOrAbort($user, $exam);
+    $this->authorizeEntry($user, $exam);
 
     app(ExamMarkWriter::class)->assertWritable($exam);
 
     $this->assertSubmittedStudentsBelongToSchool($request, $exam);
+    $this->roster->assertStudentsAllowed($user, $exam, $this->submittedMarkStudentIds($request));
     $this->checkSubmissionLocked($exam);
 
     // A save on an already-submitted exam is a correction → needs a reason.
@@ -499,11 +543,12 @@ public function updateMark(Request $request, Exam $exam, User $student, GradingS
         abort(403, 'Not Authorized');
     }
 
-    $this->examAuthorization->authorizeOrAbort($teacher, $exam);
+    $this->authorizeEntry($teacher, $exam);
 
     app(ExamMarkWriter::class)->assertWritable($exam);
 
     $schoolId = $teacher->school_id;
+    $this->roster->assertStudentsAllowed($teacher, $exam, [(int) $student->id]);
 
     if (
         $student->school_id !== $schoolId

@@ -1,5 +1,9 @@
 <div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4" data-testid="exams-marks">
 
+    @if(($filterRoute ?? '') === 'admin.marks.filter')
+        @include('partials.ka-marks-nav', ['marksNav' => 'sheet'])
+        @include('partials.ka-lifecycle', ['current' => 'saved'])
+    @endif
     <div class="ds-page-head" data-testid="exams-page-head">
         <div>
             <h1 class="ds-page-head-title">{{ ($type?->name ?? null) ? (($type->name === 'End of Term' || str_contains(strtolower($type->name), 'end')) ? 'End of term marks' : ($type->name.' marks')) : 'Marks' }}</h1>

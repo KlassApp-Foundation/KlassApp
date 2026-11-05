@@ -8,6 +8,7 @@ use App\Models\Academics\Exam;
 use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\Marks;
 use App\Models\User;
+use App\Services\Academics\BaseClassExamRoster;
 use App\Services\GradingSystemService;
 use Illuminate\Validation\ValidationException;
 
@@ -19,7 +20,10 @@ use Illuminate\Validation\ValidationException;
  */
 class ExamMarkWriter
 {
-    public function __construct(private GradingSystemService $grading) {}
+    public function __construct(
+        private GradingSystemService $grading,
+        private BaseClassExamRoster $roster,
+    ) {}
 
     public function save(User $actor, Exam $exam, int $studentId, mixed $mark, ?string $correctionReason = null): Marks
     {
@@ -37,8 +41,28 @@ class ExamMarkWriter
             abort(403, 'Submitted student is not authorized for this school.');
         }
 
+        $this->roster->assertStudentAllowed($actor, $exam, (int) $student->id);
+
         $this->assertWritable($exam);
         $this->assertCorrectionReason($exam, $correctionReason);
+
+        if ($this->isAbsent($mark)) {
+            return Marks::updateOrCreate(
+                [
+                    'student_id' => $student->id,
+                    'exam_id' => $exam->id,
+                    'school_id' => $exam->school_id,
+                    'subject_id' => $exam->subject_id,
+                ],
+                [
+                    'teacher_id' => $exam->teacher_id ?: $actor->id,
+                    'marks' => null,
+                    'grade' => 'AB',
+                    'absent' => true,
+                    'section_id' => $exam->section_id,
+                ]
+            );
+        }
 
         return Marks::updateOrCreate(
             [
@@ -51,6 +75,7 @@ class ExamMarkWriter
                 'teacher_id' => $exam->teacher_id ?: $actor->id,
                 'marks' => $mark,
                 'grade' => $this->letter($exam, $mark),
+                'absent' => false,
                 'section_id' => $exam->section_id,
             ]
         );
@@ -105,9 +130,32 @@ class ExamMarkWriter
             ->first();
     }
 
+    public function maximum(Exam $exam): float
+    {
+        return 100.0;
+    }
+
+    public function isAbsent(mixed $mark): bool
+    {
+        return strcasecmp(trim((string) $mark), 'AB') === 0;
+    }
+
+    public function exceedsMaximum(Exam $exam, mixed $mark): bool
+    {
+        if ($mark === null || $this->isAbsent($mark) || trim((string) $mark) === '' || ! is_numeric($mark)) {
+            return false;
+        }
+
+        return (float) $mark > $this->maximum($exam);
+    }
+
+    /**
+     * The same closed-mark test the writer enforces, for readers: the profile's
+     * mark list and the correction-reason check both ask this question.
+     */
     public function requiresCorrection(Exam $exam): bool
     {
-        return false;
+        return $this->writesAreRefused($exam);
     }
 
     private function letter(Exam $exam, mixed $mark): string

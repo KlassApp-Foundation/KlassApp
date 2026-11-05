@@ -150,7 +150,19 @@ return [
                         [
                             'label' => 'Exams and reports', 'icon' => 'exams', 'url' => 'admin/exams',
                             'children' => [
-                                ['label' => 'Exams and marks', 'url' => 'admin/marks', 'paths' => ['admin/exams*', 'admin/exam*', 'admin/marks*', 'admin/mark*']],
+                                ['label' => 'Exam sets', 'url' => 'admin/exams/sets', 'paths' => ['admin/exams/sets', 'admin/exams/sets/*']],
+                                ['label' => 'Exams and marks', 'url' => 'admin/marks', 'paths' => [
+                                    'admin/marks*',
+                                    'admin/mark*',
+                                    'admin/exams',
+                                    'admin/exams/add-new',
+                                    'admin/exams/store',
+                                    'admin/exams/*/edit',
+                                    'admin/exams/*/update',
+                                    'admin/exams/*/marksheet',
+                                    'admin/exams/*/marks*',
+                                    'admin/exams/*/archive',
+                                ]],
                                 ['label' => 'Marks Release', 'url' => 'admin/marks/releases/new', 'paths' => ['admin/marks/releases*']],
                                 ['label' => 'Mark submissions', 'url' => 'admin/marks/submissions', 'paths' => ['admin/marks/submissions*'], 'count' => 'mark_submissions'],
                                 ['label' => 'Grading', 'url' => 'admin/grades', 'paths' => ['admin/grades*', 'admin/grade*']],
