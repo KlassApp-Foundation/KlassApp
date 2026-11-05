@@ -209,8 +209,6 @@ class OnboardingStepsService
      * wizard both call it and store what it returns; neither keeps its own
      * "?: 'Uganda'" fallback, so the rule cannot drift between them.
      */
-    public const DEFAULT_COUNTRY = 'Uganda';
-
     public static function countryOrDefault(?string $answer): string
     {
         $answer = trim((string) $answer);
