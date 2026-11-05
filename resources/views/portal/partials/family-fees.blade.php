@@ -24,6 +24,7 @@
         </ul>
     @endif
     <p class="family-fee-line"><span data-testid="fee-paid">Paid</span><strong>UGX {{ number_format($fees['total_paid'] ?? 0, 0) }}</strong></p>
+    <p>Paid to date: UGX {{ number_format($fees['total_paid'] ?? 0, 0) }}</p>
     <p class="family-fee-line"><span data-testid="fee-balance">Balance</span><strong data-testid="parent-fees-total">UGX {{ number_format($balance, 0) }}</strong></p>
     @foreach($fees['payments'] ?? [] as $payment)
         <p class="family-fee-line"><span>{{ $payment['date'] }} · {{ $payment['method'] }}</span><strong>UGX {{ number_format($payment['amount'], 0) }}</strong></p>

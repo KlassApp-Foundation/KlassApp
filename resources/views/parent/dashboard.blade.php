@@ -4,6 +4,7 @@
 @section('content')
 <div class="family-page" data-testid="parent-dashboard">
     <main class="family-main" style="width:100% !important;margin-left:0 !important;margin-right:0 !important;">
+        <p class="family-kicker">Parent Portal</p>
         @include('partials.message')
         @if ($linkedChildCount === 0)
             <section class="family-empty" data-testid="parent-empty-children">
