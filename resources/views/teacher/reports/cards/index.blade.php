@@ -4,7 +4,7 @@
 <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
     <div class="mb-8">
         <h1 class="text-2xl font-bold text-gray-900">Report Cards</h1>
-        <p class="mt-1 text-sm text-gray-600">Generate report cards for your class teacher streams only.</p>
+        <p class="mt-1 text-sm text-gray-600">Report cards for the classes and streams you head.</p>
     </div>
 
     @include('partials.message')

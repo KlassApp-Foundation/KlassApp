@@ -25,6 +25,33 @@
 
     @include('partials.message')
 
+    @if ($hasExam && $students->isNotEmpty())
+        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <a href="{{ route('teacher.reports.cards.class.pdf', $stdLink) }}"
+               class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-green-700 hover:bg-green-800 text-white text-sm font-medium">
+                Download class PDF
+            </a>
+            <p class="text-sm text-gray-600">
+                One PDF, one report card per student, the same card as Download on each row.
+                Up to {{ \App\Services\StudentReportCardService::CLASS_PDF_DIRECT_MAX }} students download straight away.
+                A larger class is prepared in the background.
+            </p>
+        </div>
+    @endif
+
+    @if (!empty($classGeneration))
+        <div class="mb-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-800" data-testid="class-pdf-status">
+            @if ($classGeneration->status === 'completed')
+                The class PDF is ready.
+                <a href="{{ route('teacher.reports.cards.generation.download', $classGeneration) }}" class="font-medium text-green-800 underline">Download the class PDF</a>
+            @elseif ($classGeneration->status === 'failed')
+                The class PDF could not be prepared. {{ $classGeneration->error }}
+            @else
+                Preparing the class PDF. Refresh this page to see when it is ready.
+            @endif
+        </div>
+    @endif
+
     <div class="bg-white shadow-sm rounded-2xl border border-gray-200 overflow-hidden">
         <div class="px-6 py-5 border-b border-gray-200">
             <h2 class="text-lg font-semibold text-gray-800">Students</h2>

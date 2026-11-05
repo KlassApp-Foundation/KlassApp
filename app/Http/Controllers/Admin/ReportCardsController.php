@@ -126,7 +126,12 @@ class ReportCardsController extends Controller
 
     public function downloadMerged(StandardLink $stdLink)
     {
-        return $this->dispatchGeneration($stdLink, 'merged');
+        $actor = Auth::user();
+        $redirect = route('admin.reports.cards.index', array_filter([
+            'term' => request('term'),
+        ]));
+
+        return app(\App\Services\ClassReportCardDownload::class)->download($actor, $stdLink, $redirect);
     }
 
     public function combinedMarksheet(StandardLink $stdLink)
