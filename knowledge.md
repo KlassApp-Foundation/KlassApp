@@ -2,6 +2,10 @@
 
 > **Canonical location**: `/Users/mac/projects/KlassApp/knowledge.md` (workspace root). Worktrees (e.g. `KlassApp-main-checkout`) should sync to that path when copies diverge — keep one body of truth; do not maintain parallel divergent session logs.
 
+## Session note — 2026-11-05 — parent and student portals (page 9, draft)
+
+Stacked on `cursor/parent-student-portal-0657` (#1266, not merged). Branch `cursor/parent-student-portals-page9-6ada`. Dashboard cards open Marks, Attendance and Fees. Both portals read `ParentPortalService` released results only. Attendance is whole days (a morning and afternoon row on one date is one day). No new WhatsApp or Toshi messages. Draft only; not merged and not deployed.
+
 ## Verified Stack (production — July 26, 2026)
 
 | Layer | Version | Source |

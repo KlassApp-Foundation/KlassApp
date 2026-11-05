@@ -1,15 +1,37 @@
 {{-- SPDX-License-Identifier: MIT --}}
 @php
-    $chart = $chart ?? ['labels' => [], 'present' => [], 'absent' => []];
+    $weeks = $attendance['weeks'] ?? ($weeks ?? []);
+    if ($weeks === [] && ! empty($chart['labels'])) {
+        foreach ($chart['labels'] as $i => $label) {
+            $weeks[] = [
+                'label' => $label,
+                'present' => (int) round((float) ($chart['present'][$i] ?? 0)),
+                'full' => true,
+            ];
+        }
+    }
+    $max = 5;
+    foreach ($weeks as $week) {
+        $max = max($max, (int) $week['present']);
+    }
 @endphp
-<div class="mt-4" data-testid="attendance-chart">
-    <x-chart type="bar" :height="220"
-             :labels="$chart['labels'] ?? []"
-             :datasets="[
-                ['label' => 'Present', 'data' => $chart['present'] ?? [], 'backgroundColor' => '#15803D'],
-                ['label' => 'Absent', 'data' => $chart['absent'] ?? [], 'backgroundColor' => '#B45309'],
-             ]"
-             :options="['plugins' => ['legend' => ['display' => true]]]"
-             aria-label="Attendance, present and absent"
-             empty-message="No attendance recorded in the last month." />
+<div class="family-chart-card" data-testid="attendance-chart">
+    @if($weeks === [])
+        <p class="family-chart-empty">No attendance recorded for this period.</p>
+    @else
+        <div class="family-bars" role="img" aria-label="Days present by week">
+            @foreach($weeks as $week)
+                @php $present = (int) $week['present']; @endphp
+                <div class="family-bar">
+                    <span class="family-bar__value">{{ $present }}</span>
+                    <span class="family-bar__fill {{ !empty($week['full']) ? 'is-full' : 'is-short' }}" style="height: {{ (int) round(($present / $max) * 120) }}px;"></span>
+                    <span class="family-bar__label">{{ $week['label'] }}</span>
+                </div>
+            @endforeach
+        </div>
+        <div class="family-legend">
+            <span><i class="is-full"></i> Full week</span>
+            <span><i class="is-short"></i> Missed a day</span>
+        </div>
+    @endif
 </div>

@@ -2,18 +2,15 @@
 /**
  * SPDX-License-Identifier: MIT
  *
- * Marks and attendance for the AUTHENTICATED STUDENT, own record only.
- *
- * There is deliberately no student id parameter anywhere in this controller. The parent
- * equivalents take one and enforce ownership through StudentParentLink; a student reading
- * their own record needs no such surface, so the id does not exist to be tampered with.
- * Every query is scoped to Auth::id() and the authenticated school, and the shape mirrors
- * the proven logic in ParentPortalService::grades() and ::attendance().
+ * Marks, attendance, and fees for the authenticated student, own record only.
+ * There is no student id on these routes. Every read goes through ParentPortalService,
+ * which applies the same release gate the parent portal uses.
  */
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
 use App\Services\Parent\ParentPortalService;
+use App\Support\DisplayName;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -23,37 +20,87 @@ class RecordsController extends Controller
 
     public function marks(Request $request)
     {
-        $student = Auth::user();
-        $grades = $this->portal->releasedResults($student, (int) $student->school_id, $request->query('year'));
+        return $this->page($request, 'marks', 'student.records.marks');
+    }
 
-        return view('student.records.marks', [
-            'grades' => $grades,
-            'message' => $grades['exam_groups'] === [] ? 'No results published yet.' : null,
+    public function attendance(Request $request)
+    {
+        return $this->page($request, 'attendance', 'student.records.attendance');
+    }
+
+    public function fees(Request $request)
+    {
+        return $this->page($request, 'fees', 'student.records.fees');
+    }
+
+    public function report()
+    {
+        $student = Auth::user();
+        $result = $this->portal->releasedReportPdf($student, (int) $student->school_id);
+        if (! ($result['ok'] ?? false)) {
+            return back()->with('failmessage', $result['message'] ?? 'No report card has been released yet.');
+        }
+
+        return response($result['pdf'], 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$result['filename'].'"',
         ]);
     }
 
-    public function attendance()
+    private function page(Request $request, string $panel, string $view)
     {
         $student = Auth::user();
-        $summary = $this->portal->attendanceSummary($student, (int) $student->school_id);
+        $schoolId = (int) $student->school_id;
+        $year = $panel === 'marks' ? $request->query('year') : null;
+        $bundle = $this->portal->bundle($student, $schoolId, $year);
+        [$bundle, $loading] = $this->preview($request, $bundle);
+        $name = DisplayName::title($student->displayName ?: $student->name);
+        $link = $student->studentAcademicLatest?->standardLink;
+        $className = ($link && (int) $link->school_id === $schoolId) ? ($link->StandardSection ?: '') : '';
 
-        return view('student.records.attendance', [
-            'present' => $summary['present'],
-            'absent' => $summary['absent'],
-            'late' => $summary['late'],
-            'total' => $summary['total'],
-            'since' => $summary['since'],
-            'recent' => $summary['recent'],
-            'chart' => $summary['chart'],
+        return view($view, [
+            'panel' => $panel,
+            'childName' => $name,
+            'className' => $className,
+            'studentId' => $student->id,
+            'bundle' => $bundle,
+            'loading' => $loading,
+            'grades' => $bundle['grades'],
+            'fees' => $bundle['fees'],
+            'attendance' => $bundle['attendance'],
+            'message' => ($bundle['grades']['exam_groups'] ?? []) === [] ? 'No results published yet.' : null,
+            'links' => [
+                'dashboard' => route('student.dashboard'),
+                'marks' => route('student.marks'),
+                'attendance' => route('student.attendance'),
+                'fees' => route('student.fees'),
+                'report' => route('student.report'),
+            ],
         ]);
     }
 
-    public function fees()
+    /**
+     * @param  array<string, mixed>  $bundle
+     * @return array{0: array<string, mixed>, 1: bool}
+     */
+    private function preview(Request $request, array $bundle): array
     {
-        $student = Auth::user();
+        $state = (string) $request->query('state', '');
+        if (! in_array($state, ['loading', 'empty', 'error'], true) || ! app()->environment(['local', 'testing'])) {
+            return [$bundle, false];
+        }
+        if ($state === 'loading') {
+            return [$bundle, true];
+        }
+        if ($state === 'empty') {
+            $bundle['grades']['exam_groups'] = [];
+            $bundle['grades']['chart'] = ['labels' => [], 'scores' => []];
+            $bundle['headline'] = ['average' => null, 'label' => '', 'delta' => null, 'since' => null, 'has_unreleased' => false];
 
-        return view('student.records.fees', [
-            'fees' => $this->portal->feeSummary($student, (int) $student->school_id),
-        ]);
+            return [$bundle, false];
+        }
+        $bundle['errors']['fees'] = true;
+
+        return [$bundle, false];
     }
 }

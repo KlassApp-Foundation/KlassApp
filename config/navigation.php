@@ -230,7 +230,7 @@ return [
             'active_class' => 'active dashboard-active',
             'items' => [
                 ['label' => 'Dashboard', 'icon' => 'dashboard', 'url' => 'student/dashboard', 'active' => ['dashboard']],
-                ['label' => 'Marks', 'icon' => 'marks', 'url' => 'student/marks', 'active' => ['marks', 'mark']],
+                ['label' => 'Marks', 'icon' => 'marks', 'url' => 'student/marks', 'active' => ['marks', 'mark'], 'paths' => ['student/marks', 'student/marks/*', 'student/report']],
                 ['label' => 'Attendance', 'icon' => 'attendance', 'url' => 'student/attendance', 'active' => ['attendance']],
                 ['label' => 'Fees', 'icon' => 'fees', 'route' => 'student.fees', 'paths' => ['student/fees', 'student/fees/*']],
                 ['label' => 'Homework', 'icon' => 'homework', 'url' => 'student/homeworks', 'active' => ['homework', 'homeworks']],
@@ -252,10 +252,10 @@ return [
             'active_class' => 'active dashboard-active',
             'items' => [
                 ['label' => 'Dashboard', 'icon' => 'dashboard', 'route' => 'parent.dashboard', 'paths' => ['parent/dashboard', 'parent/dashboard/*']],
-                ['label' => 'Children', 'icon' => 'students', 'route' => 'parent.children', 'paths' => ['parent/children']],
-                ['label' => 'Fees', 'icon' => 'fees', 'resolver' => 'parent_child', 'child_path' => 'fees', 'paths' => ['parent/children/*/fees']],
-                ['label' => 'Grades', 'icon' => 'grades', 'resolver' => 'parent_child', 'child_path' => 'grades', 'paths' => ['parent/children/*/grades']],
+                ['label' => 'Marks', 'icon' => 'marks', 'resolver' => 'parent_child', 'child_path' => 'grades', 'paths' => ['parent/children/*/grades', 'parent/children/*/report']],
                 ['label' => 'Attendance', 'icon' => 'attendance', 'resolver' => 'parent_child', 'child_path' => 'attendance', 'paths' => ['parent/children/*/attendance']],
+                ['label' => 'Fees', 'icon' => 'fees', 'resolver' => 'parent_child', 'child_path' => 'fees', 'paths' => ['parent/children/*/fees']],
+                ['label' => 'Children', 'icon' => 'students', 'route' => 'parent.children', 'paths' => ['parent/children']],
             ],
         ],
 
