@@ -329,6 +329,7 @@ class StudentReportCardService
 
         $standard = $learner->studentAcademicLatest?->standardLink?->standard;
         $isNursery = $standard && \App\Helpers\GradingHelper::levelTypeForStandard($standard) === 'nursery';
+        $isALevel = $standard && \App\Helpers\GradingHelper::levelTypeForStandard($standard) === 'a-level';
 
         $standardName = $standard?->name ?? '';
 
@@ -407,6 +408,11 @@ class StudentReportCardService
         $eotMarkBySubject = $this->chosenMarksBySubject($learner->marks, $contributing);
         $eotPoints = $this->sumPoints($eotMarkBySubject, $schoolId, (int) $stdLink->standard_id);
         $eotDivision = $divisionLabel($eotPoints);
+
+        // A level is graded on points, not on a division; an O-level scale has
+        // no points at all, so a division there would print a misleading '-'.
+        $showDivision = $showAgg && ! $isALevel && $eotDivision !== '-';
+        $showPoints = $isALevel;
 
         $streamPos = null;
         $streamTotal = null;
@@ -497,7 +503,17 @@ class StudentReportCardService
             'eotAgg' => $eotPoints['points'] ?? ($grade['agg'] ?? null),
             'school' => $school,
             'schoolIdentity' => $schoolIdentity,
-            'isNursery' => $isNursery, 'nurseryAssessments' => collect(),
+            'isNursery' => $isNursery,
+            'nurseryAssessments' => $isNursery
+                ? \App\Models\Academics\NurseryAssessment::query()
+                    ->where('exam_id', $exam->id)
+                    ->where('student_id', (int) $learner->id)
+                    ->get()
+                    ->keyBy('domain')
+                : collect(),
+            'isALevel' => $isALevel,
+            'showDivision' => $showDivision,
+            'showPoints' => $showPoints,
             'teacherComment' => $teacherComment,
             'headTeacherComment' => $headTeacherComment,
             'showAgg' => $showAgg,

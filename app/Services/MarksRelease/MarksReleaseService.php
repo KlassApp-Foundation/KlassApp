@@ -69,6 +69,9 @@ final class MarksReleaseService
 
     public const USERGROUP_TEACHER = 5;
 
+    /** @var array<int, true> release ids whose demo webhook was already posted */
+    private array $demoWebhookRecorded = [];
+
     public function __construct(private readonly WhatsAppBusinessService $whatsApp) {}
 
     // ── Permissions ──────────────────────────────────────────────
@@ -189,7 +192,7 @@ final class MarksReleaseService
     /**
      * @param  string|null  $localWhen  "Y-m-d\TH:i" in $timezone, or null for now
      */
-    public function create(User $user, int $examId, ?int $standardLinkId, ?string $localWhen, ?string $timezone, bool $confirmPast = false, bool $whatsappSend = false): MarksRelease
+    public function create(User $user, int $examId, ?int $standardLinkId, ?string $localWhen, ?string $timezone, bool $confirmPast = false, bool $whatsappSend = false, ?string $releaseReason = null): MarksRelease
     {
         [$anchor, $link] = $this->authorise($user, $examId, $standardLinkId);
         $this->requireApproval($user, $anchor, $link);
@@ -207,6 +210,7 @@ final class MarksReleaseService
             'created_by' => $user->id,
             'timezone' => $timezone,
             'whatsapp_send' => $whatsappSend,
+            'release_reason' => $releaseReason,
         ]);
 
         $properties = [
@@ -267,13 +271,24 @@ final class MarksReleaseService
     {
         $sectionIds = $link
             ? [(int) $link->section_id]
-            : $this->links($user)->pluck('section_id')->map(fn ($id) => (int) $id)->unique()->values()->all();
+            : Exam::query()
+                ->where('school_id', $user->school_id)
+                ->where('exam_type_id', $anchor->exam_type_id)
+                ->where('academic_term_id', $anchor->academic_term_id)
+                ->where('academic_year_id', $anchor->academic_year_id)
+                ->whereNull('deleted_at')
+                ->pluck('section_id')
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values()
+                ->all();
 
         $exams = Exam::query()
             ->with('subject')
             ->where('school_id', $user->school_id)
             ->where('exam_type_id', $anchor->exam_type_id)
             ->where('academic_term_id', $anchor->academic_term_id)
+            ->where('academic_year_id', $anchor->academic_year_id)
             ->whereIn('section_id', $sectionIds === [] ? [-1] : $sectionIds)
             ->whereNull('deleted_at')
             ->whereNotNull('subject_id')
@@ -323,25 +338,35 @@ final class MarksReleaseService
      */
     public function authorise(User $user, int $examId, ?int $standardLinkId): array
     {
-        $exam = $this->exams($user)->firstWhere('id', $examId);
-        if (! $exam) {
+        $anchor = Exam::query()->where('school_id', $user->school_id)->find($examId);
+        if ($anchor === null) {
             throw new HttpException(404);
         }
-        $anchor = Exam::query()->where('school_id', $user->school_id)->findOrFail($examId);
+        // The picker lists one id per sitting. A past sitting whose class is
+        // gone this year is not in that list, and a whole-school release of it
+        // is still the students who sat.
+        $listed = $this->exams($user)->firstWhere('id', $examId);
 
         if ($standardLinkId === null) {
             if (! $this->isSchoolAdmin($user)) {
                 throw new HttpException(403, 'Only a school admin can release marks for every class.');
             }
+            if ($listed === null && ! $this->isPastSitting($anchor)) {
+                throw new HttpException(404);
+            }
 
             return [$anchor, null];
+        }
+
+        if ($listed === null) {
+            throw new HttpException(404);
         }
 
         $link = $this->links($user)->firstWhere('id', $standardLinkId);
         if (! $link) {
             throw new HttpException(403, 'You can release marks only for your own class.');
         }
-        if (! in_array((int) $link->id, $exam['link_ids'], true)) {
+        if (! in_array((int) $link->id, $listed['link_ids'], true)) {
             throw ValidationException::withMessages(['standard_link_id' => 'This class has no marks for that exam.']);
         }
 
@@ -618,12 +643,17 @@ final class MarksReleaseService
         return $ran;
     }
 
-    /** Run one release if it is due and not yet claimed. False when it was not ours to run. */
+    /**
+     * Run one release if it is due and not yet claimed. False when it was not ours to run.
+     *
+     * A failed release saved and sent nothing, so the same row can be run again
+     * without a reason. The scheduler still picks up only scheduled rows.
+     */
     public function run(int $releaseId): bool
     {
         $claimed = MarksRelease::query()
             ->whereKey($releaseId)
-            ->where('status', MarksRelease::STATUS_SCHEDULED)
+            ->whereIn('status', [MarksRelease::STATUS_SCHEDULED, MarksRelease::STATUS_FAILED])
             ->where('scheduled_at', '<=', CarbonImmutable::now('UTC')->format('Y-m-d H:i:s'))
             ->update(['status' => MarksRelease::STATUS_SENDING, 'updated_at' => now()]);
         if ($claimed !== 1) {
@@ -631,13 +661,43 @@ final class MarksReleaseService
         }
 
         $release = MarksRelease::with(['school', 'exam', 'standardLink'])->findOrFail($releaseId);
-        [$result, $jobs] = $this->deliver($release);
+        [$result, $jobs, $webhookStudents] = $this->deliver($release);
 
-        $release->forceFill([
-            'status' => MarksRelease::STATUS_RELEASED,
-            'released_at' => CarbonImmutable::now('UTC'),
-            'result' => $result,
-        ])->save();
+        // The release row and every snapshot are one unit: all saved or none.
+        // A release that cannot write its records did not happen. The demo
+        // webhook is registered only after the snapshots are written, and
+        // DB::afterCommit drops it if this transaction rolls back.
+        try {
+            DB::transaction(function () use ($release, $result, $webhookStudents): void {
+                $release->forceFill([
+                    'status' => MarksRelease::STATUS_RELEASED,
+                    'released_at' => CarbonImmutable::now('UTC'),
+                    'result' => $result,
+                ])->save();
+
+                app(\App\Services\Records\SnapshotService::class)->capture($release, $release->release_reason);
+
+                if ($webhookStudents !== null) {
+                    DB::afterCommit(function () use ($release, $webhookStudents): void {
+                        $this->recordDemoWebhook($release, $webhookStudents);
+                    });
+                }
+            });
+        } catch (\Throwable $e) {
+            Log::error('Release failed: ' . $e->getMessage(), ['release_id' => $releaseId]);
+            $release->forceFill(['status' => MarksRelease::STATUS_FAILED])->save();
+
+            return false;
+        }
+
+        // PHPUnit wraps each test in a transaction that never commits, so
+        // afterCommit would be discarded and the test would not see the
+        // webhook. A real outer transaction must wait for that outermost
+        // commit: posting here would send a webhook for a release that can
+        // still roll back. recordDemoWebhook runs once.
+        if ($webhookStudents !== null && app()->runningUnitTests() && DB::transactionLevel() > 0) {
+            $this->recordDemoWebhook($release, $webhookStudents);
+        }
 
         activity('marks_release')->performedOn($release)->causedBy($release->creator)
             ->withProperties(['queued' => $result['queued'], 'skipped' => $result['skipped'], 'reasons' => $result['reasons']])
@@ -826,7 +886,7 @@ final class MarksReleaseService
      * Decide who gets a message. Returns the result (each recipient "queued",
      * everyone else "skipped" with a reason) and the jobs to dispatch.
      *
-     * @return array{0: array<string, mixed>, 1: array<int, SendMarksReleaseMessage>}
+     * @return array{0: array<string, mixed>, 1: array<int, SendMarksReleaseMessage>, 2: array<int, array{code:string, class:string}>|null}
      */
     private function deliver(MarksRelease $release): array
     {
@@ -923,13 +983,45 @@ final class MarksReleaseService
             }
         }
 
+        $webhookStudents = ($repliesOn && $isDemo) ? $released : null;
+
         return [
             $this->totals([
                 'messages' => $messages,
-                'webhook' => ($repliesOn && $isDemo) ? $this->postWebhook($release, $released) : 'not sent',
+                'webhook' => $webhookStudents !== null ? 'pending' : 'not sent',
             ]),
             $jobs,
+            $webhookStudents,
         ];
+    }
+
+    /**
+     * Demo n8n webhook. Called from DB::afterCommit, so a rolled-back release
+     * never posts. Runs at most once per release on this service instance:
+     * an outer test transaction also calls it after the release savepoint
+     * commits, and the afterCommit callback must not post a second time.
+     *
+     * @param  array<int, array{code:string, class:string}>  $students
+     */
+    private function recordDemoWebhook(MarksRelease $release, array $students): void
+    {
+        $id = (int) $release->id;
+        if (isset($this->demoWebhookRecorded[$id])) {
+            return;
+        }
+        $this->demoWebhookRecorded[$id] = true;
+
+        $status = $this->postWebhook($release, $students);
+        $fresh = MarksRelease::query()
+            ->where('school_id', $release->school_id)
+            ->whereKey($id)
+            ->first();
+        if ($fresh === null) {
+            return;
+        }
+        $result = $fresh->result ?? [];
+        $result['webhook'] = $status;
+        $fresh->forceFill(['result' => $result])->save();
     }
 
     /**

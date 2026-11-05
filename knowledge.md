@@ -678,9 +678,21 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
 
+## Current Status: November 3, 2026 — **Release reasons follow the sitting OPEN [#1255](https://github.com/KlassApp-Foundation/KlassApp/pull/1255)**
+
+- A whole-school release asks for a reason when any class of that sitting was already released. A stream released for the first time does not, even when another stream of the same class was. A past-year whole-school release snapshots the students who sat that sitting. A failed release that saved and sent nothing can be run again with no reason. Merged the new [#1244](https://github.com/KlassApp-Foundation/KlassApp/pull/1244) head. Not merged to main. No deploy.
+
 ## Current Status: November 3, 2026 — **Demo-only stays the outer release gate OPEN [#1244](https://github.com/KlassApp-Foundation/KlassApp/pull/1244)**
 
 - `WHATSAPP_DEMO_ONLY_RECIPIENTS` is checked after the per-release switch and the template. While it is on, a real school sends nothing. A demo school is unchanged. The class head stays `sections.class_teacher_id`. #1252 must merge before this PR. Not merged. No deploy.
+
+## Current Status: November 2, 2026 — **Level reports wait for the outermost commit OPEN [#1255](https://github.com/KlassApp-Foundation/KlassApp/pull/1255)**
+
+- A demo release webhook registered with `DB::afterCommit` is not posted while a real outer transaction is still open. PHPUnit's own transaction still records it so the existing webhook tests can see it. A-level cards on both templates show `POINTS:` and not `DIVISION:`. Not merged. No deploy.
+
+## Current Status: November 2, 2026 — **Level reports follow the Phase 6 generator OPEN [#1255](https://github.com/KlassApp-Foundation/KlassApp/pull/1255)**
+
+- [#1255](https://github.com/KlassApp-Foundation/KlassApp/pull/1255) (`cursor/marks-level-reports`) merged the new [#1244](https://github.com/KlassApp-Foundation/KlassApp/pull/1244) head. `app/Services/StudentIdGeneratorService.php` matches both that head and [#1252](https://github.com/KlassApp-Foundation/KlassApp/pull/1252). This branch does not change the file. No force-push. Not merged to main. No deploy.
 
 ## Current Status: November 2, 2026 — **Phase 6 class head and results template OPEN [#1244](https://github.com/KlassApp-Foundation/KlassApp/pull/1244)**
 
@@ -3272,6 +3284,28 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Decision**: New class names are the canonical levels (nursery, P.1–P.7, S.1–S.6), the type preset, and names the school already uses. Arbitrary text is still rejected. A school-wide invite cap still applies inside that school; a different invite is isolated by the per-invite cap, and a different school is isolated by both.
 - **Status**: OPEN [#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239) (`cursor/marks-phase-1-class-teacher-v2`). Not merged. Production untouched. Stacked PRs #1240–#1244 and #1255 need this commit merged up. No force-push.
 - **Evidence**: With the cross-school guard removed, `test_approval_of_another_schools_email_issues_nothing_and_does_not_error` failed at the session assertion (line 578). Restored, that test passed (14 assertions). `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh`: 3207 tests, 0 failures, 0 errors, 9 skipped. Guard OK.
+
+### 2026-11-03: Owner decisions on release reasons and past-year snapshots (#1255)
+
+- **Work done**: Merged `cursor/marks-phase-6-release` (`cc186c85`) into `cursor/marks-level-reports`. A whole-school release after any class of that sitting requires a reason. A stream or class released for the first time does not, even when another stream of the same class was already released. A past-year whole-school release snapshots the students who sat that sitting, using that year's classes. A failed release that saved and sent nothing can be run again without a reason. The skip-reason order from `bb98cd51` is already pinned by `MarksPhase6WhatsAppGateTest::test_the_switch_and_the_template_are_reported_before_the_demo_only_guard`.
+- **Files touched**: `MarksReleaseController.php`, `MarksReleaseService.php`, `SnapshotService.php`, `MarksRelease.php`, `ReleaseSnapshotTest.php`, `docs/product/marks-flow.md`, `knowledge.md`. `app/Services/StudentIdGeneratorService.php` was not edited.
+- **Decisions**: Owner, 3 November 2026. The class head stays `sections.class_teacher_id`. `WHATSAPP_DEMO_ONLY_RECIPIENTS` stays the outer gate after the switch and the template. #1252 must merge before #1244.
+- **Status**: On the open PR. Not merged to main. No deploy. No production data.
+- **Edge cases**: The scheduler still runs only scheduled rows. Running the failed row again is an explicit `run()`. An empty target list still does not ask for a reason.
+
+### 2026-10-30: Review fixes on #1255 (level reports and snapshots)
+
+- **Work done**: Merged `cursor/marks-phase-6-release` (`2b628415`) into `cursor/marks-level-reports`. Re-release reason follows the class however it is picked. Released snapshots use ON DELETE RESTRICT. Rollback of `record_snapshots` refuses to drop rows unless `RECORD_SNAPSHOTS_ALLOW_DROP=true`. The demo release webhook runs from `DB::afterCommit`. `bb98cd51` is still on the branch.
+- **Files touched**: `MarksReleaseController.php`, `create.blade.php`, `MarksReleaseService.php`, `SnapshotService.php`, `2026_10_27_120000_create_record_snapshots_table.php`, `config/klassapp.php`, `ReleaseSnapshotTest.php`, `knowledge.md`.
+- **Decisions**: Whole-school release after a class-only release still does not ask for a reason. `supersedes_id`, `release_id` and `released_by` still have no foreign keys. Demo exams from the seeders all have a year and a term; no seeder change.
+- **Status**: On the open PR. Not merged. Not deployed.
+- **Edge cases**: `demo:purge-schools` and `test:purge-schools` do not list `record_snapshots`, so a hard delete of a school, year or term that has a snapshot is refused and the snapshot stays.
+
+### 2026-11-02: #1255 takes the Phase 6 student-ID generator
+
+- **Work done**: Merged the new `cursor/marks-phase-6-release` head into `cursor/marks-level-reports`. That head already contains `cursor/t060-widen-student-id-c495` ([#1252](https://github.com/KlassApp-Foundation/KlassApp/pull/1252)). `app/Services/StudentIdGeneratorService.php` is unchanged relative to #1244 and matches #1252. No rebase and no force-push.
+- **Files touched**: the #1244 merge, including `knowledge.md`. No edit of `StudentIdGeneratorService.php` on this branch.
+- **Status**: [#1255](https://github.com/KlassApp-Foundation/KlassApp/pull/1255) open. Not merged to main. No deploy.
 
 ### 2026-10-26: Marks Phase 4 one combined sheet per sitting
 

@@ -18,13 +18,14 @@ class MarksRelease extends Model
     public const STATUS_SCHEDULED = 'scheduled';
     public const STATUS_SENDING = 'sending';
     public const STATUS_RELEASED = 'released';
+    public const STATUS_FAILED = 'failed';
     public const STATUS_CANCELLED = 'cancelled';
 
     protected $table = 'marks_releases';
 
     protected $fillable = [
         'school_id', 'exam_id', 'scope', 'standard_link_id', 'scheduled_at', 'released_at',
-        'status', 'created_by', 'timezone', 'result', 'whatsapp_send',
+        'status', 'created_by', 'timezone', 'result', 'whatsapp_send', 'release_reason',
     ];
 
     protected $casts = [
