@@ -42,7 +42,10 @@ class ParentLinkRequestService
         ?string $flowToken = null,
         string $senderName = 'Parent',
     ): ParentLinkRequest {
-        $phone = WhatsAppPhoneHelper::normalise($phone);
+        $phone = $this->storedPhone($phone);
+        if ($phone === null) {
+            throw new \InvalidArgumentException('Unreadable phone number.');
+        }
 
         $parentName = trim((string) ($payload['parent_name'] ?? $senderName));
         $profileName = ParentLinkRequest::profileNameOrNull($senderName);
@@ -139,7 +142,10 @@ class ParentLinkRequestService
      */
     public function createFromKlassAppNumber(string $phone, User $student, ?string $profileName): ParentLinkRequest
     {
-        $phone = WhatsAppPhoneHelper::normalise($phone);
+        $phone = $this->storedPhone($phone);
+        if ($phone === null) {
+            throw new \InvalidArgumentException('Unreadable phone number.');
+        }
         $profileName = ParentLinkRequest::profileNameOrNull($profileName);
         $schoolId = (int) $student->school_id;
 
@@ -245,9 +251,20 @@ class ParentLinkRequestService
         return $message;
     }
 
+    /**
+     * E.164, or null when the input cannot be read. Never a made-up '+' number.
+     */
+    private function storedPhone(string $phone): ?string
+    {
+        return WhatsAppPhoneHelper::normalise($phone);
+    }
+
     public function findPendingForPhone(string $phone): ?ParentLinkRequest
     {
-        $phone = WhatsAppPhoneHelper::normalise($phone);
+        $phone = $this->storedPhone($phone);
+        if ($phone === null) {
+            return null;
+        }
 
         return ParentLinkRequest::query()
             ->where('phone', $phone)
@@ -269,7 +286,10 @@ class ParentLinkRequestService
         ?int $schoolId,
         string $schoolName = '',
     ): ?ParentLinkRequest {
-        $phone = WhatsAppPhoneHelper::normalise($phone);
+        $phone = $this->storedPhone($phone);
+        if ($phone === null) {
+            return null;
+        }
         $schoolName = trim($schoolName);
 
         $query = ParentLinkRequest::query()
@@ -301,7 +321,10 @@ class ParentLinkRequestService
      */
     public function findLatestRejectedForPhone(string $phone): ?ParentLinkRequest
     {
-        $phone = WhatsAppPhoneHelper::normalise($phone);
+        $phone = $this->storedPhone($phone);
+        if ($phone === null) {
+            return null;
+        }
 
         if ($this->findPendingForPhone($phone) !== null) {
             return null;

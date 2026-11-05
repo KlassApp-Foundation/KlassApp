@@ -3,8 +3,10 @@
 namespace App\Http\Requests;
 
 use App\Models\Country;
+use App\Models\School;
 use App\Models\User;
 use App\Services\OnboardingStepsService;
+use App\Support\PhoneCountry;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
@@ -30,18 +32,20 @@ class RegisterRequest extends FormRequest
                 'required',
                 'string',
                 'max:20',
-                'regex:/^(\+?256)?0?7[0578]\d{7}$/',
                 function (string $attribute, mixed $value, \Closure $fail) {
-                    $normalized = app(\App\Services\SchoolSignupBootstrapService::class)->normalizePhone((string) $value);
+                    $normalized = PhoneCountry::normalise((string) $value, $this->countryForPhone());
                     if ($normalized === null) {
-                        $fail('Enter a valid WhatsApp phone number.');
+                        $fail('Enter a valid phone number. The country code is filled in for Uganda; replace it if the number is from somewhere else.');
 
                         return;
                     }
-                    if (User::where('mobile_no', $normalized)->exists()) {
+                    $country = $this->countryForPhone();
+                    if (User::matchingPhone((string) $value, $country)->exists()) {
                         $fail('This phone number is already registered.');
                     }
-                    if (\App\Models\School::where('phone', $normalized)->exists()) {
+                    $schools = School::query();
+                    PhoneCountry::applyLookup($schools, 'phone', (string) $value, $country, null, 'registration_country');
+                    if ($schools->exists()) {
                         $fail('This phone number is already registered to a school.');
                     }
                 },
@@ -63,7 +67,7 @@ class RegisterRequest extends FormRequest
             'email.required' => 'Email is required.',
             'email.unique' => 'This email is already registered.',
             'phone.required' => 'Phone (WhatsApp) is required.',
-            'phone.regex' => 'Enter a valid Ugandan WhatsApp number (e.g. 07XX XXX XXX or +2567XXXXXXXX).',
+            'phone.max' => 'Enter a phone number of at most 20 characters.',
             'password.required' => 'Password is required.',
             'password.min' => 'Password must be at least 8 characters.',
             'password.confirmed' => 'Password confirmation does not match.',
@@ -71,6 +75,18 @@ class RegisterRequest extends FormRequest
             'termsandcondn.accepted' => 'Please agree to the Terms and Conditions.',
             'country.exists' => 'Choose a country from the list.',
         ];
+    }
+
+    /**
+     * The country a national number is read in: the one this person chose, or
+     * null so PhoneCountry falls back to Uganda when none is given. A number
+     * typed with its own country code ignores this entirely.
+     */
+    private function countryForPhone(): ?string
+    {
+        $country = trim((string) $this->input('country'));
+
+        return $country !== '' ? $country : null;
     }
 
     protected function prepareForValidation(): void
@@ -88,6 +104,11 @@ class RegisterRequest extends FormRequest
         $match = $this->matchingCountry(trim((string) $this->input('country')));
         if ($match !== null) {
             $this->merge(['country' => $match->name]);
+        }
+
+        $normalized = PhoneCountry::normalise((string) $this->input('phone'), $this->countryForPhone());
+        if ($normalized !== null) {
+            $this->merge(['phone' => $normalized]);
         }
     }
 

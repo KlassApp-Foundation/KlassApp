@@ -39,7 +39,7 @@ class GoogleAuthController extends Controller
                     ->withInput();
             }
 
-            if (User::where('mobile_no', $phone)->exists()) {
+            if (User::matchingPhone($phone)->exists()) {
                 return redirect()->route('register')
                     ->withErrors(['phone' => 'This phone number is already registered.'])
                     ->withInput();

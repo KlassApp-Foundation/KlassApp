@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\TeacherLoginRequest;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use App\Services\EmailVerificationGate;
 use Illuminate\Http\Request;
 use App\Models\Userprofile;
@@ -40,9 +41,10 @@ class LoginController extends Controller
 
         try
         {
- if (Auth::attempt(['mobile_no' => request('email'), 'password' => request('password'),'usergroup_id'=>5]))
+ $auth_user = User::findBySubmittedPhone((string) request('email'), 'Uganda', 5);
+            if ($auth_user && Hash::check((string) request('password'), (string) $auth_user->password))
             {
-                $auth_user   = Auth::user();
+                Auth::login($auth_user);
 
                 // Mobile-token sign-ins are gated on verified email too: no
                 // token is issued until the account's email is confirmed.

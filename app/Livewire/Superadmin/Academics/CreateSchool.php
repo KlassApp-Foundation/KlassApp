@@ -21,7 +21,7 @@ class CreateSchool extends Component
     #[Rule('required|email')]
     public $email;
 
-    #[Rule('required|numeric|digits:10')]
+    #[Rule('required|string|max:20')]
     public $phone;
 
     #[Rule('required')]

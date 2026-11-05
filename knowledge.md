@@ -3075,6 +3075,22 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-11-02: phone lookups do not cross countries or schools (#1251)
+
+- **Work done**: Merged the updated #1246 head into this branch. A WhatsApp sender id without a plus (`254712345678`) is read as that country code, not as a Ugandan national number. Login, password reset, one-time code, and WhatsApp sender lookup tests each reject a bare local collision across countries and schools, and still match the same-country number. `PhoneCountry::keys` does not return `0712345678` for `+254712345678`. No production data and no deploy.
+- **Files touched**: `app/Helpers/WhatsAppPhoneHelper.php`, `tests/Feature/Auth/PhoneLookupIsolationTest.php`, `knowledge.md`.
+- **Decision**: A number typed without a country code is still read as Uganda on login, reset, and a one-time code, because those requests have no school yet. It does not match another country's stored local number.
+- **Status**: OPEN [#1251](https://github.com/KlassApp-Foundation/KlassApp/pull/1251). Not merged. Production untouched.
+- **Evidence**: `vendor/bin/phpunit` for `PhoneLookupIsolationTest`, `InternationalPhoneTest`, `InternationalPhoneLookupTest`, `WhatsAppPhoneHelperCountryTest`, `CountryCodeCorrectionTest`, and `CountryDefaultTest` — 49 tests, 332 assertions, 0 failures.
+
+### 2026-11-02: combine the country default with international phones (#1251)
+
+- **Work done**: Merged `cursor/school-country-default-c495` (`5264b49b`) into `cursor/t065-international-phone-c495` with a merge commit. The only conflict was `app/Http/Requests/RegisterRequest.php`. Signup still defaults a blank country to Uganda and rejects a country that is not in the `countries` table (name, short code, or id). Phone numbers are normalised with `countryForPhone()` and libphonenumber, stored as E.164. The chosen country only supplies the dialling code; a number that already has another country code is accepted. No production data, deploy, or force-push. [#1246](https://github.com/KlassApp-Foundation/KlassApp/pull/1246) was already an ancestor of its base and was not changed.
+- **Files touched**: `app/Http/Requests/RegisterRequest.php`, `tests/Feature/Auth/RegisterRequestPhoneCountryTest.php`, `knowledge.md`. The merge also brought in the #1246 review fixes already on that branch.
+- **Decision**: Keep both behaviours. Do not restore the Uganda-only phone pattern.
+- **Status**: OPEN [#1251](https://github.com/KlassApp-Foundation/KlassApp/pull/1251) (`cursor/t065-international-phone-c495`), stacked on OPEN [#1246](https://github.com/KlassApp-Foundation/KlassApp/pull/1246). Not merged. Production untouched.
+- **Evidence**: `vendor/bin/phpunit` for `RegisterRequestPhoneCountryTest`, `CountryDefaultTest`, `InternationalPhoneLookupTest`, `InternationalPhoneTest`, and `RegisterUserProvisioningTest` — 31 tests, 204 assertions, 0 failures.
+
 ### 2026-11-02: a failed school save shows the country sentence only for a country change (#1246)
 
 - **Work done**: The school-details failure decision now lives in `countrySaveError.mjs` and is executed by a node test. A 500, a network failure, and a save that is not changing the country do not show "Confirm the country change". An unconfirmed change keeps that sentence and the typed values. A Google signup with no country is stored as Uganda. No production data and no deploy.
