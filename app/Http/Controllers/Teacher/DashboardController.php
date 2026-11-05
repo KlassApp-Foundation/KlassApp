@@ -29,15 +29,20 @@ class DashboardController extends Controller
         $teacher_id = Auth::id();
         $school_id  = Auth::user()->school_id;
 
-        $dashboard = $this->teacherDashboard( $school_id, $teacher_id );
+        $board = app(\App\Services\Teacher\TeacherHomeBoard::class)->forTeacher(Auth::user());
+        $state = (string) $request->query('state', '');
+        if (in_array($state, ['loading', 'error', 'empty'], true) && app()->environment(['local', 'testing'])) {
+            $board['state'] = $state;
+            if ($state === 'empty') {
+                $board['empty'] = true;
+            }
+        }
 
-        $dashboard['greeting'] = $this->dashboardGreeting(Auth::user());
-
-        $dashboard['pendingApprovals'] = $this->getPendingApprovals($school_id, $teacher_id);
-
-        $dashboard['upcomingDeadlines'] = $this->getUpcomingDeadlines($school_id, $teacher_id);
-
-        return view( '/teacher/dashboard/dashboard',['dashboard' => $dashboard]);
+        return view('/teacher/dashboard/dashboard', [
+            'board' => $board,
+            'school_id' => $school_id,
+            'teacher_id' => $teacher_id,
+        ]);
     }
 
     private function dashboardGreeting(\App\Models\User $user): array
