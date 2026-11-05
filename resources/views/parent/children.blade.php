@@ -28,7 +28,7 @@
                                 <div class="flex flex-wrap gap-2">
                                     <a href="{{ route('parent.dashboard', ['child' => $child['student_id']]) }}" class="ds-btn ds-btn-sm ds-btn-primary">Dashboard</a>
                                     <a href="{{ route('parent.children.fees', $child['student_id']) }}" class="ds-btn ds-btn-sm ds-btn-outline">Fees</a>
-                                    <a href="{{ route('parent.children.grades', $child['student_id']) }}" class="ds-btn ds-btn-sm ds-btn-outline">Grades</a>
+                                    <a href="{{ route('parent.children.grades', $child['student_id']) }}" class="ds-btn ds-btn-sm ds-btn-outline">Marks</a>
                                     <a href="{{ route('parent.children.attendance', $child['student_id']) }}" class="ds-btn ds-btn-sm ds-btn-outline">Attendance</a>
                                 </div>
                             </li>

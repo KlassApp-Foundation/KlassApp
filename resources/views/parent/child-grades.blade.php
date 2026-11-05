@@ -2,24 +2,14 @@
 @extends('layouts.parent.layout')
 
 @section('content')
-<div class="dashboard-shell dashboard-shell--parent px-4 md:px-6 py-4" data-testid="parent-child-grades-page">
-    @include('layouts.partials.page-header', [
-        'title' => 'Grades',
-        'subtitle' => $childName.($studentId ? ' · Student #'.$studentId : ''),
-    ])
-
-    <p class="mt-2 mb-4">
-        <a href="{{ route('parent.children') }}" class="ds-btn ds-btn-sm ds-btn-outline">← Children</a>
-        @if ($studentId)
-            <a href="{{ route('parent.dashboard', ['child' => $studentId]) }}" class="ds-btn ds-btn-sm ds-btn-outline">Dashboard</a>
+<div class="family-page" data-testid="parent-child-grades-page">
+    <main class="family-main" style="width:100% !important;margin-left:0 !important;margin-right:0 !important;">
+        <a class="family-back" href="{{ $links['dashboard'] }}">← {{ $childName }}</a>
+        @include('partials.message')
+        @include('portal.partials.family-states', ['loading' => $loading, 'panel' => 'marks', 'childName' => $childName, 'bundle' => $bundle])
+        @if(!$loading)
+            @include('portal.partials.family-marks', ['bundle' => $bundle, 'links' => $links])
         @endif
-    </p>
-
-    @include('portal.partials.results-year-filter', ['grades' => $grades])
-    @include('portal.partials.performance-chart', ['grades' => $grades])
-
-    <x-card title="Grades" padding="none" class="parent-panel mt-4" data-testid="parent-grades-panel">
-        @include('parent.partials.grades-panel', ['grades' => $grades, 'emptyMessage' => $message])
-    </x-card>
+    </main>
 </div>
 @endsection

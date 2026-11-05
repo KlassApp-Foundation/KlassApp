@@ -323,9 +323,12 @@ trait Dashboard
         $array = [];
 
         $academic_year      =   SiteHelper::getAcademicYear($school_id);
-        $total              =   Attendance::where('user_id',$user_id->id)->count();
-        $present            =   Attendance::where([['user_id',$user_id->id],['status',1]])->count();
-        $absent             =   Attendance::where([['user_id',$user_id->id],['status',0]])->count();
+        $attendanceBase     =   Attendance::query()->where('school_id', $school_id)->where('user_id', $user_id->id);
+        $total              =   (clone $attendanceBase)->count();
+        $present            =   (clone $attendanceBase)->where('status', 1)->count();
+        $absent             =   (clone $attendanceBase)->where('status', 0)->count();
+        $presentDays        =   (int) (clone $attendanceBase)->where('status', 1)->distinct()->count('date');
+        $absentDays         =   (int) (clone $attendanceBase)->where('status', 0)->distinct()->count('date');
 
         $date=date('Y-m-d H:i:s');
 
@@ -367,9 +370,9 @@ trait Dashboard
         {
             $array['absentPercentage']  = number_format((float)( $absent / $total )*100);
         }
-        // Attendance has AM+PM entries per day — divide by 2 for calendar day count
-        $array['presentDay']        = $present/2;
-        $array['absentDay']         = $absent/2;
+        // One calendar day, even when the register has a morning and an afternoon row.
+        $array['presentDay']        = $presentDays;
+        $array['absentDay']         = $absentDays;
         $array['noticeboard']       = NoticeBoard::where([['school_id',$school_id],['academic_year_id',$academic_year->id],['type','!=','teacher']])->orWhere('standardLink_id',$standardLink_id)->orderBy('created_at','DESC')->take(5)->get();
         $array['upcomingeventCount']  = Events::where([['school_id',$school_id],['standard_id',$standardLink_id],['end_date','>',$date],['category','!=','holidays']])->count();
         $array['upcomingholidayCount']  = Events::where([['school_id',$school_id],['end_date','>=',$date],['category','=','holidays']])->count();

@@ -118,7 +118,7 @@ class ParentChildDataPagesTest extends TestCase
             ->get(route('parent.children.grades', $this->child->id))
             ->assertOk()
             ->assertSee('data-testid="parent-child-grades-page"', false)
-            ->assertSee('No results published');
+            ->assertSee('No results yet this term');
     }
 
     public function test_attendance_page_renders_html_shell(): void
@@ -127,6 +127,6 @@ class ParentChildDataPagesTest extends TestCase
             ->get(route('parent.children.attendance', $this->child->id))
             ->assertOk()
             ->assertSee('data-testid="parent-child-attendance-page"', false)
-            ->assertSee('No attendance yet');
+            ->assertSee('No attendance recorded for this period.');
     }
 }
