@@ -162,7 +162,14 @@
                                     </button>
                                     <div class="people-menu-pop" role="menu" hidden>
                                         @foreach($row['menu'] as $item)
-                                            <a role="menuitem" href="{{ $item['href'] }}">{{ $item['label'] }}</a>
+                                            @if(($item['method'] ?? 'get') === 'post')
+                                                <form method="POST" action="{{ $item['href'] }}">
+                                                    @csrf
+                                                    <button type="submit" role="menuitem">{{ $item['label'] }}</button>
+                                                </form>
+                                            @else
+                                                <a role="menuitem" href="{{ $item['href'] }}">{{ $item['label'] }}</a>
+                                            @endif
                                         @endforeach
                                     </div>
                                 </div>
@@ -197,7 +204,14 @@
                             </button>
                             <div class="people-menu-pop" role="menu" hidden>
                                 @foreach($row['menu'] as $item)
-                                    <a role="menuitem" href="{{ $item['href'] }}">{{ $item['label'] }}</a>
+                                    @if(($item['method'] ?? 'get') === 'post')
+                                        <form method="POST" action="{{ $item['href'] }}">
+                                            @csrf
+                                            <button type="submit" role="menuitem">{{ $item['label'] }}</button>
+                                        </form>
+                                    @else
+                                        <a role="menuitem" href="{{ $item['href'] }}">{{ $item['label'] }}</a>
+                                    @endif
                                 @endforeach
                             </div>
                         </div>

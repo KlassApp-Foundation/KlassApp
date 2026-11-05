@@ -116,7 +116,12 @@ class TeacherClassSetup extends Component
             $result = app(OnboardingEngine::class)->saveStudents($this->school(), $this->year(), $drafts, (int) $link->id);
             $createdCount = count($result['created'] ?? []);
             $otherClass = collect($result['skipped'] ?? [])->where('reason', 'another class')->count();
-            if ($otherClass > 0) {
+            $planSkip = collect($result['skipped'] ?? [])->first(
+                fn ($skip) => str_contains(strtolower((string) ($skip['reason'] ?? '')), 'plan allows')
+            );
+            if ($planSkip !== null) {
+                $this->report = $createdCount.' students added, '.count($result['skipped'] ?? []).' not imported. '.$planSkip['reason'];
+            } elseif ($otherClass > 0) {
                 $this->report = $createdCount.' students added, '.$otherClass.' rows skipped: they belong to another class';
             } else {
                 $this->report = $createdCount.' students added, '.count($result['skipped'] ?? []).' skipped';

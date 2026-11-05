@@ -8,6 +8,7 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 use App\AiAgents\Concerns\AuthorizesToshiAction;
 use App\AiAgents\Concerns\ConfirmsBeforeWrite;
 use App\AiAgents\Concerns\VerifiableTool;
+use App\Models\TeacherInvite;
 use App\Models\User;
 
 class AddTeacherTool implements Tool, VerifiableTool
@@ -63,15 +64,24 @@ class AddTeacherTool implements Tool, VerifiableTool
             return ['verified' => false, 'message' => 'Teacher email is required for verification.'];
         }
 
-        $exists = User::where('school_id', $schoolId)
-            ->where('usergroup_id', 5)
-            ->where('email', $email)
+        $emailKey = mb_strtolower($email);
+        $invited = TeacherInvite::query()
+            ->where('school_id', $schoolId)
+            ->where('email', $emailKey)
+            ->whereNull('claimed_at')
+            ->whereNull('revoked_at')
             ->exists();
+        $joined = User::query()
+            ->where('school_id', $schoolId)
+            ->where('usergroup_id', 5)
+            ->whereRaw('lower(email) = ?', [$emailKey])
+            ->exists();
+        $exists = $invited || $joined;
 
         return [
             'verified' => $exists,
             'message' => $exists
-                ? 'Teacher record confirmed in database.'
+                ? 'Teacher invite confirmed for this school.'
                 : 'Teacher was not found after creation.',
         ];
     }

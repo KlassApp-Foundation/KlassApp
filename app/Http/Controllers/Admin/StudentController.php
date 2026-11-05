@@ -169,6 +169,11 @@ class StudentController extends Controller
 
         $academic_year = SiteHelper::getAcademicYear($school_id);
 
+        $plan = app(\App\Services\PlanLimitService::class)->status((int) $school_id, 'students');
+        if ($plan['blocked']) {
+            return redirect()->back()->with('overlimit', $plan['message']);
+        }
+
         $file = $request->file('avatar');
         if($file)
         {

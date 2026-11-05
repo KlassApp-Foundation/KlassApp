@@ -9,6 +9,7 @@ use App\Models\School;
 use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
+use App\Models\ActivityLog;
 use App\Models\TeacherInvite;
 use App\Models\User;
 use App\Models\Userprofile;
@@ -47,6 +48,7 @@ class ClassTeacherInviteServiceTest extends TestCase
         $link = $this->stream($inviter->school_id);
         $section = $link->section;
         $result = ClassTeacherInviteService::invite($inviter, $link, [
+            'confirmed' => true,
             'name'  => 'New Teacher',
             'email' => 'newteacher@school.ug',
             'phone' => '0777000000',
@@ -88,10 +90,18 @@ class ClassTeacherInviteServiceTest extends TestCase
     {
         $inviter = $this->admin();
         $existingTeacher = $this->teacher($inviter->school_id, 'existing@school.ug');
+        ActivityLog::query()->create([
+            'log_name' => 'login',
+            'description' => 'Logged In',
+            'causer_id' => $existingTeacher->id,
+            'causer_type' => User::class,
+            'school_id' => $existingTeacher->school_id,
+        ]);
         $link = $this->stream($inviter->school_id);
         $section = $link->section;
 
         $result = ClassTeacherInviteService::invite($inviter, $link, [
+            'confirmed' => true,
             'email'                => 'existing@school.ug',
             'existing_teacher_id'  => $existingTeacher->id,
         ]);
@@ -126,6 +136,7 @@ class ClassTeacherInviteServiceTest extends TestCase
         $link = $this->stream($this->createSchool()->id);
 
         $result = ClassTeacherInviteService::invite($inviter, $link, [
+            'confirmed' => true,
             'name'  => 'Teacher',
             'email' => 't@school.ug',
         ]);
@@ -140,6 +151,7 @@ class ClassTeacherInviteServiceTest extends TestCase
         $otherSchoolLink = $this->stream($this->createSchool()->id);
 
         $result = ClassTeacherInviteService::invite($inviter, $otherSchoolLink, [
+            'confirmed' => true,
             'name'  => 'Teacher',
             'email' => 't@school.ug',
         ]);
@@ -155,6 +167,7 @@ class ClassTeacherInviteServiceTest extends TestCase
         $link = $this->stream($schoolId, ['status' => 0]);
 
         $result = ClassTeacherInviteService::invite($inviter, $link, [
+            'confirmed' => true,
             'name'  => 'Teacher',
             'email' => 't@school.ug',
         ]);
@@ -189,6 +202,7 @@ class ClassTeacherInviteServiceTest extends TestCase
         ]);
 
         $result = ClassTeacherInviteService::invite($inviter, $link, [
+            'confirmed' => true,
             'name'  => 'Teacher',
             'email' => 't@school.ug',
         ]);
@@ -205,6 +219,7 @@ class ClassTeacherInviteServiceTest extends TestCase
         User::factory()->create(['email' => 'dup@school.ug']);
 
         $result = ClassTeacherInviteService::invite($inviter, $link, [
+            'confirmed' => true,
             'name'  => 'Teacher',
             'email' => 'dup@school.ug',
         ]);
@@ -219,6 +234,7 @@ class ClassTeacherInviteServiceTest extends TestCase
         $link = $this->stream($inviter->school_id);
 
         $result = ClassTeacherInviteService::invite($inviter, $link, [
+            'confirmed' => true,
             'name'  => '',
             'email' => 't@school.ug',
         ]);
@@ -233,6 +249,7 @@ class ClassTeacherInviteServiceTest extends TestCase
         $link = $this->stream($inviter->school_id);
 
         $result = ClassTeacherInviteService::invite($inviter, $link, [
+            'confirmed' => true,
             'name'  => 'Teacher',
             'email' => 'not-an-email',
         ]);
@@ -251,6 +268,7 @@ class ClassTeacherInviteServiceTest extends TestCase
         $link = $this->stream($inviter->school_id);
 
         $result = ClassTeacherInviteService::invite($inviter, $link, [
+            'confirmed' => true,
             'email'               => 'any@school.ug',
             'existing_teacher_id' => 999999,
         ]);
@@ -271,6 +289,7 @@ class ClassTeacherInviteServiceTest extends TestCase
         $link = $this->stream($inviter->school_id);
 
         $result = ClassTeacherInviteService::invite($inviter, $link, [
+            'confirmed' => true,
             'email'               => 'other@school.ug',
             'existing_teacher_id' => $otherTeacher->id,
         ]);
@@ -286,6 +305,7 @@ class ClassTeacherInviteServiceTest extends TestCase
         $link = $this->stream($inviter->school_id);
 
         $result = ClassTeacherInviteService::invite($inviter, $link, [
+            'confirmed' => true,
             'email'               => 'wrong@school.ug',
             'existing_teacher_id' => $existingTeacher->id,
         ]);
@@ -301,6 +321,7 @@ class ClassTeacherInviteServiceTest extends TestCase
         $link = $this->stream($inviter->school_id, ['class_teacher_id' => $existingTeacher->id]);
 
         $result = ClassTeacherInviteService::invite($inviter, $link, [
+            'confirmed' => true,
             'email'               => 'already@school.ug',
             'existing_teacher_id' => $existingTeacher->id,
         ]);
@@ -320,6 +341,7 @@ class ClassTeacherInviteServiceTest extends TestCase
         $link = $this->stream($inviter->school_id);
 
         $result = ClassTeacherInviteService::invite($inviter, $link, [
+            'confirmed' => true,
             'email'               => 'student@school.ug',
             'existing_teacher_id' => $studentUser->id,
         ]);

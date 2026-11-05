@@ -28,6 +28,7 @@ use App\Support\PhoneCountry;
 use App\Support\UserProvisioning;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -1821,7 +1822,8 @@ class OnboardingEngine
     // ── Phase 1C: Teacher / Student / WhatsApp / Plan ──────────────────
 
     /**
-     * Create teacher users with random passwords and is_reset=1.
+     * Create teacher users with no password. A real email gets a setup link.
+     * A generated placeholder is stored and is not invited.
      *
      * Each entry in $teachers must contain at least 'name' and 'email'.
      * Optional keys: 'phone', 'standardLink_id', 'subject_id',
@@ -1839,18 +1841,29 @@ class OnboardingEngine
     public function saveTeachers(School $school, AcademicYear $year, array $teachers): array
     {
         try {
-            return DB::transaction(function () use ($school, $year, $teachers) {
+            $result = DB::transaction(function () use ($school, $year, $teachers) {
                 $created = [];
                 $skipped = [];
                 $batchEmails = [];
+                $plan = app(PlanLimitService::class)->status((int) $school->id, 'teachers');
+                $remaining = $plan['remaining'];
+                $createdCount = 0;
+                $planMessage = null;
 
                 // Pass 1: refuse colliding emails before creating anyone.
+                // Rows beyond the plan's remaining slots are not attempted, so a
+                // duplicate in the tail cannot fail the rows that will import.
+                $validSeen = 0;
                 foreach ($teachers as $draft) {
                     $name = trim((string) ($draft['name'] ?? ''));
                     $email = trim((string) ($draft['email'] ?? ''));
                     if ($name === '' || $email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
                         continue;
                     }
+                    if ($remaining !== null && $validSeen >= $remaining) {
+                        continue;
+                    }
+                    $validSeen++;
                     $emailKey = Str::lower($email);
                     if (isset($batchEmails[$emailKey])) {
                         throw ValidationException::withMessages([
@@ -1873,6 +1886,17 @@ class OnboardingEngine
                         continue;
                     }
 
+                    if ($remaining !== null && $createdCount >= $remaining) {
+                        $planMessage ??= app(PlanLimitService::class)
+                            ->status((int) $school->id, 'teachers')['message'];
+                        $skipped[] = [
+                            'name' => $name,
+                            'email' => $email,
+                            'reason' => $planMessage ?? 'Plan limit reached. Talk to sales to add more.',
+                        ];
+                        continue;
+                    }
+
                     $phone = $this->normaliseOnboardingPhone($school, (string) ($draft['phone'] ?? ''), 'teachers', false, 'Teacher '.$name);
 
                     $teacher = User::create([
@@ -1880,11 +1904,10 @@ class OnboardingEngine
                         'usergroup_id'   => 5,
                         'name'            => $name,
                         'email'           => $email,
-                        // FLAGGED(product-decision): a new teacher gets a random password, not an invite link. see docs/onboarding-engine-plan.md
-                        'password'        => bcrypt(Str::random(16)),
+                        'password'        => null,
                         'status'          => 'active',
                         'email_verified'  => 1,
-                        'is_reset'        => 1,
+                        'is_reset'        => 0,
                         'mobile_no'       => $phone ?: null,
                     ]);
 
@@ -1930,18 +1953,50 @@ class OnboardingEngine
                         ]);
                     }
 
+                    $createdCount++;
                     $created[] = ['name' => $name, 'email' => $email, 'user_id' => $teacher->id];
                 }
 
-                $result = ['created' => $created, 'skipped' => $skipped];
                 DashboardCache::forgetRosterCounts((int) $school->id);
 
-                return $result;
+                return ['created' => $created, 'skipped' => $skipped];
             });
+
+            $this->inviteCreatedTeachers($school, $result['created'] ?? []);
+
+            return $result;
         } catch (UniqueConstraintViolationException $e) {
             throw ValidationException::withMessages([
                 'teachers' => $this->describeUniqueConstraintViolation($e),
             ]);
+        }
+    }
+
+    /**
+     * @param  list<array{user_id?: int}>  $created
+     */
+    private function inviteCreatedTeachers(School $school, array $created): void
+    {
+        $actor = Auth::user();
+        $actor = $actor instanceof User && (int) $actor->school_id === (int) $school->id ? $actor : null;
+        $invites = app(TeacherAccountInviteService::class);
+
+        foreach ($created as $row) {
+            $teacher = User::query()
+                ->where('school_id', $school->id)
+                ->where('usergroup_id', 5)
+                ->whereKey((int) ($row['user_id'] ?? 0))
+                ->first();
+            if ($teacher instanceof User) {
+                $invites->inviteIfNeeded(
+                    $teacher,
+                    $actor,
+                    null,
+                    null,
+                    true,
+                    TeacherInviteLinkService::CONTEXT_ADMIN_BULK,
+                );
+            }
         }
     }
 
@@ -2002,6 +2057,10 @@ class OnboardingEngine
             return DB::transaction(function () use ($school, $year, $students, $onlyStandardLinkId) {
                 $created = [];
                 $skipped = [];
+                $plan = app(PlanLimitService::class)->status((int) $school->id, 'students');
+                $remaining = $plan['remaining'];
+                $createdCount = 0;
+                $planMessage = null;
 
                 $pinned = null;
                 if ($onlyStandardLinkId !== null) {
@@ -2022,13 +2081,21 @@ class OnboardingEngine
                 $unmatchedClasses = [];
                 $batchEmails = [];
                 $batchLins = [];
+                $validSeen = 0;
                 foreach ($students as $draft) {
                     $name = trim((string) ($draft['name'] ?? ''));
                     $className = trim((string) ($draft['class'] ?? ''));
                     $stream = trim((string) ($draft['stream'] ?? ''));
-                    if ($pinned !== null && $name !== '' && $this->rowNamesAnotherClass($pinned, $className, $stream)) {
+                    if ($name === '') {
                         continue;
                     }
+                    if ($remaining !== null && $validSeen >= $remaining) {
+                        continue;
+                    }
+                    if ($pinned !== null && $this->rowNamesAnotherClass($pinned, $className, $stream)) {
+                        continue;
+                    }
+                    $validSeen++;
                     if ($pinned === null && $name !== '' && $className !== '') {
                         if (! $this->ensureStandardLinkForClass($school, $year, $className, $stream !== '' ? $stream : null)) {
                             $label = $stream !== '' ? "{$className} / stream {$stream}" : "'{$className}'";
@@ -2095,6 +2162,17 @@ class OnboardingEngine
                         continue;
                     }
 
+                    if ($remaining !== null && $createdCount >= $remaining) {
+                        $planMessage ??= app(PlanLimitService::class)
+                            ->status((int) $school->id, 'students')['message'];
+                        $skipped[] = [
+                            'name' => $name,
+                            'reason' => $planMessage ?? 'Plan limit reached. Talk to sales to add more.',
+                            'row' => (int) ($draft['row'] ?? 0),
+                        ];
+                        continue;
+                    }
+
                     $providedEmail = trim((string) ($draft['email'] ?? ''));
                     if ($providedEmail === '') {
                         $email = $this->allocateGeneratedEmail($school, 'student', '.local');
@@ -2116,6 +2194,7 @@ class OnboardingEngine
                         'is_reset'        => 1,
                         'mobile_no'       => $phone ?: null,
                     ]);
+                    $createdCount++;
 
                     $gender = strtolower(trim((string) ($draft['gender'] ?? '')));
                     if (! in_array($gender, ['male', 'female'], true)) {
@@ -2738,7 +2817,11 @@ class OnboardingEngine
             }
         }
 
-        $plan = Plan::query()->where('id', $planId)->where('is_active', 1)->first();
+        $plan = Plan::query()
+            ->where('id', $planId)
+            ->where('is_active', 1)
+            ->where('is_platform_only', 0)
+            ->first();
         if (! $plan) {
             throw ValidationException::withMessages(['plan' => 'That plan is not available.']);
         }

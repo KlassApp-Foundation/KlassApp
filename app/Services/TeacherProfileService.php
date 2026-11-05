@@ -88,7 +88,11 @@ class TeacherProfileService
             'joining_date' => $this->dateLabel($profile?->joining_date),
             'job_type' => $this->jobTypeLabel($record?->job_type),
             'phone' => filled($teacher->mobile_no) ? (string) $teacher->mobile_no : 'Not recorded',
-            'email' => filled($teacher->email) ? (string) $teacher->email : 'Not recorded',
+            'email' => app(TeacherAccountInviteService::class)->emailIsUsable($teacher->email)
+                ? (string) $teacher->email
+                : 'Not recorded',
+            'needs_email' => ! app(TeacherAccountInviteService::class)->emailIsUsable($teacher->email),
+            'can_resend' => app(TeacherAccountInviteService::class)->canResend($teacher),
             'last_login' => $this->lastLogin($schoolId, $teacher->id),
             'classes' => $this->classesTile($assignments),
             'subjects' => $this->subjectsTile($assignments),

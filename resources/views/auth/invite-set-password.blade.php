@@ -3,6 +3,10 @@
 
 @section('title', 'Set Your Password — ' . ($school->name ?? 'KlassApp'))
 
+@push('head')
+  <meta name="referrer" content="no-referrer">
+@endpush
+
 @section('content')
 <div class="ap-page" data-ap-paper="vintage" data-ap-layout="split" data-ap-screen="invite-set-password" data-testid="invite-password-form">
   @include('auth.preview._paper-bg')

@@ -241,7 +241,7 @@ class PlanLimitNonBlockingPathsTest extends TestCase
         $this->assertStringContainsString("session()->flash('overlimit'", $admission);
 
         $links = file_get_contents(app_path('Http/Controllers/Admin/TeacherLinkImportController.php'));
-        $this->assertStringContainsString('enforcePlanLimit', $links);
+        $this->assertStringContainsString('PlanLimitService', $links);
         $this->assertStringContainsString('overlimit', $links);
     }
 }

@@ -197,6 +197,22 @@ class OnboardingStepsService
         return (new UgandaOnboardingProfile())->matches($country);
     }
 
+    /**
+     * The country an onboarding answer means when the person left it blank.
+     *
+     * This is the only place that decides the default. Toshi v1 and the v2
+     * wizard both call it and store what it returns; neither keeps its own
+     * "?: 'Uganda'" fallback, so the rule cannot drift between them.
+     */
+    public const DEFAULT_COUNTRY = 'Uganda';
+
+    public static function countryOrDefault(?string $answer): string
+    {
+        $answer = trim((string) $answer);
+
+        return $answer !== '' ? $answer : self::DEFAULT_COUNTRY;
+    }
+
     public static function isUnebCurriculum(?string $curriculum): bool
     {
         return strcasecmp(trim((string) $curriculum), 'uneb') === 0;
@@ -491,6 +507,7 @@ class OnboardingStepsService
     {
         $plans = Plan::query()
             ->where('is_active', 1)
+            ->where('is_platform_only', 0)
             ->where(function ($q) {
                 $q->whereRaw('LOWER(name) in (?, ?, ?)', ['freemium', 'growth', 'premium'])
                     ->orWhereRaw('LOWER(display_name) in (?, ?, ?)', ['freemium', 'growth', 'premium']);
@@ -499,7 +516,11 @@ class OnboardingStepsService
             ->get();
 
         if ($plans->isEmpty()) {
-            return Plan::query()->where('is_active', 1)->orderBy('order')->first();
+            return Plan::query()
+                ->where('is_active', 1)
+                ->where('is_platform_only', 0)
+                ->orderBy('order')
+                ->first();
         }
 
         $sorted = $plans->sortBy(function (Plan $plan) {

@@ -9,6 +9,8 @@ use App\Http\Controllers\Controller;
 use App\Mail\ResetPasswordCodeMail;
 use App\Models\Authentication;
 use App\Models\User;
+use App\Services\TeacherAccountInviteService;
+use App\Support\PendingPassword;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -31,8 +33,13 @@ class ForgotPasswordController extends Controller
         $request->validate(['email' => 'required|email']);
 
         $user = User::where('email', $request->email)->first();
-        if (!$user) {
-            // Don't reveal whether the email exists — same message either way
+        if (!$user || PendingPassword::isUnset($user)) {
+            if ($user && PendingPassword::isUnset($user) && (int) $user->usergroup_id === 5) {
+                app(TeacherAccountInviteService::class)->inviteIfNeeded($user, null);
+            }
+
+            // Don't reveal whether the email exists — same message either way.
+            // An account that has not set a password is sent its setup link, not a reset code.
             return redirect()->route('password.reset.code', ['email' => $request->email])
                 ->with('status', 'If that email is registered, a reset code has been sent.');
         }

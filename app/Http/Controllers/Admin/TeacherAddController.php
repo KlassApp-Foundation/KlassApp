@@ -197,6 +197,14 @@ class TeacherAddController extends Controller
         {
           $usergroup_id=5;
         }
+
+        if ((int) $usergroup_id === 5) {
+          $plan = app(\App\Services\PlanLimitService::class)->status((int) $school_id, 'teachers');
+          if ($plan['blocked']) {
+            return redirect()->back()->with('overlimit', $plan['message']);
+          }
+        }
+
         // dd($request);
         $user = $this->CreateTeacher($request , $school_id , $academic_year , $path,$usergroup_id);
         // dd($user);

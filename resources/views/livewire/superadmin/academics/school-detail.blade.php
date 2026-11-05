@@ -79,7 +79,7 @@
                 <p>City</p>
             </div>
             <div class="text-sm lg:w-3/4 md:w-3/4">
-                <p class="leading-loose txt-gray-light">{{ $schoolDetail->city->name }}</p>
+                <p class="leading-loose txt-gray-light">{{ $schoolDetail->city?->name ?? '—' }}</p>
             </div>
         </div>
 
@@ -88,7 +88,7 @@
                 <p>Country</p>
             </div>
             <div class="text-sm lg:w-3/4 md:w-3/4">
-                <p class="leading-loose txt-gray-light">{{ $schoolDetail->country->name }}</p>
+                <p class="leading-loose txt-gray-light">{{ $schoolDetail->country?->name ?? '—' }}</p>
             </div>
         </div>
 
@@ -190,6 +190,42 @@
         
     </div>
 </div>
+
+@if($schoolDetail)
+<div class="my-3 p-3 w-full bg-white shadow" data-testid="school-current-plan-card">
+    <div class="font-bold text-sm mb-2">Current plan (limits)</div>
+    <p class="text-sm text-gray-600 mb-3">
+        @if($currentPlan?->plan)
+            <span class="font-semibold">{{ $currentPlan->plan->display_name ?: $currentPlan->plan->name }}</span>
+            · teachers {{ $limits['limit'] === null ? 'unlimited' : $limits['limit'].' ('.$limits['count'].' now)' }}
+            · students {{ $studentLimits['limit'] === null ? 'unlimited' : $studentLimits['limit'].' ('.$studentLimits['count'].' now)' }}
+        @else
+            No current plan. The school is unlimited until a plan is assigned.
+        @endif
+    </p>
+    @if(session('success'))
+        <div class="bg-green-100 border border-green-400 text-green-800 px-3 py-2 rounded mb-2 text-sm" role="status">{{ session('success') }}</div>
+    @endif
+    <form wire:submit="assignPlan" class="flex flex-col md:flex-row gap-2 md:items-end">
+        <label class="flex-1 text-sm font-semibold">
+            Plan
+            <select wire:model="selectedPlanId" class="mt-1 w-full rounded border-gray-300 text-sm" data-testid="school-plan-select">
+                <option value="">Choose a plan</option>
+                @foreach($plans as $plan)
+                    <option value="{{ $plan->id }}">
+                        {{ $plan->display_name ?: $plan->name }}
+                        — {{ (int) $plan->no_of_users > 0 ? $plan->no_of_users.' teachers' : 'unlimited teachers' }},
+                        {{ (int) $plan->no_of_students > 0 ? $plan->no_of_students.' students' : 'unlimited students' }}
+                        @if($plan->is_platform_only) (platform only) @endif
+                    </option>
+                @endforeach
+            </select>
+        </label>
+        <button type="submit" class="px-3 py-2 rounded bg-blue-600 text-white text-sm" data-testid="school-plan-save">Save plan</button>
+    </form>
+    @error('selectedPlanId')<p class="text-sm text-red-600 mt-1">{{ $message }}</p>@enderror
+</div>
+@endif
 
 <div class="text-xl ml-3 font-bold mt-4">Admin Accounts</div>
 <div class="text-sm text-gray-500 mb-2">Admins created during onboarding or manually</div>
