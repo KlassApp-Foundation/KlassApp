@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\StudentParentAccountInviteService;
 use App\Services\StudentProfileService;
 use App\Support\StudentProfileTabs;
 use Illuminate\Http\Request;
@@ -32,5 +33,15 @@ class StudentProfileController extends Controller
         $record = $profiles->deactivate($schoolId, $student);
 
         return redirect('/admin/students/'.$record->id);
+    }
+
+    public function resendSetup(int $student, StudentProfileService $profiles, StudentParentAccountInviteService $invites)
+    {
+        $schoolId = (int) Auth::user()->school_id;
+        $record = $profiles->find($schoolId, $student);
+        $result = $invites->resend(Auth::user(), $record);
+
+        return redirect('/admin/students/'.$record->id)
+            ->with($result['ok'] ? 'successmessage' : 'errormessage', $result['message']);
     }
 }

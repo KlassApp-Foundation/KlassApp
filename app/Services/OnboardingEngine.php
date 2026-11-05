@@ -25,7 +25,6 @@ use App\Services\StudentIdGeneratorService;
 use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
 use App\Helpers\DashboardCache;
 use App\Support\PhoneCountry;
-use App\Support\UserProvisioning;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -2079,20 +2078,23 @@ class OnboardingEngine
     }
 
     /**
-     * Create student users with random passwords, is_reset=1, and KlassApp IDs.
+     * Create student users with no password, is_reset=1, and KlassApp IDs.
      *
      * Each entry in $students must contain at least 'name'.
      * Optional keys: 'class' (section name to resolve StandardLink), 'email',
      * 'phone' (the student's own number), 'parent' or 'parent_name',
-     * 'parent_phone', 'school_student_id', 'lin' (Learner Identification Number),
+     * 'parent_phone', 'parent_email', 'school_student_id',
+     * 'lin' (Learner Identification Number),
      * 'board_registration_number', 'gender'
      * (male|female on userprofiles), 'date_of_birth' (optional).
      *
      * A parent name and/or parent phone creates or reuses a guardian in this
      * school. The name and phone are stored on that guardian. Guardians in the
      * same school with the same normalised phone are one person, so siblings
-     * share them. The parent phone is never written onto the student. Nothing
-     * is sent: no mail, no invitation, no WhatsApp user or message.
+     * share them. The parent phone is never written onto the student. No
+     * password is stored for a new student or parent. After the roster is
+     * saved, each one with a real email gets a one-time setup link by email;
+     * placeholder addresses and people without an email get nothing.
      *
      * school_student_id = school-internal ID; lin = Uganda national LIN.
      * They are distinct columns on student_academics — never aliases.
@@ -2112,7 +2114,7 @@ class OnboardingEngine
     public function saveStudents(School $school, AcademicYear $year, array $students, ?int $onlyStandardLinkId = null): array
     {
         try {
-            return DB::transaction(function () use ($school, $year, $students, $onlyStandardLinkId) {
+            $result = DB::transaction(function () use ($school, $year, $students, $onlyStandardLinkId) {
                 $created = [];
                 $skipped = [];
                 $plan = app(PlanLimitService::class)->status((int) $school->id, 'students');
@@ -2200,6 +2202,7 @@ class OnboardingEngine
                 }
 
                 $parentsByPhone = $this->importedParentsByPhone($school);
+                $createdParents = [];
 
                 foreach ($students as $draft) {
                     $name = trim((string) ($draft['name'] ?? ''));
@@ -2245,8 +2248,8 @@ class OnboardingEngine
                         'usergroup_id'   => 6,
                         'name'            => $name,
                         'email'           => $email,
-                        // FLAGGED(product-decision): a new student gets a random password, not an invite link. see docs/onboarding-engine-plan.md
-                        'password'        => bcrypt(Str::random(16)),
+                        // No password exists until the student opens their setup link.
+                        'password'        => null,
                         'status'          => 'active',
                         'email_verified'  => 1,
                         'is_reset'        => 1,
@@ -2330,7 +2333,10 @@ class OnboardingEngine
                         'board_registration_number' => $boardReg !== '' ? $boardReg : null,
                     ]);
 
-                    $this->linkImportedParent($school, $student, $draft, $parentsByPhone);
+                    $newParent = $this->linkImportedParent($school, $student, $draft, $parentsByPhone);
+                    if ($newParent instanceof User) {
+                        $createdParents[] = $newParent;
+                    }
 
                     $created[] = [
                         'name'         => $name,
@@ -2342,7 +2348,11 @@ class OnboardingEngine
                     ];
                 }
 
-                $result = ['created' => $created, 'skipped' => $skipped];
+                $result = [
+                    'created' => $created,
+                    'skipped' => $skipped,
+                    'created_parents' => $createdParents,
+                ];
                 DashboardCache::forgetRosterCounts((int) $school->id);
 
                 return $result;
@@ -2352,6 +2362,16 @@ class OnboardingEngine
                 'students' => $this->describeUniqueConstraintViolation($e),
             ]);
         }
+
+        $this->inviteCreatedStudentsAndParents(
+            $school,
+            $result['created'] ?? [],
+            $result['created_parents'] ?? [],
+        );
+
+        unset($result['created_parents']);
+
+        return $result;
     }
 
     /**
@@ -2381,17 +2401,19 @@ class OnboardingEngine
 
     /**
      * Create or reuse this school's guardian and link the student.
-     * No mail, invitation, or WhatsApp record is created.
+     * A new guardian has no password. The setup link (when the guardian has
+     * a real email) is sent by the caller after the roster transaction.
      *
      * @param  array<string, mixed>  $draft
      * @param  array<string, User>  $parentsByPhone
+     * @return User|null The guardian when this call created it, null when reused.
      */
-    private function linkImportedParent(School $school, User $student, array $draft, array &$parentsByPhone): void
+    private function linkImportedParent(School $school, User $student, array $draft, array &$parentsByPhone): ?User
     {
         $parentName = trim((string) ($draft['parent'] ?? $draft['parent_name'] ?? ''));
         $rawPhone = trim((string) ($draft['parent_phone'] ?? ''));
         if ($parentName === '' && $rawPhone === '') {
-            return;
+            return null;
         }
 
         $phone = $rawPhone === ''
@@ -2399,17 +2421,26 @@ class OnboardingEngine
             : $this->normaliseOnboardingPhone($school, $rawPhone, 'students', false, 'Parent of '.$student->name);
 
         $parent = ($phone !== '' && isset($parentsByPhone[$phone])) ? $parentsByPhone[$phone] : null;
+        $created = null;
 
         if ($parent === null) {
-            // FLAGGED(product-decision): a new parent gets a random password, not an invite link. see docs/onboarding-engine-plan.md
-            $password = UserProvisioning::randomPasswordAttributes();
+            $parentEmail = trim((string) ($draft['parent_email'] ?? ''));
+            if ($parentEmail !== '' && filter_var($parentEmail, FILTER_VALIDATE_EMAIL) === false) {
+                throw ValidationException::withMessages([
+                    'students' => "Parent of {$student->name} has an invalid email '{$parentEmail}'. Fix it or leave it blank.",
+                ]);
+            }
+
+            // No password is stored. The parent can only receive a setup link
+            // when the school supplied a real address; otherwise they keep the
+            // WhatsApp magic-login route and the admin can add an email later.
             $parent = User::create([
                 'school_id' => $school->id,
                 'usergroup_id' => 7,
                 'name' => $parentName !== '' ? $parentName : 'Parent',
-                'email' => $this->allocateGeneratedEmail($school, 'parent', '.local'),
-                'password' => $password['password'],
-                'is_reset' => $password['is_reset'],
+                'email' => $parentEmail !== '' ? $parentEmail : $this->allocateGeneratedEmail($school, 'parent', '.local'),
+                'password' => null,
+                'is_reset' => 1,
                 'email_verified' => 1,
                 'mobile_no' => $phone !== '' ? $phone : null,
             ]);
@@ -2425,6 +2456,8 @@ class OnboardingEngine
             if ($phone !== '') {
                 $parentsByPhone[$phone] = $parent;
             }
+
+            $created = $parent;
         }
 
         StudentParentLink::query()->firstOrCreate(
@@ -2435,6 +2468,50 @@ class OnboardingEngine
             ],
             ['status' => 1]
         );
+
+        return $created;
+    }
+
+    /**
+     * Email a setup link to every newly imported student and parent that has
+     * a real address. Placeholder addresses (`.local`, `*.test`, `school.edu`)
+     * and people without an email send nothing.
+     *
+     * @param  list<array{user_id?: int}>  $students
+     * @param  list<User>  $parents
+     */
+    private function inviteCreatedStudentsAndParents(School $school, array $students, array $parents): void
+    {
+        $actor = Auth::user();
+        $actor = $actor instanceof User && (int) $actor->school_id === (int) $school->id ? $actor : null;
+        $invites = app(StudentParentAccountInviteService::class);
+
+        foreach ($students as $row) {
+            $student = User::query()
+                ->where('school_id', $school->id)
+                ->where('usergroup_id', 6)
+                ->whereKey((int) ($row['user_id'] ?? 0))
+                ->first();
+            if ($student instanceof User) {
+                $invites->inviteIfNeeded(
+                    $student,
+                    $actor,
+                    true,
+                    TeacherInviteLinkService::CONTEXT_ADMIN_BULK,
+                );
+            }
+        }
+
+        foreach ($parents as $parent) {
+            if ($parent instanceof User) {
+                $invites->inviteIfNeeded(
+                    $parent,
+                    $actor,
+                    true,
+                    TeacherInviteLinkService::CONTEXT_ADMIN_BULK,
+                );
+            }
+        }
     }
 
     private function canonicalParentPhone(School $school, string $phone): string

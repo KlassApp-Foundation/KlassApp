@@ -49,6 +49,7 @@ class ClassTeacherInviteController extends Controller
             ->get();
 
         $pendingInvites = TeacherInvite::where('school_id', $schoolId)
+            ->whereIn('role', ['class_teacher', 'teacher'])
             ->whereNull('claimed_at')
             ->whereNull('revoked_at')
             ->orderByDesc('created_at')

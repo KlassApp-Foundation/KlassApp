@@ -717,6 +717,7 @@ class PeopleListQuery
     {
         return TeacherInvite::query()
             ->where('school_id', $schoolId)
+            ->whereIn('role', ['class_teacher', 'teacher'])
             ->whereNull('claimed_at')
             ->where('expires_at', '>', now())
             ->selectRaw('lower(email)');
@@ -791,6 +792,7 @@ class PeopleListQuery
 
         return TeacherInvite::query()
             ->where('school_id', $schoolId)
+            ->whereIn('role', ['class_teacher', 'teacher'])
             ->whereNull('claimed_at')
             ->where('expires_at', '>', now())
             ->get()

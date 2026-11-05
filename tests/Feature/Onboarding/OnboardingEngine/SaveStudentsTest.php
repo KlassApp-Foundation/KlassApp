@@ -82,11 +82,11 @@ class SaveStudentsTest extends TestCase
         ]);
     }
 
-    public function test_creates_student_user_with_random_password(): void
+    public function test_creates_student_without_a_password(): void
     {
         $engine = app(OnboardingEngine::class);
 
-        $result = $engine->saveStudents($this->school, $this->year, [
+        $engine->saveStudents($this->school, $this->year, [
             ['name' => 'Alice Student'],
         ]);
 
@@ -94,9 +94,9 @@ class SaveStudentsTest extends TestCase
         $this->assertNotNull($student);
         $this->assertEquals(6, $student->usergroup_id);
         $this->assertEquals($this->school->id, $student->school_id);
-        // Random password — NOT 'password'
-        $this->assertFalse(\Hash::check('password', $student->password));
-        $this->assertEquals(60, strlen($student->password));
+        // No credential exists until the student opens a setup link.
+        $this->assertNull($student->password);
+        $this->assertSame(1, (int) $student->is_reset);
     }
 
     public function test_sets_is_reset_on_created_student(): void
