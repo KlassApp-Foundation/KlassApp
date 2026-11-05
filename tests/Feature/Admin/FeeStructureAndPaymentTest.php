@@ -446,6 +446,38 @@ class FeeStructureAndPaymentTest extends TestCase
         $this->assertNotContains($this->otherStudent->id, array_column($byClass, 'id'));
     }
 
+    public function test_fee_boards_show_empty_loading_and_a_class_filter(): void
+    {
+        $this->actingAs($this->admin)
+            ->get(route('admin.fees-categories', ['state' => 'empty']))
+            ->assertOk()
+            ->assertSee('No fees set up yet')
+            ->assertSee('Add the first fee')
+            ->assertDontSee('Other Fee School');
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.fees-categories', ['state' => 'loading']))
+            ->assertOk()
+            ->assertSee('Loading the fee structure')
+            ->assertSee('data-testid="fee-loading"', false);
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.fee-payments'))
+            ->assertOk()
+            ->assertSee('data-testid="family-filters-open"', false)
+            ->assertSee('All classes');
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.fee-payments', ['state' => 'empty']))
+            ->assertOk()
+            ->assertSee('Every student is paid up');
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.fee-payments', ['state' => 'error']))
+            ->assertOk()
+            ->assertSee("The payment wasn't recorded", false);
+    }
+
     private function balance(int $studentId): float
     {
         return $this->balanceForTerm(null, $studentId);

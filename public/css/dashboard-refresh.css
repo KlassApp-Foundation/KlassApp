@@ -5177,4 +5177,21 @@ td a.btn-danger:hover {
     }
     .family-filters-sheet__bar { display: flex; justify-content: space-between; align-items: center; }
     .family-filters-close { display: inline-flex; min-height: 44px; background: none; border: 0; font-weight: 600; color: #1D4ED8; }
+
+.family-page { padding: 12px 16px 24px; }
+.family-main { background: #fff; border: 1px solid #E2E8F0; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 16px; color: #1E293B; }
+.family-page-head, .teacher-actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; }
+.family-main h1, .family-main h2 { margin: 0; font-family: Sora, sans-serif; }
+.family-empty { border: 1px dashed #CBD5E1; border-radius: 14px; padding: 28px 16px; text-align: center; }
+.family-alert { background: #FEF2F2; border: 1px solid #FECACA; border-radius: 12px; padding: 14px; color: #7F1D1D; }
+.family-sk { background: #E2E8F0; border-radius: 8px; }
+.family-table-card { border: 1px solid #E2E8F0; border-radius: 14px; padding: 16px; }
+.family-filters-open { display: none; }
+.family-filters-sheet { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+@media (max-width: 767px) {
+    .family-page { padding: 0; }
+    .family-main { border-radius: 0; padding: 16px; }
+    .family-filters-open { display: inline-flex; min-height: 44px; }
+    .family-filters-sheet { display: none; }
+    .family-filters-sheet.is-open { display: flex; flex-direction: column; align-items: stretch; position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: #fff; padding: 16px; border-radius: 16px 16px 0 0; }
 }

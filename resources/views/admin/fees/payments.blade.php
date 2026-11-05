@@ -88,7 +88,63 @@
     </x-card>
 </div>
 
-@if(!empty($balances))
+@php
+    $feeState = (string) request()->query('state', '');
+    if (! in_array($feeState, ['loading', 'error', 'empty'], true) || ! app()->environment(['local', 'testing'])) {
+        $feeState = '';
+    }
+    $classOptions = collect($balances ?? [])->pluck('class_label')->filter()->unique()->values();
+@endphp
+@if($feeState === 'loading')
+    <section data-testid="fee-loading" aria-busy="true">
+        <div class="family-sk" style="height:24px;width:40%;"></div>
+        <div class="family-sk" style="height:48px;"></div>
+        <p>Loading balances…</p>
+    </section>
+@elseif($feeState === 'error' || $errors->any())
+    <section data-testid="fee-error" role="alert" class="family-alert">
+        <strong>The payment wasn't recorded</strong>
+        <p>Nothing was saved and no receipt went out. Your amount and date are still in the form.</p>
+        <a class="ds-btn ds-btn-primary" href="{{ url()->current() }}">Try again</a>
+    </section>
+@endif
+@if($feeState === '')
+<div class="family-filters" data-testid="fee-class-filter">
+    <button type="button" class="family-filters-open ds-btn ds-btn-outline" data-testid="family-filters-open">Filters</button>
+    <div id="fee-filters-sheet" class="family-filters-sheet">
+        <label for="fee-class-select">Class</label>
+        <select id="fee-class-select">
+            <option value="">All classes</option>
+            @foreach($classOptions as $className)
+                <option value="{{ $className }}">{{ $className }}</option>
+            @endforeach
+        </select>
+        <label><input type="checkbox" id="fee-only-owe"> Only students who owe</label>
+    </div>
+</div>
+<script>
+document.addEventListener('click', function (event) {
+    var open = event.target.closest && event.target.closest('[data-testid="family-filters-open"]');
+    var sheet = document.getElementById('fee-filters-sheet');
+    if (open && sheet) sheet.classList.toggle('is-open');
+});
+document.addEventListener('change', function (event) {
+    if (event.target.id !== 'fee-class-select' && event.target.id !== 'fee-only-owe') return;
+    var wanted = document.getElementById('fee-class-select').value;
+    document.querySelectorAll('.fee-balance-row').forEach(function (row) {
+        var show = wanted === '' || row.getAttribute('data-class') === wanted;
+        row.hidden = !show;
+    });
+});
+</script>
+@endif
+@if($feeState === 'empty')
+    <section class="family-empty" data-testid="fees-paid-up">
+        <h2>Every student is paid up</h2>
+        <p>Nothing to remind. New balances appear here when a fee is added or a term starts.</p>
+    </section>
+@endif
+@if(!empty($balances) && $feeState === '')
     <div data-testid="fee-balances" style="margin-bottom: 16px;">
         @if(session('reminder_result'))
             <p data-testid="fee-reminder-result" data-tone="{{ session('reminder_tone') === 'ready' ? 'ready' : 'plain' }}" style="margin: 0 0 8px; color: {{ session('reminder_tone') === 'ready' ? '#15803D' : '#0F172A' }};">{{ session('reminder_result') }}</p>
@@ -97,11 +153,11 @@
             <div style="padding: 12px 16px; font-weight: 700; color: #0F172A;">Students with a balance</div>
             <x-table :headers="['', 'Student', 'Balance', '']" striped>
                 @foreach($balances as $row)
-                    <tr data-testid="fee-balance-row">
+                    <tr class="fee-balance-row" data-testid="fee-balance-row" data-class="{{ $row['class_label'] ?? '' }}">
                         <td>
                             <input form="fee-reminder-bulk" type="checkbox" name="student_ids[]" value="{{ $row['id'] }}" data-parents="{{ $row['parents'] }}" aria-label="Select {{ $row['name'] }}">
                         </td>
-                        <td>{{ $row['name'] }}</td>
+                        <td>{{ $row['name'] }}<br><span>{{ $row['class_label'] ?? '' }}</span></td>
                         <td>UGX {{ number_format($row['balance'], 0) }}</td>
                         <td>
                             <form method="POST" action="{{ route('admin.fee-payments.reminders') }}" class="fee-remind-form" style="margin: 0;">

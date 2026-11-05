@@ -11,6 +11,7 @@ use App\Models\Section;
 use App\Models\Standard;
 use App\Services\FeeStructureService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -29,21 +30,25 @@ class FeesCategoryController extends Controller
               "terms" =>   AcademicTerm::where("school_id", $school_id)->get()
          ];
     }
-    public function index()
+    public function index(Request $request)
     {
-        //
-        // $region = DB::table("states")
-        //            ->where("country_id", 1)
-        //            ->get();
-        //            dd($region);
         $school_id = Auth::user()->school_id;
         $structure = app(FeeStructureService::class)->structure((int) $school_id);
         $fees = $structure['rows'];
         $classTotals = $structure['totals'];
+        $state = (string) $request->query('state', '');
+        if (! in_array($state, ['loading', 'error', 'empty'], true) || ! app()->environment(['local', 'testing'])) {
+            $state = '';
+        }
+        if ($state === 'empty') {
+            $fees = [];
+            $classTotals = [];
+        }
 
         return view("admin.school.fees.index", compact(
             "fees",
-            "classTotals"
+            "classTotals",
+            "state"
         ));
     }
 
