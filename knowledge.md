@@ -3075,6 +3075,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-11-02: a failed school save shows the country sentence only for a country change (#1246)
+
+- **Work done**: The school-details failure decision now lives in `countrySaveError.mjs` and is executed by a node test. A 500, a network failure, and a save that is not changing the country do not show "Confirm the country change". An unconfirmed change keeps that sentence and the typed values. A Google signup with no country is stored as Uganda. No production data and no deploy.
+- **Files touched**: `resources/assets/js/components/schooldetail/Edit.vue`, `resources/assets/js/components/schooldetail/countrySaveError.mjs`, `tests/js/countrySaveError.test.mjs`, `tests/Feature/Onboarding/CountryDefaultTest.php`, `knowledge.md`.
+- **Decision**: Toshi's country step still accepts any text of two or more characters. That remains a product decision. The commented-out `store` route was not given a second confirmation.
+- **Status**: OPEN [#1246](https://github.com/KlassApp-Foundation/KlassApp/pull/1246). Not merged. Production untouched.
+- **Evidence**: `node --test tests/js/countrySaveError.test.mjs` — 3 tests, 0 failures. `vendor/bin/phpunit tests/Feature/Onboarding/CountryDefaultTest.php tests/Feature/Admin/CountryCodeCorrectionTest.php` — 22 tests, 213 assertions, 0 failures.
+
 ### 2026-11-02: country codes can be rolled back, and the two country fields must agree (#1249)
 
 - **Work done**: The country-code migration's `down()` writes the known seed codes back inside one transaction. A soft-deleted row and a name that matches two live rows are skipped and logged, not corrected. `persistCountry` stores `countries.name` when a short code matches one live row. A superadmin save that sends a `country_id` and a different country name is rejected and leaves the school unchanged. No production data and no deploy.
@@ -3082,6 +3090,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Decision**: A contradictory country id and country name is an error. The save does not pick one of them.
 - **Status**: OPEN [#1249](https://github.com/KlassApp-Foundation/KlassApp/pull/1249). Not merged. Production untouched.
 - **Evidence**: `vendor/bin/phpunit tests/Feature/Admin/CountryCodeCorrectionTest.php tests/Feature/Toshi/NoSchoolGetsAiByDefaultTest.php` — 18 tests, 148 assertions, 0 failures.
+
+### 2026-10-30: review fixes on the Uganda country default (#1246)
+
+- **Work done**: Merged `91bf33f` (the #1249 country-code fixes) into `cursor/school-country-default-c495`. A failed school-details or wizard save now shows the user-facing error and logs the exception. The country confirmation is shown only when the saved country actually changes. Signup rejects a country that is not in the `countries` table. No production data, deploy, or real school records.
+- **Files touched**: `app/Support/UserFacingException.php`, `app/Http/Controllers/Admin/SchoolDetailsController.php`, `app/Http/Requests/RegisterRequest.php`, `app/Http/Requests/DetailRequest.php` (unchanged comparison, verified), `app/Livewire/ManualOnboardingWizard.php`, `resources/assets/js/components/schooldetail/Edit.vue`, `resources/views/auth/preview/register.blade.php`, `tests/Feature/Onboarding/CountryDefaultTest.php`, `public/build`.
+- **Decision**: SQL and stack text stay in the log. A blank signup country is still Uganda, including when the countries table has no rows, so existing signup tests keep working. Toshi's country step still accepts any text of two or more characters. That is left for a product decision.
+- **Status**: OPEN [#1246](https://github.com/KlassApp-Foundation/KlassApp/pull/1246). Not merged. [#1251](https://github.com/KlassApp-Foundation/KlassApp/pull/1251) is stacked on this branch and needs this commit merged up. Production untouched.
+- **Evidence**: `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh` — 3202 tests, 0 failures, 0 errors, 9 skipped. `[test-guard] OK: 0 failing test(s)`. The specific-error tests failed when the generic fallback was forced, then passed with the fix.
 
 ### 2026-10-21: Mask phone numbers in WhatsApp logs; fix doActivityLog call
 

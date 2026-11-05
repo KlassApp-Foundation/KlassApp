@@ -3,10 +3,19 @@
 namespace Tests\Feature\Auth;
 
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Concerns\CreatesSignupCountriesTable;
 use Tests\TestCase;
 
 class AuthPageCacheControlTest extends TestCase
 {
+    use CreatesSignupCountriesTable;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->createSignupCountriesTable();
+    }
+
     #[Test]
     public function register_page_prevents_browser_caching_with_no_store(): void
     {

@@ -1233,7 +1233,10 @@ class ManualOnboardingWizard extends Component
             } catch (\Throwable $e) {
                 report($e);
                 // Never surface raw SQL / connection strings to the wizard UI.
-                $this->errorMessage = 'Could not save this step. Please try again.';
+                $this->errorMessage = \App\Support\UserFacingException::message(
+                    $e,
+                    'Could not save this step. Please try again.',
+                );
 
                 return;
             }
@@ -1982,7 +1985,9 @@ class ManualOnboardingWizard extends Component
         try {
             app(OnboardingEngine::class)->saveCountry($school, $this->countryName);
         } catch (ValidationException $e) {
-            throw ValidationException::withMessages(['countryName' => $e->getMessage()]);
+            throw ValidationException::withMessages([
+                'countryName' => \App\Support\UserFacingException::message($e, 'Choose a country.'),
+            ]);
         }
     }
 
