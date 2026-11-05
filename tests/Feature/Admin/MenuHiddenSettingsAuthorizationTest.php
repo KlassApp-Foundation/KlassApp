@@ -201,13 +201,13 @@ class MenuHiddenSettingsAuthorizationTest extends TestCase
     public function test_head_teacher_report_cards_do_not_link_to_school_details(): void
     {
         $this->actingAs($this->head)
-            ->get('/admin/reports/cards')
+            ->get('/admin/reports/cards/history')
             ->assertOk()
             ->assertDontSee('/admin/schooldetails', false)
             ->assertSee('A school admin manages the school logo', false);
 
         $this->actingAs($this->admin)
-            ->get('/admin/reports/cards')
+            ->get('/admin/reports/cards/history')
             ->assertOk()
             ->assertSee('/admin/schooldetails/editdetail/'.$this->school->id, false)
             ->assertDontSee('A school admin manages the school logo', false);

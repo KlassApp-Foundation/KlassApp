@@ -43,6 +43,19 @@ class Userprofile extends Model
     ];
 
 
+    /**
+     * A student's joined date defaults to the day they were onboarded. Imports and the add-student
+     * form that give a real date keep theirs; only a missing date is filled in.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (self $profile) {
+            if ((int) $profile->usergroup_id === 6 && empty($profile->getAttributes()['joining_date'] ?? null)) {
+                $profile->joining_date = now()->toDateString();
+            }
+        });
+    }
+
     public function getFirstNameAttribute($value)
     {
         return strtoupper($value);
