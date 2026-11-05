@@ -1,5 +1,7 @@
 # Screen inventory: Riverside walkthrough
 
+**Last updated:** 5 Nov 2026.
+
 Destined for `docs/product/screen-inventory.md`. Notes only; no code changed.
 
 - **Code base:** local branch `scratch/riverside-combined` (HEAD 10f58b12), read with `git show` and `git grep`. No code was changed.
@@ -28,6 +30,7 @@ Destined for `docs/product/screen-inventory.md`. Notes only; no code changed.
   - Actions: adjust fees or mark paid, add marks, record attendance with a comment.
   - Joined date defaults to the onboarding date.
   - "More" either removed or given real actions.
+- **5 Nov 2026:** Built in #1274 (`feat/student-profile-report-cards`, head `6912f253`). The page is a header card: photo (add, replace, remove), KLS number, class and stream, gender, date of birth, joined, and class teacher. The tabs sit under that card. Actions are Record a payment, Add marks (saved as drafts only), Record attendance, and Mark as paid for the outstanding term balance (`data-testid="mark-paid"`). Joined date defaults to the onboarding date. The same PR builds the report-cards class screen (Role 2, item 6). Message parent and Deactivate stay on the page. Photo and Mark as paid landed in commits `8a55aa7e` and `6912f253`; the PR body's "not matched" list is older than those commits.
 
 ### 2. Student list — DEMO
 - **Screen:** `/admin/students`. Route at `routes/admin.php:271` → `StudentController@index` (`app/Http/Controllers/Admin/StudentController.php:55-62`). Data from `app/Services/People/PeopleListQuery.php:28-102`. View: `resources/views/admin/member/index.blade.php` plus `components/people-list.blade.php`.
@@ -116,12 +119,14 @@ Destined for `docs/product/screen-inventory.md`. Notes only; no code changed.
   - Exam sets per term, with BOT, MOT (MID) and EOT defaults from the curriculum.
   - Each set applies to the chosen classes and all their subjects.
   - Admins, class heads or teachers can create them.
+- **5 Nov 2026:** Creating the set stays #1261. The set page after that is built in #1272 (see E3). The November boards for these screens are in the repo via #1273 (`docs/design/2026-11-demo/`), which is merged and is a design reference only.
 
 ### 9. Marks / Mark submissions — DEMO
 - **Screen:** `/admin/marks/submissions` → `ExamMarksSubmissionController@index` (≈`admin.php:926`, name `admin.marks.submissions`; `app/Http/Controllers/Admin/ExamMarksSubmissionController.php:18-29`), view `resources/views/admin/marks/submissions.blade.php`.
 - **What's wrong (his words):** "Mark submissions" doesn't seem to work.
 - **Code check: it works, it's just empty (see the full trace below).** The page lists only `exam_marks_submissions` rows with status `submitted` or `locked` and approval `pending` or null (`app/Services/Marks/MarksSubmissionService.php:291-300`). Such a row exists only after a teacher saves marks for an exam and presses Submit (`routes/teacher.php:465` → `Teacher/MarksController.php:126-146` → `MarksSubmissionService::submit`, 52-90). With no exams at Riverside there can't be any submissions, so the page shows "No submitted marks found." (`submissions.blade.php:44-50`). It's empty by design. Better empty-state copy would help: explain that submissions appear after teachers submit.
 - **What I want:** to see marks coming in. That means the exam-set flow (entry 8) plus a clear path for teachers to enter marks (below).
+- **5 Nov 2026:** That teacher path is built in #1272. See Role 2, item 5. The run sheet that scripts it is #1276 (`docs/demo/2026-11-12-run-sheet.md`), docs only.
 
 ### 10. Fees — DEMO
 - **Screen:**
@@ -137,6 +142,7 @@ Destined for `docs/product/screen-inventory.md`. Notes only; no code changed.
   - A simple table: fee types, classes applied, total per class.
   - The student list sortable by class and editable on the recording page.
   - Record payment with student search, defaulting to recording against the total with no allocation, which is what most schools do.
+- **5 Nov 2026:** Built in #1270 (`cursor/demo-fees-structure-a0f0`, head `98e65957`). One whole-school fee is one row. A class fee with the same name still saves and is added on top; the fee list then shows a warning (for example Tuition already exists as a whole-school fee, and the class total includes both). Older per-tier copies stay in the database. The list and the resolver hide them (`FeeStructureService::withoutHiddenLegacyCopies`); a TODO there is the clean-up follow-up. They are not deleted. A yearly fee counts once in the year total and only in its due term (`academic_term_id`, or the first term of the year by start date when that column is empty). Record payment can search by name, admission number or class, and the category can be left against the student's total. The walkthrough's sortable, editable balances list is not in this PR. Mark as paid on the student profile is #1274, not this fee-structure change.
 
 ### 11. Currency — DEMO
 - **Screen:** cross-cutting.
@@ -184,6 +190,7 @@ Destined for `docs/product/screen-inventory.md`. Notes only; no code changed.
   - A clear error, distinguishing "we couldn't email you" from "try again", with the real cause logged at error level and alerted.
   - No codes for undeliverable `.local` addresses: the user is told to ask their school admin instead.
   - The production risk flagged **HIGH**.
+- **5 Nov 2026:** Built in #1267 (`cursor/password-reset-code-send-a7c1`, head `aef2272e`), stacked on #1262. A blank `MAIL_FROM_ADDRESS` is sent as `connect@klassapp.xyz`, so the reset code goes out. `PasswordResetCodeDeliveryTest` covers an imported teacher, a parent and a student. The code still goes out in the request, because it expires in five minutes; it is not queued. A generated `.local` address can still complete this flow. A null password still gets the teacher setup link and no reset code.
 
 #### 12b. First-login `is_reset` vs the setup links in #1262 — DEMO
 *Read on #1262, branch `cursor/t091-teacher-email-invite-6d9a` at `2048072`. On that branch the `is_reset` check is at `AuthenticatesUsers.php:281`, not :275.*
@@ -196,12 +203,13 @@ Destined for `docs/product/screen-inventory.md`. Notes only; no code changed.
 - **Order and bypass.** The null-password refusal in `attemptLogin` (`AuthenticatesUsers.php:206-207`) runs before `sendLoginResponse` (:281), so a passwordless account never reaches the force-change check. The force-change form also needs the current password to match (`ForceChangePasswordController.php:44-46`), and that check fails for a null hash. The route needs `auth` (`routes/web.php:314-318`). **I found no bypass.**
 - **Parents and students.** Their random password is never shown or sent (`UserProvisioning.php:29-36`, flagged as a product decision at `OnboardingEngine.php:2259`), so they can only get in through a reset code or another sign-in route. **This is a separate gap,** like L9.
 - **Update (Rasta, Nov 4):** the `/teacher/setup` fix (save `is_reset=0`, or route the flow through `completeClaim`, with a test) **is now being added to #1262**. The parent and student gap is now L10 (T-094).
+- **5 Nov 2026:** L10 is built in #1275 (`cursor/t094-parent-student-setup-links`, head `ccd56ead`), stacked on #1262. See the L10 row.
 - **Verdict:** this **fits** #1262 for invite links. **Minimal fix (not implemented):** set `is_reset=0` in `TeacherSetupController.php:74`, or move that flow onto `completeClaim`. A separate follow-up should give parents and students a first-login path, for example a setup link or a magic link.
 
 ### LATER entries (admin)
 | # | Screen / area | What I want (his words, tidied) | Tag |
 |---|---|---|---|
-| L1 | Plan limits (`enforcePlanLimit`, earlier blueprint; the student-add notice is at `member/create.blade.php:13-18`) | Revisit the plan limits. | LATER |
+| L1 | Plan limits (`enforcePlanLimit`, earlier blueprint; the student-add notice is at `member/create.blade.php:13-18`) | Revisit the plan limits. | Built in #1279 (draft, `cursor/t082-plan-limits`, head `8b778880`). Early adopter is `no_of_users` 0, `no_of_students` 0, `is_platform_only` 1, assigned by a platform admin, and it stays out of a school's own plan picker. Every other plan is enforced on the single add forms, `OnboardingEngine` (wizard and Toshi), the teacher and student imports, and Toshi's direct add. This was LATER, not a walkthrough DEMO row. |
 | L2 | Admissions | An admissions form and invitation. | LATER |
 | L3 | Student status | Suspend, and recommend for transfer. | LATER |
 | L4 | Teacher | A weekly schedule (`/admin/teacher/my-timetable`, `admin.php:375`); reassign, suspend or transfer. | LATER |
@@ -210,7 +218,7 @@ Destined for `docs/product/screen-inventory.md`. Notes only; no code changed.
 | L7 | Attendance records (≈`admin.php:569-578`) | An attendance records page. | LATER |
 | L8 | Unmatched payments (`/admin/fees/payments/unmatched`, ≈`admin.php:989-990`; `FeePaymentController.php:117-131`) | Hide it until a payment integration exists. | LATER |
 | L9 | Other staff accounts (librarians and other non-teacher staff) | They still get a random password on creation. Move them to the same setup-link invite as teachers (#1262 covers teachers only). Follow-up, not for the demo (Rasta, Nov 4, 2026). | LATER |
-| L10 | Parent and student first-login access | Random password plus `is_reset=1`, never shared (`OnboardingEngine.php:2103-2108, 2259-2267`). **T-094** in Rasta's sheet. The first real schools will need it. Follow-up, not for the demo (Rasta, Nov 4, 2026). | LATER (follow-up) |
+| L10 | Parent and student first-login access | Random password plus `is_reset=1`, never shared (`OnboardingEngine.php:2103-2108, 2259-2267`). **T-094** in Rasta's sheet. The first real schools will need it. Follow-up, not for the demo (Rasta, Nov 4, 2026). | Built in #1275 (draft, stacked on #1262). Import stores no password. A real email gets the same one-time setup link teachers get (`/invite/account/{token}`). Generated `.local`, `*.test` and the link-import `@school.edu` address send nothing. A parent with no email keeps the WhatsApp magic login, which now accepts a null password. Resend setup link is on the student and parent profiles. This was LATER, not a walkthrough DEMO row. The parent-profile redesign (entry 4) is not this PR. |
 
 ---
 
@@ -308,14 +316,19 @@ Class teachers can also create exams for their own class (`teacher.php:430-434`;
    - **Gap:** I found no per-subject student filter for subject teachers (who takes which subject). This is now DEMO item 9.
 4. **Exams — DEMO.** Exams are created through exam sets (#1261), using the agreed design.
 5. **Marks — DEMO.** Rename "Release marks" to **"Marks Release"**. The label appears in `resources/views/marks-releases/_button.blade.php:8` (the dashboard button, included at `teacher/dashboard/dashboard.blade.php:16`), `marks-releases/index.blade.php:14`, `create.blade.php:17`, `preview.blade.php:11`, and the comments at `_button.blade.php:2` and `app/Http/Controllers/MarksReleaseController.php:16`. The marks page needs more functions, such as recording marks by class or stream and subject. The design must make the teacher's part of the marks workflow clear.
+   - **5 Nov 2026:** The workflow is built in #1272 (`cursor/exam-sets-page-marks-f7b0`). Manzi's note names head `0add32aa` (the ka-screen stylesheet commit). The PR head is now `f44c7298`, one commit later: a base-class release reaches the streams, and cards resolve the class. Base-class marks entry has a stream column and a stream filter (`teacher/marks/enter.blade.php`). A stream's subject teacher sees only that stream; the class head sees every stream (`BaseClassExamRoster`). AB is grade `AB`, `absent = true`, and a null mark, and it is left out of totals, averages, positions and divisions. A mark above 100 can be saved, shows "Above 100. Check the mark.", and cannot be submitted. The release page has the checklist (`data-testid="release-steps"`) and the audience panel (`data-testid="release-audience"`). Selected submissions can be approved together. The mark sheet has a phone card per student. The release-page test still expects the string "Release marks", so this PR does not do the rename.
 6. **Report cards — DEMO.** Only admins and class heads can open them. They should be a mark-sheet style table with a performance overview, and offer a PDF of one student or of the whole class at once.
    - **Today:** teachers reach them at `/teacher/reports/cards` (`routes/teacher.php:392-396`, `ReportCardsController` index/show/preview/download for a single student). *I haven't verified how `ReportCardsController` restricts access to class heads.* The whole-class PDF is DEMO item 10.
+   - **5 Nov 2026:** The class screen (class and exam filters, KPIs, average by subject, students by division, positions, a PDF per student, class-PDF states) is built in #1274. The one PDF of every card in the class is built in #1271 (item 10).
 7. **Dashboard cards — DEMO.** Style them like the admin's cards and add charts of class stats: performance, attendance and gender.
 8. **Attendance — DEMO (stretch).** A one-click present/absent register per class or stream. Build it if time allows. **Today:** `app/Http/Controllers/Teacher/AttendanceController.php` has `index` (:44), `create` (:154) and `store` (:166). The one-click register is DEMO item 11.
+   - **5 Nov 2026:** Built in #1277 (`cursor/t095-one-click-attendance`, head `cc5f38a5`). Take attendance opens the roster with Present already selected. A class head gets every active stream of that class. Anyone else gets only the streams `attendance_scope` already allows. One save writes the register; a second save updates the same rows. The parent attendance page also gets a weekly summary (`weeks`, `missed_days`, `this_week`). The old add form stays.
 
 9. **Subject-teacher filter — DEMO.** A subject teacher sees only the students who take their subject in each class they teach. No per-subject filter exists today (see item 3).
 10. **Whole-class report card PDF — DEMO.** Download the report cards for a whole class at once. Today there is only single-student preview and download (`routes/teacher.php:392-396`).
+    - **5 Nov 2026:** Built in #1271 (`cursor/whole-class-report-pdf-cd2d`, head `71d97202`). Admins, deputy admins on the admin pages, and class heads. Another school's class is 404. Everyone else is 403. Up to 12 students download in the request (`StudentReportCardService::CLASS_PDF_DIRECT_MAX`). A larger class is queued, and the class page says "Preparing the class PDF".
 11. **One-click attendance register — DEMO.** One click marks each student present or absent, per class or stream. Today `app/Http/Controllers/Teacher/AttendanceController.php` has `index` (:44), `create` (:154) and `store` (:166).
+    - **5 Nov 2026:** Built in #1277. Same register as item 8.
 
 #### LATER (class teacher)
 | # | Screen / area | What he wants (his words, tidied) | Tag |
@@ -331,13 +344,13 @@ Class teachers can also create exams for their own class (`teacher.php:430-434`;
 | 2 | Dashboard ignores the class-teacher link | Bug: cause found (`Dashboard.php:401`). Rasta's local agent fixes it with the demo blockers |
 | 3 | Student, marks and exam scoping by class head or subject | Gap: subject-level scoping is missing |
 | 4 | Exams via exam sets | #1261 |
-| 5 | "Marks Release" rename and more marks functions | Rename at 4 views. Design work needed |
-| 6 | Report cards: admins and class heads only, mark sheet, class PDF | To build |
+| 5 | "Marks Release" rename and more marks functions | Workflow built in #1272 (stream roster, AB, over-100 block, release checklist and audience, bulk approve, phone sheet). The rename is not in #1272 |
+| 6 | Report cards: admins and class heads only, mark sheet, class PDF | Built in #1274 (class screen) and #1271 (one PDF for the class) |
 | 7 | Dashboard cards styled like admin, with charts | To build |
-| 8 | One-click attendance register | Stretch |
+| 8 | One-click attendance register | Built in #1277 |
 | 9 | Subject-teacher student filter | To build |
-| 10 | Whole-class report card PDF | To build |
-| 11 | One-click present/absent register (with 8) | To build |
+| 10 | Whole-class report card PDF | Built in #1271 (direct up to 12 students, queued above that) |
+| 11 | One-click present/absent register (with 8) | Built in #1277 |
 
 ## Role 3: Parent
 
@@ -353,20 +366,25 @@ Class teachers can also create exams for their own class (`teacher.php:430-434`;
      - (b) the child selector chip (`parent/dashboard.blade.php:42-43`)
      - (c) the header family menu (`layouts/partials/family-menu.blade.php:29-31`, included from `navigation.blade.php:104-106`)
    - **Capitals:** only the family menu applies `ucwords(strtolower(…))`. (a) and (b) print the stored name as it is, so the capitals probably come from the imported data. *That last point is unverified.*
+   - **5 Nov 2026:** Built in #1266 (`cursor/parent-student-portal-0657`, head `c751e53f`) for the name: the selected child's name is shown once, in title case, and the stored name is not rewritten. The header family menu identifies children by school and class. The PR body does not describe a visual restyle of the stat cards to the admin cards.
 2. **Performance — DEMO.** Show the child's results for every released exam and test set, not only the latest. Show nothing unreleased.
    - **Today:** `ParentPortalService::grades` (`ParentPortalService.php:335-380`) takes the exams that have marks for this student in the current academic year, newest first (`latest('id')`, :360). It then applies the release gate, `$this->releases->applyToExams` (:366), and keeps at most **15** exams (`take(15)`, :367).
    - **The gate** is `EloquentReleaseGate::applyToExams` (`app/Services/Results/EloquentReleaseGate.php:60-80`). It returns nothing when no sittings are released (:63-64). Otherwise it limits results to released sittings matched on school, exam type, term and, where set, section (:66-78). *I didn't read `releasedSittings()` or the `MarksRelease` model (`app/Models/MarksRelease.php`).*
    - **So unreleased results are already hidden.** The gaps are the 15-exam cap, the current-year limit, and the dashboard showing only a "Recent Marks" count (:76-81).
+   - **5 Nov 2026:** Built in #1266. The list is every released exam and test set, with a year filter that starts on the current year. The 15-exam cap and the hard current-year-only query are gone. `EloquentReleaseGate::applyToExams` is unchanged, so an unreleased sitting stays hidden.
 3. **Clickable cards and simple pages — DEMO.** The cards should open three pages: Marks (each released set), Attendance and Fees (structure, paid, balance). Each page gets a chart: performance over time, attendance, and fees paid against fees due.
    - **Pages that already exist:**
      - `/parent/children` (`routes/parent.php:4`)
      - `/parent/children/{student}/fees`, `/grades` and `/attendance` (`routes/parent.php:7-9`, `ChildDataController`)
    - The sidebar lists Dashboard, Children, Fees, Grades and Attendance (`config/navigation.php:246-256`).
    - **Not wired yet:** the cards aren't links, and the pages have no charts. *I didn't verify the `ChildDataController` views.* The sidebar's active paths are `parent/*/fees` etc. (:253-255), but the routes are `parent/children/{id}/…`. *It's unverified whether that mismatch breaks the highlight.*
+   - **5 Nov 2026:** Built in #1266. The stat cards link to Marks, Attendance and Fees for the selected child, and to the student's own `/student/marks`, `/student/attendance` and `/student/fees`. Fees shows structure, paid and balance. Each of those pages has a Chart.js chart. #1277 later adds the parent weekly attendance bars on top of the attendance page.
 4. **Sidebar — DEMO.** The active item has a dark red background, and the other items look greyed out as if disabled. Restyle it to match the admin sidebar.
    - **Why it differs:** the parent menu sets no `active_class`, so it falls back to a plain `active` (`layouts/partials/sidebar-menu.blade.php:25`). The admin menu uses `'active dashboard-active'` (`config/navigation.php:113`). The parent sidebar wrapper adds the `parent-sidebar` class (`layouts/parent/sidebar.blade.php:2`).
    - *I didn't find the CSS rule that makes it dark red or greys out the other items. Unverified.*
+   - **5 Nov 2026:** Built in #1266. Parent and student sidebars use the admin active classes (`active dashboard-active`). Parent active paths match `parent/children/{id}/fees|grades|attendance`. Resting links stay full-strength text.
 5. **Top bar — DEMO.** It has only a Logout button and no profile menu. **The cross-role header PR covers this** (same as class-teacher entry 1). The parent layout passes `'showLogout' => true` (`layouts/parent/layout.blade.php:5`), which swaps the profile menu for a plain Logout button (`layouts/partials/navigation.blade.php:149-153`).
+   - **5 Nov 2026:** Built in #1266 for this item. The parent header uses `layouts.partials.profile-dropdown`, and `showLogout` is removed. Logout stays inside the menu. The cross-role top bar for every role is #1265, which is not one of the PRs recorded here, so class-teacher item 1 and student item 3 stay as they were.
 6. **Sign-in shows "Page not found" — DEMO.** Signing in as a teacher showed "Page not found". After a refresh, the signed-in parent appeared. **Rasta's local agent is reproducing it** (possibly a session issue).
    - **Hypothesis, not verified:** after a successful login, `sendLoginResponse` uses `redirect()->intended(...)` (`app/Traits/AuthenticatesUsers.php:281`). So a URL saved in the session earlier, such as a parent page, wins over the role dashboard from `LoginController::redirectTo` → `AuthRedirectHelper::dashboardPathForUsergroup` (`LoginController.php:57-60`; teacher `/teacher/dashboard`, parent `/parent/dashboard`, `AuthRedirectHelper.php:25-33`).
    - That would explain a 404 or a wrong-role page. The fact that a refresh showed the *parent* suggests the old session was still active, for example a login done in another tab or without logging out first.
@@ -380,11 +398,11 @@ Class teachers can also create exams for their own class (`teacher.php:430-434`;
 ### DEMO summary (parent)
 | # | Item | Status |
 |---|---|---|
-| 1 | Layout, admin-style cards, child info once and not in capitals | To build |
-| 2 | Every released exam and test set, nothing unreleased | Gate exists. Lift the 15-exam cap and current-year limit, list each set |
-| 3 | Clickable cards → Marks, Attendance, Fees pages with charts | Routes exist. Links and charts to build |
-| 4 | Sidebar active and inactive styling like admin | Restyle (`active_class`) |
-| 5 | Top bar: Logout only | Cross-role header PR |
+| 1 | Layout, admin-style cards, child info once and not in capitals | Built in #1266 for the name once, in title case. The PR body does not describe an admin-card restyle |
+| 2 | Every released exam and test set, nothing unreleased | Built in #1266 |
+| 3 | Clickable cards → Marks, Attendance, Fees pages with charts | Built in #1266. #1277 adds the parent weekly attendance bars |
+| 4 | Sidebar active and inactive styling like admin | Built in #1266 |
+| 5 | Top bar: Logout only | Built in #1266 (shared profile menu). The all-roles header is #1265 |
 | 6 | "Page not found" after teacher login | Local agent is reproducing it. Hypothesis: intended-URL redirect |
 
 ## Role 4: Student
@@ -394,7 +412,7 @@ Class teachers can also create exams for their own class (`teacher.php:430-434`;
 
 **Where the page comes from:** `/student/dashboard` (`routes/student.php:4`) → `Student/DashboardController@index` (`app/Http/Controllers/Student/DashboardController.php:26`), which returns the view `student/dashboard/dashboard` (:41). The layout is `layouts/student/layout.blade.php`. It includes the shared navigation without `showLogout` (:5), along with `layouts/student/sidebar.blade.php`. The sidebar items are defined in `config/navigation.php:226-242`: Dashboard, Marks, Attendance, Homework, Assignments, Events, Notices, Library, Holidays, Chats and Activity. Like the parent menu, the student menu sets no `active_class`, so it falls back to plain `active` (`sidebar-menu.blade.php:25`; admin uses `active dashboard-active`, `config/navigation.php:113`).
 
-1. **Same discipline as the parent dashboard — DEMO.** That means an aligned layout, admin-style cards, all released results and nothing unreleased, and clickable cards that open simple Marks, Attendance and Fees pages with charts. **This is being built in the parent/student portal PR** (draft, cloud agent, PR number pending). See Role 3 entries 1-4. *I didn't verify which service the student dashboard uses for results, or whether it applies the release gate.*
+1. **Same discipline as the parent dashboard — DEMO.** That means an aligned layout, admin-style cards, all released results and nothing unreleased, and clickable cards that open simple Marks, Attendance and Fees pages with charts. **Built in #1266** (draft, `cursor/parent-student-portal-0657`). See Role 3 entries 1-4. The student pages are `/student/marks`, `/student/attendance` and `/student/fees`, and they share the parent query. *This note did not re-read the student results service beyond the PR body and its file list.*
 2. **Timetable — DEMO.** The timetable is the Calendar view. The student sidebar has **no Timetable item** today; Events is at `config/navigation.php:236`. This ties to R2-L2 and admin L6.
 3. **Top bar — DEMO.** The cross-role header PR covers it (same as R2-1 and R3-5).
 
@@ -407,7 +425,7 @@ Class teachers can also create exams for their own class (`teacher.php:430-434`;
 ### DEMO summary (student)
 | # | Item | Status |
 |---|---|---|
-| 1 | Parent-style dashboard: cards, released results, Marks, Attendance and Fees pages with charts | #1266 parent/student portal (draft) |
+| 1 | Parent-style dashboard: cards, released results, Marks, Attendance and Fees pages with charts | Built in #1266 (draft) |
 | 2 | Timetable shown as the Calendar view | Design-only |
 | 3 | Top bar | Cross-role header PR |
 
@@ -421,18 +439,22 @@ Class teachers can also create exams for their own class (`teacher.php:430-434`;
   - **The request:** classes appear as clickable chips grouped by level, and the whole school is selected by default. Streams are picked only when needed. A class counts as one by default and covers all its streams.
   - **Today:** "Whole school" is an unchecked checkbox (`exam-set-create.blade.php:54`), and the classes are a plain multi-select list of section names (:62-66). The service scopes by `section_id` (`ExamSetService.php:87`).
 - **E3. Preview after creating — DEMO.** Show the set grouped by class and exam type. **Today** the service returns only counts: created, skipped, sections and subjects (`ExamSetService.php:68-74`).
+  - **5 Nov 2026:** Built in #1272. The set page (`admin/exams/exam-set-show.blade.php`, `data-testid="exam-set-page"`) groups the set by class, with a column per exam type, KPIs (exams, have marks, subjects with no teacher), and type and class filters.
 - **E4. Setting exams and entering marks kept clearly separate — DEMO.** The flow is the exam sets page, then marks entry by exam, with submission. The exam sets page is `/admin/exams/sets/create` and `/teacher/exam/sets/create` (from the PR body). The marks entry and submission design is still to come (ties to R2-5).
+  - **5 Nov 2026:** Built in #1272. The set page and the marks-entry screen are separate. Marks entry is the base-class roster described under Role 2, item 5.
 - **E5. No required "All" filters on the marks screen — DEMO.** In `resources/views/admin/marks/filter-form.blade.php`, Term (:5-6), Class (:17-18) and Exam type (:29-30) are each `required` selects whose first option is an empty "All …". So "All" looks selectable but fails validation. Stream (:41) isn't required. This form is included at `admin/marks/combined-sheet.blade.php:31`.
+  - **5 Nov 2026:** Built in #1272. On that branch the three selects are not `required`. The empty options read "All terms", "All classes" and "All exam types". Stream's empty option reads "Whole class".
+- **Not built in #1272,** from that PR's own follow-ups: new-set switches, rename, "counts towards the report", Add exam type, Add classes, Assign teacher, an "All released" set status, marks-grid comments, offline save, the MarksUpload redraw, live loading skeletons for create and release, and a per-exam maximum (for example out of 50). The maximum in the PR is 100. E1's type-management screen and E2's class chips stay open.
 
 ## Master DEMO table (all roles)
-*Statuses below are the 4 November walkthrough baseline. The 5 November build status is in “PR coverage — 5 November 2026” at the end of this document.*
+*The Status column was updated on 5 Nov 2026 where one of #1266, #1267, #1270, #1271, #1272, #1273, #1274, #1275, #1276, #1277 or #1279 implements the item. Detail is in “PR coverage — 5 November 2026”. Every other row is unchanged.*
 
 *This table is the brief for Claude Design. **Status** is one of three things. "Being built: …" names the PR or stream doing the work. "Onboarding fixes PR" means planned after the walkthrough. "Design-only" means it needs a design before anyone builds it. "Unassigned" means it's buildable, but no open PR covers it. A PR is credited only where its title, body or diff shows the item:*
 - *#1261: exam sets (local agent)*
 - *#1262: teacher setup links*
 - *#1263: demo blockers part 1, currency and the "What's set up" list*
 - *#1264: T-092, login while signed in goes to your own dashboard*
-- *parent/student portal PR: cloud agent, number pending*
+- *#1266: parent and student portals*
 - *demo blockers part 2: local agent*
 - *fees*
 - *header PR: Claude Code, cross-role top bar*
@@ -441,7 +463,7 @@ Class teachers can also create exams for their own class (`teacher.php:430-434`;
 
 | ID | Role | Item (short) | File:line | Effort | Dependency | Status |
 |---|---|---|---|---|---|---|
-| A1 | Admin | Student profile: ID card, tabs on top, action buttons, joined date | `OnboardingEngine.php:2140-2154` (joining date) | M | Fee (A10) and marks (A8/A9) actions | Unassigned |
+| A1 | Admin | Student profile: ID card, tabs on top, action buttons, joined date | `OnboardingEngine.php:2140-2154` (joining date) | M | Fee (A10) and marks (A8/A9) actions | Built in #1274. Header card with photo, facts and joined date; tabs under the card; Record a payment, Add marks, Record attendance, Mark as paid |
 | A2 | Admin | Student list: Add and Import reuse the onboarding form and import; retire `/admin/import`; check the class picker live | see entry 2 | M | Reusable onboarding student form | Unassigned |
 | A3 | Admin | Student, teacher and parent edit forms rebuilt on the import-template fields | see entry 3 | M (3 small forms) | Branded templates (blueprint) | Unassigned |
 | A4 | Admin | Parent profile: new design, actions, collect parent emails | see entry 4 | M–L | Parent email column in the student template | Unassigned |
@@ -449,36 +471,43 @@ Class teachers can also create exams for their own class (`teacher.php:430-434`;
 | A6 | Admin | Pick an existing teacher as class teacher; they get a setup link | `ClassTeacherAssignmentService.php:304, 430` | M | #1239 | Being built: #1262 |
 | A7 | Admin | Classes page: class dropdown, clickable names, stats, curriculum order | see entry 7 | M | Ordering rank; fee and marks totals | Unassigned |
 | A8 | Admin | Create a term's exam set for chosen classes and all subjects | `ExamSetService.php:25-75` | L | Exam types, subject rows, teacher links | Being built: #1261 |
-| A9 | Admin | Marks: clear empty state plus a working teacher path | see entry 9 | S (copy) | A8 | Being built: #1261 (empty-state copy, per its body) |
-| A10 | Admin | Fees: structure table (name, amount, classes, duration: one-off, termly by default, yearly; total per class); any fee editable; one row per whole-school fee (today 4 became 8, one per level); record payment with student search against the total (`fee_category_id` optional) | see entry 10; `fees/index.blade.php:18-24`; `FeePaymentController.php:23-71` | M–L | Unallocated-payment model | Being built: #1270 fees (draft; Rasta's local agent dropped fees, Nov 4) |
+| A9 | Admin | Marks: clear empty state plus a working teacher path | see entry 9 | S (copy) | A8 | Built in #1272 for the teacher path (base-class roster, stream column and filter, AB, over-100 block, phone sheet, bulk approve, release checklist). Empty-state copy stays with #1261 and was not re-checked here |
+| A10 | Admin | Fees: structure table (name, amount, classes, duration: one-off, termly by default, yearly; total per class); any fee editable; one row per whole-school fee (today 4 became 8, one per level); record payment with student search against the total (`fee_category_id` optional) | see entry 10; `fees/index.blade.php:18-24`; `FeePaymentController.php:23-71` | M–L | Unallocated-payment model | Built in #1270 (draft). One whole-school row; a same-name class fee adds on top and the list warns after save; old duplicates are hidden, not deleted; a yearly fee counts once in the year total and in its due term |
 | A11 | Admin | Currency from the school's country, with a USD switch and correct hint | `DashboardV2DataService::currencyFor` (per #1263 body) | S | — | Being built: #1263 |
-| A12 | Admin | Password reset works for teachers, parents and students, with a clear error and no silent failure in production (HIGH) | see entry 12; `ForgotPasswordController.php:51-69` | S–M | Mail channel and From address; #1262 (same controller) | Being built: #1267 (draft, stacked on #1262; root cause blank MAIL_FROM_ADDRESS) |
+| A12 | Admin | Password reset works for teachers, parents and students, with a clear error and no silent failure in production (HIGH) | see entry 12; `ForgotPasswordController.php:51-69` | S–M | Mail channel and From address; #1262 (same controller) | Built in #1267 (draft, stacked on #1262). The code sends when MAIL_FROM_ADDRESS is blank. The send stays in the request. A .local address can still be used |
 | A12b | Admin | `/teacher/setup` saves `is_reset=0`, so there's no second password prompt | `TeacherSetupController.php:74` | S | — | Being built: #1262 (Rasta, Nov 4) |
 | R2-1 | Class teacher | Top bar like the admin's: profile menu, notifications | `profile-dropdown.blade.php:98, 142-145` | M | — | Being built: header PR |
 | R2-2 | Class teacher | Dashboard counts class-teacher streams, not only subject links ("no classes", all 0) | `Dashboard.php:401`; `ClassTeacherAssignmentService.php:138-148` | S | — | Being built: demo blockers part 2 |
 | R2-3 | Class teacher | Student, marks and exam access: class or stream head sees the whole class; subject teacher sees only their subject's students | `RosterScopeService.php:21-60`; `MarksController.php:80-93` | M | R2-9 | Design-only |
 | R2-4 | Class teacher | Exams are created through exam sets | see E1-E5 | L | A8 | Being built: #1261 |
-| R2-5 | Class teacher | Rename "Release marks" to "Marks Release"; record marks by class or stream and subject; clear teacher marks workflow | `marks-releases/_button.blade.php:8`, `index:14`, `create:17`, `preview:11` | S (rename) / L (workflow) | E4 | Being built: demo blockers part 2 (rename, 4 labels; Rasta's local agent) / Design-only (workflow) |
-| R2-6 | Class teacher | Report cards for admins and class heads only: mark-sheet table, performance overview, PDF | `routes/teacher.php:392-396` | M–L | R2-10 | Design-only |
+| R2-5 | Class teacher | Rename "Release marks" to "Marks Release"; record marks by class or stream and subject; clear teacher marks workflow | `marks-releases/_button.blade.php:8`, `index:14`, `create:17`, `preview:11` | S (rename) / L (workflow) | E4 | Workflow built in #1272. The rename is not in #1272: the release-page test still expects "Release marks". The rename stays with demo blockers part 2 |
+| R2-6 | Class teacher | Report cards for admins and class heads only: mark-sheet table, performance overview, PDF | `routes/teacher.php:392-396` | M–L | R2-10 | Built in #1274 (class screen) and #1271 (one PDF for the class) |
 | R2-7 | Class teacher | Dashboard cards styled like the admin's, with class charts (performance, attendance, gender) | `teacher/dashboard/dashboard.blade.php` | M | R2-2 | Design-only |
-| R2-8 | Class teacher | One-click present/absent attendance register (demo stretch) | `Teacher/AttendanceController.php:44, 154, 166` | M | — | Unassigned (stretch; same as R2-11) |
+| R2-8 | Class teacher | One-click present/absent attendance register (demo stretch) | `Teacher/AttendanceController.php:44, 154, 166` | M | — | Built in #1277 (same register as R2-11) |
 | R2-9 | Class teacher | Subject-teacher filter: only students taking their subject | none exists | M | Who-takes-which-subject data | Unassigned |
-| R2-10 | Class teacher | Whole-class report card PDF download | `routes/teacher.php:392-396` (single student only) | M | PDF queue for a whole class | Unassigned |
-| R2-11 | Class teacher | One-click register per class or stream (as R2-8) | `Teacher/AttendanceController.php:44, 154, 166` | M | — | Unassigned |
-| R3-1 | Parent | Realigned dashboard, admin-style cards, child's name once in normal capitalisation | `parent/dashboard.blade.php:6-10, 42-43, 63-81`; `family-menu.blade.php:29-31` | M | — | Being built: #1266 parent/student portal |
-| R3-2 | Parent | Every released exam and test set, all years, not capped at 15; nothing unreleased | `ParentPortalService.php:360-367`; `EloquentReleaseGate.php:60-80` | S–M | Release gate (exists) | Being built: #1266 parent/student portal |
-| R3-3 | Parent | Cards open simple Marks, Attendance and Fees pages; each with a chart | `routes/parent.php:4-9` | M | Chart component | Being built: #1266 parent/student portal (links and pages). charts included in the brief |
-| R3-4 | Parent | Sidebar active item styled like admin; no greyed-out items | `sidebar-menu.blade.php:25`; `config/navigation.php:113, 246-256` | S | — | Being built: #1266 parent/student portal |
-| R3-5 | Parent | Profile menu instead of the bare Logout button | `layouts/parent/layout.blade.php:5`; `navigation.blade.php:149-153` | S | Header PR | Being built: header PR (portal PR reuses it) |
+| R2-10 | Class teacher | Whole-class report card PDF download | `routes/teacher.php:392-396` (single student only) | M | PDF queue for a whole class | Built in #1271. Direct for 12 or fewer students; queued above that. Admins and class heads |
+| R2-11 | Class teacher | One-click register per class or stream (as R2-8) | `Teacher/AttendanceController.php:44, 154, 166` | M | — | Built in #1277 |
+| R3-1 | Parent | Realigned dashboard, admin-style cards, child's name once in normal capitalisation | `parent/dashboard.blade.php:6-10, 42-43, 63-81`; `family-menu.blade.php:29-31` | M | — | Built in #1266 for the name once, in title case. The PR body does not describe an admin-card restyle |
+| R3-2 | Parent | Every released exam and test set, all years, not capped at 15; nothing unreleased | `ParentPortalService.php:360-367`; `EloquentReleaseGate.php:60-80` | S–M | Release gate (exists) | Built in #1266 |
+| R3-3 | Parent | Cards open simple Marks, Attendance and Fees pages; each with a chart | `routes/parent.php:4-9` | M | Chart component | Built in #1266. #1277 adds weekly attendance bars on the parent attendance page |
+| R3-4 | Parent | Sidebar active item styled like admin; no greyed-out items | `sidebar-menu.blade.php:25`; `config/navigation.php:113, 246-256` | S | — | Built in #1266 |
+| R3-5 | Parent | Profile menu instead of the bare Logout button | `layouts/parent/layout.blade.php:5`; `navigation.blade.php:149-153` | S | Header PR | Built in #1266 (shared profile menu). The all-roles header remains #1265 |
 | R3-6 | Parent | Teacher login showed "Page not found", then the parent session | `AuthenticatesUsers.php:281` (hypothesis) | S | — | Being built: #1264 (couldn't reproduce; hardens `/login`) |
-| R4-1 | Student | Same as the parent dashboard: cards, released results, Marks, Attendance and Fees pages with charts | `routes/student.php:4`; `Student/DashboardController.php:26-41`; `config/navigation.php:226-242` | M | R3-1 to R3-4 | Being built: #1266 parent/student portal (charts included in the brief) |
+| R4-1 | Student | Same as the parent dashboard: cards, released results, Marks, Attendance and Fees pages with charts | `routes/student.php:4`; `Student/DashboardController.php:26-41`; `config/navigation.php:226-242` | M | R3-1 to R3-4 | Built in #1266 |
 | R4-2 | Student | Timetable shown as the Calendar view | `config/navigation.php:236` (Events; no Timetable item) | M | Calendar (admin L6, R2-L2) | Design-only |
 | R4-3 | Student | Top bar | `layouts/student/layout.blade.php:5` | S | Header PR | Being built: header PR |
 | E1 | Exam sets | Configurable exam types, including the school's own | `exam-set-create.blade.php:38-48` | M | — | Being built: #1261 (school-owned types). The management screen is Design-only |
 | E2 | Exam sets | Class chips grouped by level, whole school by default, streams only when needed | `exam-set-create.blade.php:54, 62-66`; `ExamSetService.php:81-92` | M | Fix to the subject-row expansion (360 exams) | Design-only (local agent fixing #1261 logic) |
-| E3 | Exam sets | Preview after creating, grouped by class and type | `ExamSetService.php:68-74` | M | E2 | Design-only |
-| E4 | Exam sets | Exam set page, then marks entry by exam, with submission, clearly separate | — | M–L | E2, R2-5 | Design-only |
-| E5 | Exam sets | Marks screen: no required "All" filters | `admin/marks/filter-form.blade.php:5-6, 17-18, 29-30` | S | — | Unassigned |
+| E3 | Exam sets | Preview after creating, grouped by class and type | `ExamSetService.php:68-74` | M | E2 | Built in #1272 (set page grouped by class, a column per exam type) |
+| E4 | Exam sets | Exam set page, then marks entry by exam, with submission, clearly separate | — | M–L | E2, R2-5 | Built in #1272 |
+| E5 | Exam sets | Marks screen: no required "All" filters | `admin/marks/filter-form.blade.php:5-6, 17-18, 29-30` | S | — | Built in #1272. Empty options are All terms, All classes, All exam types; stream is Whole class |
+| A13 | Admin | Setup links for imported parents and students | `StudentParentAccountInviteService` | M | #1262 | Built in #1275 (draft, stacked on #1262). Was L10, not a walkthrough DEMO row. No password at import. A real email gets the link. A parent with no email keeps WhatsApp magic login. Resend is on both profiles |
+| MK-1 | Marks | AB for an absent student: null mark, left out of totals, averages, positions and divisions | `ExamMarkWriter`; `marks.absent` | S | — | Built in #1272 |
+| MK-2 | Marks | A mark above the maximum warns and blocks submit. The maximum in this PR is 100 | `MarksSubmissionService` | S | — | Built in #1272. A per-exam maximum (for example out of 50) is a follow-up |
+| MK-3 | Marks | Bulk approve, release checklist and audience panel, phone mark sheet | `admin/marks/submissions.blade.php`; `marks-releases/create.blade.php`; `results-table2.blade.php` | M | — | Built in #1272 |
+| PLAT-1 | Platform | Teacher and student plan limits, and the Early adopter plan | `PlanLimitService` | M | — | Built in #1279 (draft). Was L1, not a walkthrough DEMO row. Early adopter is 0/0, platform-only, and assigned by a platform admin |
+| DOC-1 | Docs | November 2026 demo designs, 60 boards | `docs/design/2026-11-demo/` | — | — | #1273, merged (head `9075f65f`). Design reference only. No DEMO item is built by it |
+| DOC-2 | Docs | Run sheet for the 12 November 2026 demo | `docs/demo/2026-11-12-run-sheet.md` | — | — | #1276 (draft, head `4938df71`). Docs only. No DEMO item is built by it |
 | OB-F1 | Onboarding | Remove the school-size step; use the counted students (issues 1-2) | `onboarding-blueprint.md` Fix 1 | S–M | — | Onboarding fixes PR |
 | OB-F2 | Onboarding | One class-teacher invite service for wizard, Classes and Toshi: accept and decline, preview, invite lists (issues 3-8) | `onboarding-blueprint.md` Fix 2 | L | #1239; #1262 | Onboarding fixes PR (#1262 already sends links for imports) |
 | OB-F3 | Onboarding | Never generate teacher emails silently; add a "No email yet" option (issues 13-14) | `ManualOnboardingWizard.php:378, 3946-3951` | S–M | — | Onboarding fixes PR |
@@ -489,52 +518,67 @@ Class teachers can also create exams for their own class (`teacher.php:430-434`;
 
 ## PR coverage — 5 November 2026
 
-*“Built” means the code exists in the named draft PR. None of these PRs is merged, and this section does not claim a merge.*
+*“Built” means the code is in the named pull request. Only #1273 is merged. The others were open drafts when this note was written. Heads below are the GitHub heads read on 5 Nov 2026.*
 
 | PR | Branch | What it builds | DEMO items it covers |
 |---|---|---|---|
-| #1271 | `cursor/whole-class-report-pdf-cd2d` | One PDF of every report card in a class; direct up to 12 students, queued above; class-head/admin scoped | R2-10; the report-card action on A1 |
-| #1272 | `cursor/exam-sets-page-marks-f7b0` (stacked on #1261) | Exam-set page, stream and base-class marks entry, optional filters, AB/absent marks, over-100 warning, bulk approve, release checklist and audience panel, phone mark sheet | A8, A9, R2-4, R2-5, E1–E5; new MK-1 to MK-3 |
-| #1273 | `cursor/docs-demo-designs` (merged) | 60 November demo design boards and design tokens under `docs/design/2026-11-demo/` | Design reference only; no DEMO item is code-built by it |
-| #1274 | `feat/student-profile-report-cards` | Student profile header/ID card, tabs, actions (Mark as paid, add marks draft, record attendance), Performance/Attendance/Fees cards, photo, report-cards class screen, class PDF states | A1, A10 (Mark as paid), R2-6; new SP-1 and SP-2 |
-| #1275 | `cursor/t094-parent-student-setup-links` (stacked on #1262 → #1239) | One-time setup links for imported parents/students, resend on both profiles, parent magic login without a password | A13 (new); A4 partly (parent email import and resend setup link) |
-| #1276 | `docs/demo-run-sheet-2026-11-12` | 12 November demo run sheet | Docs only; no feature |
-| #1277 | `cursor/t095-one-click-attendance` | One-click attendance register by class/stream, class head for the whole class, stream teachers their own stream, parent weekly summary | R2-8, R2-11; the parent attendance summary |
-| #1279 | `cursor/t082-plan-limits` | Teacher/student plan limits across the add forms, onboarding engine, imports and Toshi; Early adopter plan assignable by a platform admin | New PLAT-1; it bounds A5/A6 teacher additions |
+| #1266 | `cursor/parent-student-portal-0657` (head `c751e53f`) | Parent and student portals. Every released set, with a year filter; the 15-exam cap is gone; unreleased sittings stay hidden. The child's name once, in title case. Stat cards link to Marks, Attendance and Fees, each with a chart. Fees show structure, paid and balance. Sidebars use the admin active classes. The parent header uses the shared profile menu | R3-1 (name only; no admin-card restyle in the PR body), R3-2, R3-3, R3-4, R3-5, R4-1 |
+| #1267 | `cursor/password-reset-code-send-a7c1` (head `aef2272e`, stacked on #1262) | The password reset code sends when `MAIL_FROM_ADDRESS` is blank. A blank or invalid From becomes `connect@klassapp.xyz`. Teachers, parents and students are covered. The send stays in the request. A `.local` address can still be used. A null password still gets the teacher setup link | A12 |
+| #1270 | `cursor/demo-fees-structure-a0f0` (head `98e65957`) | Demo fees. One whole-school row. A same-name class fee adds on top, and the fee list warns after save. Old per-tier copies are hidden, not deleted, with a clean-up TODO in `FeeStructureService`. A yearly fee counts once in the year total and only in its due term. Record payment can search and can be left against the student's total | A10. Not the sortable, editable balances list |
+| #1271 | `cursor/whole-class-report-pdf-cd2d` (head `71d97202`) | One PDF of every report card in a class. Direct for 12 or fewer students, queued above that. Admins, deputy admins on the admin pages, and class heads | R2-10, and the class-PDF half of R2-6 |
+| #1272 | `cursor/exam-sets-page-marks-f7b0` (head `f44c7298`, stacked on #1261). Manzi's note names `0add32aa`; the later commit lets a base-class release reach the streams and lets cards resolve the class | The exam set page. Base-class marks entry with a stream column and filter. A stream teacher sees only their stream; the class head sees every stream. AB for absent. The over-maximum warning blocks submit (maximum 100). The release checklist and audience panel. Bulk approve. The phone mark sheet. Marks filters are optional | A9 (teacher path), R2-5 (workflow only; the rename is not in this PR), E3, E4, E5, MK-1, MK-2, MK-3. Not E1's type screen, not E2's class chips, not A8's create form (that stays #1261) |
+| #1273 | `cursor/docs-demo-designs` (merged, head `9075f65f`) | The November demo designs, `docs/design/2026-11-demo/`: 60 boards, `canvas.json`, design tokens. README is the page map | DOC-1. No DEMO item is built by it |
+| #1274 | `feat/student-profile-report-cards` (head `6912f253`) | Student profile: header card, photo (add, replace, remove), Mark as paid for the outstanding term balance, add-marks drafts, record attendance, joined date, Performance / Attendance / Fees. Report-cards class screen (design page 4): filters, KPIs, divisions, positions, a PDF per student, class-PDF states | A1 and the class-screen half of R2-6. Design pages 5 and 4 from #1273. Mark as paid is this profile action, not the fee-structure work in #1270 |
+| #1275 | `cursor/t094-parent-student-setup-links` (head `ccd56ead`, stacked on #1262) | Setup links for imported parents and students. No password at import. A real email gets the teacher-style link. A parent with no email keeps WhatsApp magic login. Resend on both profiles | A13 (was L10). Not A4: the parent-profile redesign is not in this PR. The wizard does keep the Email and Parent Email columns |
+| #1276 | `docs/demo-run-sheet-2026-11-12` (head `4938df71`) | The 12 November 2026 demo run sheet, `docs/demo/2026-11-12-run-sheet.md` | DOC-2. No DEMO item is built by it |
+| #1277 | `cursor/t095-one-click-attendance` (head `cc5f38a5`) | One-click attendance. Present is already selected. A class head gets the whole class. A stream teacher gets their own stream. One save writes the register. The parent attendance page gains a weekly summary | R2-8, R2-11. The weekly bars sit on the attendance page from #1266; they are not a separate DEMO item |
+| #1279 | `cursor/t082-plan-limits` (head `8b778880`) | Plan limits on the add forms, the onboarding engine, the imports and Toshi. Early adopter plan, assigned by a platform admin, unlimited, and hidden from a school's own picker | PLAT-1 (was L1). Not a walkthrough DEMO row |
 
 ### Built DEMO items
 
 | Master ID | Item | Built in | Note |
 |---|---|---|---|
-| A1 | Student profile: ID card, tabs on top, actions, joined date | #1274 | Photo, Mark as paid, add marks, record attendance, progress report |
-| A4 | Parent profile: new design, actions, collect parent emails | #1275 | Setup-link resend and parent email import are built; the full profile redesign is not |
-| A8 | Create a term's exam set | #1261 + #1272 | #1272 adds the set page and stream/base-class marks entry |
-| A9 | Marks empty state and working teacher path | #1261 + #1272 | Mark sheet, phone cards, release preview |
-| A10 | Fees structure and payment | #1270 + #1274 | #1274 adds Mark as paid from the student profile |
-| A12 | Password reset for teachers, parents and students | #1267 | Root cause was the blank From address |
-| A12b | `/teacher/setup` keeps `is_reset=0` | #1262 | |
-| R2-4 | Exams created through exam sets | #1261 + #1272 | |
-| R2-5 | Marks Release workflow | #1272 | Bulk approve, release checklist, audience panel; the rename may be #1269 |
-| R2-6 | Report cards for admins and class heads | #1274 + #1271 | Class screen plus one PDF per class |
+| A1 | Student profile: ID card, tabs under the card, actions, joined date | #1274 | Photo, Mark as paid, add marks, record attendance, progress report. This is design page 5 |
+| A9 | Working teacher marks path | #1272 | Stream roster, AB, over-100 block, phone sheet, bulk approve, release checklist. Empty-state copy was not re-checked |
+| A10 | Fees structure and payment against the total | #1270 | Same-name class fee adds on top with a warning after save. Old duplicates hidden, not deleted. Yearly fee once in the year and in its due term |
+| A12 | Password reset code sends when the From address is blank | #1267 | Teachers, parents and students. Not queued. `.local` still works |
+| R2-5 | Marks workflow (not the rename) | #1272 | Checklist, audience panel, bulk approve, stream entry. The release-page test still expects "Release marks" |
+| R2-6 | Report cards class screen and class PDF | #1274 and #1271 | Class screen in #1274 (design page 4). One PDF for the class in #1271 |
 | R2-8 / R2-11 | One-click attendance register | #1277 | |
-| R2-10 | Whole-class report card PDF | #1271 | |
-| R3-1 to R3-4 | Parent portal dashboard, released results, pages and charts, sidebar | #1266 | |
-| R4-1 | Student portal: same discipline as the parent dashboard | #1266 | |
-| E1–E5 | Exam sets and marks filters | #1261 + #1272 | Optional filters and AB/over-100 in #1272 |
-| A13 (new) | Imported parent and student setup links | #1275 | No password is set; resend on both profiles |
-| PLAT-1 (new) | Teacher/student plan limits and the Early adopter plan | #1279 | 0/0 plan, assigned by a platform admin |
-| MK-1 (new) | AB / absent marks | #1272 | Null mark, grade AB, excluded from totals, averages, positions and divisions |
-| MK-2 (new) | Over-100 warning and submit block | #1272 | |
-| MK-3 (new) | Bulk approve, release checklist/audience panel, phone mark sheet | #1272 | |
-| SP-1 (new) | Student profile screen (design page 5) | #1274 | Header, actions, tabs, cards, dialogs |
-| SP-2 (new) | Report cards class screen (design page 4) | #1274 | Class/exam filters, KPIs, divisions, per-student and class PDFs |
+| R2-10 | Whole-class report card PDF | #1271 | Direct up to 12 students, queued above that |
+| R3-1 | Child's name once, in title case | #1266 | Admin-style card restyle is not in the PR body, so that part is not marked built |
+| R3-2 | Every released set, nothing unreleased | #1266 | |
+| R3-3 | Marks, Attendance and Fees pages with charts | #1266 | |
+| R3-4 | Sidebar active classes | #1266 | |
+| R3-5 | Profile menu instead of the bare Logout button | #1266 | The all-roles header is #1265, not marked here |
+| R4-1 | Student portal, same pages and released results | #1266 | |
+| E3 | Set page grouped by class and exam type | #1272 | |
+| E4 | Set page and marks entry kept separate | #1272 | |
+| E5 | Marks filters no longer required | #1272 | |
+| MK-1 | AB for absent | #1272 | |
+| MK-2 | Over-100 warning blocks submit | #1272 | Maximum is 100 |
+| MK-3 | Bulk approve, release checklist and audience, phone mark sheet | #1272 | |
 
-“Built” here means the code is in the draft PR. #1273 and #1276 are design and run-sheet inputs; they do not build a DEMO item themselves. #1266, #1267 and #1270 were already credited as “being built” in the 4 November table; this section records the newer PRs. A13, PLAT-1, MK-1 to MK-3 and SP-1 to SP-2 are new IDs introduced by these PRs; they are not in the 4 November table above.
+Left as they were, because none of these PRs implement them: A2, A3, A4, A5, A6, A7, A8 (create form stays #1261), A11, A12b, R2-1, R2-2, R2-3, R2-4, R2-7, R2-9, R3-6, R4-2, R4-3, E1, E2, and the onboarding rows. A13 and PLAT-1 are built, and they were L10 and L1, not walkthrough DEMO rows. #1273 and #1276 do not build a DEMO item. Design page 5 from #1273 is A1 (an earlier note called that screen SP-1). Design page 4 is the class screen in R2-6 (SP-2). They are not separate items.
 
-### Follow-ups — #1272 rollback tests
+### Follow-ups — #1272
 
-- **Missing refusal test:** no test asserts that `down()` throws while any `marks.absent = true` row exists, or that `absent` and the nullable mark column survive that refusal.
-- **Missing clean-path test:** no test asserts that `down()` with no absent rows makes `marks.marks` NOT NULL and drops `marks.absent`.
+Read on head `f44c7298`. The migration is `database/migrations/2026_11_04_210000_add_absent_to_marks_table.php`.
 
-Both belong on the #1272 branch before Monday. The migration is `database/migrations/2026_11_04_210000_add_absent_to_marks_table.php`.
+The rollback test is `tests/Feature/Marks/MarksFollowUpTest.php`, `test_rolling_back_absent_marks_refuses_while_an_absence_exists`, lines 225–249:
+
+- It does not check that `marks.marks` becomes non-nullable again after `down()`. After the absent rows are deleted it calls `down()` and asserts only that the `absent` column is gone (lines 243–245).
+- That clean `down()` runs in the same test, after the refusal case, not on its own fresh database.
+
+Still not built, from the PR body:
+
+- a per-exam maximum (for example out of 50)
+- new-set switches, rename, "counts towards the report", Add exam type, Add classes, Assign teacher
+- an "All released" set status
+- marks-grid comments
+- offline save
+- the MarksUpload redraw
+- live loading skeletons for create and release
+
+#1270's own follow-up, recorded there: hiding the old duplicate fee rows is enough for now. Retiring or merging them is later, and they are not deleted.
 
