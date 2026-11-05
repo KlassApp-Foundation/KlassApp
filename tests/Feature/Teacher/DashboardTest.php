@@ -170,7 +170,9 @@ class DashboardTest extends TestCase
         $html = $this->actingAs($this->teacher)->get('/teacher/dashboard')->assertOk()->getContent();
 
         $this->assertMatchesRegularExpression(
-            '/data-testid="upcoming-exams-count"[\s\S]{0,2500}ds-kpi-value">1</',
+            // The tile is the admin's dv2 card after #1265; the older ds-kpi card
+            // is accepted too, so this holds whichever of the two lands first.
+            '/data-testid="(?:upcoming-exams-count|kpi-upcoming-exams)"[\s\S]{0,2500}(?:ds-kpi-value|dv2-kpi-value)">\s*1\s*</',
             $html
         );
     }
