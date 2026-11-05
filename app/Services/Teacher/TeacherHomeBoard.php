@@ -53,7 +53,7 @@ final class TeacherHomeBoard
             'week_total' => $head ? count($this->studentIds($schoolId, $yearId, [(int) $head->id])) : 0,
             'streams' => $this->streams($schoolId, $yearId, $links),
             'empty' => $links->isEmpty(),
-            'attendance_url' => route('teacher.attendance.create'),
+            'attendance_url' => route('teacher.attendance.register'),
             'marks_url' => route('teacher.exam.marks'),
         ];
     }
@@ -67,20 +67,18 @@ final class TeacherHomeBoard
             return collect();
         }
 
-        $taught = Teacherlink::query()
-            ->where('school_id', $schoolId)
-            ->where('teacher_id', $teacher->id)
-            ->where('academic_year_id', $yearId)
-            ->pluck('standardLink_id');
+        // Same rule as the roster and the old dashboard counts (#1269): the stream's class
+        // teacher, a subject allocation, or the section's class teacher when the stream has none.
+        // A class head who is set on the section only (no stream-level teacher) is a class head too.
+        $linkIds = $teacher->currentYearStandardLinkIds();
+        if ($linkIds === []) {
+            return collect();
+        }
 
         return StandardLink::query()
             ->where('school_id', $schoolId)
-            ->where(function ($query) use ($teacher, $taught) {
-                $query->where('class_teacher_id', $teacher->id);
-                if ($taught->isNotEmpty()) {
-                    $query->orWhereIn('id', $taught);
-                }
-            })
+            ->where('academic_year_id', $yearId)
+            ->whereIn('id', $linkIds)
             ->with(['standard', 'section'])
             ->orderBy('id')
             ->get();

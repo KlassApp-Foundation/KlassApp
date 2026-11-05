@@ -136,10 +136,9 @@ class ClassTeacherDashboardStreamsTest extends TestCase
         $html = $this->actingAs($teacher)->get('/teacher/dashboard')->assertOk()->getContent();
 
         $this->assertStringNotContainsString("You haven't been assigned any classes yet", $html);
-        preg_match_all('/ds-kpi-value">([^<]*)</', $html, $values);
-        $this->assertSame('1', trim($values[1][0] ?? ''), 'My Students');
-        $this->assertSame('1', trim($values[1][1] ?? ''), 'My Classes');
-        $this->assertSame('1', trim($values[1][2] ?? ''), 'Upcoming Exams');
+        $this->assertSame('1', $this->dashboardCount($html, 'students'), 'My students');
+        $this->assertSame('1', $this->dashboardCount($html, 'classes'), 'My classes');
+        // The page-8 dashboard (#1283) has no "Upcoming Exams" tile; exams to mark are the teacher's own.
     }
 
     public function test_section_class_teacher_without_a_stream_teacher_is_counted(): void
@@ -164,9 +163,8 @@ class ClassTeacherDashboardStreamsTest extends TestCase
 
         $html = $this->actingAs($teacher)->get('/teacher/dashboard')->assertOk()->getContent();
         $this->assertStringNotContainsString("You haven't been assigned any classes yet", $html);
-        preg_match_all('/ds-kpi-value">([^<]*)</', $html, $values);
-        $this->assertSame('1', trim($values[1][0] ?? ''));
-        $this->assertSame('1', trim($values[1][1] ?? ''));
+        $this->assertSame('1', $this->dashboardCount($html, 'students'));
+        $this->assertSame('1', $this->dashboardCount($html, 'classes'));
     }
 
     public function test_subject_allocation_still_counts(): void
@@ -204,9 +202,19 @@ class ClassTeacherDashboardStreamsTest extends TestCase
         $this->student('Maths Pupil', $stream);
 
         $html = $this->actingAs($teacher)->get('/teacher/dashboard')->assertOk()->getContent();
-        preg_match_all('/ds-kpi-value">([^<]*)</', $html, $values);
-        $this->assertSame('1', trim($values[1][0] ?? ''));
-        $this->assertSame('1', trim($values[1][1] ?? ''));
+        $this->assertSame('1', $this->dashboardCount($html, 'students'));
+        $this->assertSame('1', $this->dashboardCount($html, 'classes'));
+    }
+
+    /** The two counts on the teacher home board (#1283): "my classes" and "my students". */
+    private function dashboardCount(string $html, string $which): string
+    {
+        $pattern = $which === 'students'
+            ? '/data-testid="teacher-students">\s*(\d+)\s*</'
+            : '/<strong>\s*(\d+)\s*<\/strong><span>my classes/';
+        preg_match($pattern, $html, $match);
+
+        return $match[1] ?? '';
     }
 
     private function teacher(string $name, string $email): User

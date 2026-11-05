@@ -163,12 +163,13 @@ class ParentAttendanceWeeksTest extends TestCase
         $this->assertTrue($payload['success']);
         $weeks = collect($payload['data']['weeks']);
 
-        $this->assertGreaterThanOrEqual(3, $weeks->count());
-        $this->assertSame(4, (int) $weeks->firstWhere('label', 'W1')['present']);
-        $this->assertSame(5, (int) $weeks->firstWhere('label', 'W1')['recorded']);
-        $this->assertSame(5, (int) $weeks->firstWhere('label', 'W2')['present']);
-        $this->assertSame($thisWeekPresent, (int) $payload['data']['this_week']['present']);
-        $this->assertSame($thisWeekPresent, (int) $payload['data']['this_week']['recorded']);
+        // #1282's shape: weeks that have a register, in order, with whole days (both sessions present).
+        $this->assertSame(['W1', 'W2'], $weeks->take(2)->pluck('label')->all());
+        $this->assertSame(4.0, (float) $weeks->firstWhere('label', 'W1')['present']);
+        $this->assertFalse($weeks->firstWhere('label', 'W1')['full'], 'a week with a missed day is not a full week');
+        $this->assertSame(5.0, (float) $weeks->firstWhere('label', 'W2')['present']);
+        $this->assertTrue($weeks->firstWhere('label', 'W2')['full']);
+        $this->assertSame((float) $thisWeekPresent, (float) $payload['data']['this_week_present']);
 
         $missed = collect($payload['data']['missed_days']);
         $this->assertCount(1, $missed);
@@ -176,20 +177,15 @@ class ParentAttendanceWeeksTest extends TestCase
         $this->assertSame($weekOne->copy()->addDays(2)->format('D j M'), $missed->first()['date']);
     }
 
-    public function test_an_empty_week_is_marked_unrecorded_not_five_absences(): void
+    public function test_a_week_with_no_register_is_left_out_not_shown_as_five_absences(): void
     {
         // Only the current week has a register; earlier term weeks are empty.
         $this->attendance(now()->startOfWeek(), 1);
 
         $payload = app(ParentPortalService::class)->attendance($this->parent, null, $this->child->id);
-        $weeks = collect($payload['data']['weeks']);
 
-        $this->assertTrue($weeks->count() >= 3);
-        foreach ($weeks as $week) {
-            if ((int) $week['recorded'] === 0) {
-                $this->assertSame(0, (int) $week['present']);
-            }
-        }
+        $this->assertCount(1, $payload['data']['weeks']);
+        $this->assertSame([], $payload['data']['missed_days']);
     }
 
     public function test_parent_attendance_page_shows_the_weekly_design_and_comments(): void
@@ -201,26 +197,25 @@ class ParentAttendanceWeeksTest extends TestCase
         $this->actingAs($this->parent)
             ->get(route('parent.children.attendance', $this->child->id))
             ->assertOk()
-            ->assertSee('data-testid="parent-attendance-week"', false)
-            ->assertSee('data-testid="parent-attendance-missed-day"', false)
-            ->assertSee('Weeks this term')
             ->assertSee('Days missed')
-            ->assertSee('W1')
             ->assertSee('Travelled for a family event.');
     }
 
+    /** A present day has both sessions (a whole day); an absence is the morning row only. */
     private function attendance(\Carbon\Carbon $date, int $status, ?string $comment = null): void
     {
-        Attendance::create([
-            'school_id' => $this->school->id,
-            'academic_year_id' => $this->year->id,
-            'standardLink_id' => $this->stream->id,
-            'user_id' => $this->child->id,
-            'date' => $date->toDateString(),
-            'session' => 'forenoon',
-            'status' => $status,
-            'remarks' => $comment,
-            'recorded_by' => $this->parent->id,
-        ]);
+        foreach ($status === 1 ? ['forenoon', 'afternoon'] : ['forenoon'] as $session) {
+            Attendance::create([
+                'school_id' => $this->school->id,
+                'academic_year_id' => $this->year->id,
+                'standardLink_id' => $this->stream->id,
+                'user_id' => $this->child->id,
+                'date' => $date->toDateString(),
+                'session' => $session,
+                'status' => $status,
+                'remarks' => $comment,
+                'recorded_by' => $this->parent->id,
+            ]);
+        }
     }
 }

@@ -26,19 +26,16 @@ class TeacherDashboardKpiTilesTest extends TestCase
         ]);
     }
 
-    public function test_the_five_teacher_tiles_use_the_admin_tile_component_and_styles(): void
+    public function test_the_teacher_home_is_the_page_8_board_not_the_five_tiles(): void
     {
+        // #1283 replaces the five dv2 tiles with the page-8 board. A teacher with no class sees the empty state.
         $html = $this->actingAs($this->userFor(5))->get('/teacher/dashboard')->assertOk()->getContent();
 
-        $this->assertStringContainsString('data-testid="dashboard-kpi-grid"', $html);
-        $this->assertStringContainsString('class="dv2-kpis dv2-kpis--five"', $html);
-        $this->assertStringContainsString('css/dashboard-v2.css', $html, 'the admin dashboard stylesheet is loaded');
+        $this->assertStringContainsString('data-testid="teacher-dashboard"', $html);
+        $this->assertStringContainsString('data-testid="teacher-empty"', $html);
+        $this->assertStringContainsString('No classes yet', $html);
+        $this->assertStringNotContainsString('class="dv2-kpis dv2-kpis--five"', $html);
         $this->assertStringNotContainsString('ds-kpi-card', $html, 'the old teacher-only card is gone');
-
-        foreach (['kpi-my-students' => 'My Students', 'kpi-my-classes' => 'My Classes', 'kpi-upcoming-exams' => 'Upcoming Exams', 'kpi-whatsapp-linked' => 'WhatsApp Linked', 'kpi-marks-needing-you' => 'Marks needing you'] as $testid => $label) {
-            $this->assertMatchesRegularExpression('#<div[^>]*data-testid="'.$testid.'"[^>]*>\s*<(?:a|div) class="dv2-kpi-link".*?'.preg_quote($label, '#').'#s', $html, $label);
-            $this->assertMatchesRegularExpression('#<div[^>]*class="dv2-kpi[ "][^>]*data-testid="'.$testid.'"|<div[^>]*data-testid="'.$testid.'"[^>]*class="dv2-kpi[ "]#', $html, $label.' is a dv2-kpi tile');
-        }
     }
 
     public function test_the_tile_markup_uses_the_same_class_names_as_the_admin_dashboard(): void

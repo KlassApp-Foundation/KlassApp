@@ -164,14 +164,22 @@ class DashboardTest extends TestCase
             'status' => 'undone',
         ]);
 
-        $html = $this->actingAs($this->teacher)->get('/teacher/dashboard')->assertOk()->getContent();
+        // The board lists the exams of the classes this teacher belongs to, so give them the class.
+        $link = StandardLink::create([
+            'school_id' => $this->school->id, 'academic_year_id' => $this->academicYear->id,
+            'standard_id' => $standard->id, 'section_id' => $section->id, 'status' => 1,
+        ]);
+        \App\Models\Teacherlink::create([
+            'school_id' => $this->school->id, 'academic_year_id' => $this->academicYear->id,
+            'standardLink_id' => $link->id, 'subject_id' => $subject->id, 'teacher_id' => $this->teacher->id,
+        ]);
 
-        $this->assertMatchesRegularExpression(
-            // The tile is the admin's dv2 card after #1265; the older ds-kpi card
-            // is accepted too, so this holds whichever of the two lands first.
-            '/data-testid="(?:upcoming-exams-count|kpi-upcoming-exams)"[\s\S]{0,2500}(?:ds-kpi-value|dv2-kpi-value)">\s*1\s*</',
-            $html
-        );
+        // The "Upcoming Exams" tile is gone (#1283 page-8 board). The board's "exams to mark"
+        // count is the same question: open exams this person can mark.
+        $this->actingAs($this->teacher)->get('/teacher/dashboard')->assertOk();
+        $board = app(TeacherHomeBoard::class)->forTeacher($this->teacher);
+
+        $this->assertSame(1, (int) $board['to_mark']);
     }
 
     public function test_dashboard_shows_marks_entry_banner(): void
