@@ -13,8 +13,10 @@
       extraPricing       show the Pricing link (default false)
       showLogout         show a Logout button instead of the profile dropdown (default false)
       chromeInSidebar    true => suppress the notification bell + profile dropdown here
-                         (they live in the sidebar footer instead — admin shell only,
-                         2026-09-27 UI-polish pass)
+                         (they live in the sidebar footer instead, and on phones the avatar
+                         moves to the top bar). EVERY role shell passes true so the top bar
+                         and the account menu are the same for each role (school admin first,
+                         2026-09-27 UI-polish pass; all roles since the account-menu pass).
 --}}
 @php
     $variant          = $variant          ?? 'dashboard';

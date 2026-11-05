@@ -17,6 +17,11 @@ $(document).ready(function(){
     $menu.addClass('is-portaled').removeAttr('hidden');
     var box = trigger.getBoundingClientRect();
     var phone = window.innerWidth < 768;
+    // A trigger in the upper half of the screen (a top-bar avatar) opens its menu DOWNWARD like
+    // the phone layout. The sidebar-footer trigger sits at the bottom and opens upward. Opening
+    // a top-bar menu upward ran it off the top of the screen and clamped it to 120px, which
+    // scrolled every item below the first out of view (the teacher's "Log out" disappeared).
+    var opensDown = phone || box.top < window.innerHeight / 2;
     var width = phone ? Math.min(280, window.innerWidth - 16) : 224;
     var style = {
       position: 'fixed',
@@ -33,10 +38,10 @@ $(document).ready(function(){
     var padL = sideStyle ? (parseFloat(sideStyle.paddingLeft) || 0) : 0;
     var padR = sideStyle ? (parseFloat(sideStyle.paddingRight) || 0) : 0;
     var innerWidth = Math.max(160, Math.round(side.width - padL - padR));
-    if (phone) {
+    if (opensDown) {
       style.top = Math.round(box.bottom + 8) + 'px';
       style.bottom = 'auto';
-      style.right = '8px';
+      style.right = phone ? '8px' : Math.max(8, Math.round(window.innerWidth - box.right)) + 'px';
       style.left = 'auto';
     } else if (collapsed) {
       var rail = document.getElementById('admin-sidebar');
@@ -68,7 +73,7 @@ $(document).ready(function(){
       style.bottom = Math.round(window.innerHeight - box.top + 8) + 'px';
     }
     $menu.css(style);
-    if (!phone) {
+    if (!opensDown) {
       var placed = $menu[0].getBoundingClientRect();
       if (placed.top < 8) {
         $menu.css({

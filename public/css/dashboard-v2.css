@@ -99,6 +99,7 @@
 /* 150px only at 1280+ with the panel closed. Open or narrower viewports grow. */
 @media (min-width:1280px){
     .dv2-kpis{grid-template-columns:repeat(6,minmax(0,1fr))}
+    .dv2-kpis.dv2-kpis--five{grid-template-columns:repeat(5,minmax(0,1fr))}
     html.toshi-collapsed .dv2-kpi,
     body.toshi-collapsed .dv2-kpi{max-height:150px}
 }
