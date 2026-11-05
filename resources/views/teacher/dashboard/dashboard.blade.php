@@ -67,7 +67,7 @@
                 <div class="family-bars">
                     @foreach($board['week'] as $day)
                         <div class="family-bar">
-                            <span class="family-bar__value">{{ (int) $day['present'] }}</span>
+                            <span class="family-bar__value">{{ $day['present_label'] ?? \App\Support\AttendanceDays::mark((float) $day['present']) }}</span>
                             <span class="family-bar__fill is-full" style="height: {{ max(8, (int) $day['present']) }}px;"></span>
                             <span class="family-bar__label">{{ $day['label'] }}</span>
                         </div>

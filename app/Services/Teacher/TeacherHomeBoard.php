@@ -11,6 +11,7 @@ use App\Models\StandardLink;
 use App\Models\StudentAcademic;
 use App\Models\Teacherlink;
 use App\Models\User;
+use App\Support\AttendanceDays;
 use App\Support\DashboardGreeting;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -217,17 +218,22 @@ final class TeacherHomeBoard
         $rows = [];
         foreach (range(0, 4) as $offset) {
             $day = $start->copy()->addDays($offset);
-            $present = 0;
+            $present = 0.0;
             if ($ids !== []) {
-                $present = (int) Attendance::query()
+                $records = Attendance::query()
                     ->where('school_id', $schoolId)
                     ->whereIn('user_id', $ids)
-                    ->where('status', 1)
                     ->whereDate('date', $day->toDateString())
-                    ->distinct()
-                    ->count('user_id');
+                    ->get(['user_id', 'date', 'status']);
+                foreach ($records->groupBy('user_id') as $studentRows) {
+                    $present += AttendanceDays::present($studentRows);
+                }
             }
-            $rows[] = ['label' => $day->format('D'), 'present' => $present];
+            $rows[] = [
+                'label' => $day->format('D'),
+                'present' => $present,
+                'present_label' => AttendanceDays::mark($present),
+            ];
         }
 
         return $rows;

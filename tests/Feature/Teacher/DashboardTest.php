@@ -353,8 +353,14 @@ class DashboardTest extends TestCase
 
         $board = app(TeacherHomeBoard::class)->forTeacher($this->teacher);
         $monday = collect($board['week'])->firstWhere('label', now()->startOfWeek()->format('D'));
-        $this->assertSame(1, $monday['present']);
-        $this->assertIsInt($monday['present']);
+        $this->assertEquals(1.0, $monday['present']);
+        $this->assertSame('1', $monday['present_label']);
+
+        Attendance::query()->where('user_id', $student->id)->where('session', 'afternoon')->delete();
+        $half = app(TeacherHomeBoard::class)->forTeacher($this->teacher);
+        $halfMonday = collect($half['week'])->firstWhere('label', now()->startOfWeek()->format('D'));
+        $this->assertEquals(0.5, $halfMonday['present']);
+        $this->assertSame('½', $halfMonday['present_label']);
 
         $this->actingAs($this->teacher)->get('/teacher/dashboard')
             ->assertOk()
