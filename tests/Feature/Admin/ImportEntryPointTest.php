@@ -64,17 +64,20 @@ class ImportEntryPointTest extends TestCase
         $dashboard = $this->actingAs($admin)->get('/admin/dashboard');
         $dashboard->assertOk();
         $dashboard->assertSee('data-testid="dashboard-v2-import-students"', false);
-        $dashboard->assertSee('/admin/import"', false);
+        // #1269: the student import is the new Import students page.
+        $dashboard->assertSee('/admin/students/import"', false);
         $dashboard->assertDontSee('/admin/student/import', false);
 
         $students = $this->actingAs($admin)->get('/admin/students');
         $students->assertOk();
-        $this->assertMatchesRegularExpression('#href="[^"]*/admin/import"[^>]*>Import list</a>#', $students->getContent());
+        $students->assertSee('/admin/students/import', false);
         $this->assertDoesNotMatchRegularExpression('#/admin/student/import#', $students->getContent());
 
-        $studentImport = $this->actingAs($admin)->get('/admin/import');
+        // The old address now opens the Import students page (#1269).
+        $this->actingAs($admin)->get('/admin/import')->assertRedirect('/admin/students/import');
+        $studentImport = $this->actingAs($admin)->get('/admin/students/import');
         $studentImport->assertOk();
-        $studentImport->assertSee('admin/importUsers', false);
+        $studentImport->assertSee('Import students', false);
         $studentImport->assertDontSee('admin/importTeachers', false);
         $studentImport->assertDontSee('admin/importParents', false);
 
@@ -89,7 +92,7 @@ class ImportEntryPointTest extends TestCase
         $parents = $this->actingAs($admin)->get('/admin/parents');
         $parents->assertOk();
         $this->assertMatchesRegularExpression('#href="[^"]*/admin/import/parents"[^>]*>Import list</a>#', $parents->getContent());
-        $this->assertDoesNotMatchRegularExpression('#href="[^"]*/admin/import"[^>]*>Import list</a>#', $parents->getContent());
+        $this->assertDoesNotMatchRegularExpression('#href="[^"]*/admin/students/import"[^>]*>Import list</a>#', $parents->getContent());
         $parentImport = $this->actingAs($admin)->get('/admin/import/parents');
         $parentImport->assertOk();
         $parentImport->assertSee('Import Parents', false);

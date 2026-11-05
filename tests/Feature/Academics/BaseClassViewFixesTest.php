@@ -219,23 +219,22 @@ class BaseClassViewFixesTest extends TestCase
             'recorded_by' => $admin->id,
         ]);
 
+        // #1282: the dashboards link to Marks, Attendance and Fees pages; the subjects are on the Marks pages.
         $studentPage = $this->actingAs($student)->get('/student/dashboard')->assertOk();
-        $studentPage->assertSee('MATHEMATICS');
-        $studentPage->assertSee('ENGLISH');
-        $studentPage->assertSee('SCIENCE');
-        $studentPage->assertSee('SOCIAL STUDIES');
-        $studentPage->assertSee('>4<', false);
-        $studentPage->assertDontSee('ART');
         $studentPage->assertSee('½ day present');
         $studentPage->assertDontSee('>0.5<', false);
 
-        $parentPage = $this->actingAs($parent)->get('/parent/dashboard')->assertOk();
-        $parentPage->assertSee('MATHEMATICS');
-        $parentPage->assertSee('ENGLISH');
-        $parentPage->assertSee('SCIENCE');
-        $parentPage->assertSee('SOCIAL STUDIES');
-        $parentPage->assertSee('>4<', false);
-        $parentPage->assertDontSee('ART');
+        $studentMarks = $this->actingAs($student)->get('/student/marks')->assertOk();
+        foreach (['MATHEMATICS', 'ENGLISH', 'SCIENCE', 'SOCIAL STUDIES'] as $name) {
+            $studentMarks->assertSee($name);
+        }
+        $studentMarks->assertDontSee('ART');
+
+        $parentMarks = $this->actingAs($parent)->get(route('parent.children.grades', $student->id))->assertOk();
+        foreach (['MATHEMATICS', 'ENGLISH', 'SCIENCE', 'SOCIAL STUDIES'] as $name) {
+            $parentMarks->assertSee($name);
+        }
+        $parentMarks->assertDontSee('ART');
 
         Attendance::create([
             'school_id' => $school->id,

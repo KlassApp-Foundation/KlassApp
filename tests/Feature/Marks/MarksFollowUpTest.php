@@ -289,7 +289,7 @@ class MarksFollowUpTest extends TestCase
         $this->assertStringContainsString('data-testid="release-audience"', $html);
         $this->assertStringContainsString('Who will be told', $html);
         $this->assertStringContainsString('on WhatsApp', $html);
-        $this->assertStringContainsString('Release marks', $html);
+        $this->assertStringContainsString('Marks Release', $html);
     }
 
     public function test_the_mark_sheet_includes_a_phone_card_per_student(): void

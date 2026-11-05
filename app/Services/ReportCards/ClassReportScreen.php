@@ -42,7 +42,7 @@ class ClassReportScreen
             ->where('school_id', $schoolId)
             ->whereIn('academic_year_id', $years)
             ->whereNotNull('section_id')
-            ->with('section')
+            ->with(['section', 'standard'])
             ->orderBy('id')
             ->get()
             ->filter(fn (StandardLink $l) => $l->section && (int) $l->section->school_id === $schoolId)
@@ -50,9 +50,11 @@ class ClassReportScreen
             ->map(fn (Collection $links) => [
                 'id' => (int) $links->first()->section_id,
                 'label' => (string) $links->first()->section->name,
+                // Class level order (#1269), then the name.
+                'level' => (int) ($links->first()->standard?->order ?? 999999),
                 'links' => $links->map(fn (StandardLink $l) => ['id' => (int) $l->id, 'stream' => trim((string) $l->stream)])->values()->all(),
             ])
-            ->sortBy('label', SORT_NATURAL | SORT_FLAG_CASE)
+            ->sort(fn (array $a, array $b) => [$a['level'], mb_strtolower($a['label'])] <=> [$b['level'], mb_strtolower($b['label'])])
             ->values()
             ->all();
     }

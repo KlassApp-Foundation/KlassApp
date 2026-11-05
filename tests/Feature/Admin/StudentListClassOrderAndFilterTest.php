@@ -222,7 +222,7 @@ class StudentListClassOrderAndFilterTest extends TestCase
             ]));
         }
 
-        $html = $this->actingAs($this->admin)->get('/admin/reports/cards')->assertOk()->getContent();
+        $html = $this->actingAs($this->admin)->get('/admin/reports/cards/history')->assertOk()->getContent();
         $baby = strpos($html, 'Baby Class');
         $p5a = strpos($html, 'P.5 · A');
         $p5b = strpos($html, 'P.5 · B');

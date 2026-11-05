@@ -5,6 +5,14 @@
     @if($errorMessage !== '')
         <p class="manual-wizard-bulk-help" data-testid="import-students-error">{{ $errorMessage }}</p>
     @endif
+    @if(session('import_row_failures'))
+        {{-- Row-by-row failures from the older spreadsheet import (#1252), same list the old page showed. --}}
+        <ul data-testid="import-row-failures" class="text-red-700 text-sm" style="margin: 10px;">
+            @foreach(session('import_row_failures') as $failure)
+                <li>{{ $failure }}</li>
+            @endforeach
+        </ul>
+    @endif
     @if($overLimitNotice)
         <p class="manual-wizard-bulk-help" data-testid="import-students-limit">{{ $overLimitNotice }}</p>
     @endif

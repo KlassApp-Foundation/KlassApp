@@ -223,7 +223,7 @@ class ExamSetServiceTest extends TestCase
                 'standard_ids' => [$this->base->id],
                 'stream_ids' => [$this->streamE->id, $babyStream->id],
             ])
-            ->assertRedirect(route('teacher.exam.marks'));
+            ->assertRedirect(route('teacher.exam-sets.show', ['batch' => \App\Models\Academics\ExamSet::query()->where('school_id', $this->school->id)->value('id')]));
 
         $exams = fn (Section $section) => Exam::where('school_id', $this->school->id)->where('section_id', $section->id)->count();
         $this->assertSame(2, $exams($this->base), 'their class: 2 subjects');

@@ -108,7 +108,8 @@ class StudentImportFailureReportTest extends TestCase
         $this->assertStringNotContainsString($email, $session);
         $this->assertStringNotContainsString('insert into', strtolower($session));
 
-        $page = $this->actingAs($admin)->get('/admin/import');
+        // #1269: the student import page is /admin/students/import; it shows the same row failures.
+        $page = $this->actingAs($admin)->get('/admin/students/import');
         $page->assertOk();
         $page->assertSee($plain);
         $page->assertDontSee('SQLSTATE', false);

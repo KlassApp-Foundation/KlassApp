@@ -11,7 +11,7 @@ use App\Services\Results\DisplayedGrade;
 use App\Services\Results\ResultCell;
 use App\Services\Results\ResultsQuery;
 use App\Services\Results\ResultsService;
-use App\Support\ClassListOrder;
+use App\Support\ClassLevelOrder;
 use App\Support\DemoStudentCode;
 use Illuminate\Support\Facades\Auth;
 
@@ -27,17 +27,17 @@ class ClassMarksController extends Controller
     {
         $schoolId = (int) Auth::user()->school_id;
 
-        // Class level order (#1269), active classes only and never a name-encoded
-        // stream such as "P.6 East" under "P.6" (#1281), then only classes that
-        // have exam marks.
-        $all = ClassListOrder::orderSections(
-            Section::query()
-                ->where('school_id', $schoolId)
-                ->where(function ($q) {
-                    $q->where('status', 1)->orWhere('status', '1');
-                })
-        )->get(['sections.id', 'sections.name', 'sections.school_id']);
-        $sections = $all->reject(function (Section $section) use ($all) {
+        // #1281: active classes only, never a name-encoded stream such as "P.6 East" under "P.6",
+        // in class-level order, and every class is listed ("No marks yet" when it has none).
+        // The merged branch had #1269's marks filter and ClassListOrder here; #1281's test is the
+        // reference for this screen.
+        $all = Section::query()
+            ->where('school_id', $schoolId)
+            ->where(function ($q) {
+                $q->where('status', 1)->orWhere('status', '1');
+            })
+            ->get(['id', 'name', 'school_id']);
+        $sections = ClassLevelOrder::sort($all->reject(function (Section $section) use ($all) {
             foreach ($all as $other) {
                 if ((int) $other->id !== (int) $section->id
                     && str_starts_with((string) $section->name, $other->name.' ')) {
@@ -46,9 +46,7 @@ class ClassMarksController extends Controller
             }
 
             return false;
-        })
-            ->filter(fn (Section $s) => LatestExamMarks::forSection($schoolId, (int) $s->id) !== null)
-            ->values();
+        }));
 
         if ($section !== null) {
             $current = Section::query()->where('school_id', $schoolId)->whereKey($section)->first();
