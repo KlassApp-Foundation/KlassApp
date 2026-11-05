@@ -778,15 +778,27 @@ class MarksImportService
         }
     }
 
-    /** Students enrolled in the exam's class: the same rule as the entry screen and the #986 template (usergroup 6, same school, standard link of this standard and section). */
+    /**
+     * Students enrolled in the exam's class. A base-class exam includes every
+     * stream ("Primary Seven E", "Primary Seven W"), not only the empty base
+     * section. Scoped by the exam's school.
+     */
     private function roster(Exam $exam)
     {
+        $base = app(\App\Services\Academics\BaseClassExamRoster::class);
+        if ($base->coversStreams($exam)) {
+            return $base->everyStudent($exam);
+        }
+
         return User::query()
             ->where('usergroup_id', self::STUDENT_USERGROUP)
             ->where('school_id', $exam->school_id)
-            ->whereHas('studentAcademic', fn ($q) => $q->whereHas('standardLink', fn ($q2) => $q2
-                ->where('standard_id', $exam->standard_id)
-                ->where('section_id', $exam->section_id)))
+            ->whereHas('studentAcademic', fn ($q) => $q
+                ->where('school_id', $exam->school_id)
+                ->whereHas('standardLink', fn ($q2) => $q2
+                    ->where('school_id', $exam->school_id)
+                    ->where('standard_id', $exam->standard_id)
+                    ->where('section_id', $exam->section_id)))
             ->orderBy('name')
             ->get();
     }

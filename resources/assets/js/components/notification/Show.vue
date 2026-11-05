@@ -10,8 +10,8 @@
         </a>
 
         <div class="hide-menu" id="notification-list">
-            <div class="shadow" style="width: 300px; z-index:40; top:0;right:0; position:fixed;background:#fff;">
-                <div class="px-3" style="height: 100vh; justify-content: space-between;margin-bottom: 2rem; display: flex; flex-direction: column;">
+            <div class="shadow notification-panel">
+                <div class="px-3 notification-panel__body">
                     <div class="my-3 flex justify-between items-center w-full">
                         <div class="font-semibold">Unread Notifications</div>
                         <a href="#" @click="disableNotification()" style="display:block;font-bold;text-decoration: none;">
@@ -134,5 +134,35 @@
 <style scoped="">
     .hide-menu{
         display:none !important;
+    }
+    .notification-panel{
+        position:fixed;
+        z-index:60;
+        top:auto;
+        right:auto;
+        left:260px;
+        bottom:12px;
+        width:min(320px, calc(100vw - 276px));
+        max-height:min(70vh, 520px);
+        height:auto;
+        overflow:auto;
+        background:#fff;
+        border:1px solid #E2E8F0;
+        border-radius:12px;
+    }
+    .notification-panel__body{
+        display:flex;
+        flex-direction:column;
+        justify-content:space-between;
+        max-height:min(68vh, 500px);
+    }
+    @media (max-width: 767px){
+        .notification-panel{
+            left:8px;
+            right:8px;
+            width:auto;
+            bottom:8px;
+            max-width:calc(100vw - 16px);
+        }
     }
 </style>

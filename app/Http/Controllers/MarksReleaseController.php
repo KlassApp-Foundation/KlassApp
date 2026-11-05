@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Academics\Exam;
 use App\Models\MarksRelease;
 use App\Models\User;
+use App\Support\ClassLevelOrder;
 use App\Services\MarksRelease\MarksReleaseService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -237,6 +238,7 @@ class MarksReleaseController extends Controller
             'approvals' => $approvals,
             'pastSitting' => $pastSitting,
             'needsReason' => $examId > 0 && $known && $this->needsReason($user, $examId, $targets),
+            'releaseReasonPrompt' => $this->releaseReasonPrompt($this->releasedClassNames($user, $examId, $known ? $targets : [])),
             'previewMessage' => $previewMessage,
             'audience' => ($examId && $known)
                 ? $this->releases->audienceSummary($user, $examId, $targets)
@@ -425,6 +427,75 @@ class MarksReleaseController extends Controller
             $q->where('scope', 'school')
                 ->orWhereIn('standard_link_id', $standardLinkIds);
         })->exists();
+    }
+
+    /**
+     * Class names in this selection that already have a released sitting.
+     * A whole-school release is named as such. An empty selection names nothing.
+     *
+     * @param  array<int, int>|null  $standardLinkIds
+     * @return list<string>
+     */
+    private function releasedClassNames(User $user, int $examId, ?array $standardLinkIds): array
+    {
+        if ($examId <= 0 || $standardLinkIds === []) {
+            return [];
+        }
+
+        $anchor = Exam::query()->where('school_id', $user->school_id)->find($examId);
+        if ($anchor === null) {
+            return [];
+        }
+
+        $rows = MarksRelease::query()
+            ->with('standardLink.section')
+            ->where('school_id', $user->school_id)
+            ->where('status', MarksRelease::STATUS_RELEASED)
+            ->whereHas('exam', fn ($q) => $q
+                ->where('school_id', $user->school_id)
+                ->where('exam_type_id', $anchor->exam_type_id)
+                ->where('academic_term_id', $anchor->academic_term_id))
+            ->get();
+
+        $names = [];
+        foreach ($rows as $row) {
+            if ($row->scope === 'school') {
+                $names[] = 'The whole school';
+
+                continue;
+            }
+            if ($standardLinkIds !== null && ! in_array((int) $row->standard_link_id, $standardLinkIds, true)) {
+                continue;
+            }
+            $section = trim((string) ($row->standardLink?->section?->name ?? ''));
+            $stream = trim((string) ($row->standardLink?->stream ?? ''));
+            $label = trim($section.' '.$stream);
+            if ($label !== '') {
+                $names[] = $label;
+            }
+        }
+
+        $names = array_values(array_unique($names));
+        $whole = in_array('The whole school', $names, true);
+        $classes = array_values(array_filter($names, fn (string $name) => $name !== 'The whole school'));
+        $classes = ClassLevelOrder::sort(collect($classes), fn (string $name) => $name)->all();
+
+        return $whole ? array_merge(['The whole school'], $classes) : $classes;
+    }
+
+    /** @param  list<string>  $names */
+    private function releaseReasonPrompt(array $names): string
+    {
+        if ($names === []) {
+            return 'Why release this sitting again?';
+        }
+
+        $list = count($names) === 1
+            ? $names[0]
+            : implode(', ', array_slice($names, 0, -1)).' and '.$names[array_key_last($names)];
+        $verb = count($names) === 1 ? 'was' : 'were';
+
+        return $list.' '.$verb.' already released. Why release this sitting again?';
     }
 
     /** @return array{area:string, layout:string} */

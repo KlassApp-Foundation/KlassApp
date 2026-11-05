@@ -137,6 +137,27 @@ class BaseClassExamRoster
     }
 
     /**
+     * Every student on the base class and its streams, for a template or a
+     * class-wide save. Does not narrow to one teacher's stream.
+     *
+     * @return Collection<int, User>
+     */
+    public function everyStudent(Exam $exam): Collection
+    {
+        if (! $this->coversStreams($exam)) {
+            return $this->legacyRoster($exam, (int) $exam->school_id);
+        }
+
+        $structure = $this->structure($exam);
+        $sectionIds = array_values(array_unique(array_merge(
+            [(int) $structure['base']->id],
+            $structure['streams']->pluck('id')->map(fn ($id) => (int) $id)->all(),
+        )));
+
+        return $this->studentsOnSections($exam, $sectionIds, (string) $structure['base']->name);
+    }
+
+    /**
      * The roster a stream-level exam already used: this standard and this section only.
      *
      * @return Collection<int, User>

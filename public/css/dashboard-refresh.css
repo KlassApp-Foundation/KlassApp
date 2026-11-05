@@ -5031,3 +5031,39 @@ td a.btn-danger:hover {
     .wa-lr-actions__row { justify-content: stretch; }
     .wa-lr-actions__row .wa-lr-btn { flex: 1 1 auto; }
 }
+
+/* Bell is in the sidebar footer (bottom left). The panel opens beside it.
+   !important beats the component's old inline top/right until the bundle rebuilds. */
+#notification-list > .shadow,
+#notification-list > .notification-panel {
+    position: fixed !important;
+    top: auto !important;
+    right: auto !important;
+    left: 260px !important;
+    bottom: 12px !important;
+    width: min(320px, calc(100vw - 276px)) !important;
+    height: auto !important;
+    max-height: min(70vh, 520px) !important;
+    overflow: auto;
+    background: #fff;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    z-index: 60 !important;
+    box-sizing: border-box;
+}
+#notification-list > .shadow > div,
+#notification-list .notification-panel__body {
+    height: auto !important;
+    max-height: min(68vh, 500px);
+    margin-bottom: 0 !important;
+}
+@media (max-width: 767px) {
+    #notification-list > .shadow,
+    #notification-list > .notification-panel {
+        left: 8px !important;
+        right: 8px !important;
+        width: auto !important;
+        bottom: 8px !important;
+        max-width: calc(100vw - 16px);
+    }
+}

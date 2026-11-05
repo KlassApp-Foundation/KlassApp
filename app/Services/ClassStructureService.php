@@ -55,6 +55,44 @@ class ClassStructureService
     }
 
     /**
+     * The base section and every stream section under it, scoped to the school.
+     * A stream is a section whose name is "{base} {label}".
+     *
+     * @return list<int>
+     */
+    public function classSectionIds(Section $section): array
+    {
+        $base = $this->resolveBaseSection($section);
+        if ((int) $base->school_id !== (int) $section->school_id) {
+            return [(int) $section->id];
+        }
+
+        $prefix = trim((string) $base->name).' ';
+        $ids = [(int) $base->id];
+        if ($prefix === ' ') {
+            return $ids;
+        }
+
+        $rows = Section::query()
+            ->where('school_id', $base->school_id)
+            ->where(function ($q) {
+                $q->where('status', 1)->orWhere('status', '1');
+            })
+            ->get(['id', 'name']);
+
+        foreach ($rows as $row) {
+            if ((int) $row->id === (int) $base->id) {
+                continue;
+            }
+            if (str_starts_with((string) $row->name, $prefix)) {
+                $ids[] = (int) $row->id;
+            }
+        }
+
+        return array_values(array_unique($ids));
+    }
+
+    /**
      * Read-only snapshot of base classes for the year, with stream children and CT.
      *
      * @return list<array{
