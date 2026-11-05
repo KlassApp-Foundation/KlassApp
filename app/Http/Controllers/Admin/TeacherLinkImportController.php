@@ -73,6 +73,11 @@ class TeacherLinkImportController extends Controller
         $created = 0;
         $skipped = 0;
         $errors = [];
+        $plan = app(\App\Services\PlanLimitService::class)->status((int) $schoolId, 'teachers');
+        $newTeacherSlots = $plan['remaining'];
+        $newTeachers = 0;
+        $planSkipped = 0;
+        $planMessage = null;
 
         DB::beginTransaction();
         try {
@@ -93,6 +98,15 @@ class TeacherLinkImportController extends Controller
                 $teacher = $this->findExistingTeacher($schoolId, $teacherName, $phone);
 
                 if (!$teacher) {
+                    if ($newTeacherSlots !== null && $newTeachers >= $newTeacherSlots) {
+                        $planMessage ??= app(\App\Services\PlanLimitService::class)
+                            ->status((int) $schoolId, 'teachers')['message'];
+                        $errors[] = $planMessage ?? 'Plan limit reached. Talk to sales to add more.';
+                        $skipped++;
+                        $planSkipped++;
+                        continue;
+                    }
+
                     $teacher = User::create([
                         'school_id' => $schoolId,
                         'usergroup_id' => 5,
@@ -114,6 +128,7 @@ class TeacherLinkImportController extends Controller
                         'firstname'    => $teacherName,
                         'lastname'     => '',
                     ]);
+                    $newTeachers++;
                 } elseif ($phone && empty($teacher->mobile_no)) {
                     $teacher->update(['mobile_no' => $phone]);
                 }
@@ -182,13 +197,12 @@ class TeacherLinkImportController extends Controller
 
             $redirect = back()->with('success', $message);
 
-            // Provisioning new teachers above plan limit is a notice, never a block.
-            $overLimit = \App\Services\ToshiActionService::enforcePlanLimit((int) $schoolId, 'teachers');
-            if (! $overLimit['success']) {
-                $redirect->with('overlimit', $overLimit['message']);
-            }
+            $planNotice = app(\App\Services\PlanLimitService::class)
+                ->importNotice((int) $schoolId, 'teachers', $newTeachers, $planSkipped);
 
-            return $redirect;
+            return $planNotice !== null
+                ? $redirect->with('overlimit', $planNotice)
+                : $redirect;
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Database error: ' . $e->getMessage());

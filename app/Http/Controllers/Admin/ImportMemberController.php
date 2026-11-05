@@ -43,9 +43,16 @@ class ImportMemberController extends Controller
 
       try
       {
-        Excel::import(new UsersImport,$request->file('import_file'));
+        // Import up to the plan's remaining student slots; report the rest.
+        $plan = app(\App\Services\PlanLimitService::class)->status((int) $school_id, 'students');
+        $import = new UsersImport($plan['remaining']);
+        Excel::import($import, $request->file('import_file'));
 
-        $insertedcount = \Session::get('insertedcount');
+        $insertedcount = (int) \Session::get('insertedcount');
+        $planSkipped = (int) ($import->skippedByPlan ?? \Session::get('plan_skipped', 0));
+        $planNotice = app(\App\Services\PlanLimitService::class)
+            ->importNotice((int) $school_id, 'students', $insertedcount, $planSkipped);
+
         $failures = \Session::get('import_row_failures', []);
         if (! is_array($failures)) {
             $failures = [];
@@ -64,22 +71,22 @@ class ImportMemberController extends Controller
           );
           $redirect = back()->with('successmessage',$insertedcount.' '.trans('messages.insert_success_msg'));
         }
+        elseif ($planNotice !== null)
+        {
+          $redirect = back();
+        }
         else
         {
           $redirect = back()->with('failmessage',trans('messages.insert_failure_msg'));
         }
-        \Session::forget('insertedcount');
-        \Session::forget('import_row_failures');
+        \Session::forget(['insertedcount', 'plan_skipped', 'plan_message', 'import_row_failures']);
         if ($failures !== []) {
             $redirect = $redirect->with('import_row_failures', array_slice($failures, 0, 50));
         }
 
-        // ── Over plan limit is a NOTICE, never a block: every row above was saved. ──
-        $overLimit = ToshiActionService::enforcePlanLimit($school_id, 'students');
-
-        return $overLimit['success']
-            ? $redirect
-            : $redirect->with('overlimit', $overLimit['message']);
+        return $planNotice !== null
+            ? $redirect->with('overlimit', $planNotice)
+            : $redirect;
       }
       catch(\Throwable $e)
       {

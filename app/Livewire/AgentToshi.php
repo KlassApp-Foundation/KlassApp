@@ -4433,7 +4433,11 @@ class AgentToshi extends Component
     // ════════════════════════════════════════════════
     public function selectPlan(int $planId)
     {
-        $plan = \App\Models\Plan::find($planId);
+        $plan = \App\Models\Plan::query()
+            ->whereKey($planId)
+            ->where('is_active', 1)
+            ->where('is_platform_only', 0)
+            ->first();
         if (!$plan) {
             $this->botSay("I didn't recognize that plan. Please select from the buttons above.");
             return;
@@ -4483,8 +4487,16 @@ class AgentToshi extends Component
             return;
         }
 
-        $plan = \App\Models\Plan::whereRaw('LOWER(name) = ?', [strtolower(trim($text))])->first()
-            ?? \App\Models\Plan::whereRaw('LOWER(display_name) = ?', [strtolower(trim($text))])->first();
+        $plan = \App\Models\Plan::query()
+            ->where('is_active', 1)
+            ->where('is_platform_only', 0)
+            ->whereRaw('LOWER(name) = ?', [strtolower(trim($text))])
+            ->first()
+            ?? \App\Models\Plan::query()
+                ->where('is_active', 1)
+                ->where('is_platform_only', 0)
+                ->whereRaw('LOWER(display_name) = ?', [strtolower(trim($text))])
+                ->first();
         if ($plan) {
             $this->selectPlan($plan->id);
             return;
@@ -4499,7 +4511,10 @@ class AgentToshi extends Component
 
     private function promptPlanSelection(): void
     {
-        $activePlans = \App\Models\Plan::query()->where('is_active', 1)->count();
+        $activePlans = \App\Models\Plan::query()
+            ->where('is_active', 1)
+            ->where('is_platform_only', 0)
+            ->count();
         if ($activePlans === 0) {
             $this->suggestedPlanId = null;
             $this->botSay('No plans are available yet. Contact support.');
@@ -7032,10 +7047,14 @@ class AgentToshi extends Component
                         'phone' => $this->teacherPhones[$name] ?? '',
                     ];
                 }, $this->teacherList);
-                app(OnboardingEngine::class)->saveTeachers($school, $academicYear, $teacherDrafts);
+                $teacherResult = app(OnboardingEngine::class)->saveTeachers($school, $academicYear, $teacherDrafts);
                 $teacherOver = \App\Services\ToshiActionService::enforcePlanLimit($school->id, 'teachers');
-                if (! $teacherOver['success']) {
-                    $this->botSay("⚠️ {$teacherOver['message']} Every teacher was saved — nothing was dropped. You can keep working; upgrading adds room for more.");
+                $teacherSkipped = count($teacherResult['skipped'] ?? []);
+                if ($teacherSkipped > 0) {
+                    $reason = $teacherResult['skipped'][0]['reason'] ?? $teacherOver['message'];
+                    $this->botSay("⚠️ {$reason} Created ".count($teacherResult['created'] ?? [])." teacher(s); {$teacherSkipped} not imported.");
+                } elseif (! $teacherOver['success']) {
+                    $this->botSay("⚠️ {$teacherOver['message']}");
                 }
 
                 // Form path (teacherClasses × teacherSubjects) + file-upload path → Teacherlink
@@ -7171,10 +7190,14 @@ class AgentToshi extends Component
                             'phone' => $this->teacherPhones[$name] ?? '',
                         ];
                     }, $this->teacherList);
-                    app(OnboardingEngine::class)->saveTeachers($school, $academicYear, $teacherDrafts);
+                    $teacherResult = app(OnboardingEngine::class)->saveTeachers($school, $academicYear, $teacherDrafts);
                     $teacherOver = \App\Services\ToshiActionService::enforcePlanLimit($school->id, 'teachers');
-                    if (! $teacherOver['success']) {
-                        $this->botSay("⚠️ {$teacherOver['message']} Every teacher was saved — nothing was dropped. You can keep working; upgrading adds room for more.");
+                    $teacherSkipped = count($teacherResult['skipped'] ?? []);
+                    if ($teacherSkipped > 0) {
+                        $reason = $teacherResult['skipped'][0]['reason'] ?? $teacherOver['message'];
+                        $this->botSay("⚠️ {$reason} Created ".count($teacherResult['created'] ?? [])." teacher(s); {$teacherSkipped} not imported.");
+                    } elseif (! $teacherOver['success']) {
+                        $this->botSay("⚠️ {$teacherOver['message']}");
                     }
                 }
 
@@ -7195,11 +7218,15 @@ class AgentToshi extends Component
                         ? $this->actionData['students']
                         : array_map(fn($n) => ['name' => $n, 'class' => ''], $this->studentList);
                     $studentDrafts = $this->mapStudentRecordsForEngine($studentRecords);
-                    app(OnboardingEngine::class)->saveStudents($school, $academicYear, $studentDrafts);
+                    $studentResult = app(OnboardingEngine::class)->saveStudents($school, $academicYear, $studentDrafts);
 
                     $overLimit = \App\Services\ToshiActionService::enforcePlanLimit($school->id, 'students');
-                    if (! $overLimit['success']) {
-                        $this->botSay("⚠️ {$overLimit['message']} Every student was saved — nothing was dropped. You can keep working; upgrading adds room for more.");
+                    $studentSkipped = count($studentResult['skipped'] ?? []);
+                    if ($studentSkipped > 0) {
+                        $reason = $studentResult['skipped'][0]['reason'] ?? $overLimit['message'];
+                        $this->botSay("⚠️ {$reason} Created ".count($studentResult['created'] ?? [])." student(s); {$studentSkipped} not imported.");
+                    } elseif (! $overLimit['success']) {
+                        $this->botSay("⚠️ {$overLimit['message']}");
                     }
                 }
 

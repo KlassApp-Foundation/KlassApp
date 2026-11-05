@@ -133,10 +133,10 @@ class ToshiActionService
      *   ['success' => true,  'message' => '']            → under limit
      *   ['success' => false, 'message' => '...upgrade...'] → at/over limit (NOTICE only)
      *
-     * Soft-launch rule (2026-10-01): callers must NEVER hard-block create/import on
-     * this result. Always save the data, then surface `$message` as an upgrade notice
-     * (HTTP session `overlimit`, Toshi reply suffix, wizard banner). A limit of 0
-     * (or missing CurrentPlan) means unlimited.
+     * Callers that create teachers/students must check `success` before writing
+     * (see PlanLimitService). Legacy notice-only paths may still surface
+     * `$message` after a save. A limit of 0 (or missing CurrentPlan) means
+     * unlimited.
      *
      * The message is plain-text safe for both HTTP flash contexts and Toshi/WhatsApp
      * conversational use (no HTML, no route-dependent phrasing).
@@ -147,28 +147,10 @@ class ToshiActionService
             return self::result(true, '');
         }
 
-        $cfg = self::PLAN_TYPES[$type];
+        $status = app(PlanLimitService::class)->status($schoolId, $type);
 
-        $currentPlan = CurrentPlan::with('plan')->where('school_id', $schoolId)->first();
-        if (!$currentPlan || !$currentPlan->plan) {
-            return self::result(true, ''); // No plan configured → no limit
-        }
-
-        $plan   = $currentPlan->plan;
-        $limit  = $plan->{$cfg['plan_column']} ?? 0;
-        if ($limit <= 0) {
-            return self::result(true, ''); // Unlimited
-        }
-
-        $count = User::where('school_id', $schoolId)
-            ->where('usergroup_id', $cfg['usergroup_id'])
-            ->count();
-
-        if ($count >= $limit) {
-            return self::result(
-                false,
-                "Your {$plan->name} plan allows a maximum of {$limit} {$cfg['label']}. Please upgrade to add more."
-            );
+        if ($status['blocked']) {
+            return self::result(false, (string) $status['message']);
         }
 
         return self::result(true, '');
@@ -462,6 +444,11 @@ class ToshiActionService
         $schoolId = (int) $admin->school_id;
         if ($schoolId === 0) {
             return self::result(false, 'You are not assigned to a school.');
+        }
+
+        $plan = app(PlanLimitService::class)->status((int) $schoolId, 'teachers');
+        if ($plan['blocked']) {
+            return self::result(false, (string) $plan['message']);
         }
 
         $name = trim($data['name'] ?? '');

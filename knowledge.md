@@ -15,6 +15,16 @@ Stacked on `cursor/parent-student-portal-0657` (#1266, not merged). Branch `curs
 - **Status:** Draft pull request against `main`. Not merged. Production untouched.
 - **Follow-up:** The register does not send the old per-absence WhatsApp/push message; it writes the rows that the parent portal reads. The old `/teacher/attendance/add` form stays for reasons and exports.
 
+## Session: 2026-11-05 — T-082 plan limits and the Early adopter plan
+
+- **Work:** Added the **Early adopter** plan (`no_of_users = 0`, `no_of_students = 0`, `is_platform_only = 1`). It is assignable to a school by a platform admin from the school detail page; schools never see it in their own plan picker.
+- **Single source:** `PlanLimitService` resolves the current plan, the teacher/student limit, the current count and the remaining slots. `ToshiActionService::enforcePlanLimit()` now delegates to it, so every legacy notice and every new gate reads the same numbers.
+- **Enforcement:** the single add forms stop before creating anyone; `OnboardingEngine::saveTeachers()` / `saveStudents()` fill the remaining slots and return every extra row in `skipped` with the plan message; `TeachersImport` / `UsersImport` / `TeacherLinkImport` import up to the limit and report the rest; Toshi's add-teacher and add-student paths stop at the limit. Messages carry the plan name, the limit, the current count and **“Talk to sales”**. Imports add “Imported X, Y not imported”.
+- **Early adopter:** 0 means unlimited, so every path above is uncapped for a founding school. `is_platform_only` is filtered out of the wizard, Toshi plan cards, pricing and `OnboardingStepsService`.
+- **Reference data:** migration `2026_11_05_000000_add_platform_only_plans_and_seed_early_adopter.php` adds the column and inserts the plan only when plans already exist (existing installs); fresh installs get it from `PlansTableSeeder` / `php artisan plans:ensure`.
+- **Overlap:** `OnboardingEngine::saveStudents()` is also changed by the T-094 branch (#1275); `OnboardingEngine` is touched by #1270 (fees). Merge those first, then rebase this branch and keep the cap lines.
+- **Status:** Draft pull request. Not merged. Production untouched.
+
 ## Session: 2026-11-04 — T-091 teacher setup invites (stacked on #1239)
 
 - **Work:** Teachers created with a real email get a setup link from the existing `TeacherInviteLinkService`. No password is stored. A placeholder address (`teacher.<random>@<slug>.test`, `*.local`, or the link-import `@school.edu` address) creates the row and sends nothing. Resend is on the teacher list and profile for teachers who have never signed in. Assigning a never-signed-in teacher as class teacher sends the setup link. A teacher who has signed in still gets the class notice.
@@ -674,6 +684,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - The code is saved on its own, then sent from `connect@klassapp.xyz` when the configured address is blank or not an email. Failures log the exception class and message, with the code redacted. An imported teacher, parent, and student can request a code, set a password, and sign in. A null password still gets the setup link from #1262.
 - **Tests:** PHP 8.4.27. `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh`: 3247 tests, 0 failures, 0 errors, 9 skipped.
 - **Status:** DRAFT [#1267](https://github.com/KlassApp-Foundation/KlassApp/pull/1267), branch `cursor/password-reset-code-send-a7c1`, base `cursor/t091-teacher-email-invite-6d9a` (#1262). Not merged. No deploy. No production data.
+
 
 ## Current Status: November 3, 2026 — **Marks Phase 1 owner decisions OPEN [#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239)**
 
