@@ -161,7 +161,7 @@
                 <p>Your dashboard fills in as you add students, take attendance and enter marks. You can add them one by one or import a spreadsheet.</p>
                 <span style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
                     <a class="dv2-btn" href="{{ url('/admin/student/add') }}">Add student</a>
-                    <a class="dv2-btn dv2-btn--soft" href="{{ url('/admin/student/import') }}">Import a list</a>
+                    <a class="dv2-btn dv2-btn--soft" href="{{ url('/admin/import') }}" data-testid="dashboard-v2-import-students">Import a list</a>
                 </span>
             </div>
         @else
