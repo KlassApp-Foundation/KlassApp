@@ -69,6 +69,30 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | O-LEVEL LEGACY (S1-S4) — EXAMPLE of an old-UCE letter scale
+    |--------------------------------------------------------------------------
+    | This is an EXAMPLE, not a national standard. UNEB never published one
+    | fixed pre-NLSC cut-off table, so each school owns its boundaries and
+    | edits them on the exam-type settings page; the school's saved table is
+    | used when the 'legacy' curriculum profile is active. The D1-F9 letters
+    | and 1-9 points are fixed and are copied from this example; only the
+    | min/max marks move. A school that never saves its own table sees this
+    | one, labelled as an example.
+    */
+    'o-level-legacy' => [
+        ['grade' => 'D1', 'points' => 1, 'min_score' => 75, 'max_score' => 100, 'remark' => 'Excellent'],
+        ['grade' => 'D2', 'points' => 2, 'min_score' => 70, 'max_score' => 74,  'remark' => 'Very Good'],
+        ['grade' => 'C3', 'points' => 3, 'min_score' => 65, 'max_score' => 69,  'remark' => 'Good'],
+        ['grade' => 'C4', 'points' => 4, 'min_score' => 60, 'max_score' => 64,  'remark' => 'Credit'],
+        ['grade' => 'C5', 'points' => 5, 'min_score' => 55, 'max_score' => 59,  'remark' => 'Credit'],
+        ['grade' => 'C6', 'points' => 6, 'min_score' => 50, 'max_score' => 54,  'remark' => 'Credit'],
+        ['grade' => 'P7', 'points' => 7, 'min_score' => 45, 'max_score' => 49,  'remark' => 'Pass'],
+        ['grade' => 'P8', 'points' => 8, 'min_score' => 40, 'max_score' => 44,  'remark' => 'Pass'],
+        ['grade' => 'F9', 'points' => 9, 'min_score' => 0,  'max_score' => 39,  'remark' => 'Fail'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | A-LEVEL (S5-S6) — UACE-style Points
     |--------------------------------------------------------------------------
     | UACE principal-subject points as cited from NymyNet's UACE grading guide

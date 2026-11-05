@@ -277,6 +277,25 @@ class StudentReportCardService
         return ['filled' => $filled, 'total' => $total];
     }
 
+    /**
+     * The school's report composition can hide an exam type's column from
+     * report cards entirely (schools.report_composition include flag).
+     */
+    private function typeIncluded(int $schoolId, $exam): bool
+    {
+        $typeId = (int) ($exam->examType?->id ?? 0);
+        if ($typeId === 0) {
+            return false;
+        }
+        $composition = \App\Models\School::query()->find($schoolId)?->report_composition;
+        if (! is_array($composition)) {
+            return true;
+        }
+        $settings = $composition[(string) $typeId] ?? $composition[$typeId] ?? [];
+
+        return ($settings['include'] ?? true) !== false;
+    }
+
     public function generatePdf(
         int $sid,
         Exam $exam,
@@ -293,6 +312,7 @@ class StudentReportCardService
         $subjects = $helper->subjects($schoolId, $stdLink->section_id, $learner, $exam);
         $subjects = \App\Models\Subject::sortByReportOrder($subjects);
         $exams = $helper->exam($schoolId, $exam);
+        $exams = $exams->filter(fn ($e) => $this->typeIncluded($schoolId, $e));
 
         $midExams = $exams->filter(fn ($e) => $e->examType->code === 'MID')->sortBy('scheduled_at')->values();
         $eotExams = $exams->filter(fn ($e) => $e->examType->code !== 'MID')->values();
