@@ -13,9 +13,11 @@ Route::post('/settings/maintenancesettings', 'Setting\MaintenanceController@stor
 Route::get('/settings/seodetailsettings', 'Setting\SeoDetailController@create');
 Route::post('/settings/seodetailsettings', 'Setting\SeoDetailController@store');
 
-// Exam type preferences — per-school toggle for report card contribution
+// Exam type preferences — per-school toggle for report card contribution, plus
+// the school's own exam types created next to the shared catalog.
 Route::get('/settings/exam-types', 'Setting\ExamTypeController@index')->name('admin.settings.exam-types');
 Route::post('/settings/exam-types', 'Setting\ExamTypeController@update')->name('admin.settings.exam-types.update');
+Route::post('/settings/exam-types/create', 'Setting\ExamTypeController@store')->name('admin.settings.exam-types.store');
 Route::post('/settings/exam-types/profile', 'Setting\ExamTypeController@updateProfile')->name('admin.settings.exam-types.profile');
 Route::post('/settings/exam-types/bands', 'Setting\ExamTypeController@updateBands')->name('admin.settings.exam-types.bands');
 
