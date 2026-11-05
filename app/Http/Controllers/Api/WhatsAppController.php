@@ -22,6 +22,7 @@ use App\Models\Academics\Exam;
 use App\Models\Academics\Classes;
 use App\Services\DemoSchoolCommsGuard;
 use App\Services\StudentFeeResolver;
+use App\Services\StudentIdGeneratorService;
 use App\Services\OutboundWhatsAppService;
 use App\Services\ParentLinkService;
 use App\Models\StudentParentLink;
@@ -589,6 +590,9 @@ class WhatsAppController extends Controller
 
                     if ($msgType === 'text') {
                         $body = $msg['text']['body'] ?? '';
+                    } elseif ($msgType === 'button') {
+                        // A template quick reply. results_released uses "See results".
+                        $body = $msg['button']['payload'] ?? $msg['button']['text'] ?? '';
                     } elseif ($msgType === 'interactive') {
                         $ir = $msg['interactive'] ?? [];
                         if (($ir['type'] ?? '') === 'nfm_reply') {
@@ -1032,7 +1036,9 @@ class WhatsAppController extends Controller
         }
 
         // ── KlassApp Student ID: the school gets a link request ──
-        if (preg_match('/^KLS\d{7}$/i', $trimmed)) {
+        // StudentIdGeneratorService::PATTERN from #1252
+        // (branch cursor/t060-widen-student-id-c495): KLS plus 7 or 11 digits.
+        if (preg_match(StudentIdGeneratorService::PATTERN, $trimmed)) {
             $academic = \App\Models\StudentAcademic::where('klassapp_student_id', strtoupper($trimmed))
                 ->with(['user.school', 'standardLink.standard', 'school'])
                 ->first();
@@ -1388,7 +1394,7 @@ class WhatsAppController extends Controller
         }
 
         // Parent (ug7): a KlassApp number asks the school to link another child.
-        if ($role === 7 && preg_match('/^kls\d{7}$/', $normalised)) {
+        if ($role === 7 && preg_match(StudentIdGeneratorService::PATTERN, $normalised)) {
             $kls = strtoupper($normalised);
             $academic = \App\Models\StudentAcademic::where('klassapp_student_id', $kls)
                 ->with(['user.school', 'standardLink.standard', 'school'])
@@ -1552,7 +1558,7 @@ class WhatsAppController extends Controller
 
                 return;
             }
-            if ($match(['grades', 'results', 'marks', 'exams'])) {
+            if ($match(['grades', 'results', 'marks', 'exams', 'see results'])) {
                 $this->sendGrades($user, $phone, $whatsAppService);
                 return;
             }
@@ -2051,11 +2057,9 @@ class WhatsAppController extends Controller
         }
 
         $sentAny = false;
-        $childCount = $children->count();
-        $index = 0;
+        $emptyLines = [];
 
         foreach ($children as $link) {
-            $index++;
             $student = $link->userStudent;
             $studentName = $user->demo_name
                 ? "{$user->demo_name} Demo"
@@ -2079,13 +2083,10 @@ class WhatsAppController extends Controller
             $exams = $examQuery->take(15)->get();
 
             if ($exams->isEmpty()) {
-                $emptyMsg = "📊 *{$studentName}* — _{$className}_\n\nNo results published yet.\n\nResults will appear here automatically once the school releases them.";
-                $whatsAppService->sendText(
-                    $phone,
-                    $emptyMsg,
-                    'grades_none',
-                    $user->user_id,
-                );
+                // Collected, not sent one by one: a parent gets one line per child
+                // in a single reply (Phase 6e).
+                $emptyLines[] = "• *{$studentName}* — {$className}: no results published yet.";
+
                 continue;
             }
 
@@ -2101,11 +2102,20 @@ class WhatsAppController extends Controller
             $sentAny = true;
         }
 
-        if (!$sentAny) {
+        if (! $sentAny) {
             $whatsAppService->sendText(
                 $phone,
-                "📊 No results found for any of your children.\n\nResults will appear here once published by the school.",
-                'grades_none_all',
+                "📊 *No results yet for your children*\n\n" . implode("\n", $emptyLines)
+                    . "\n\nResults will appear here automatically once the school releases them.",
+                'grades_none',
+                $user->user_id,
+            );
+        } elseif ($emptyLines !== []) {
+            $whatsAppService->sendText(
+                $phone,
+                "📊 *Still to come*\n\n" . implode("\n", $emptyLines)
+                    . "\n\nThey appear here automatically once the school releases them.",
+                'grades_none',
                 $user->user_id,
             );
         }

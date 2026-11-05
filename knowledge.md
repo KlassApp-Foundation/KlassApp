@@ -677,9 +677,24 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 
 **Proposed for `design/system/readme.md` (not applied until owner approves the global replacement pass):** replace the opening positioning paragraph with the same Tagline + Description above; keep the following voice/surfaces sections unchanged.
 
+
+## Current Status: November 3, 2026 — **Demo-only stays the outer release gate OPEN [#1244](https://github.com/KlassApp-Foundation/KlassApp/pull/1244)**
+
+- `WHATSAPP_DEMO_ONLY_RECIPIENTS` is checked after the per-release switch and the template. While it is on, a real school sends nothing. A demo school is unchanged. The class head stays `sections.class_teacher_id`. #1252 must merge before this PR. Not merged. No deploy.
+
+## Current Status: November 2, 2026 — **Phase 6 class head and results template OPEN [#1244](https://github.com/KlassApp-Foundation/KlassApp/pull/1244)**
+
+- A class head is `sections.class_teacher_id` and can release every stream of that class. A stream teacher releases only the stream that names them. `teachers_may_release_marks` stays on when the school has never set it. A real-school release sends the approved `results_released` template and does not consult `WHATSAPP_DEMO_ONLY_RECIPIENTS`. Not merged. No deploy.
+
 ## Current Status: November 2, 2026 — **T-060 review follow-up OPEN [#1252](https://github.com/KlassApp-Foundation/KlassApp/pull/1252)**
 
 - The generator docblock no longer says the WhatsApp matcher accepts only 7 digits. Seeding an 11-digit ID (`KLS00001010001`) sets the next sequence to 10002. A parent-row failure keeps the student and shows a plain sentence. Not merged. No deploy.
+
+
+## Current Status: November 2, 2026 — **Marks Phase 6 drops its copy of the student-ID pattern OPEN [#1244](https://github.com/KlassApp-Foundation/KlassApp/pull/1244)**
+
+- [#1244](https://github.com/KlassApp-Foundation/KlassApp/pull/1244) (`cursor/marks-phase-6-release`) merged `cursor/t060-widen-student-id-c495` ([#1252](https://github.com/KlassApp-Foundation/KlassApp/pull/1252)) so the WhatsApp matcher reads `StudentIdGeneratorService::PATTERN` from that branch. `app/Services/StudentIdGeneratorService.php` on this branch matches #1252. No copied constant. No force-push. Not merged to main. No deploy.
+- Local PHPUnit on the generator, the format guard, import failure rows, and `LongStudentIdMatcherTest`: 45 tests, 380 assertions, 0 failures. PHP 8.4.27.
 
 ## Current Status: October 30, 2026 — **T-060 student IDs and plain import failures OPEN [#1252](https://github.com/KlassApp-Foundation/KlassApp/pull/1252)**
 
@@ -708,6 +723,7 @@ Related fix shipped along the way: PR #527 removed hardcoded LLM API keys from c
 - Hard-coded Ugandan class levels offered to every school, and Toshi's exact class-name match, are unchanged pending a product decision.
 - **Tests:** the class-teacher files on PHP 8.4.27, sqlite memory: 56 tests, 310 assertions, 0 failures. Full `scripts/test-guard.sh` was not run.
 - **Status:** OPEN [#1239](https://github.com/KlassApp-Foundation/KlassApp/pull/1239), branch `cursor/marks-phase-1-class-teacher-v2`, base `docs/marks-n8n-blueprint`. Not merged. No deploy. No production data.
+
 
 ## Current Status: October 26, 2026 — **Marks Phase 4 combined sheet OPEN (stacked on [#1241](https://github.com/KlassApp-Foundation/KlassApp/pull/1241))**
 
@@ -14574,3 +14590,35 @@ Shell PRs #1054 and #1056 are merged (`e26d851c`, `261fad07`). `feat/people-list
 **Tests:** Without the fix, the new tests failed: two sections, two links, and one standard stayed behind after a forced mid-save failure; the issue code was `standards.stream_duplicate`; the rename form said `A class named "Primary One B" already exists.` With the fix they pass. `TEST_GUARD_PROCESSES=4 bash scripts/test-guard.sh`: 3187 tests, 0 failures, 0 errors, 9 skipped.
 
 **Status:** [#1237](https://github.com/KlassApp-Foundation/KlassApp/pull/1237) is open on `cursor/class-save-atomicity-d848`. Not merged. Production untouched.
+
+## Session: 2026-10-26 — Marks Phase 6 release rules (draft #1244)
+
+**Work:** Built Phase 6 on `cursor/marks-phase-6-release`, stacked on #1243, as draft [#1244](https://github.com/KlassApp-Foundation/KlassApp/pull/1244). **6a** removed the approval override from the service, the controller validation and the release screen: `requireApproval()` takes no reason and `create()` no longer accepts one. **6b** added `teachers_may_release_marks` in `school_details`, off by default and fail-safe, cached per school and forgotten on write, with a toggle on Maintenance settings; `links()` is now the single gate, so a class teacher has no releasable class until the school turns it on and never reaches another class or the whole school. **6c** added `sittingIsPast()` and `requirePastConfirmation()` plus a `confirm_past` checkbox that renders only for a sitting in an earlier term or year. **6d** added `marks_releases.whatsapp_send` (false by default, on the release screen and the release page), `App\Services\WhatsApp\TemplateGate` over `config/whatsapp.php` (the approved list is empty unless a deployment records it; nothing calls Meta), and recipient resolution to approved, linked, opted-in parents of the students in the released class and sitting, enforced in both `deliver()` and `deliverOne()`. Demo follow-along sends are unchanged (a demo send is not a school sending a template, decision 3 in `marks-flow.md`), and the demo-only recipient guard still runs first for a real school. **6g** recorded the build in `docs/product/marks-flow.md` under "Phase 6 as built".
+
+**Guard exception, second round (6e, the demo test, this file):** 6e is in. `WhatsAppController::sendGrades` now collects the children with no released results and sends one reply with one line per child on the `grades_none` flow type, instead of one message per child plus a "no results for any of your children" line. The webhook docblock at line 510 was left exactly as it was, character for character. `tests/Feature/Demo/MarksReleaseTest.php` now states the Phase 6 rules in its three old assertions: a real school's release reports the switched-off release, and the two class-teacher tests turn `teachers_may_release_marks` on through a small helper. That entry was appended here by the same scripted patch, and the parked copy `docs/product/marks-phase6-session-log.md` was deleted. `config/services.php` stays unpatched: the template list lives in `config/whatsapp.php`.
+
+**Guard exception:** with the owner's approval, three files were patched by script because the guard flags pre-existing lines: `MarksReleaseService.php` (its `$secret = (string) config(...)` line, left untouched), `ReleaseRequiresApprovalTest.php` (fake `bcrypt('x')` fixture) and `MarksPhase3SubmissionTest.php` (`VerifyCsrfToken::class`). Full diffs are in #1244. An allowlist entry for those lines is wanted.
+
+**Tests:** five new files under `tests/Feature/Marks`: Approval 3, WhoMayRelease 5, PastSitting 5, WhatsAppGate 5, MarksReply 2. `tests/Feature/Marks` is 60 tests green, and the two demo release suites next to them (27 and 3 tests) are green as well: 92 tests and 661 assertions together.
+
+**Status:** ready for review, not merged, nothing deployed, no production access, WhatsApp exercised only through fakes. 6a–6g are in and the branch suite is green; the run is recorded on #1244.
+
+## Session: 2026-10-30 — Review fixes on #1244
+
+**Work:** Review-fix on [#1244](https://github.com/KlassApp-Foundation/KlassApp/pull/1244), branch `cursor/marks-phase-6-release`, still stacked on #1243. Nothing merged, nothing deployed. WhatsApp only through fakes. Synthetic fixture pupils only.
+
+The Maintenance checkbox for `teachers_may_release_marks` now shows the effective value, on when the school has never saved one, so saving the page without turning it off keeps it on. An older sitting messages the students who have marks for that exam, not the current class. A real-school send uses the `results_released` template and still stops in `realSendBlocker()` until that template is on the approved list. The WhatsApp student-ID matcher uses `StudentIdGeneratorService::PATTERN` (`/^KLS(?:\d{7}|\d{11})$/i`), the same constant as #1252 (`cursor/t060-widen-student-id-c495`). That constant is defined on this branch so the matcher compiles before #1252 merges; the two definitions must stay identical. The class-head rule is unchanged: a teacher named on any stream can release every stream of that section. Mucu is deciding whether that should become `sections.class_teacher_id`.
+
+**Tests:** local `bash scripts/test-guard.sh` (paratest, 4 processes, PHP 8.4.27): 3250 tests, 0 failures, 0 errors, 9 skipped. `OK: 0 failing test(s), all accounted for`.
+
+**Status:** #1244 still open, not merged, production untouched.
+
+## Session: 2026-11-02 — Student ID generator conflict cleanup on #1244
+
+**Work:** [#1244](https://github.com/KlassApp-Foundation/KlassApp/pull/1244) had added its own `StudentIdGeneratorService::PATTERN` so the WhatsApp matcher compiled before [#1252](https://github.com/KlassApp-Foundation/KlassApp/pull/1252). That copy is gone. This branch merged `cursor/t060-widen-student-id-c495` (the #1252 head; there is no branch named `cursor/t060-widen-student-id`). `app/Services/StudentIdGeneratorService.php` is identical to that head. The matcher still calls `StudentIdGeneratorService::PATTERN`. `LongStudentIdMatcherTest` no longer says this branch defines the constant. Merge commit only; no rebase and no force-push. `knowledge.md` kept both the marks-phase notes and the #1252 status note.
+
+**Files touched:** `app/Services/StudentIdGeneratorService.php` (taken from #1252), `tests/Feature/WhatsApp/LongStudentIdMatcherTest.php`, `knowledge.md`, plus the rest of the #1252 merge.
+
+**Tests:** PHPUnit 12.5.40, PHP 8.4.27: `LongStudentIdMatcherTest`, `StudentIdGeneratorServiceTest`, `StudentIdDocExamplesTest`, `KlsIdFormatGuardTest`, `DemoStudentCodeTest`, `StudentCreationAssignsKlsTest`, `StudentImportFailureReportTest`, `RepairOrphanStudentAcademicsTest`, `StudentRegistrationNumberPathsTest`. 45 tests, 380 assertions, 0 failures.
+
+**Status:** #1244 open. Not merged to main. No deploy. No production data.

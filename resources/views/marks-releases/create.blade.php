@@ -70,18 +70,21 @@
                 @if($confirming)
                     <p class="mr-when-label" data-testid="release-when">{{ $whenLabel }}</p>
                 @endif
-                <button type="submit" class="mr-btn" data-testid="release-marks-confirm" data-release-to="{{ $releaseTo }}">{{ $confirming ? ($when === 'schedule' ? 'Confirm schedule' : 'Confirm and release') : $buttonLabel }}</button>
-                @if($isAdmin && collect($approvals ?? [])->contains(fn ($row) => $row['state'] !== 'approved'))
-                    <label class="mr-control">
-                        <span>Reason to release before approval</span>
-                        <textarea name="override_reason" maxlength="500" data-testid="release-override-reason">{{ old('override_reason') }}</textarea>
+                @if($pastSitting ?? false)
+                    <label class="mr-control mr-confirm-past" data-testid="release-confirm-past">
+                        <span><input type="checkbox" name="confirm_past" value="1" @checked(old('confirm_past'))> This sitting is from an earlier term or year. Release it anyway.</span>
                     </label>
                 @endif
+                <label class="mr-control mr-wa-send" data-testid="release-whatsapp-send">
+                    <span><input type="checkbox" name="whatsapp_send" value="1" @checked(old('whatsapp_send', $old['whatsapp_send'] ?? false))> Send these results on WhatsApp</span>
+                </label>
+                <p class="mr-sub" style="margin:0 0 8px">Off by default. With it off, the release still happens and opens the portal, Toshi and the report cards, and nothing is sent. A send also waits until <code>results_released</code> is approved by Meta.</p>
+                <button type="submit" class="mr-btn" data-testid="release-marks-confirm" data-release-to="{{ $releaseTo }}">{{ $confirming ? ($when === 'schedule' ? 'Confirm schedule' : 'Confirm and release') : $buttonLabel }}</button>
                 @error('scheduled_for')<p class="mr-error">{{ $message }}</p>@enderror
                 @error('exam_id')<p class="mr-error">{{ $message }}</p>@enderror
                 @error('standard_link_id')<p class="mr-error">{{ $message }}</p>@enderror
                 @error('approval')<p class="mr-error" data-testid="release-approval-error">{{ $message }}</p>@enderror
-                @error('override_reason')<p class="mr-error">{{ $message }}</p>@enderror
+                @error('confirm_past')<p class="mr-error" data-testid="release-confirm-past-error">{{ $message }}</p>@enderror
             </form>
         </div>
 
