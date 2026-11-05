@@ -5,10 +5,9 @@
     $fees = $bundle['fees'] ?? [];
     $average = $headline['average'] ?? null;
     $delta = $headline['delta'] ?? null;
-    $present = (int) ($attendance['days_present'] ?? 0);
-    $totalDays = (int) ($attendance['days_total'] ?? 0);
+    $presentLabel = $attendance['days_present_label'] ?? \App\Support\AttendanceDays::phrase((float) ($attendance['days_present'] ?? 0));
     $percent = $attendance['days_percent'] ?? null;
-    $weekPresent = (int) ($attendance['this_week_present'] ?? 0);
+    $weekLabel = $attendance['this_week_label'] ?? null;
     $weekTotal = (int) ($attendance['this_week_total'] ?? 0);
     $window = str_contains(mb_strtolower((string) ($attendance['term_label'] ?? '')), 'term') ? 'this term' : 'this year';
     $balance = (float) ($fees['total_balance'] ?? 0);
@@ -54,9 +53,9 @@
         </span>
         <span class="family-card__value">{{ $percent === null ? '—' : ((int) $percent).'%' }}</span>
         <span class="family-card__meta" data-testid="family-days-present">
-            {{ $present }} of {{ $totalDays }} days {{ $window }}
-            @if($weekTotal > 0)
-                · this week {{ $weekPresent }} of {{ $weekTotal }}
+            {{ $presentLabel }} {{ $window }}
+            @if($weekTotal > 0 && $weekLabel)
+                · this week {{ $weekLabel }}
             @endif
         </span>
     </a>

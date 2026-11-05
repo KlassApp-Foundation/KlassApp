@@ -7,7 +7,7 @@
 <div class="family-page-head">
     <div>
         <h1>Attendance</h1>
-        <p>{{ (int) ($attendance['days_present'] ?? 0) }} of {{ (int) ($attendance['days_total'] ?? 0) }} days · {{ $window }}</p>
+        <p data-testid="attendance-days-present">{{ $attendance['days_present_label'] ?? \App\Support\AttendanceDays::phrase((float) ($attendance['days_present'] ?? 0)) }} · {{ $window }}</p>
     </div>
 </div>
 @include('portal.partials.attendance-chart', ['attendance' => $attendance])

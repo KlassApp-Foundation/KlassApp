@@ -42,20 +42,20 @@ class FamilyPortalDesignTest extends ParentStudentPortalFixesTest
         ]);
 
         $summary = app(ParentPortalService::class)->attendanceSummary($this->studentUser(), $this->schoolId());
-        $this->assertSame(1, $summary['days_present']);
+        $this->assertEquals(1.0, $summary['days_present']);
         $this->assertSame(2, $summary['days_total']);
-        $this->assertIsInt($summary['days_present']);
+        $this->assertSame('1 day present', $summary['days_present_label']);
 
-        $html = $this->actingAs($this->parentUser())
+        $this->actingAs($this->parentUser())
             ->get(route('parent.children.attendance', $this->studentUser()->id))
             ->assertOk()
             ->assertSee('data-testid="attendance-chart"', false)
-            ->assertSee('1 of 2 days');
+            ->assertSee('1 day present');
 
         $this->actingAs($this->studentUser())
             ->get(route('student.attendance'))
             ->assertOk()
-            ->assertSee('1 of 2 days');
+            ->assertSee('1 day present');
     }
 
     public function test_dashboard_cards_open_marks_attendance_and_fees_and_states_render(): void

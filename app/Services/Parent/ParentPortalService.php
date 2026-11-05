@@ -16,6 +16,7 @@ use App\Models\StudentParentLink;
 use App\Models\User;
 use App\Services\StudentFeeResolver;
 use App\Services\StudentReportCardService;
+use App\Support\AttendanceDays;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
@@ -402,9 +403,11 @@ class ParentPortalService
                 'absent' => array_values(array_map(fn ($row) => $row['absent'], $buckets)),
             ],
             'days_present' => $days['days_present'],
+            'days_present_label' => $days['days_present_label'],
             'days_total' => $days['days_total'],
             'days_percent' => $days['days_percent'],
             'this_week_present' => $days['this_week_present'],
+            'this_week_label' => $days['this_week_label'],
             'this_week_total' => $days['this_week_total'],
             'weeks' => $days['weeks'],
             'missed_days' => $days['missed_days'],
@@ -739,17 +742,19 @@ class ParentPortalService
     }
 
     /**
-     * Calendar days present for the term in progress, or the current academic
-     * year when today sits outside every term. Morning and afternoon rows on
-     * the same date count as one day.
+     * Days present for the term in progress, or the current academic year when
+     * today sits outside every term. Each date has a morning and an afternoon
+     * row. Both present is one day. One present session is a half day.
      *
      * @return array{
-     *     days_present: int,
+     *     days_present: float,
+     *     days_present_label: string,
      *     days_total: int,
      *     days_percent: int|null,
-     *     this_week_present: int,
+     *     this_week_present: float,
+     *     this_week_label: string,
      *     this_week_total: int,
-     *     weeks: list<array{label: string, present: int, full: bool}>,
+     *     weeks: list<array{label: string, present: float, present_label: string, full: bool}>,
      *     missed_days: list<array{date: string, comment: string}>,
      *     term_label: string
      * }
@@ -757,10 +762,12 @@ class ParentPortalService
     private function attendanceDays(User $student, ?int $schoolId): array
     {
         $empty = [
-            'days_present' => 0,
+            'days_present' => 0.0,
+            'days_present_label' => AttendanceDays::phrase(0),
             'days_total' => 0,
             'days_percent' => null,
-            'this_week_present' => 0,
+            'this_week_present' => 0.0,
+            'this_week_label' => AttendanceDays::phrase(0),
             'this_week_total' => 0,
             'weeks' => [],
             'missed_days' => [],
@@ -781,23 +788,26 @@ class ParentPortalService
             ->get()
             ->groupBy(fn ($row) => Carbon::parse($row->date)->toDateString());
 
-        $present = 0;
+        $present = 0.0;
         $missed = [];
         $weeks = [];
         $thisWeekKey = Carbon::now()->startOfWeek()->toDateString();
-        $thisWeekPresent = 0;
+        $thisWeekPresent = 0.0;
         $thisWeekTotal = 0;
 
         foreach ($rows as $date => $sessions) {
-            $statuses = $sessions->map(fn ($row) => (int) $row->status);
-            $wasPresent = $statuses->contains(1) || ($statuses->contains(2) && ! $statuses->contains(0));
-            $wasMissed = $statuses->contains(0) && ! $statuses->contains(1);
+            $presentSessions = $sessions->filter(fn ($row) => in_array((int) $row->status, [1, 2], true))->count();
+            $day = $presentSessions >= 2 ? 1.0 : ($presentSessions === 1 ? 0.5 : 0.0);
+            $missedDay = $day === 0.0 && $sessions->contains(fn ($row) => (int) $row->status === 0);
             $weekKey = Carbon::parse($date)->startOfWeek()->toDateString();
-            $weeks[$weekKey] ??= ['present' => 0, 'missed' => 0];
-            if ($wasPresent) {
-                $present++;
-                $weeks[$weekKey]['present']++;
-            } elseif ($wasMissed) {
+            $weeks[$weekKey] ??= ['present' => 0.0, 'half' => false, 'missed' => 0];
+            if ($day > 0) {
+                $present += $day;
+                $weeks[$weekKey]['present'] += $day;
+                if ($day < 1) {
+                    $weeks[$weekKey]['half'] = true;
+                }
+            } elseif ($missedDay) {
                 $weeks[$weekKey]['missed']++;
                 $comment = trim((string) $sessions->pluck('remarks')->filter(fn ($note) => trim((string) $note) !== '')->first());
                 $missed[] = [
@@ -806,12 +816,8 @@ class ParentPortalService
                 ];
             }
             if ($weekKey === $thisWeekKey) {
-                if ($wasPresent) {
-                    $thisWeekPresent++;
-                }
-                if ($wasPresent || $wasMissed) {
-                    $thisWeekTotal++;
-                }
+                $thisWeekPresent += $day;
+                $thisWeekTotal++;
             }
         }
 
@@ -820,19 +826,22 @@ class ParentPortalService
         foreach ($weeks as $week) {
             $weekRows[] = [
                 'label' => 'W'.$index,
-                'present' => (int) $week['present'],
-                'full' => (int) $week['missed'] === 0 && (int) $week['present'] > 0,
+                'present' => (float) $week['present'],
+                'present_label' => AttendanceDays::mark((float) $week['present']),
+                'full' => ! $week['half'] && (int) $week['missed'] === 0 && $week['present'] > 0,
             ];
             $index++;
         }
 
-        $total = $present + count($missed);
+        $total = $rows->count();
 
         return [
             'days_present' => $present,
+            'days_present_label' => AttendanceDays::phrase($present),
             'days_total' => $total,
             'days_percent' => $total > 0 ? (int) round(($present / $total) * 100) : null,
             'this_week_present' => $thisWeekPresent,
+            'this_week_label' => AttendanceDays::phrase($thisWeekPresent),
             'this_week_total' => $thisWeekTotal,
             'weeks' => $weekRows,
             'missed_days' => array_reverse($missed),
