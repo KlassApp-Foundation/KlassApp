@@ -2,102 +2,72 @@
 
 namespace Database\Seeders;
 
-// use DB;
+use App\Database\ReferenceUpsert;
+use App\Reference\Geography;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use RuntimeException;
 
+/**
+ * Depends on CountriesTableSeeder and StatesTableSeeder.
+ * Every city is stored with the state that belongs to its country.
+ * Uganda districts use the region state. Other cities use that
+ * country's single state.
+ */
 class CitiesTableSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
- public function run()
-{
-    $now = now();
+    public function run(): void
+    {
+        if (! Schema::hasColumn('cities', 'state_id')) {
+            throw new RuntimeException('cities.state_id is missing. Run migrations before CitiesTableSeeder.');
+        }
 
-    
+        $ugandaId = DB::table('countries')->where('name', 'Uganda')->value('id');
+        if ($ugandaId === null) {
+            throw new RuntimeException('CitiesTableSeeder requires Uganda. Seed countries first.');
+        }
 
-    $ugandaDistricts = [
-    'Central' => [
-        'Buikwe', 'Bukomansimbi', 'Butambala', 'Buvuma', 'Gomba', 'Kalangala',
-        'Kalungu', 'Kampala', 'Kasanda', 'Kayunga', 'Kiboga', 'Kyankwanzi',
-        'Kyotera', 'Luweero', 'Lwengo', 'Lyantonde', 'Masaka', 'Mityana',
-        'Mpigi', 'Mubende', 'Mukono', 'Nakaseke', 'Nakasongola', 'Rakai',
-        'Sembabule', 'Wakiso'
-    ],
+        foreach (Geography::ugandaDistricts() as $region => $districts) {
+            $stateId = $this->stateId((int) $ugandaId, $region);
+            foreach ($districts as $district) {
+                $this->city((int) $ugandaId, $stateId, $district);
+            }
+        }
 
-    'Western' => [
-        'Buhweju', 'Buliisa', 'Bundibugyo', 'Bunyangabu', 'Bushenyi', 'Hoima',
-        'Ibanda', 'Isingiro', 'Kabale', 'Kabarole', 'Kagadi', 'Kakumiro',
-        'Kamwenge', 'Kanungu', 'Kasese', 'Kibaale', 'Kikuube', 'Kiruhura',
-        'Kisoro', 'Kitagwenda', 'Kyenjojo', 'Kyegegwa', 'Mbarara', 'Mitooma',
-        'Ntoroko', 'Ntungamo', 'Rubanda', 'Rubirizi', 'Rukiga', 'Rukungiri',
-        'Rwampara', 'Sheema'
-    ],
-
-    'Eastern' => [
-        'Amuria', 'Budaka', 'Bududa', 'Bugiri', 'Bugweri', 'Bukedea', 'Bukwo',
-        'Bulambuli', 'Butebo', 'Busia', 'Butaleja', 'Buyende', 'Iganga', 'Jinja',
-        'Kaberamaido', 'Kaliro', 'Kamuli', 'Kapchorwa', 'Kapelebyong', 'Katakwi',
-        'Kibuku', 'Kumi', 'Kween', 'Luuka', 'Manafwa', 'Mayuge', 'Mbale',
-        'Namisindwa', 'Namayingo', 'Namutumba', 'Ngora', 'Pallisa', 'Serere',
-        'Sironko', 'Soroti', 'Tororo'
-    ],
-
-    'Northern' => [
-        'Abim', 'Adjumani', 'Agago', 'Alebtong', 'Amolatar', 'Amudat', 'Amuru',
-        'Apac', 'Arua', 'Dokolo', 'Gulu', 'Kaabong', 'Koboko', 'Kole', 'Kotido',
-        'Lamwo', 'Lira', 'Madi-Okollo', 'Maracha', 'Moroto', 'Moyo', 'Nabilatuk',
-        'Nakapiripirit', 'Napak', 'Nebbi', 'Nwoya', 'Obongi', 'Omoro', 'Otuke',
-        'Oyam', 'Pader', 'Pakwach', 'Yumbe', 'Zombo', 'Kwania', 'Karenga'
-    ]
-];
-$country = DB::table("countries")->where("name", "Uganda")->first();
-
-   
-    foreach ($ugandaDistricts as $regionName => $districtList) {
-        foreach ($districtList as $districtName){
-            $conditions = [
-                'name' => $districtName,
-                'country_id' => $country->id
-            ];
-            $values = [
-                'status'     => 1,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ];
-            DB::table('cities')->updateOrInsert($conditions, $values);
+        foreach (Geography::foreignCities() as $city) {
+            $countryId = DB::table('countries')->where('name', $city['country'])->value('id');
+            if ($countryId === null) {
+                throw new RuntimeException("CitiesTableSeeder requires country {$city['country']}.");
+            }
+            $stateName = Geography::otherStateNames()[$city['country']];
+            $this->city((int) $countryId, $this->stateId((int) $countryId, $stateName), $city['name']);
         }
     }
 
-    // Capitals / major cities for neighbouring countries (names must match CountriesTableSeeder).
-    $foreignCities = [
-        ['country' => 'Kenya', 'name' => 'Nairobi'],
-        ['country' => 'Tanzania', 'name' => 'Dodoma'],
-        ['country' => 'Rwanda', 'name' => 'Kigali'],
-        ['country' => 'Burundi', 'name' => 'Bujumbura'],
-        ['country' => 'South Sudan', 'name' => 'Juba'],
-        ['country' => 'DRC', 'name' => 'Kinshasa'],
-        ['country' => 'Nigeria', 'name' => 'Lagos'],
-        ['country' => 'Egypt', 'name' => 'Cairo'],
-        ['country' => 'Other', 'name' => 'Other'],
-    ];
-    foreach ($foreignCities as $city) {
-        $country = DB::table('countries')->where('name', $city['country'])->first();
-        if ($country === null) {
-            continue;
+    private function stateId(int $countryId, string $name): int
+    {
+        $id = DB::table('states')
+            ->where('country_id', $countryId)
+            ->where('name', $name)
+            ->value('id');
+
+        if ($id === null) {
+            throw new RuntimeException("CitiesTableSeeder requires state {$name} for country id {$countryId}. Seed states first.");
         }
-        DB::table('cities')->updateOrInsert(
-            ['name' => $city['name'], 'country_id' => $country->id],
-            [
-                'status' => 1,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]
-        );
+
+        return (int) $id;
     }
 
-}
+    private function city(int $countryId, int $stateId, string $name): void
+    {
+        ReferenceUpsert::sync('cities', [
+            'country_id' => $countryId,
+            'name' => $name,
+        ], [
+            'state_id' => $stateId,
+            'status' => 1,
+            'deleted_at' => null,
+        ]);
+    }
 }

@@ -18,7 +18,7 @@ use App\Onboarding\Country\CountryProfiles;
 use App\Onboarding\Country\UgandaOnboardingProfile;
 use Illuminate\Support\Facades\Schema;
 
-    /**
+/**
  * Single canonical source of truth for onboarding steps.
  *
  * Both Toshi's checklist and the System admin UI should read from this
