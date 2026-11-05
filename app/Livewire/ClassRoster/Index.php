@@ -14,7 +14,7 @@ class Index extends Component
 {
     use WithPagination;
 
-    public string $search = '';
+    public string|int|null $classId = null;
 
     public ?int $selectedAcademicYearId = null;
 
@@ -25,7 +25,7 @@ class Index extends Component
     public int $perPage = 12;
 
     protected $queryString = [
-        'search' => ['except' => ''],
+        'classId' => ['except' => null, 'as' => 'class'],
         'selectedAcademicYearId' => ['except' => null, 'as' => 'academic_year_id'],
         'levelId' => ['except' => null, 'as' => 'level_id'],
         'assignmentStatus' => ['except' => 'all', 'as' => 'assignment'],
@@ -41,7 +41,7 @@ class Index extends Component
             ->value('id');
     }
 
-    public function updatingSearch(): void
+    public function updatingClassId(): void
     {
         $this->resetPage();
     }
@@ -63,7 +63,7 @@ class Index extends Component
 
     public function clearFilters(): void
     {
-        $this->search = '';
+        $this->classId = null;
         $this->levelId = null;
         $this->assignmentStatus = 'all';
         $this->resetPage();
@@ -101,10 +101,6 @@ class Index extends Component
 
         $query = $rosterScope->visibleSections($actor, $schoolId, $selectedYear->id);
 
-        $query->when($this->search !== '', function ($sectionQuery): void {
-            $sectionQuery->where('sections.name', 'like', '%' . $this->search . '%');
-        });
-
         $query->when($this->levelId !== null, function ($sectionQuery): void {
             $sectionQuery->whereHas('standardLink', function ($streamQuery): void {
                 $streamQuery
@@ -138,10 +134,17 @@ class Index extends Component
                 });
         }
 
+        $classOptions = (clone $query)->setEagerLoads([])->get(['sections.id', 'sections.name']);
+
+        if ($this->classId) {
+            $query->where('sections.id', $this->classId);
+        }
+
         return view('livewire.class-roster.index', [
             'sections' => $query->paginate($this->perPage),
             'years' => $years,
             'levels' => $levels,
+            'classOptions' => $classOptions,
             'selectedYear' => $selectedYear,
         ]);
     }

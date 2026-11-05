@@ -293,7 +293,8 @@ class DashboardV2Test extends TestCase
             ->assertSee('data-testid="dashboard-v2-empty-students"', false)
             ->assertSee('Add your students to get started', false)
             ->assertSee('/admin/student/add', false)
-            ->assertSee('/admin/student/import', false);
+            ->assertSee('data-testid="dashboard-v2-import-students"', false)
+            ->assertSee('/admin/students/import', false);
     }
 
     public function test_toshi_states_onboarding_preview_assistant(): void

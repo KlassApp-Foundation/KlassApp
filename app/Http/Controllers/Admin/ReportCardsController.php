@@ -10,6 +10,7 @@ use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Services\ReportCardCommentService;
 use App\Services\StudentReportCardService;
+use App\Support\ClassListOrder;
 use App\Exports\CombinedMarksheetExport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
@@ -54,8 +55,8 @@ class ReportCardsController extends Controller
                 }
 
                 return $sl->eotExam !== null;
-            })
-            ->values();
+            });
+        $stdLinks = ClassListOrder::sortLinks($stdLinks);
 
         $eotKpis = self::computeEotKpis($schoolId, $selectedTerm);
 

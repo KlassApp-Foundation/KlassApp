@@ -31,8 +31,7 @@ class ImportMemberController extends Controller
      */
     public function index()
     {
-      //
-      return view('admin/member/import/import');
+      return redirect()->route('admin.students.import');
     }
 
     /**

@@ -34,6 +34,7 @@ return [
         // Uploads and imports (marks entry is a form and stays allowed).
         ['*', '#^livewire/upload-file$#', 'file upload'],
         ['*', '#^admin/(import|import/teacher|importTeachers|importUsers|promotion/import|report/importHolidays|teacher-links/import)$#', 'import'],
+        ['*', '#^admin/students/import(/|$)#', 'import'],
         ['*', '#^admin/exams/[^/]+/marks/import(/|$)#', 'marks file import'],
         ['write', '#^admin/(document|upload|changeavatar)(/|$)#', 'file upload'],
         ['write', '#^admin/classwall/post/(add|edit)/attachment#', 'file upload'],

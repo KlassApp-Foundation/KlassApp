@@ -8,7 +8,7 @@
 
 @section('content')
 <div class="mr" data-testid="marks-release-preview">
-    <h1>Release marks</h1>
+    <h1>Marks Release</h1>
     <p class="mr-sub">Step 2 of 2. Check the message, then confirm.</p>
 
     <div class="mr-card" role="dialog" aria-labelledby="mr-confirm-title">

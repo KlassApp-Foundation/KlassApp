@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\StandardLink;
 use App\Models\User;
 use App\Services\StudentReportCardService;
+use App\Support\ClassListOrder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
@@ -23,8 +24,10 @@ class ReportCardsController extends Controller
         $teacher = $this->actor();
         $schoolId = (int) $teacher->school_id;
 
-        $stdLinks = SiteHelper::getClassTeacherStandardLinks($schoolId, (int) $teacher->id)
-            ->load(['section', 'standard']);
+        $stdLinks = ClassListOrder::sortLinks(
+            SiteHelper::getClassTeacherStandardLinks($schoolId, (int) $teacher->id)
+                ->load(['section', 'standard'])
+        );
 
         $rows = $stdLinks->map(function (StandardLink $sl) use ($schoolId) {
             $exam = $this->reports->resolveExam($schoolId, $sl);

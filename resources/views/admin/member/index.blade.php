@@ -6,8 +6,8 @@
     @include('layouts.partials.page-header', [
         'title' => 'Students',
         'subtitle' => $list['subtitle'],
-        'actions' => '<a href="' . url('/admin/import') . '" class="ds-btn ds-btn-ghost text-sm">Import list</a>'
-            . '<a href="' . url('/admin/student/add/') . '" class="ds-btn ds-btn-primary text-sm">Add student</a>',
+        'actions' => '<a href="' . url('/admin/students/import') . '" class="ds-btn ds-btn-ghost text-sm">Import list</a>'
+            . '<a href="' . url('/admin/students/import') . '" class="ds-btn ds-btn-primary text-sm">Add student</a>',
     ])
 
     @include('partials.message')

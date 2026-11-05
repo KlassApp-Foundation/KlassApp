@@ -1722,7 +1722,9 @@ class ManualOnboardingWizard extends Component
         $sid = $school->id;
 
         $year = AcademicYear::where('school_id', $sid)->first();
-        $links = StandardLink::with('section')->where('school_id', $sid)->get();
+        $links = \App\Support\ClassListOrder::sortLinks(
+            StandardLink::with(['section', 'standard'])->where('school_id', $sid)->get()
+        );
         $subjects = Subject::where('school_id', $sid)
             ->pluck('name')
             ->filter()

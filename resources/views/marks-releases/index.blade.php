@@ -8,10 +8,10 @@
 
 @section('content')
 <div class="mr" data-testid="marks-releases">
-    <h1>Marks releases</h1>
+    <h1>Marks Release</h1>
     <p class="mr-sub">Send an exam's marks to parents on WhatsApp.</p>
     <div class="mr-actions" style="margin:0 0 16px">
-        <a class="mr-btn" href="{{ route($area.'.marks.releases.create') }}" data-testid="release-marks-new">Release marks</a>
+        <a class="mr-btn" href="{{ route($area.'.marks.releases.create') }}" data-testid="release-marks-new">Marks Release</a>
     </div>
     <div class="mr-card mr-scroll">
         @if($list->isEmpty())

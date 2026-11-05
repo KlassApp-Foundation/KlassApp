@@ -50,11 +50,13 @@
                         </select>
                     </label>
                     <label class="block max-sm:w-full">
-                        <span class="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-400">Find a class</span>
-                        <span class="relative block">
-                            <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"/></svg>
-                            <input wire:model.live.debounce.300ms="search" type="search" placeholder="Search P.1, P.7..." class="max-sm:w-full rounded-xl border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-emerald-500 sm:w-56 h-10" data-testid="ct-filter-search">
-                        </span>
+                        <span class="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-400">Class</span>
+                        <select wire:model.live="classId" class="max-sm:w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:ring-emerald-500 sm:w-56 h-10" data-testid="ct-filter-class">
+                            <option value="">All classes</option>
+                            @foreach($classOptions as $classOption)
+                                <option value="{{ $classOption->id }}">{{ $classOption->name }}</option>
+                            @endforeach
+                        </select>
                     </label>
                     <button wire:click="clearFilters" type="button" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 h-10 text-xs font-bold uppercase tracking-wider text-slate-500 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700" data-testid="ct-filter-clear">
                         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
