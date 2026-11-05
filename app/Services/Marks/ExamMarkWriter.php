@@ -149,9 +149,13 @@ class ExamMarkWriter
         return (float) $mark > $this->maximum($exam);
     }
 
+    /**
+     * The same closed-mark test the writer enforces, for readers: the profile's
+     * mark list and the correction-reason check both ask this question.
+     */
     public function requiresCorrection(Exam $exam): bool
     {
-        return false;
+        return $this->writesAreRefused($exam);
     }
 
     private function letter(Exam $exam, mixed $mark): string
