@@ -491,6 +491,7 @@ class OnboardingStepsService
     {
         $plans = Plan::query()
             ->where('is_active', 1)
+            ->where('is_platform_only', 0)
             ->where(function ($q) {
                 $q->whereRaw('LOWER(name) in (?, ?, ?)', ['freemium', 'growth', 'premium'])
                     ->orWhereRaw('LOWER(display_name) in (?, ?, ?)', ['freemium', 'growth', 'premium']);
@@ -499,7 +500,11 @@ class OnboardingStepsService
             ->get();
 
         if ($plans->isEmpty()) {
-            return Plan::query()->where('is_active', 1)->orderBy('order')->first();
+            return Plan::query()
+                ->where('is_active', 1)
+                ->where('is_platform_only', 0)
+                ->orderBy('order')
+                ->first();
         }
 
         $sorted = $plans->sortBy(function (Plan $plan) {

@@ -3,12 +3,23 @@
 namespace Tests\Feature;
 
 use App\Http\Middleware\VerifyCsrfToken;
+use App\Livewire\Superadmin\Academics\SchoolDetail;
 use App\Models\CurrentPlan;
 use App\Models\Plan;
+use App\Models\School;
 use App\Models\User;
+use App\Services\OnboardingEngine;
+use App\Services\OnboardingStepsService;
+use App\Services\PlanLimitService;
 use App\Services\ToshiActionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
+use Livewire\Livewire;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -128,7 +139,9 @@ class PlanLimitEnforcementTest extends TestCase
         $result = ToshiActionService::enforcePlanLimit($this->schoolId, 'students');
 
         $this->assertFalse($result['success']);
-        $this->assertStringContainsString('allows a maximum of 2 students', $result['message']);
+        $this->assertStringContainsString('allows 2 students', $result['message']);
+        $this->assertStringContainsString('You already have 2', $result['message']);
+        $this->assertStringContainsString('Talk to sales', $result['message']);
         $this->assertStringContainsString('upgrade', $result['message']);
     }
 
@@ -182,7 +195,7 @@ class PlanLimitEnforcementTest extends TestCase
     // ── ToshiActionService integration tests ──
 
     #[Test]
-    public function toshi_add_student_saves_with_notice_when_at_plan_limit(): void
+    public function toshi_add_student_is_blocked_at_plan_limit(): void
     {
         // Fill to exactly 2 students. Leave registration_number empty so it
         // cannot occupy the id addStudent is about to assign.
@@ -194,16 +207,17 @@ class PlanLimitEnforcementTest extends TestCase
 
         $result = ToshiActionService::addStudent($this->admin, ['name' => 'Excess Student']);
 
-        $this->assertTrue($result['success'], 'over-limit must not block Toshi student create');
-        $this->assertStringContainsString('allows a maximum of 2 students', $result['message']);
+        $this->assertFalse($result['success']);
+        $this->assertStringContainsString('allows 2 students', $result['message']);
+        $this->assertStringContainsString('Talk to sales', $result['message']);
         $this->assertSame(
-            3,
+            2,
             User::where('school_id', $this->schoolId)->where('usergroup_id', 6)->count()
         );
     }
 
     #[Test]
-    public function toshi_add_teacher_saves_with_notice_when_at_plan_limit(): void
+    public function toshi_add_teacher_is_blocked_at_plan_limit(): void
     {
         // Fill to exactly 2 teachers
         User::factory()->count(2)->create([
@@ -215,8 +229,13 @@ class PlanLimitEnforcementTest extends TestCase
             'name' => 'Excess Teacher', 'email' => 'excess@teacher.test',
         ]);
 
-        $this->assertTrue($result['success'], 'over-limit must not block Toshi teacher create');
-        $this->assertStringContainsString('allows a maximum of 2 teachers', $result['message']);
+        $this->assertFalse($result['success']);
+        $this->assertStringContainsString('allows 2 teachers', $result['message']);
+        $this->assertStringContainsString('Talk to sales', $result['message']);
+        $this->assertSame(
+            2,
+            User::where('school_id', $this->schoolId)->where('usergroup_id', 5)->count()
+        );
     }
 
     #[Test]
@@ -233,13 +252,14 @@ class PlanLimitEnforcementTest extends TestCase
         ]);
 
         $this->assertTrue($result['success'], 'over-limit must not block Toshi co-admin invite');
-        $this->assertStringContainsString('allows a maximum of 2 administrators', $result['message']);
+        $this->assertStringContainsString('allows 2 administrators', $result['message']);
+        $this->assertStringContainsString('Talk to sales', $result['message']);
     }
 
     // ── HTTP StudentController integration tests ──
 
     #[Test]
-    public function student_controller_store_saves_with_overlimit_notice_when_at_plan_limit(): void
+    public function student_controller_store_is_blocked_at_plan_limit(): void
     {
         // Fill to exactly 2 students. Leave registration_number empty so it
         // cannot occupy the id the add-student form is about to assign.
@@ -259,9 +279,15 @@ class PlanLimitEnforcementTest extends TestCase
             'class'     => 'Primary 1',
         ]);
 
-        $response->assertSessionMissing('errors');
-        $response->assertSessionHas('overlimit');
+        $response->assertSessionHas('overlimit', function ($message) {
+            return str_contains($message, 'allows 2 students')
+                && str_contains($message, 'Talk to sales');
+        });
         $response->assertRedirect();
+        $this->assertSame(
+            2,
+            User::where('school_id', $this->schoolId)->where('usergroup_id', 6)->count()
+        );
     }
 
     #[Test]
@@ -358,5 +384,176 @@ class PlanLimitEnforcementTest extends TestCase
         $this->assertStringNotContainsString('route', $result['message']);
         $this->assertStringNotContainsString('url', $result['message']);
         $this->assertStringNotContainsString('http', $result['message']);
+    }
+
+    // ── Early adopter and platform assignment ──
+
+    #[Test]
+    public function early_adopter_plan_has_no_teacher_or_student_limits(): void
+    {
+        Mail::fake();
+
+        $early = Plan::create([
+            'name' => 'early_adopter_test',
+            'display_name' => 'Early adopter',
+            'cycle' => 30,
+            'order' => 0,
+            'is_active' => 1,
+            'is_platform_only' => 1,
+            'amount' => 0,
+            'no_of_users' => 0,
+            'no_of_students' => 0,
+        ]);
+
+        CurrentPlan::where('school_id', $this->schoolId)->update(['plan_id' => $early->id]);
+
+        $limits = app(PlanLimitService::class);
+        $this->assertNull($limits->limit($this->schoolId, 'teachers'));
+        $this->assertNull($limits->limit($this->schoolId, 'students'));
+        $this->assertFalse($limits->status($this->schoolId, 'students')['blocked']);
+
+        // Two of each would already fill the old test plan.
+        User::factory()->count(2)->create(['usergroup_id' => 5, 'school_id' => $this->schoolId]);
+        User::factory()->count(2)->create(['usergroup_id' => 6, 'school_id' => $this->schoolId]);
+
+        $teacher = ToshiActionService::addTeacher($this->admin, [
+            'name' => 'Early Teacher',
+            'email' => 'early.teacher@example.test',
+        ]);
+        $this->assertTrue($teacher['success'], (string) ($teacher['message'] ?? ''));
+
+        $student = ToshiActionService::addStudent($this->admin, ['name' => 'Early Student']);
+        $this->assertTrue($student['success'], (string) ($student['message'] ?? ''));
+
+        $this->assertSame(3, User::where('school_id', $this->schoolId)->where('usergroup_id', 5)->count());
+        $this->assertSame(3, User::where('school_id', $this->schoolId)->where('usergroup_id', 6)->count());
+    }
+
+    #[Test]
+    public function a_platform_admin_can_assign_early_adopter_to_a_school(): void
+    {
+        $early = Plan::create([
+            'name' => 'early_adopter_assign',
+            'display_name' => 'Early adopter',
+            'cycle' => 30,
+            'order' => 0,
+            'is_active' => 1,
+            'is_platform_only' => 1,
+            'amount' => 0,
+            'no_of_users' => 0,
+            'no_of_students' => 0,
+        ]);
+
+        Livewire::test(SchoolDetail::class, ['id' => $this->schoolId])
+            ->set('selectedPlanId', $early->id)
+            ->call('assignPlan')
+            ->assertHasNoErrors();
+
+        $this->assertSame(
+            $early->id,
+            (int) CurrentPlan::where('school_id', $this->schoolId)->value('plan_id')
+        );
+    }
+
+    #[Test]
+    public function a_school_cannot_choose_a_platform_only_plan_itself(): void
+    {
+        $early = Plan::create([
+            'name' => 'early_adopter_hidden',
+            'display_name' => 'Early adopter',
+            'cycle' => 30,
+            'order' => 0,
+            'is_active' => 1,
+            'is_platform_only' => 1,
+            'amount' => 0,
+            'no_of_users' => 0,
+            'no_of_students' => 0,
+        ]);
+
+        $this->expectException(ValidationException::class);
+        app(OnboardingEngine::class)->savePlan(School::findOrFail($this->schoolId), $early->id, true);
+    }
+
+    // ── Engine cap (the wizard and Toshi write through this) ──
+
+    #[Test]
+    public function onboarding_engine_caps_teachers_at_the_plan_limit(): void
+    {
+        User::factory()->create(['usergroup_id' => 5, 'school_id' => $this->schoolId]);
+
+        $school = School::findOrFail($this->schoolId);
+        $year = \App\Models\AcademicYear::where('school_id', $this->schoolId)->firstOrFail();
+
+        $result = app(OnboardingEngine::class)->saveTeachers($school, $year, [
+            ['name' => 'Teacher One', 'email' => 'cap.teacher.one@example.test'],
+            ['name' => 'Teacher Two', 'email' => 'cap.teacher.two@example.test'],
+            ['name' => 'Teacher Three', 'email' => 'cap.teacher.three@example.test'],
+        ]);
+
+        $this->assertCount(1, $result['created']);
+        $this->assertCount(2, $result['skipped']);
+        $this->assertStringContainsString('allows 2 teachers', $result['skipped'][0]['reason']);
+        $this->assertStringContainsString('Talk to sales', $result['skipped'][0]['reason']);
+        $this->assertSame(2, User::where('school_id', $this->schoolId)->where('usergroup_id', 5)->count());
+    }
+
+    #[Test]
+    public function teacher_add_form_is_blocked_at_the_plan_limit(): void
+    {
+        User::factory()->count(2)->create(['usergroup_id' => 5, 'school_id' => $this->schoolId]);
+
+        $response = $this->actingAs($this->admin)->post('/admin/teacher/add', [
+            '_token' => csrf_token(),
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('overlimit', function ($message) {
+            return str_contains($message, 'allows 2 teachers')
+                && str_contains($message, 'Talk to sales');
+        });
+        $this->assertSame(2, User::where('school_id', $this->schoolId)->where('usergroup_id', 5)->count());
+    }
+
+    #[Test]
+    public function teacher_import_stops_at_the_limit_and_reports_the_rest(): void
+    {
+        User::factory()->create(['usergroup_id' => 5, 'school_id' => $this->schoolId]);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->fromArray(['firstname', 'lastname', 'email', 'mobile_no', 'gender'], null, 'A1');
+        for ($i = 1; $i <= 4; $i++) {
+            $sheet->fromArray([
+                'Imported '.$i,
+                'Teacher',
+                'imported.teacher.'.$i.'@example.test',
+                '+2567000000'.$i,
+                'male',
+            ], null, 'A'.($i + 1));
+        }
+        $tmp = tempnam(sys_get_temp_dir(), 'teacher-limit').'.xlsx';
+        (new Xlsx($spreadsheet))->save($tmp);
+
+        $file = new UploadedFile(
+            $tmp,
+            'teachers.xlsx',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            null,
+            true,
+        );
+
+        $response = $this->actingAs($this->admin)->post('/admin/importTeachers', [
+            'import_file' => $file,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('overlimit', function ($message) {
+            return str_contains($message, 'Imported 1 teacher')
+                && str_contains($message, '3 teachers were not imported')
+                && str_contains($message, 'Talk to sales');
+        });
+        $this->assertSame(2, User::where('school_id', $this->schoolId)->where('usergroup_id', 5)->count());
+
+        @unlink($tmp);
     }
 }

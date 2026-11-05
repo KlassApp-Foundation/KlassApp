@@ -164,7 +164,7 @@ class SchoolSizeAndLimitsTest extends TestCase
         $this->assertSame(0, School::where('student_size', 'More than 1,000')->count());
     }
 
-    public function test_engine_saves_six_hundred_students_without_blocking_and_notice_fires(): void
+    public function test_engine_saves_only_the_remaining_students_and_reports_the_rest(): void
     {
         $this->capStudentsAt(500);
 
@@ -179,16 +179,18 @@ class SchoolSizeAndLimitsTest extends TestCase
             $drafts
         );
 
-        $this->assertCount(600, $result['created'], 'onboarding must never block or truncate');
-        $this->assertSame([], $result['skipped']);
-        $this->assertSame(600, User::where('school_id', $this->school->id)->where('usergroup_id', 6)->count());
+        $this->assertCount(500, $result['created'], 'the engine must fill the plan limit, not truncate silently');
+        $this->assertCount(100, $result['skipped'], 'every row above the limit must be reported');
+        $this->assertStringContainsString('plan allows 500 students', $result['skipped'][0]['reason']);
+        $this->assertStringContainsString('Talk to sales', $result['skipped'][0]['reason']);
+        $this->assertSame(500, User::where('school_id', $this->school->id)->where('usergroup_id', 6)->count());
 
         $overLimit = ToshiActionService::enforcePlanLimit($this->school->id, 'students');
         $this->assertFalse($overLimit['success']);
         $this->assertStringContainsString('upgrade', strtolower($overLimit['message']));
     }
 
-    public function test_csv_import_saves_all_600_over_plan_limit_and_notices(): void
+    public function test_csv_import_saves_up_to_the_limit_and_reports_the_rest(): void
     {
         $this->capStudentsAt(500);
 
@@ -221,8 +223,12 @@ class SchoolSizeAndLimitsTest extends TestCase
         $response = $this->actingAs($this->admin)->post('/admin/importUsers', ['import_file' => $file]);
 
         $response->assertRedirect();
-        $response->assertSessionHas('overlimit', fn ($message) => str_contains(strtolower($message), 'upgrade'));
-        $this->assertSame(600, User::where('school_id', $this->school->id)->where('usergroup_id', 6)->count(), 'import must save every row, never block or truncate');
+        $response->assertSessionHas('overlimit', function ($message) {
+            return str_contains($message, 'Imported 500 students')
+                && str_contains($message, '100 students were not imported')
+                && str_contains($message, 'Talk to sales');
+        });
+        $this->assertSame(500, User::where('school_id', $this->school->id)->where('usergroup_id', 6)->count(), 'import must fill the limit and report the rest');
         $response->assertSessionHas('successmessage');
 
         @unlink($tmp);

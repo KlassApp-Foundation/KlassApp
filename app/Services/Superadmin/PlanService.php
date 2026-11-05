@@ -70,6 +70,7 @@ class PlanService
             'display_name' => 'nullable|string|max:255',
             'order' => 'nullable|integer',
             'is_active' => 'nullable',
+            'is_platform_only' => 'nullable|boolean',
             'amount' => 'required|numeric',
             'no_of_users' => 'required|integer',
             'no_of_students' => 'required|integer',

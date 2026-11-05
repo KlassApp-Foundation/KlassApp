@@ -18,7 +18,11 @@ class PricingController extends Controller
     public function create()
     {
         //
-        $plan = Plan::get();
+        $plan = Plan::query()
+            ->where('is_active', 1)
+            ->where('is_platform_only', 0)
+            ->orderBy('order')
+            ->get();
         return view('/pricing',['plans' => $plan]);
     }
 }

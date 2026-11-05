@@ -2,6 +2,16 @@
 
 > **Canonical location**: `/Users/mac/projects/KlassApp/knowledge.md` (workspace root). Worktrees (e.g. `KlassApp-main-checkout`) should sync to that path when copies diverge — keep one body of truth; do not maintain parallel divergent session logs.
 
+## Session: 2026-11-05 — T-082 plan limits and the Early adopter plan
+
+- **Work:** Added the **Early adopter** plan (`no_of_users = 0`, `no_of_students = 0`, `is_platform_only = 1`). It is assignable to a school by a platform admin from the school detail page; schools never see it in their own plan picker.
+- **Single source:** `PlanLimitService` resolves the current plan, the teacher/student limit, the current count and the remaining slots. `ToshiActionService::enforcePlanLimit()` now delegates to it, so every legacy notice and every new gate reads the same numbers.
+- **Enforcement:** the single add forms stop before creating anyone; `OnboardingEngine::saveTeachers()` / `saveStudents()` fill the remaining slots and return every extra row in `skipped` with the plan message; `TeachersImport` / `UsersImport` / `TeacherLinkImport` import up to the limit and report the rest; Toshi's add-teacher and add-student paths stop at the limit. Messages carry the plan name, the limit, the current count and **“Talk to sales”**. Imports add “Imported X, Y not imported”.
+- **Early adopter:** 0 means unlimited, so every path above is uncapped for a founding school. `is_platform_only` is filtered out of the wizard, Toshi plan cards, pricing and `OnboardingStepsService`.
+- **Reference data:** migration `2026_11_05_000000_add_platform_only_plans_and_seed_early_adopter.php` adds the column and inserts the plan only when plans already exist (existing installs); fresh installs get it from `PlansTableSeeder` / `php artisan plans:ensure`.
+- **Overlap:** `OnboardingEngine::saveStudents()` is also changed by the T-094 branch (#1275); `OnboardingEngine` is touched by #1270 (fees). Merge those first, then rebase this branch and keep the cap lines.
+- **Status:** Draft pull request. Not merged. Production untouched.
+
 ## Verified Stack (production — July 26, 2026)
 
 | Layer | Version | Source |

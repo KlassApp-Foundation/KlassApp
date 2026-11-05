@@ -443,7 +443,11 @@ class ManualOnboardingWizard extends Component
 
     public function selectPlan(int $planId): void
     {
-        if (! Plan::query()->where('id', $planId)->where('is_active', 1)->exists()) {
+        if (! Plan::query()
+            ->where('id', $planId)
+            ->where('is_active', 1)
+            ->where('is_platform_only', 0)
+            ->exists()) {
             $this->errorMessage = 'That plan is not available.';
 
             return;
@@ -1063,7 +1067,11 @@ class ManualOnboardingWizard extends Component
      */
     public function getPlansProperty()
     {
-        return Plan::query()->where('is_active', 1)->orderBy('order')->get();
+        return Plan::query()
+            ->where('is_active', 1)
+            ->where('is_platform_only', 0)
+            ->orderBy('order')
+            ->get();
     }
 
     /**
@@ -1208,7 +1216,7 @@ class ManualOnboardingWizard extends Component
         // No active plans: the step's @empty alert already explains this. Do not also
         // push the same string into the shell error banner (duplicate on Continue).
         if (($step['key'] ?? '') === 'plan_selection'
-            && Plan::query()->where('is_active', 1)->doesntExist()) {
+            && Plan::query()->where('is_active', 1)->where('is_platform_only', 0)->doesntExist()) {
             return;
         }
 
@@ -1603,7 +1611,11 @@ class ManualOnboardingWizard extends Component
             return;
         }
 
-        $first = Plan::query()->where('is_active', 1)->orderBy('order')->first();
+        $first = Plan::query()
+            ->where('is_active', 1)
+            ->where('is_platform_only', 0)
+            ->orderBy('order')
+            ->first();
         $this->selectedPlanId = $first ? (int) $first->id : null;
     }
 
@@ -3373,18 +3385,17 @@ class ManualOnboardingWizard extends Component
             return;
         }
 
-        $before = User::query()
-            ->where('school_id', $school->id)
-            ->where('usergroup_id', 6)
-            ->count();
-        $this->saveStudents($school);
-        $added = User::query()
-            ->where('school_id', $school->id)
-            ->where('usergroup_id', 6)
-            ->count() - $before;
+        $result = $this->saveStudents($school);
+        $planSkips = collect($result['skips'] ?? [])
+            ->filter(fn ($skip) => str_contains(strtolower((string) ($skip['reason'] ?? '')), 'plan allows'))
+            ->values()
+            ->all();
         $this->studentMissingStreams = [];
-        $this->studentUploadSkips = [];
-        $this->studentUploadReport = $this->formatStudentUploadReport($added, 0);
+        $this->studentUploadSkips = $planSkips;
+        $this->studentUploadReport = $this->formatStudentUploadReport(
+            (int) ($result['added'] ?? 0),
+            count($planSkips),
+        );
     }
 
     private function formatStudentUploadReport(int $added, int $skipped): string
@@ -4029,6 +4040,21 @@ class ManualOnboardingWizard extends Component
         $this->studentDrafts = [];
 
         $skips = array_merge($alreadyThere, $saved['skipped'] ?? []);
+        $planSkips = collect($saved['skipped'] ?? [])
+            ->filter(fn ($skip) => str_contains(strtolower((string) ($skip['reason'] ?? '')), 'plan allows'))
+            ->values();
+        if ($planSkips->isNotEmpty()) {
+            $this->studentUploadReport = $this->formatStudentUploadReport(
+                count($saved['created'] ?? []),
+                $planSkips->count(),
+            );
+            $this->studentUploadSkips = $planSkips
+                ->map(fn ($skip) => [
+                    'name' => $skip['name'] ?? 'Student',
+                    'reason' => $skip['reason'] ?? 'Plan limit',
+                ])
+                ->all();
+        }
 
         return [
             'added' => count($saved['created'] ?? []),
@@ -4275,7 +4301,7 @@ class ManualOnboardingWizard extends Component
 
     private function savePlan(School $school): void
     {
-        if (Plan::query()->where('is_active', 1)->doesntExist()) {
+        if (Plan::query()->where('is_active', 1)->where('is_platform_only', 0)->doesntExist()) {
             // Prefer the in-step empty alert; next() short-circuits before this when empty.
             // Keep a guard for any direct persist path without duplicating UX intent.
             throw ValidationException::withMessages([

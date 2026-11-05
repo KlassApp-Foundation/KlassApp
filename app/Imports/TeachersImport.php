@@ -13,6 +13,7 @@ use App\Traits\RegisterUser;
 use App\Models\Country;
 use App\Models\City;
 use App\Models\User;
+use App\Services\PlanLimitService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Session;
@@ -20,6 +21,12 @@ use Illuminate\Support\Facades\Session;
 class TeachersImport implements ToCollection, WithHeadingRow
 {
     use RegisterUser;
+
+    public int $skippedByPlan = 0;
+
+    public ?string $planMessage = null;
+
+    public function __construct(private ?int $maxNewTeachers = null) {}
 
     public function collection(Collection $rows)
     {
@@ -149,12 +156,20 @@ class TeachersImport implements ToCollection, WithHeadingRow
                     ->exists();
 
                 if (!$exists) {
+                    if ($this->maxNewTeachers !== null && $insertedcount >= $this->maxNewTeachers) {
+                        $this->skippedByPlan++;
+                        $this->planMessage ??= app(PlanLimitService::class)->message((int) $school_id, 'teachers');
+                        continue;
+                    }
+
                     $this->CreateTeacher($teacher, $school_id, $academic_year, "", 5);
                     $insertedcount++;
                 }
             }
 
             Session::put('insertedcount', $insertedcount);
+            Session::put('plan_skipped', $this->skippedByPlan);
+            Session::put('plan_message', $this->planMessage);
 
         } catch (Exception $e) {
             Log::error('Teacher Import Error: ' . $e->getMessage());
