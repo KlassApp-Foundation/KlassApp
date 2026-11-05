@@ -14,11 +14,14 @@ use App\Traits\AcademicProcess;
 use App\Models\StudentAcademic;
 use Illuminate\Http\Request;
 use App\Models\StandardLink;
+use App\Models\Section;
 use App\Models\AbsentReason;
 use App\Traits\LogActivity;
 use App\Helpers\SiteHelper;
 use App\Models\Attendance;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use League\Csv\Writer;
 use App\Traits\Common;
 use Carbon\Carbon;
@@ -218,6 +221,363 @@ class AttendanceController extends Controller
         ], 422);
     }
 }
+
+    /**
+     * One-click register: every student in the class or stream, Present by
+     * default, one tap to mark Absent, an optional comment, one save.
+     *
+     * A class head (sections.class_teacher_id) gets every stream of the
+     * section. A stream teacher gets the streams the school's attendance
+     * scope already allows; under classes_i_teach that includes the streams
+     * they subject-teach, never another teacher's class.
+     */
+    public function register(Request $request)
+    {
+        $schoolId = (int) Auth::user()->school_id;
+        $teacherId = (int) Auth::id();
+        $scope = $this->registerScope($schoolId, $teacherId);
+
+        $selectedSection = $request->integer('section_id') ?: null;
+        $selectedStream = $request->integer('standardLink_id') ?: null;
+        $selectedSession = (string) $request->input('session', 'forenoon');
+        if (! in_array($selectedSession, ['forenoon', 'afternoon'], true)) {
+            $selectedSession = 'forenoon';
+        }
+
+        $selectedDate = (string) $request->input('date', now()->format('Y-m-d'));
+        $date = null;
+        try {
+            $date = Carbon::createFromFormat('Y-m-d', $selectedDate)->startOfDay();
+        } catch (\Throwable) {
+            $date = null;
+        }
+        if ($date === null || $date->gt(Carbon::today())) {
+            $date = Carbon::today();
+        }
+        if ($scope['year'] !== null && $date->lt(Carbon::parse($scope['year']->start_date)->startOfDay())) {
+            $date = Carbon::today();
+        }
+        $selectedDate = $date->toDateString();
+
+        $selection = $this->resolveRegisterSelection($scope, $selectedSection, $selectedStream);
+        $students = $this->registerRoster($scope, $selection['streams'], $selectedDate, $selectedSession);
+
+        $present = $students->where('status', 1)->count();
+        $absent = $students->where('status', 0)->count();
+
+        return view('teacher/attendance/register', [
+            'scopeReady' => $scope['year'] !== null,
+            'sections' => $scope['sections'],
+            'streams' => $scope['streams'],
+            'selectedSection' => $selection['section']?->id,
+            'selectedStream' => $selection['streams']->count() === 1 ? $selection['streams']->first()->id : null,
+            'selectedDate' => $selectedDate,
+            'selectedSession' => $selectedSession,
+            'className' => $selection['section']?->name,
+            'isClassHead' => $selection['is_class_head'],
+            'students' => $students,
+            'presentCount' => $present,
+            'absentCount' => $absent,
+        ]);
+    }
+
+    /**
+     * Save the whole register once. A second save updates the same rows
+     * instead of creating duplicates.
+     */
+    public function saveRegister(Request $request)
+    {
+        $schoolId = (int) Auth::user()->school_id;
+        $teacherId = (int) Auth::id();
+
+        // A class head can have a thousand learners. The browser sends the
+        // register as one JSON field so PHP's max_input_vars cannot truncate
+        // it; the per-row inputs stay as the no-JavaScript fallback.
+        if ($request->filled('rows_json')) {
+            $decoded = json_decode((string) $request->input('rows_json'), true);
+            if (is_array($decoded)) {
+                $request->merge(['rows' => $decoded]);
+            }
+        }
+
+        $validated = $request->validate([
+            'section_id' => ['nullable', 'integer'],
+            'standardLink_id' => ['nullable', 'integer'],
+            'date' => ['required', 'date_format:Y-m-d'],
+            'session' => ['required', 'in:forenoon,afternoon'],
+            'rows' => ['required', 'array', 'min:1'],
+            'rows.*.status' => ['required', 'in:0,1'],
+            'rows.*.comment' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $scope = $this->registerScope($schoolId, $teacherId);
+        if ($scope['year'] === null) {
+            throw ValidationException::withMessages([
+                'date' => 'Set up the academic year before recording attendance.',
+            ]);
+        }
+
+        $date = Carbon::createFromFormat('Y-m-d', $validated['date'])->startOfDay();
+        $yearStart = Carbon::parse($scope['year']->start_date)->startOfDay();
+        if ($date->lt($yearStart) || $date->gt(Carbon::today())) {
+            throw ValidationException::withMessages([
+                'date' => 'Choose a date within this academic year, up to today.',
+            ]);
+        }
+
+        $selection = $this->resolveRegisterSelection(
+            $scope,
+            isset($validated['section_id']) ? (int) $validated['section_id'] : null,
+            isset($validated['standardLink_id']) ? (int) $validated['standardLink_id'] : null,
+        );
+
+        if ($selection['streams']->isEmpty()) {
+            abort(403, 'You are not allowed to record attendance for this class.');
+        }
+
+        $students = $this->registerRoster($scope, $selection['streams'], $validated['date'], $validated['session']);
+        $rosterIds = $students->pluck('user_id')->map(fn ($id) => (int) $id)->all();
+        $postedIds = array_map('intval', array_keys($validated['rows']));
+        if (array_diff($postedIds, $rosterIds) !== []) {
+            abort(403, 'One of those students is not in this class.');
+        }
+
+        $rows = $validated['rows'];
+        $saved = 0;
+        $first = null;
+
+        DB::transaction(function () use ($students, $rows, $scope, $date, $validated, $teacherId, &$saved, &$first): void {
+            foreach ($students as $student) {
+                $row = $rows[$student['user_id']] ?? null;
+                if ($row === null) {
+                    continue;
+                }
+
+                $comment = trim((string) ($row['comment'] ?? ''));
+                $attributes = [
+                    'status' => (int) $row['status'],
+                    'remarks' => $comment !== '' ? $comment : null,
+                    'reason_id' => null,
+                    'recorded_by' => $teacherId,
+                ];
+
+                $attendance = Attendance::withTrashed()
+                    ->where('school_id', (int) $scope['year']->school_id)
+                    ->where('academic_year_id', (int) $scope['year']->id)
+                    ->where('standardLink_id', (int) $student['stream_id'])
+                    ->where('user_id', (int) $student['user_id'])
+                    ->where('session', $validated['session'])
+                    ->whereDate('date', $date->toDateString())
+                    ->orderByDesc('id')
+                    ->first();
+
+                if ($attendance !== null) {
+                    if ($attendance->trashed()) {
+                        $attendance->restore();
+                    }
+                    $attendance->fill($attributes)->save();
+                } else {
+                    $attendance = Attendance::create(array_merge($attributes, [
+                        'school_id' => (int) $scope['year']->school_id,
+                        'academic_year_id' => (int) $scope['year']->id,
+                        'standardLink_id' => (int) $student['stream_id'],
+                        'user_id' => (int) $student['user_id'],
+                        'date' => $date->toDateString(),
+                        'session' => $validated['session'],
+                    ]));
+                }
+
+                $saved++;
+                $first ??= $attendance;
+            }
+        });
+
+        if ($saved === 0) {
+            return back()->with('errormessage', 'No students were saved. Check the class and try again.');
+        }
+
+        if ($first !== null) {
+            $this->doActivityLog(
+                $first,
+                Auth::user(),
+                ['ip' => $this->getRequestIP(), 'details' => request()->userAgent() ?? ''],
+                LOGNAME_ADD_ATTENDANCE,
+                'Attendance saved for '.$saved.' students',
+            );
+        }
+
+        $params = [
+            'date' => $date->toDateString(),
+            'session' => $validated['session'],
+        ];
+        if ($selection['streams']->count() === 1) {
+            $params['standardLink_id'] = $selection['streams']->first()->id;
+        } elseif ($selection['section'] !== null) {
+            $params['section_id'] = $selection['section']->id;
+        }
+
+        return redirect()->route('teacher.attendance.register', $params)
+            ->with('successmessage', 'Attendance saved for '.$saved.' '.(($saved === 1) ? 'student' : 'students').'.');
+    }
+
+    /**
+     * The streams this teacher may take the register for.
+     *
+     * @return array{year: ?\App\Models\AcademicYear, streams: \Illuminate\Support\Collection, sections: \Illuminate\Support\Collection, head_section_ids: list<int>}
+     */
+    private function registerScope(int $schoolId, int $teacherId): array
+    {
+        $year = SiteHelper::getAcademicYear($schoolId);
+        if (! $year) {
+            return ['year' => null, 'streams' => collect(), 'sections' => collect(), 'head_section_ids' => []];
+        }
+
+        $allowed = SiteHelper::attendanceScopeStandardLinks($schoolId, $teacherId);
+
+        $headSectionIds = Section::query()
+            ->where('school_id', $schoolId)
+            ->where('class_teacher_id', $teacherId)
+            ->where('status', 1)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $headStreams = $headSectionIds === [] ? collect() : StandardLink::query()
+            ->with(['section', 'standard'])
+            ->where('school_id', $schoolId)
+            ->where('academic_year_id', $year->id)
+            ->where('status', 1)
+            ->whereIn('section_id', $headSectionIds)
+            ->get();
+
+        $streams = $allowed->merge($headStreams)
+            ->unique('id')
+            ->values()
+            ->sortBy(fn (StandardLink $link) => trim((string) ($link->section?->name ?? '')).'|'.trim((string) ($link->stream ?? '')))
+            ->values();
+
+        $sections = $streams->pluck('section')
+            ->filter()
+            ->unique('id')
+            ->sortBy('name')
+            ->values();
+
+        return [
+            'year' => $year,
+            'streams' => $streams,
+            'sections' => $sections,
+            'head_section_ids' => $headSectionIds,
+        ];
+    }
+
+    /**
+     * @param  array{year: ?\App\Models\AcademicYear, streams: \Illuminate\Support\Collection, sections: \Illuminate\Support\Collection, head_section_ids: list<int>}  $scope
+     * @return array{section: ?\App\Models\Section, streams: \Illuminate\Support\Collection, is_class_head: bool}
+     */
+    private function resolveRegisterSelection(array $scope, ?int $sectionId, ?int $standardLinkId): array
+    {
+        $streams = $scope['streams'];
+        if ($streams->isEmpty()) {
+            return ['section' => null, 'streams' => collect(), 'is_class_head' => false];
+        }
+
+        if ($standardLinkId !== null && $standardLinkId > 0) {
+            $stream = $streams->firstWhere('id', $standardLinkId);
+            if ($stream === null) {
+                abort(403, 'You are not allowed to record attendance for this class.');
+            }
+
+            return [
+                'section' => $stream->section,
+                'streams' => collect([$stream]),
+                'is_class_head' => in_array((int) $stream->section_id, $scope['head_section_ids'], true),
+            ];
+        }
+
+        if ($sectionId !== null && $sectionId > 0) {
+            $section = $scope['sections']->firstWhere('id', $sectionId);
+            if ($section === null) {
+                abort(403, 'You are not allowed to record attendance for this class.');
+            }
+
+            $isClassHead = in_array((int) $section->id, $scope['head_section_ids'], true);
+            $sectionStreams = $isClassHead
+                ? StandardLink::query()
+                    ->with(['section', 'standard'])
+                    ->where('school_id', (int) $section->school_id)
+                    ->where('academic_year_id', (int) $scope['year']->id)
+                    ->where('status', 1)
+                    ->where('section_id', (int) $section->id)
+                    ->orderBy('stream')
+                    ->get()
+                : $streams->where('section_id', (int) $section->id)->values();
+
+            return ['section' => $section, 'streams' => $sectionStreams, 'is_class_head' => $isClassHead];
+        }
+
+        $headSectionId = $scope['head_section_ids'][0] ?? null;
+        if ($headSectionId !== null && $scope['sections']->contains('id', $headSectionId)) {
+            return $this->resolveRegisterSelection($scope, (int) $headSectionId, null);
+        }
+
+        return $this->resolveRegisterSelection($scope, null, (int) $streams->first()->id);
+    }
+
+    /**
+     * @param  array{year: ?\App\Models\AcademicYear, streams: \Illuminate\Support\Collection, sections: \Illuminate\Support\Collection, head_section_ids: list<int>}  $scope
+     * @param  \Illuminate\Support\Collection  $streams
+     * @return \Illuminate\Support\Collection<int, array{user_id: int, name: string, stream_id: int, stream: string, status: int, comment: string}>
+     */
+    private function registerRoster(array $scope, $streams, string $date, string $session)
+    {
+        $streamIds = $streams->pluck('id')->map(fn ($id) => (int) $id)->all();
+
+        $students = StudentAcademic::query()
+            ->with(['user.userprofile', 'standardLink.section'])
+            ->where('school_id', (int) $scope['year']->school_id)
+            ->where('academic_year_id', (int) $scope['year']->id)
+            ->whereIn('standardLink_id', $streamIds)
+            ->whereHas('user', function ($query) {
+                $query->where('usergroup_id', 6)
+                    ->where('status', 'active')
+                    ->whereNull('deleted_at');
+            })
+            ->get();
+
+        $existing = Attendance::query()
+            ->where('school_id', (int) $scope['year']->school_id)
+            ->where('academic_year_id', (int) $scope['year']->id)
+            ->whereIn('standardLink_id', $streamIds)
+            ->where('session', $session)
+            ->whereDate('date', $date)
+            ->orderByDesc('id')
+            ->get()
+            ->keyBy('user_id');
+
+        return $students
+            ->unique('user_id')
+            ->map(function (StudentAcademic $row) use ($existing) {
+                $profile = optional(optional($row->user)->userprofile);
+                $name = trim((string) ($profile?->firstname ?? '').' '.(string) ($profile?->lastname ?? ''));
+                if ($name === '') {
+                    $name = trim((string) ($row->user->name ?? '')) ?: 'Student';
+                }
+
+                $record = $existing->get($row->user_id);
+                $stream = trim((string) ($row->standardLink?->section?->name ?? '').' '.(string) ($row->standardLink?->stream ?? ''));
+
+                return [
+                    'user_id' => (int) $row->user_id,
+                    'name' => $name,
+                    'stream_id' => (int) $row->standardLink_id,
+                    'stream' => $stream !== '' ? $stream : 'No stream',
+                    'status' => $record ? (int) $record->status : 1,
+                    'comment' => (string) ($record->remarks ?? ''),
+                ];
+            })
+            ->sortBy(fn (array $row) => $row['stream'].'|'.$row['name'])
+            ->values();
+    }
 
     public function export($standardLink_id)
     {
