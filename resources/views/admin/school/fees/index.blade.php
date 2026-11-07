@@ -2,47 +2,84 @@
 @extends('layouts.admin.layout')
 
 @section('content')
-<div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4">
+<div class="family-page" data-testid="fee-structure-page">
+    <main class="family-main" style="width:100% !important;margin-left:0 !important;margin-right:0 !important;">
+        @include('partials.message')
+        <div class="family-page-head">
+            <div>
+                <h1>Fees</h1>
+                <p>Amounts in UGX, from the school's country</p>
+            </div>
+            <a href="{{ route('admin.fees-categories.create') }}" class="ds-btn ds-btn-primary">Add a fee</a>
+        </div>
+        <nav class="teacher-actions" aria-label="Fees">
+            <a href="{{ route('admin.fees-categories') }}" aria-current="page">Fee structure</a>
+            <a href="{{ route('admin.fee-payments') }}">Balances and payments</a>
+        </nav>
 
-    @include('layouts.partials.page-header', [
-        'title' => 'Fee Categories',
-        'subtitle' => 'Manage fee structures across classes and terms.',
-        'actions' => '<a href="' . route('admin.fees-categories.create') . '" class="ds-btn ds-btn-primary ds-btn-sm"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Add Category</a>'
-    ])
-
-    @include('partials.message')
-
-    @if($fees->isEmpty())
-        <div class="text-center py-12 text-gray-500">No fee categories found for this year.</div>
-    @else
-        <x-table :headers="['#', 'Name', 'Amount', 'Level', 'Class', 'Term', 'Actions']">
-            @foreach($fees as $fee)
-                <tr>
-                    <td>{{ $loop->iteration }}</td>
-                    <td class="font-medium">{{ $fee->name }}</td>
-                    <td>{{ $fee->amount ?? '-' }}</td>
-                    <td>{{ \App\Models\FeesCategories::tierDisplayLabel($fee->standard->name ?? null) ?? ($fee->standard->name ?? '-') }}</td>
-                    <td>{{ $fee->section->name ?? 'All Levels' }}</td>
-                    <td>{{ $fee->term->name ?? 'All' }}</td>
-                    <td>
-                        <div class="flex items-center justify-center gap-2">
-                            <a href="{{ route('admin.fees-categories.edit', $fee) }}" class="dt-action-btn" title="Edit">
-                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                            </a>
-                            <form action="{{ route('admin.fees-categories.destroy', $fee->id) }}" method="POST" class="inline m-0"
-                                  onsubmit="return confirm('Are you sure you want to delete this fee category?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="dt-action-btn text-red-500 hover:text-red-700" title="Delete">
-                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-            @endforeach
-        </x-table>
-    @endif
-
+        @if(($state ?? '') === 'loading')
+            <section data-testid="fee-loading" aria-busy="true">
+                <div class="family-sk" style="height:24px;width:40%;"></div>
+                <div class="family-sk" style="height:48px;"></div>
+                <p>Loading the fee structure…</p>
+            </section>
+        @elseif(($state ?? '') === 'error')
+            <section data-testid="fee-error" role="alert" class="family-alert">
+                <strong>The fee structure wasn't loaded</strong>
+                <p>Nothing was changed. Try again.</p>
+                <a class="ds-btn ds-btn-primary" href="{{ url()->current() }}">Try again</a>
+            </section>
+        @elseif($fees === [])
+            <section class="family-empty" data-testid="fee-structure-empty">
+                <h2>No fees set up yet</h2>
+                <p>Add each fee once, with its amount, duration and the classes it applies to. Totals per class are worked out for you.</p>
+                <a class="ds-btn ds-btn-primary" href="{{ route('admin.fees-categories.create') }}">Add the first fee</a>
+            </section>
+        @else
+            <section class="family-table-card">
+                <h2>Fee structure</h2>
+                <div class="family-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fee</th><th>Amount</th><th>Duration</th><th>Applies to</th><th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($fees as $fee)
+                                <tr data-testid="fee-structure-row" data-name="{{ $fee['name'] }}" data-duration="{{ $fee['duration'] }}" data-classes="{{ $fee['classes'] }}" data-due="{{ $fee['due'] ?? '' }}">
+                                    <td>{{ $fee['name'] }}</td>
+                                    <td>UGX {{ number_format($fee['amount'], 0) }}</td>
+                                    <td>{{ $fee['duration'] }}</td>
+                                    <td>{{ $fee['classes'] }}</td>
+                                    <td><a href="{{ route('admin.fees-categories.edit', $fee['id']) }}">Edit</a></td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            <section class="family-table-card" data-testid="fee-class-totals">
+                <h2>Total per student</h2>
+                @if($classTotals === [])
+                    <p>Add classes to see a total for each one.</p>
+                @else
+                    <div class="family-scroll"><table>
+                        <thead><tr><th>Classes</th><th>Term total</th><th>Year total</th></tr></thead>
+                        <tbody>
+                            @foreach($classTotals as $row)
+                                <tr data-testid="fee-class-total" data-class="{{ $row['class'] }}" data-total="{{ number_format($row['total'], 2, '.', '') }}" data-year-total="{{ number_format($row['year_total'] ?? $row['total'], 2, '.', '') }}">
+                                    <td>{{ $row['class'] }}</td>
+                                    <td>UGX {{ number_format($row['total'], 0) }}</td>
+                                    <td>UGX {{ number_format($row['year_total'] ?? $row['total'], 0) }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table></div>
+                @endif
+                <p>Termly fees count every term. Yearly fees count in Term 1 only. One-off fees count once, in the term they're charged.</p>
+            </section>
+        @endif
+    </main>
 </div>
 @endsection

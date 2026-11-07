@@ -51,6 +51,12 @@ class ManualOnboardingWizard extends Component
     public int $stepIndex = 0;
 
     /**
+     * The current step's key, bound to ?step= so the URL, the card counter and
+     * the side panel all describe the same step. Written only by setStepIndex.
+     */
+    public ?string $stepKey = null;
+
+    /**
      * Steps unlocked by the last answer. The applicable step list grows as answers
      * arrive (country unlocks EMIS, a UNEB curriculum unlocks UNEB centre and school
      * category), so surface the growth instead of letting the counter jump.
@@ -443,7 +449,11 @@ class ManualOnboardingWizard extends Component
 
     public function selectPlan(int $planId): void
     {
-        if (! Plan::query()->where('id', $planId)->where('is_active', 1)->exists()) {
+        if (! Plan::query()
+            ->where('id', $planId)
+            ->where('is_active', 1)
+            ->where('is_platform_only', 0)
+            ->exists()) {
             $this->errorMessage = 'That plan is not available.';
 
             return;
@@ -967,8 +977,10 @@ class ManualOnboardingWizard extends Component
                     'name' => $row['name'],
                     'class' => (string) ($row['class'] ?? ''),
                     'stream' => (string) ($row['stream'] ?? ''),
+                    'email' => (string) ($row['email'] ?? ''),
                     'parent' => (string) ($row['parent'] ?? ''),
                     'parent_phone' => $parentPhone,
+                    'parent_email' => (string) ($row['parent_email'] ?? ''),
                     'school_student_id' => (string) ($row['school_student_id'] ?? ''),
                     'lin' => (string) ($row['lin'] ?? ''),
                     'board_registration_number' => (string) ($row['board_registration_number'] ?? ''),
@@ -1056,6 +1068,18 @@ class ManualOnboardingWizard extends Component
         return count($this->steps);
     }
 
+    /** Completed steps in the same list the card counts, so both agree. */
+    public function getDoneCountProperty(): int
+    {
+        return collect($this->steps)->where('is_complete', true)->count();
+    }
+
+    /** The step on screen — what the side panel's "Now:" must name. */
+    public function getNowLabelProperty(): ?string
+    {
+        return $this->currentStep['label'] ?? null;
+    }
+
     /**
      * Active plans for the visible plan_selection step.
      *
@@ -1063,7 +1087,11 @@ class ManualOnboardingWizard extends Component
      */
     public function getPlansProperty()
     {
-        return Plan::query()->where('is_active', 1)->orderBy('order')->get();
+        return Plan::query()
+            ->where('is_active', 1)
+            ->where('is_platform_only', 0)
+            ->orderBy('order')
+            ->get();
     }
 
     /**
@@ -1174,7 +1202,7 @@ class ManualOnboardingWizard extends Component
         }
     }
 
-    public function next(): void
+    public function next()
     {
         $this->errorMessage = '';
         // Read steps[] directly — do not touch $this->currentStep here.
@@ -1208,7 +1236,7 @@ class ManualOnboardingWizard extends Component
         // No active plans: the step's @empty alert already explains this. Do not also
         // push the same string into the shell error banner (duplicate on Continue).
         if (($step['key'] ?? '') === 'plan_selection'
-            && Plan::query()->where('is_active', 1)->doesntExist()) {
+            && Plan::query()->where('is_active', 1)->where('is_platform_only', 0)->doesntExist()) {
             return;
         }
 
@@ -1233,7 +1261,10 @@ class ManualOnboardingWizard extends Component
             } catch (\Throwable $e) {
                 report($e);
                 // Never surface raw SQL / connection strings to the wizard UI.
-                $this->errorMessage = 'Could not save this step. Please try again.';
+                $this->errorMessage = \App\Support\UserFacingException::message(
+                    $e,
+                    'Could not save this step. Please try again.',
+                );
 
                 return;
             }
@@ -1246,6 +1277,20 @@ class ManualOnboardingWizard extends Component
         // Do NOT auto-assign Freemium on every Next — plan_selection must remain a
         // visible decision step. Assignment happens only in savePlan() when confirmed.
         $this->refreshSteps();
+
+        // The school name and the year list are rendered in the page chrome
+        // (layouts/partials/navigation + the nav-bar selector), outside this
+        // component. Re-rendering the component alone leaves the old name and a
+        // stale year dropdown, so these two saves take a full reload.
+        if (in_array($step['key'], ['school_name', 'academic_year'], true)
+            && $this->returnToStepIndex === null
+            && $this->returnToStepKey === null) {
+            // A full reload (not a Livewire navigate): the header's school name and
+            // the academic-year selector are rendered outside this component and
+            // only a fresh page load re-reads them. The advance below still runs, so
+            // the reload lands on the step Continue would have shown.
+            $this->js('window.location.reload()');
+        }
 
         if ($this->returnToStepIndex !== null || $this->returnToStepKey !== null) {
             $this->returnToReviewAfterEdit();
@@ -1410,7 +1455,12 @@ class ManualOnboardingWizard extends Component
     private function setStepIndex(int $index): void
     {
         $this->stepIndex = $index;
+        $this->stepKey = (string) ($this->steps[$index]['key'] ?? '');
         unset($this->currentStep);
+
+        // Keep ?step= on the URL for the step the card actually shows. The key is
+        // written here and nowhere else, so it cannot drift from the card.
+        $this->dispatch('wizard-url', step: $this->stepKey);
 
         $key = $this->currentKey();
         if (in_array($key, ['standards', 'students'], true)) {
@@ -1603,7 +1653,11 @@ class ManualOnboardingWizard extends Component
             return;
         }
 
-        $first = Plan::query()->where('is_active', 1)->orderBy('order')->first();
+        $first = Plan::query()
+            ->where('is_active', 1)
+            ->where('is_platform_only', 0)
+            ->orderBy('order')
+            ->first();
         $this->selectedPlanId = $first ? (int) $first->id : null;
     }
 
@@ -1722,7 +1776,9 @@ class ManualOnboardingWizard extends Component
         $sid = $school->id;
 
         $year = AcademicYear::where('school_id', $sid)->first();
-        $links = StandardLink::with('section')->where('school_id', $sid)->get();
+        $links = \App\Support\ClassListOrder::sortLinks(
+            StandardLink::with(['section', 'standard'])->where('school_id', $sid)->get()
+        );
         $subjects = Subject::where('school_id', $sid)
             ->pluck('name')
             ->filter()
@@ -1910,8 +1966,8 @@ class ManualOnboardingWizard extends Component
         // FLAGGED(product-decision): a blank curriculum is shown as uneb. see docs/onboarding-engine-plan.md
         $this->curriculum = $school->curriculum ?: 'uneb';
         $this->schoolCategory = (string) ($school->school_category ?: '');
-        // FLAGGED(product-decision): a blank country is shown as Uganda. see docs/onboarding-engine-plan.md
-        $this->countryName = $school->registration_country ?: 'Uganda';
+        // The default for a blank country lives in the onboarding service.
+        $this->countryName = OnboardingStepsService::countryOrDefault($school->registration_country);
         $this->ministryCode = (string) ($school->ministry_code ?: '');
         $this->unebCenterNumber = (string) ($school->uneb_center_number ?: '');
     }
@@ -1982,7 +2038,9 @@ class ManualOnboardingWizard extends Component
         try {
             app(OnboardingEngine::class)->saveCountry($school, $this->countryName);
         } catch (ValidationException $e) {
-            throw ValidationException::withMessages(['countryName' => $e->getMessage()]);
+            throw ValidationException::withMessages([
+                'countryName' => \App\Support\UserFacingException::message($e, 'Choose a country.'),
+            ]);
         }
     }
 
@@ -2135,6 +2193,7 @@ class ManualOnboardingWizard extends Component
             'existing_teacher_id' => $draft['existing_teacher_id'] ?? '',
             'name' => $draft['name'] ?? '',
             'phone' => $phone,
+            'confirmed' => true,
         ]);
 
         if (! ($result['success'] ?? false)) {
@@ -2925,10 +2984,10 @@ class ManualOnboardingWizard extends Component
 
     /**
      * Save each readable class-teacher row now. One bad row does not roll the
-     * others back. Nothing here sends an invite or a message — the teacher
-     * file does not either. Assignment uses standards_link.class_teacher_id
-     * and sections.class_teacher_id, the same columns the class-teacher
-     * invite writes when it assigns someone who already has an account.
+     * others back. A real email gets a setup link from the teacher create
+     * step. Assigning someone who already exists sends that link when they
+     * have never signed in, and the class notice when they have. Assignment
+     * uses standards_link.class_teacher_id and sections.class_teacher_id.
      */
     private function ingestClassTeacherUpload(): void
     {
@@ -3033,7 +3092,7 @@ class ManualOnboardingWizard extends Component
                 continue;
             }
 
-            if (! $this->writeClassTeacherAssignment($school, $resolved['link'], $teacher['user'])) {
+            if (! $this->writeClassTeacherAssignment($school, $resolved['link'], $teacher['user'], (bool) $teacher['created'])) {
                 $skipped[] = ['row' => $line, 'reason' => 'could not save'];
 
                 continue;
@@ -3236,7 +3295,7 @@ class ManualOnboardingWizard extends Component
             ->where('status', 'active');
     }
 
-    private function writeClassTeacherAssignment(School $school, StandardLink $link, User $teacher): bool
+    private function writeClassTeacherAssignment(School $school, StandardLink $link, User $teacher, bool $justCreated = false): bool
     {
         if ((int) $teacher->school_id !== (int) $school->id || (int) $teacher->usergroup_id !== 5) {
             return false;
@@ -3258,12 +3317,19 @@ class ManualOnboardingWizard extends Component
             return false;
         }
 
-        $link->class_teacher_id = $teacher->id;
-        $link->save();
-        $section->class_teacher_id = $teacher->id;
-        $section->save();
+        $actor = Auth::user();
+        if (! $actor instanceof User) {
+            return false;
+        }
 
-        return true;
+        $result = app(\App\Services\ClassTeacherAssignmentService::class)->assignFromUpload(
+            $actor,
+            $link,
+            $teacher,
+            $justCreated,
+        );
+
+        return (bool) ($result['success'] ?? false);
     }
 
     /**
@@ -3373,18 +3439,17 @@ class ManualOnboardingWizard extends Component
             return;
         }
 
-        $before = User::query()
-            ->where('school_id', $school->id)
-            ->where('usergroup_id', 6)
-            ->count();
-        $this->saveStudents($school);
-        $added = User::query()
-            ->where('school_id', $school->id)
-            ->where('usergroup_id', 6)
-            ->count() - $before;
+        $result = $this->saveStudents($school);
+        $planSkips = collect($result['skips'] ?? [])
+            ->filter(fn ($skip) => str_contains(strtolower((string) ($skip['reason'] ?? '')), 'plan allows'))
+            ->values()
+            ->all();
         $this->studentMissingStreams = [];
-        $this->studentUploadSkips = [];
-        $this->studentUploadReport = $this->formatStudentUploadReport($added, 0);
+        $this->studentUploadSkips = $planSkips;
+        $this->studentUploadReport = $this->formatStudentUploadReport(
+            (int) ($result['added'] ?? 0),
+            count($planSkips),
+        );
     }
 
     private function formatStudentUploadReport(int $added, int $skipped): string
@@ -3986,8 +4051,10 @@ class ManualOnboardingWizard extends Component
                 'name' => trim((string) ($draft['name'] ?? '')),
                 'class' => trim((string) ($draft['class'] ?? '')),
                 'stream' => trim((string) ($draft['stream'] ?? '')),
+                'email' => trim((string) ($draft['email'] ?? '')),
                 'parent' => trim((string) ($draft['parent'] ?? '')),
                 'parent_phone' => trim((string) ($draft['parent_phone'] ?? $draft['phone'] ?? '')),
+                'parent_email' => trim((string) ($draft['parent_email'] ?? '')),
                 'school_student_id' => trim((string) ($draft['school_student_id'] ?? '')),
                 'lin' => trim((string) ($draft['lin'] ?? '')),
                 'board_registration_number' => trim((string) ($draft['board_registration_number'] ?? '')),
@@ -4029,6 +4096,21 @@ class ManualOnboardingWizard extends Component
         $this->studentDrafts = [];
 
         $skips = array_merge($alreadyThere, $saved['skipped'] ?? []);
+        $planSkips = collect($saved['skipped'] ?? [])
+            ->filter(fn ($skip) => str_contains(strtolower((string) ($skip['reason'] ?? '')), 'plan allows'))
+            ->values();
+        if ($planSkips->isNotEmpty()) {
+            $this->studentUploadReport = $this->formatStudentUploadReport(
+                count($saved['created'] ?? []),
+                $planSkips->count(),
+            );
+            $this->studentUploadSkips = $planSkips
+                ->map(fn ($skip) => [
+                    'name' => $skip['name'] ?? 'Student',
+                    'reason' => $skip['reason'] ?? 'Plan limit',
+                ])
+                ->all();
+        }
 
         return [
             'added' => count($saved['created'] ?? []),
@@ -4114,7 +4196,11 @@ class ManualOnboardingWizard extends Component
             if ($scope === 'class') {
                 $row['class'] = trim((string) ($draft['class'] ?? ''));
             }
-            if (empty($draft['is_yearly'])) {
+            if (! empty($draft['is_yearly'])) {
+                $row['is_yearly'] = true;
+                $row['duration'] = 'yearly';
+            } else {
+                $row['duration'] = 'termly';
                 $term = trim((string) ($draft['term'] ?? ''));
                 if ($term !== '') {
                     $row['term'] = $term;
@@ -4275,7 +4361,7 @@ class ManualOnboardingWizard extends Component
 
     private function savePlan(School $school): void
     {
-        if (Plan::query()->where('is_active', 1)->doesntExist()) {
+        if (Plan::query()->where('is_active', 1)->where('is_platform_only', 0)->doesntExist()) {
             // Prefer the in-step empty alert; next() short-circuits before this when empty.
             // Keep a guard for any direct persist path without duplicating UX intent.
             throw ValidationException::withMessages([

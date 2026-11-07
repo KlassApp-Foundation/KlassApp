@@ -25,9 +25,9 @@ use App\Services\StudentIdGeneratorService;
 use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
 use App\Helpers\DashboardCache;
 use App\Support\PhoneCountry;
-use App\Support\UserProvisioning;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -1483,11 +1483,12 @@ class OnboardingEngine
      * resolves to a Standard (grading tier) and optionally a Section (class).
      * If 'term' is provided, it resolves to an AcademicTerm.
      *
-     * Whole-school fees (no 'class'): when no class is specified, the fee is
-     * genuinely school-wide — one row per Standard with section_id = NULL.
-     * StudentFeeResolver includes only the row for the student's own standard,
-     * plus that student's section and stream. A fee scoped to one arbitrary
-     * Standard would be invisible to students in other grading tiers.
+     * Whole-school fees (no 'class' and no level): one row with
+     * applies_school_wide, standard_id null and section_id null. StudentFeeResolver
+     * includes that row for every class. Older per-tier copies are left in place
+     * and are not written again when they already cover every tier. Duration
+     * defaults to termly. is_yearly stores yearly. one_off, termly and yearly
+     * may be passed as duration.
      *
      * Idempotent via firstOrCreate on
      * (school_id, standard_id, section_id, academic_term_id, name).
@@ -1527,16 +1528,17 @@ class OnboardingEngine
             $className = trim((string) ($fee['class'] ?? ''));
             $level = strtolower(trim((string) ($fee['level'] ?? '')));
             $academicTermId = $this->resolveFeeAcademicTermId($school, $fee);
+            $duration = $this->feeDuration($fee);
 
             if ($className !== '') {
                 // Class-specific fee: resolve to one Standard + Section
-                $this->saveFeeForClass($school, $name, $amount, $className, $academicTermId);
+                $this->saveFeeForClass($school, $name, $amount, $className, $academicTermId, $duration);
             } elseif ($level !== '' && $level !== 'all') {
                 // Level-scoped fee (nursery / primary / o-level / a-level / secondary)
-                $this->saveFeeForLevels($school, $name, $amount, $level, $academicTermId);
+                $this->saveFeeForLevels($school, $name, $amount, $level, $academicTermId, $duration);
             } else {
-                // Whole-school fee: one row per Standard, section_id = NULL
-                $this->saveFeeSchoolWide($school, $name, $amount, $academicTermId);
+                // Whole-school fee: one row covering every class.
+                $this->saveFeeSchoolWide($school, $name, $amount, $academicTermId, $duration);
             }
         }
     }
@@ -1544,7 +1546,7 @@ class OnboardingEngine
     /**
      * Save a class-specific fee scoped to the Standard and Section for that class.
      */
-    private function saveFeeForClass(School $school, string $name, float $amount, string $className, ?int $academicTermId): void
+    private function saveFeeForClass(School $school, string $name, float $amount, string $className, ?int $academicTermId, string $duration): void
     {
         $standardId = null;
         $sectionId = null;
@@ -1582,7 +1584,7 @@ class OnboardingEngine
             ]);
         }
 
-        $this->rememberFee($school->id, (int) $standardId, $sectionId !== null ? (int) $sectionId : null, $academicTermId, $name, $amount);
+        $this->rememberFee($school->id, (int) $standardId, $sectionId !== null ? (int) $sectionId : null, $academicTermId, $name, $amount, $duration);
     }
 
     /**
@@ -1596,7 +1598,8 @@ class OnboardingEngine
         string $name,
         float $amount,
         string $level,
-        ?int $academicTermId
+        ?int $academicTermId,
+        string $duration
     ): void {
         $tiers = match ($level) {
             'o-level', 'o_level', 'olevel' => ['o-level'],
@@ -1617,7 +1620,7 @@ class OnboardingEngine
             }
 
             $found = true;
-            $this->rememberFee($school->id, (int) $standard->id, null, $academicTermId, $name, $amount);
+            $this->rememberFee($school->id, (int) $standard->id, null, $academicTermId, $name, $amount, $duration);
         }
 
         if (! $found) {
@@ -1628,14 +1631,14 @@ class OnboardingEngine
     }
 
     /**
-     * Save a whole-school fee as one row per Standard (section_id = NULL).
+     * Save a whole-school fee as one row covering every class.
      *
-     * WhatsApp and some fee queries filter by standard_id, so a single null-standard
-     * row would be invisible to students in other tiers. The admin list therefore
-     * shows one row per grading tier for "All Levels" fees — that is intentional,
-     * not accidental duplication. Display uses tierDisplayLabel() / labeledName().
+     * StudentFeeResolver includes applies_school_wide rows for every student.
+     * When older per-tier copies already cover every standard, this does not
+     * add another row. Those copies stay in the database and the fee list
+     * groups them.
      */
-    private function saveFeeSchoolWide(School $school, string $name, float $amount, ?int $academicTermId): void
+    private function saveFeeSchoolWide(School $school, string $name, float $amount, ?int $academicTermId, string $duration): void
     {
         $standards = Standard::where('school_id', $school->id)->get();
 
@@ -1645,9 +1648,61 @@ class OnboardingEngine
             ]);
         }
 
-        foreach ($standards as $standard) {
-            $this->rememberFee($school->id, (int) $standard->id, null, $academicTermId, $name, $amount);
+        $existing = FeesCategories::query()
+            ->where('school_id', $school->id)
+            ->where('name', $name)
+            ->where('applies_school_wide', true)
+            ->whereNull('section_id');
+        $academicTermId === null
+            ? $existing->whereNull('academic_term_id')
+            : $existing->where('academic_term_id', $academicTermId);
+        if ($existing->exists()) {
+            return;
         }
+
+        $legacy = FeesCategories::query()
+            ->where('school_id', $school->id)
+            ->where('name', $name)
+            ->where('applies_school_wide', false)
+            ->whereNull('section_id')
+            ->whereNotNull('standard_id');
+        $academicTermId === null
+            ? $legacy->whereNull('academic_term_id')
+            : $legacy->where('academic_term_id', $academicTermId);
+        $covered = $legacy->pluck('standard_id')->unique();
+        if ($covered->count() >= $standards->count()) {
+            return;
+        }
+
+        FeesCategories::create([
+            'school_id' => $school->id,
+            'standard_id' => null,
+            'section_id' => null,
+            'academic_term_id' => $academicTermId,
+            'name' => $name,
+            'amount' => $amount,
+            'duration' => $duration,
+            'applies_school_wide' => true,
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $fee
+     */
+    private function feeDuration(array $fee): string
+    {
+        $duration = strtolower(trim((string) ($fee['duration'] ?? '')));
+        if (in_array($duration, ['one_off', 'termly', 'yearly'], true)) {
+            return $duration;
+        }
+
+        if (! empty($fee['is_yearly'])) {
+            // Stored with no term. The resolver counts it once, in the first
+            // term of the year and in the year total, not in every term.
+            return 'yearly';
+        }
+
+        return 'termly';
     }
 
     /**
@@ -1802,7 +1857,8 @@ class OnboardingEngine
         ?int $sectionId,
         ?int $academicTermId,
         string $name,
-        float $amount
+        float $amount,
+        string $duration = 'termly'
     ): void {
         FeesCategories::firstOrCreate(
             [
@@ -1814,6 +1870,8 @@ class OnboardingEngine
             ],
             [
                 'amount' => $amount,
+                'duration' => $duration,
+                'applies_school_wide' => false,
             ],
         );
     }
@@ -1821,7 +1879,8 @@ class OnboardingEngine
     // ── Phase 1C: Teacher / Student / WhatsApp / Plan ──────────────────
 
     /**
-     * Create teacher users with random passwords and is_reset=1.
+     * Create teacher users with no password. A real email gets a setup link.
+     * A generated placeholder is stored and is not invited.
      *
      * Each entry in $teachers must contain at least 'name' and 'email'.
      * Optional keys: 'phone', 'standardLink_id', 'subject_id',
@@ -1839,18 +1898,29 @@ class OnboardingEngine
     public function saveTeachers(School $school, AcademicYear $year, array $teachers): array
     {
         try {
-            return DB::transaction(function () use ($school, $year, $teachers) {
+            $result = DB::transaction(function () use ($school, $year, $teachers) {
                 $created = [];
                 $skipped = [];
                 $batchEmails = [];
+                $plan = app(PlanLimitService::class)->status((int) $school->id, 'teachers');
+                $remaining = $plan['remaining'];
+                $createdCount = 0;
+                $planMessage = null;
 
                 // Pass 1: refuse colliding emails before creating anyone.
+                // Rows beyond the plan's remaining slots are not attempted, so a
+                // duplicate in the tail cannot fail the rows that will import.
+                $validSeen = 0;
                 foreach ($teachers as $draft) {
                     $name = trim((string) ($draft['name'] ?? ''));
                     $email = trim((string) ($draft['email'] ?? ''));
                     if ($name === '' || $email === '' || ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
                         continue;
                     }
+                    if ($remaining !== null && $validSeen >= $remaining) {
+                        continue;
+                    }
+                    $validSeen++;
                     $emailKey = Str::lower($email);
                     if (isset($batchEmails[$emailKey])) {
                         throw ValidationException::withMessages([
@@ -1873,6 +1943,17 @@ class OnboardingEngine
                         continue;
                     }
 
+                    if ($remaining !== null && $createdCount >= $remaining) {
+                        $planMessage ??= app(PlanLimitService::class)
+                            ->status((int) $school->id, 'teachers')['message'];
+                        $skipped[] = [
+                            'name' => $name,
+                            'email' => $email,
+                            'reason' => $planMessage ?? 'Plan limit reached. Talk to sales to add more.',
+                        ];
+                        continue;
+                    }
+
                     $phone = $this->normaliseOnboardingPhone($school, (string) ($draft['phone'] ?? ''), 'teachers', false, 'Teacher '.$name);
 
                     $teacher = User::create([
@@ -1880,11 +1961,10 @@ class OnboardingEngine
                         'usergroup_id'   => 5,
                         'name'            => $name,
                         'email'           => $email,
-                        // FLAGGED(product-decision): a new teacher gets a random password, not an invite link. see docs/onboarding-engine-plan.md
-                        'password'        => bcrypt(Str::random(16)),
+                        'password'        => null,
                         'status'          => 'active',
                         'email_verified'  => 1,
-                        'is_reset'        => 1,
+                        'is_reset'        => 0,
                         'mobile_no'       => $phone ?: null,
                     ]);
 
@@ -1930,18 +2010,50 @@ class OnboardingEngine
                         ]);
                     }
 
+                    $createdCount++;
                     $created[] = ['name' => $name, 'email' => $email, 'user_id' => $teacher->id];
                 }
 
-                $result = ['created' => $created, 'skipped' => $skipped];
                 DashboardCache::forgetRosterCounts((int) $school->id);
 
-                return $result;
+                return ['created' => $created, 'skipped' => $skipped];
             });
+
+            $this->inviteCreatedTeachers($school, $result['created'] ?? []);
+
+            return $result;
         } catch (UniqueConstraintViolationException $e) {
             throw ValidationException::withMessages([
                 'teachers' => $this->describeUniqueConstraintViolation($e),
             ]);
+        }
+    }
+
+    /**
+     * @param  list<array{user_id?: int}>  $created
+     */
+    private function inviteCreatedTeachers(School $school, array $created): void
+    {
+        $actor = Auth::user();
+        $actor = $actor instanceof User && (int) $actor->school_id === (int) $school->id ? $actor : null;
+        $invites = app(TeacherAccountInviteService::class);
+
+        foreach ($created as $row) {
+            $teacher = User::query()
+                ->where('school_id', $school->id)
+                ->where('usergroup_id', 5)
+                ->whereKey((int) ($row['user_id'] ?? 0))
+                ->first();
+            if ($teacher instanceof User) {
+                $invites->inviteIfNeeded(
+                    $teacher,
+                    $actor,
+                    null,
+                    null,
+                    true,
+                    TeacherInviteLinkService::CONTEXT_ADMIN_BULK,
+                );
+            }
         }
     }
 
@@ -1966,20 +2078,23 @@ class OnboardingEngine
     }
 
     /**
-     * Create student users with random passwords, is_reset=1, and KlassApp IDs.
+     * Create student users with no password, is_reset=1, and KlassApp IDs.
      *
      * Each entry in $students must contain at least 'name'.
      * Optional keys: 'class' (section name to resolve StandardLink), 'email',
      * 'phone' (the student's own number), 'parent' or 'parent_name',
-     * 'parent_phone', 'school_student_id', 'lin' (Learner Identification Number),
+     * 'parent_phone', 'parent_email', 'school_student_id',
+     * 'lin' (Learner Identification Number),
      * 'board_registration_number', 'gender'
      * (male|female on userprofiles), 'date_of_birth' (optional).
      *
      * A parent name and/or parent phone creates or reuses a guardian in this
      * school. The name and phone are stored on that guardian. Guardians in the
      * same school with the same normalised phone are one person, so siblings
-     * share them. The parent phone is never written onto the student. Nothing
-     * is sent: no mail, no invitation, no WhatsApp user or message.
+     * share them. The parent phone is never written onto the student. No
+     * password is stored for a new student or parent. After the roster is
+     * saved, each one with a real email gets a one-time setup link by email;
+     * placeholder addresses and people without an email get nothing.
      *
      * school_student_id = school-internal ID; lin = Uganda national LIN.
      * They are distinct columns on student_academics — never aliases.
@@ -1999,9 +2114,13 @@ class OnboardingEngine
     public function saveStudents(School $school, AcademicYear $year, array $students, ?int $onlyStandardLinkId = null): array
     {
         try {
-            return DB::transaction(function () use ($school, $year, $students, $onlyStandardLinkId) {
+            $result = DB::transaction(function () use ($school, $year, $students, $onlyStandardLinkId) {
                 $created = [];
                 $skipped = [];
+                $plan = app(PlanLimitService::class)->status((int) $school->id, 'students');
+                $remaining = $plan['remaining'];
+                $createdCount = 0;
+                $planMessage = null;
 
                 $pinned = null;
                 if ($onlyStandardLinkId !== null) {
@@ -2022,13 +2141,21 @@ class OnboardingEngine
                 $unmatchedClasses = [];
                 $batchEmails = [];
                 $batchLins = [];
+                $validSeen = 0;
                 foreach ($students as $draft) {
                     $name = trim((string) ($draft['name'] ?? ''));
                     $className = trim((string) ($draft['class'] ?? ''));
                     $stream = trim((string) ($draft['stream'] ?? ''));
-                    if ($pinned !== null && $name !== '' && $this->rowNamesAnotherClass($pinned, $className, $stream)) {
+                    if ($name === '') {
                         continue;
                     }
+                    if ($remaining !== null && $validSeen >= $remaining) {
+                        continue;
+                    }
+                    if ($pinned !== null && $this->rowNamesAnotherClass($pinned, $className, $stream)) {
+                        continue;
+                    }
+                    $validSeen++;
                     if ($pinned === null && $name !== '' && $className !== '') {
                         if (! $this->ensureStandardLinkForClass($school, $year, $className, $stream !== '' ? $stream : null)) {
                             $label = $stream !== '' ? "{$className} / stream {$stream}" : "'{$className}'";
@@ -2075,6 +2202,7 @@ class OnboardingEngine
                 }
 
                 $parentsByPhone = $this->importedParentsByPhone($school);
+                $createdParents = [];
 
                 foreach ($students as $draft) {
                     $name = trim((string) ($draft['name'] ?? ''));
@@ -2095,6 +2223,17 @@ class OnboardingEngine
                         continue;
                     }
 
+                    if ($remaining !== null && $createdCount >= $remaining) {
+                        $planMessage ??= app(PlanLimitService::class)
+                            ->status((int) $school->id, 'students')['message'];
+                        $skipped[] = [
+                            'name' => $name,
+                            'reason' => $planMessage ?? 'Plan limit reached. Talk to sales to add more.',
+                            'row' => (int) ($draft['row'] ?? 0),
+                        ];
+                        continue;
+                    }
+
                     $providedEmail = trim((string) ($draft['email'] ?? ''));
                     if ($providedEmail === '') {
                         $email = $this->allocateGeneratedEmail($school, 'student', '.local');
@@ -2109,13 +2248,14 @@ class OnboardingEngine
                         'usergroup_id'   => 6,
                         'name'            => $name,
                         'email'           => $email,
-                        // FLAGGED(product-decision): a new student gets a random password, not an invite link. see docs/onboarding-engine-plan.md
-                        'password'        => bcrypt(Str::random(16)),
+                        // No password exists until the student opens their setup link.
+                        'password'        => null,
                         'status'          => 'active',
                         'email_verified'  => 1,
                         'is_reset'        => 1,
                         'mobile_no'       => $phone ?: null,
                     ]);
+                    $createdCount++;
 
                     $gender = strtolower(trim((string) ($draft['gender'] ?? '')));
                     if (! in_array($gender, ['male', 'female'], true)) {
@@ -2193,7 +2333,10 @@ class OnboardingEngine
                         'board_registration_number' => $boardReg !== '' ? $boardReg : null,
                     ]);
 
-                    $this->linkImportedParent($school, $student, $draft, $parentsByPhone);
+                    $newParent = $this->linkImportedParent($school, $student, $draft, $parentsByPhone);
+                    if ($newParent instanceof User) {
+                        $createdParents[] = $newParent;
+                    }
 
                     $created[] = [
                         'name'         => $name,
@@ -2205,7 +2348,11 @@ class OnboardingEngine
                     ];
                 }
 
-                $result = ['created' => $created, 'skipped' => $skipped];
+                $result = [
+                    'created' => $created,
+                    'skipped' => $skipped,
+                    'created_parents' => $createdParents,
+                ];
                 DashboardCache::forgetRosterCounts((int) $school->id);
 
                 return $result;
@@ -2215,6 +2362,16 @@ class OnboardingEngine
                 'students' => $this->describeUniqueConstraintViolation($e),
             ]);
         }
+
+        $this->inviteCreatedStudentsAndParents(
+            $school,
+            $result['created'] ?? [],
+            $result['created_parents'] ?? [],
+        );
+
+        unset($result['created_parents']);
+
+        return $result;
     }
 
     /**
@@ -2244,17 +2401,19 @@ class OnboardingEngine
 
     /**
      * Create or reuse this school's guardian and link the student.
-     * No mail, invitation, or WhatsApp record is created.
+     * A new guardian has no password. The setup link (when the guardian has
+     * a real email) is sent by the caller after the roster transaction.
      *
      * @param  array<string, mixed>  $draft
      * @param  array<string, User>  $parentsByPhone
+     * @return User|null The guardian when this call created it, null when reused.
      */
-    private function linkImportedParent(School $school, User $student, array $draft, array &$parentsByPhone): void
+    private function linkImportedParent(School $school, User $student, array $draft, array &$parentsByPhone): ?User
     {
         $parentName = trim((string) ($draft['parent'] ?? $draft['parent_name'] ?? ''));
         $rawPhone = trim((string) ($draft['parent_phone'] ?? ''));
         if ($parentName === '' && $rawPhone === '') {
-            return;
+            return null;
         }
 
         $phone = $rawPhone === ''
@@ -2262,17 +2421,26 @@ class OnboardingEngine
             : $this->normaliseOnboardingPhone($school, $rawPhone, 'students', false, 'Parent of '.$student->name);
 
         $parent = ($phone !== '' && isset($parentsByPhone[$phone])) ? $parentsByPhone[$phone] : null;
+        $created = null;
 
         if ($parent === null) {
-            // FLAGGED(product-decision): a new parent gets a random password, not an invite link. see docs/onboarding-engine-plan.md
-            $password = UserProvisioning::randomPasswordAttributes();
+            $parentEmail = trim((string) ($draft['parent_email'] ?? ''));
+            if ($parentEmail !== '' && filter_var($parentEmail, FILTER_VALIDATE_EMAIL) === false) {
+                throw ValidationException::withMessages([
+                    'students' => "Parent of {$student->name} has an invalid email '{$parentEmail}'. Fix it or leave it blank.",
+                ]);
+            }
+
+            // No password is stored. The parent can only receive a setup link
+            // when the school supplied a real address; otherwise they keep the
+            // WhatsApp magic-login route and the admin can add an email later.
             $parent = User::create([
                 'school_id' => $school->id,
                 'usergroup_id' => 7,
                 'name' => $parentName !== '' ? $parentName : 'Parent',
-                'email' => $this->allocateGeneratedEmail($school, 'parent', '.local'),
-                'password' => $password['password'],
-                'is_reset' => $password['is_reset'],
+                'email' => $parentEmail !== '' ? $parentEmail : $this->allocateGeneratedEmail($school, 'parent', '.local'),
+                'password' => null,
+                'is_reset' => 1,
                 'email_verified' => 1,
                 'mobile_no' => $phone !== '' ? $phone : null,
             ]);
@@ -2288,6 +2456,8 @@ class OnboardingEngine
             if ($phone !== '') {
                 $parentsByPhone[$phone] = $parent;
             }
+
+            $created = $parent;
         }
 
         StudentParentLink::query()->firstOrCreate(
@@ -2298,6 +2468,50 @@ class OnboardingEngine
             ],
             ['status' => 1]
         );
+
+        return $created;
+    }
+
+    /**
+     * Email a setup link to every newly imported student and parent that has
+     * a real address. Placeholder addresses (`.local`, `*.test`, `school.edu`)
+     * and people without an email send nothing.
+     *
+     * @param  list<array{user_id?: int}>  $students
+     * @param  list<User>  $parents
+     */
+    private function inviteCreatedStudentsAndParents(School $school, array $students, array $parents): void
+    {
+        $actor = Auth::user();
+        $actor = $actor instanceof User && (int) $actor->school_id === (int) $school->id ? $actor : null;
+        $invites = app(StudentParentAccountInviteService::class);
+
+        foreach ($students as $row) {
+            $student = User::query()
+                ->where('school_id', $school->id)
+                ->where('usergroup_id', 6)
+                ->whereKey((int) ($row['user_id'] ?? 0))
+                ->first();
+            if ($student instanceof User) {
+                $invites->inviteIfNeeded(
+                    $student,
+                    $actor,
+                    true,
+                    TeacherInviteLinkService::CONTEXT_ADMIN_BULK,
+                );
+            }
+        }
+
+        foreach ($parents as $parent) {
+            if ($parent instanceof User) {
+                $invites->inviteIfNeeded(
+                    $parent,
+                    $actor,
+                    true,
+                    TeacherInviteLinkService::CONTEXT_ADMIN_BULK,
+                );
+            }
+        }
     }
 
     private function canonicalParentPhone(School $school, string $phone): string
@@ -2738,7 +2952,11 @@ class OnboardingEngine
             }
         }
 
-        $plan = Plan::query()->where('id', $planId)->where('is_active', 1)->first();
+        $plan = Plan::query()
+            ->where('id', $planId)
+            ->where('is_active', 1)
+            ->where('is_platform_only', 0)
+            ->first();
         if (! $plan) {
             throw ValidationException::withMessages(['plan' => 'That plan is not available.']);
         }

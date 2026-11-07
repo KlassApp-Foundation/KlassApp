@@ -8,53 +8,30 @@
 
     {{-- Header --}}
     @php
-        $examStatus = match ($exam->status) {
-          "undone" => "Unmarked work",
-          "done" => "You haven't submitted marks!",
-          default => "Marks Submitted",
-       }
+        $examStatus = isset($submission) && $submission ? $submission->reviewLabel() : 'Not started';
     @endphp
     <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3">
         <div>
             <h2 class="text-2xl font-semibold ">{{ $exam->examType->code ?? $exam->examType->name ?? 'Exam' }} Exam Marks</h2>
-                <p class="text-xs bg-gray-400 text-center rounded-full text-red-500">
-                {{$examStatus}}</p>
+                <p class="text-xs text-center rounded-full px-3 py-1" style="background:#E2E8F0;color:#1E293B;" data-testid="marks-view-status">
+                {{ $examStatus }}</p>
         </div>
 
-        <a href="#" class="inline-flex items-center px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-lg shadow hover:bg-green-600">
-            + Add Marks
-        </a>
     </div>
 
     @if(isset($submission) && $submission && $submission->status === 'reopened')
     <div class="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3" data-testid="marks-reopened-banner">
         <p class="text-sm font-semibold" style="color:#92400E;">
-            This submission was reopened by your school admin — corrections now require a reason.
+            {{ $submission->isReturned() ? 'Returned' : 'Reopened' }} — you can edit these marks.
         </p>
-        @if($submission->reopen_reason)
-            <p class="text-xs mt-1" style="color:#92400E;">Reason given: &ldquo;{{ $submission->reopen_reason }}&rdquo;</p>
+        @if(!empty($returnNotice))
+            <p class="text-xs mt-1" style="color:#92400E;" data-testid="marks-return-reason">{{ $returnNotice }}</p>
+        @elseif($submission->reopen_reason && ! $submission->isReturned())
+            <p class="text-xs mt-1" style="color:#92400E;">Reason given: {{ $submission->reopen_reason }}</p>
         @endif
     </div>
     @endif
 
-    {{-- Filters --}}
-    <div class="bg-white p-1 rounded-lg shadow-sm border border-gray-200 mb-4 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
-        <input 
-            type="text" 
-            placeholder="Search student..." 
-            class="w-full md:w-1/3 px-3 py-1 border border-gray-400 rounded-lg text-sm focus:ring-2 focus:ring-blue-400 outline-none"
-        >
-
-        <form action="" method="GET" class="flex gap-1">
-            <select class="p-1 border border-gray-300 rounded-lg text-sm">
-                <option>All Classes</option>
-            </select>
-
-            <select class="p-1 border border-gray-300 rounded-lg text-sm">
-                <option>All Exams</option>
-            </select>
-        </form>
-    </div>
     {{-- Table --}}
     <div class="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm p-1">
         <h3 class='text-center py-2 font-semibold '>

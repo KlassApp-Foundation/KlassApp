@@ -183,19 +183,18 @@ test('@mvp-endtoend MVP path: signup to parent (all 8 steps)', async ({ page, br
 
     // ── STEP 3: five students with parent contacts (CSV import) ────────────
     const csvPath = path.join(MVP_DIR, `import-${ts}.csv`);
-    const rows = ['firstname,lastname,gender,date_of_birth,class,address,region,district,country,joining_date,lin,std_school_pay_number,parent_firstname,parent_lastname,parent_mobile_no,parent_email,relation'];
+    const rows = ['Name,Class,Parent Name,Parent Phone'];
     for (let i = 1; i <= 5; i++) {
-        rows.push(`MvpPupil${ts}${i},TestUg,${i % 2 ? 'male' : 'female'},2014-05-0${i},${ctx0.section.name},Kampala,Central,Kampala,Uganda,2026-01-10,,65410${i},Parent${i}${ts},TestUg,2567${String(70000000 + i)},parent${i}.${ts}@example.com,father`);
+        rows.push(`MvpPupil${ts}${i} TestUg,${ctx0.section.name},Parent${i}${ts} TestUg,+2567${String(70000000 + i)}`);
     }
     fs.writeFileSync(csvPath, rows.join('\n') + '\n');
 
-    await page.goto('/admin/import', { waitUntil: 'domcontentloaded' });
-    await page.setInputFiles('input[name="import_file"]', csvPath);
+    await page.goto('/admin/students/import', { waitUntil: 'domcontentloaded' });
+    await page.setInputFiles('input[type="file"]', csvPath);
     await snap('step3-import-form');
-    await Promise.all([page.waitForLoadState('domcontentloaded').catch(() => {}), page.click('button#import')]);
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(5000);
     const importText = (await page.textContent('body')) || '';
-    expect(/Inserted|imported/i.test(importText), 'import must report success').toBeTruthy();
+    expect(/added/i.test(importText), 'import must report success').toBeTruthy();
     await snap('step3-imported');
 
     const students = bridge(`
@@ -211,7 +210,8 @@ test('@mvp-endtoend MVP path: signup to parent (all 8 steps)', async ({ page, br
       echo '<<<E2E-JSON>>>'.json_encode($out);
     `);
     expect(Array.isArray(students) && students.length === 5, 'five students must exist').toBeTruthy();
-    for (const s of students) expect(s.kls, 'each student must have a KLS id').toMatch(/^KLS\d{7}$/);
+    // StudentIdGeneratorService::PATTERN: KLS plus exactly 7 or 11 digits.
+    for (const s of students) expect(s.kls, 'each student must have a KLS id').toMatch(/^KLS(?:\d{7}|\d{11})$/i);
     const first = students[0];
     const studentLink = first.link;
     info('students: ' + students.map((s) => s.kls).join(','));

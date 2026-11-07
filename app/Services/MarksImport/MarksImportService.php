@@ -3,6 +3,7 @@
 namespace App\Services\MarksImport;
 
 use App\Events\MarksUpdated;
+use App\Exceptions\MarksLockedException;
 use App\Helpers\GradingHelper;
 use App\Imports\MarksSheetReader;
 use App\Models\Academics\Exam;
@@ -11,6 +12,8 @@ use App\Models\Academics\Marks;
 use App\Models\User;
 use App\Services\ExamAuthorization;
 use App\Services\GradingSystemService;
+use App\Services\Marks\ExamMarkWriter;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -78,6 +81,7 @@ class MarksImportService
     public function __construct(
         private readonly ExamAuthorization $examAuthorization,
         private readonly GradingSystemService $grading,
+        private readonly ExamMarkWriter $writer,
     ) {
     }
 
@@ -292,7 +296,7 @@ class MarksImportService
             }
 
             $reason = $this->validatedReason($exam, $reason);
-            $result = DB::transaction(fn () => $this->apply($exam, $actor, $fresh, $overwrite));
+            $result = DB::transaction(fn () => $this->apply($exam, $actor, $fresh, $overwrite, $reason));
 
             $this->audit($exam, $actor, $plan, $result, $reason, $overwrite, $requestId);
             $this->notify($exam, $actor, $result, $reason);
@@ -531,10 +535,13 @@ class MarksImportService
         }
 
         $submission = ExamMarksSubmission::query()
+            ->where('school_id', $exam->school_id)
             ->where('exam_id', $exam->id)->where('class_id', $exam->section_id)->where('subject_id', $exam->subject_id)->first();
         if ($submission && $submission->isLocked()) {
             $deadline = $submission->deadline ? ' (deadline '.$submission->deadline->format('j M Y H:i').')' : '';
             $blockers['locked'] = 'Marks for this exam are locked'.$deadline.'. Ask a school admin to reopen them.';
+        } elseif ($this->writer->writesAreRefused($exam)) {
+            $blockers['locked'] = 'These marks are submitted or approved. A school admin has to return or reopen them before they can change.';
         }
 
         $roster = $this->roster($exam);
@@ -569,7 +576,7 @@ class MarksImportService
 
         return new MarksImportPlan(
             $exam->id, (int) $exam->school_id, $fileName, $fileSha256, $input, $resolved, $blockers,
-            $exam->status === 'submitted', $warnings,
+            false, $warnings,
         );
     }
 
@@ -645,7 +652,7 @@ class MarksImportService
         return $row;
     }
 
-    private function apply(Exam $exam, User $actor, MarksImportPlan $plan, bool $overwrite): MarksImportResult
+    private function apply(Exam $exam, User $actor, MarksImportPlan $plan, bool $overwrite, ?string $reason): MarksImportResult
     {
         // Re-read the saved marks under a lock so a concurrent entry-screen save cannot slip between plan and write.
         $existing = Marks::query()->where('exam_id', $exam->id)->where('school_id', $exam->school_id)
@@ -662,7 +669,7 @@ class MarksImportService
                         $skipped++;
                         break;
                     }
-                    Marks::create($this->attributes($exam, $actor, (int) $row['student_id'], (float) $row['mark']));
+                    $this->writeImportedMark($exam, $actor, (int) $row['student_id'], $row['mark'], $reason);
                     $rows[] = ['outcome' => 'saved'] + $row;
                     $saved++;
                     break;
@@ -679,7 +686,7 @@ class MarksImportService
                         $skipped++;
                         break;
                     }
-                    $current->update($this->attributes($exam, $actor, (int) $row['student_id'], (float) $row['mark']));
+                    $this->writeImportedMark($exam, $actor, (int) $row['student_id'], $row['mark'], $reason);
                     $rows[] = ['outcome' => 'updated'] + $row;
                     $updated++;
                     break;
@@ -703,35 +710,28 @@ class MarksImportService
         return new MarksImportResult($exam->id, $saved, $updated, $unchanged, $skipped, $rows);
     }
 
-    /** @return array<string,mixed> */
-    private function attributes(Exam $exam, User $actor, int $studentId, float $mark): array
+    private function writeImportedMark(Exam $exam, User $actor, int $studentId, mixed $mark, ?string $reason): void
     {
-        return [
-            'student_id' => $studentId,
-            'exam_id' => $exam->id,
-            'school_id' => $exam->school_id,
-            'subject_id' => $exam->subject_id,
-            'teacher_id' => $exam->teacher_id ?: $actor->id,
-            'section_id' => $exam->section_id,
-            'marks' => $mark,
-            'grade' => $this->grading->grade((int) $mark, (int) $exam->school_id, $exam),
-        ];
+        try {
+            $this->writer->save($actor, $exam, $studentId, $mark, $reason);
+        } catch (ValidationException $e) {
+            throw new MarksImportBlocked('reason_required', (string) $e->validator->errors()->first());
+        } catch (MarksLockedException $e) {
+            throw new MarksImportBlocked('locked', $e->getMessage());
+        } catch (HttpException $e) {
+            throw new MarksImportBlocked('not_in_class', 'Submitted student is not authorized for this school.');
+        }
     }
 
     private function validatedReason(Exam $exam, ?string $reason): ?string
     {
-        $reason = trim((string) $reason);
-        if ($exam->status !== 'submitted') {
-            return $reason === '' ? null : mb_substr($reason, 0, 500);
-        }
-        if (mb_strlen($reason) < 10) {
-            throw new MarksImportBlocked('reason_required', 'These marks were already submitted. Give a reason of at least 10 characters for correcting them.');
-        }
-        if (mb_strlen($reason) > 500) {
-            throw new MarksImportBlocked('reason_required', 'Keep the correction reason under 500 characters.');
+        if ($this->writer->writesAreRefused($exam)) {
+            throw new MarksImportBlocked('locked', 'These marks are submitted or approved. A school admin has to return or reopen them before they can change.');
         }
 
-        return $reason;
+        $reason = trim((string) $reason);
+
+        return $reason === '' ? null : mb_substr($reason, 0, 500);
     }
 
     private function audit(Exam $exam, User $actor, MarksImportPlan $plan, MarksImportResult $result, ?string $reason, bool $overwrite, ?string $requestId): void
@@ -778,15 +778,27 @@ class MarksImportService
         }
     }
 
-    /** Students enrolled in the exam's class: the same rule as the entry screen and the #986 template (usergroup 6, same school, standard link of this standard and section). */
+    /**
+     * Students enrolled in the exam's class. A base-class exam includes every
+     * stream ("Primary Seven E", "Primary Seven W"), not only the empty base
+     * section. Scoped by the exam's school.
+     */
     private function roster(Exam $exam)
     {
+        $base = app(\App\Services\Academics\BaseClassExamRoster::class);
+        if ($base->coversStreams($exam)) {
+            return $base->everyStudent($exam);
+        }
+
         return User::query()
             ->where('usergroup_id', self::STUDENT_USERGROUP)
             ->where('school_id', $exam->school_id)
-            ->whereHas('studentAcademic', fn ($q) => $q->whereHas('standardLink', fn ($q2) => $q2
-                ->where('standard_id', $exam->standard_id)
-                ->where('section_id', $exam->section_id)))
+            ->whereHas('studentAcademic', fn ($q) => $q
+                ->where('school_id', $exam->school_id)
+                ->whereHas('standardLink', fn ($q2) => $q2
+                    ->where('school_id', $exam->school_id)
+                    ->where('standard_id', $exam->standard_id)
+                    ->where('section_id', $exam->section_id)))
             ->orderBy('name')
             ->get();
     }

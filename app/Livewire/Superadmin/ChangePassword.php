@@ -41,17 +41,8 @@ class ChangePassword extends Component
 
         if($hashedPassword!='')
         { 
-            $user->password = Hash::make($this->new_password);
-            $user->save();
-
-            $ip= $this->getRequestIP();
-            $this->doActivityLog(
-                $user,
-                Auth::user(),
-                ['ip' => $ip,'details' => $_SERVER['HTTP_USER_AGENT']],
-                LOGNAME_CHANGE_PASSWORD,
-                'Changed Profile Password.'                        
-            );
+            // Same service as every other role: this device stays signed in, others are signed out.
+            app(\App\Services\AccountPasswordService::class)->change(Auth::user(), (string) $this->new_password);
 
             $this->alert('success', 'Password changed successfully');       
         } 

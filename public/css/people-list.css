@@ -59,8 +59,9 @@
 .people-icon-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; border: 0; border-radius: 10px; background: transparent; color: #334155; text-decoration: none; }
 .people-icon-btn svg { width: 18px; height: 18px; fill: currentColor; }
 .people-menu-pop { position: absolute; right: 0; top: 44px; min-width: 200px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12); padding: 6px; }
-.people-menu-pop a { display: flex; align-items: center; min-height: 44px; padding: 0 10px; border-radius: 8px; color: #0f172a; text-decoration: none; }
-.people-menu-pop a:hover, .people-menu-pop a:focus { background: #f8fafc; }
+.people-menu-pop a, .people-menu-pop button { display: flex; align-items: center; width: 100%; min-height: 44px; padding: 0 10px; border: 0; border-radius: 8px; background: #fff; color: #0f172a; font: inherit; text-align: left; text-decoration: none; cursor: pointer; }
+.people-menu-pop form { margin: 0; }
+.people-menu-pop a:hover, .people-menu-pop a:focus, .people-menu-pop button:hover, .people-menu-pop button:focus { background: #f8fafc; }
 .people-badge { display: inline-flex; align-items: center; min-height: 24px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
 .people-badge-ok { background: #dcfce7; color: #14532d; }
 .people-badge-off { background: #f1f5f9; color: #334155; }

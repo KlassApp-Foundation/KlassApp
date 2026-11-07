@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Helpers\AuthRedirectHelper;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\EmailVerificationCodeService;
@@ -98,10 +99,16 @@ class EmailVerificationCodeController extends Controller
 
     private function continueIntoOnboarding(Request $request, User $user)
     {
+        if (\App\Support\PendingPassword::isUnset($user)) {
+            $request->session()->forget('pending_verification_user_id');
+
+            return redirect('/login')->with('failmessage', 'This account has not finished setup. Use the link in your email to set a password.');
+        }
+
         $request->session()->forget('pending_verification_user_id');
         Auth::login($user);
 
-        return redirect('/admin/dashboard')
+        return redirect(AuthRedirectHelper::dashboardPathForUser($user))
             ->with('open_toshi_onboarding', true)
             ->with('successmessage', "Email confirmed. Welcome to KlassApp! Let's set up your school.");
     }

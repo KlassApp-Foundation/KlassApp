@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Section;
+use App\Models\StandardLink;
 use App\Models\User;
 use App\Services\Demo\LatestExamMarks;
 use App\Services\Results\DisplayedGrade;
 use App\Services\Results\ResultCell;
 use App\Services\Results\ResultsQuery;
 use App\Services\Results\ResultsService;
+use App\Support\ClassLevelOrder;
 use App\Support\DemoStudentCode;
 use Illuminate\Support\Facades\Auth;
 
@@ -25,9 +27,26 @@ class ClassMarksController extends Controller
     {
         $schoolId = (int) Auth::user()->school_id;
 
-        $sections = Section::query()->where('school_id', $schoolId)->orderBy('name')->get(['id', 'name'])
-            ->filter(fn (Section $s) => LatestExamMarks::forSection($schoolId, (int) $s->id) !== null)
-            ->values();
+        // #1281: active classes only, never a name-encoded stream such as "P.6 East" under "P.6",
+        // in class-level order, and every class is listed ("No marks yet" when it has none).
+        // The merged branch had #1269's marks filter and ClassListOrder here; #1281's test is the
+        // reference for this screen.
+        $all = Section::query()
+            ->where('school_id', $schoolId)
+            ->where(function ($q) {
+                $q->where('status', 1)->orWhere('status', '1');
+            })
+            ->get(['id', 'name', 'school_id']);
+        $sections = ClassLevelOrder::sort($all->reject(function (Section $section) use ($all) {
+            foreach ($all as $other) {
+                if ((int) $other->id !== (int) $section->id
+                    && str_starts_with((string) $section->name, $other->name.' ')) {
+                    return true;
+                }
+            }
+
+            return false;
+        }));
 
         if ($section !== null) {
             $current = Section::query()->where('school_id', $schoolId)->whereKey($section)->first();
@@ -37,6 +56,9 @@ class ClassMarksController extends Controller
         }
 
         $exam = $current ? LatestExamMarks::forSection($schoolId, (int) $current->id) : null;
+        $standardId = $current
+            ? (int) (StandardLink::query()->where('section_id', $current->id)->orderBy('id')->value('standard_id') ?? 0)
+            : 0;
         $students = collect();
         if ($exam) {
             $anchor = $exam['exams']->first();
@@ -55,7 +77,7 @@ class ClassMarksController extends Controller
                 ->whereIn('id', $bySubject->keys())
                 ->with('userprofile')
                 ->get()
-                ->map(function (User $student) use ($bySubject, $exam, $sheet, $grades, $schoolId) {
+                ->map(function (User $student) use ($bySubject, $exam, $sheet, $grades, $schoolId, $standardId) {
                     $marks = $bySubject->get($student->id)->keyBy('subject_id');
                     $result = $sheet?->student((int) $student->id);
                     $rows = [];
@@ -70,7 +92,11 @@ class ClassMarksController extends Controller
                                 : ($mark ? rtrim(rtrim(number_format((float) $mark->marks, 1, '.', ''), '0'), '.') : '–'),
                             'grade' => $fromSheet
                                 ? $grades->subject($schoolId, $result->standardId, $cell->mark, $mark?->grade)
-                                : ($mark ? (string) $mark->grade : ''),
+                                : ($mark
+                                    ? ($mark->marks !== null
+                                        ? $grades->subject($schoolId, $standardId, (float) $mark->marks, $mark->grade)
+                                        : (string) $mark->grade)
+                                    : ''),
                         ];
                     }
                     $first = trim((string) ($student->userprofile?->getRawOriginal('firstname') ?? '')) ?: (string) strtok((string) $student->name, ' ');

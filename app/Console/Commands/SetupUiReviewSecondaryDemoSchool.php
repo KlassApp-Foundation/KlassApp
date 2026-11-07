@@ -113,7 +113,7 @@ class SetupUiReviewSecondaryDemoSchool extends Command
         AcademicTerm::where('school_id', $school->id)->where('name', 'Term 1')->update(['status' => 'current']);
         AcademicTerm::where('school_id', $school->id)->whereIn('name', ['Term 2', 'Term 3'])->update(['status' => 'next']);
 
-        // School-wide Tuition → one FeesCategories row per Standard (o-level + a-level).
+        // School-wide Tuition → one FeesCategories row covering every class.
         $engine->saveFees($school, [
             ['name' => 'Tuition', 'amount' => 650000],
             ['name' => 'Boarding', 'amount' => 400000, 'class' => 'Senior Four', 'term' => 'Term 1'],

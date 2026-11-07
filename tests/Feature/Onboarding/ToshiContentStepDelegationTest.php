@@ -306,9 +306,8 @@ class ToshiContentStepDelegationTest extends TestCase
     #[Test]
     public function toshi_delegates_fees_to_engine_whole_school_spread(): void
     {
-        // Bug 1 regression (known bug pattern #7): whole-school fees must be spread
-        // across ALL grading tiers (one row per Standard with section_id=NULL),
-        // not scoped to a single arbitrary Standard.
+        // A whole-school fee is one row covering every class, not one row on a
+        // single standard and not one copy per standard.
 
         $this->actingAs($this->admin);
 
@@ -328,21 +327,18 @@ class ToshiContentStepDelegationTest extends TestCase
         $component->set('actionData', []);
         $component->call('commit');
 
-        // Fees must be spread: one row per Standard per fee name, section_id=NULL
         $standards = Standard::where('school_id', $this->school->id)->get();
         $this->assertGreaterThanOrEqual(2, $standards->count(),
             'A mixed-level school must have at least 2 tier Standards');
 
-        foreach ($standards as $standard) {
-            foreach (['Tuition', 'Uniform'] as $feeName) {
-                $fee = FeesCategories::where('school_id', $this->school->id)
-                    ->where('standard_id', $standard->id)
-                    ->where('name', $feeName)
-                    ->whereNull('section_id')
-                    ->first();
-                $this->assertNotNull($fee,
-                    "Fee '{$feeName}' must exist for Standard '{$standard->name}' with section_id=NULL");
-            }
+        foreach (['Tuition', 'Uniform'] as $feeName) {
+            $rows = FeesCategories::where('school_id', $this->school->id)
+                ->where('name', $feeName)
+                ->get();
+            $this->assertCount(1, $rows, "Fee '{$feeName}' is one whole-school row");
+            $this->assertTrue($rows->first()->applies_school_wide);
+            $this->assertNull($rows->first()->standard_id);
+            $this->assertNull($rows->first()->section_id);
         }
     }
 

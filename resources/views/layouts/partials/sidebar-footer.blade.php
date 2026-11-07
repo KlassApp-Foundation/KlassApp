@@ -10,8 +10,8 @@
       '.profile-click'), and .user-dtl is position:absolute under the
       .profile-click anchor — it works wherever the anchor lives. Here we
       anchor it in the sidebar footer; the panel opens above the anchor.
-    - The notification list is position:fixed top:0 right:0 (a full-height
-      drawer) — independent of where the bell sits.
+    - The notification list opens beside the bell: bottom-left on desktop
+      (the bell is in this footer), and inside the viewport on a phone.
     - Collapsed rail (body.sidebar-collapsed): the footer shrinks to icon
       size; labels hide exactly like the menu items above.
 

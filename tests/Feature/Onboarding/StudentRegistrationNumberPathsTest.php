@@ -116,7 +116,7 @@ class StudentRegistrationNumberPathsTest extends TestCase
     {
         $student->refresh();
         $this->assertNotNull($student->registration_number, 'users.registration_number must be set');
-        $this->assertMatchesRegularExpression('/^KLS\d{7}$/', $student->registration_number);
+        $this->assertTrue(\App\Services\StudentIdGeneratorService::isValid((string) $student->registration_number));
 
         $academic = StudentAcademic::where('user_id', $student->id)->first();
         $this->assertNotNull($academic, 'StudentAcademic row must exist');

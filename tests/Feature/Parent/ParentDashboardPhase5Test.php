@@ -141,17 +141,28 @@ class ParentDashboardPhase5Test extends TestCase
         $response->assertSee('Beta Senior');
         $response->assertSee('Child Alpha');
         $response->assertSee('Child Beta');
-        $response->assertSee('Beta-Only Tuition');
         $response->assertSee('650,000');
         $response->assertDontSee('Alpha-Only Tuition');
-        $response->assertSee('Fee Balance');
+        $response->assertDontSee('450,000');
         $response->assertSee('Attendance');
-        $response->assertSee('Grades');
-        $response->assertSee('BETA MATHS');
+        $response->assertSee('Marks');
         $response->assertSee('88');
+        $response->assertDontSee('BETA MATHS');
         $html = $response->getContent();
-        $this->assertStringContainsString('ds-kpi-card', $html);
-        $this->assertStringNotContainsString('dashboard-kpi-card', $html);
+        $this->assertStringContainsString('family-card', $html);
+
+        $this->actingAs($this->parent)
+            ->get(route('parent.children.grades', $this->studentB->id))
+            ->assertOk()
+            ->assertSee('BETA MATHS')
+            ->assertSee('88')
+            ->assertDontSee('Alpha-Only Tuition');
+
+        $this->actingAs($this->parent)
+            ->get(route('parent.children.fees', $this->studentB->id))
+            ->assertOk()
+            ->assertSee('Beta-Only Tuition')
+            ->assertDontSee('Alpha-Only Tuition');
     }
 
     public function test_dashboard_defaults_to_first_child_and_rejects_unlinked_child_param(): void
@@ -166,7 +177,8 @@ class ParentDashboardPhase5Test extends TestCase
             ->get(route('parent.dashboard', ['child' => $stranger->id]))
             ->assertOk()
             ->assertSee('Child Alpha')
-            ->assertSee('Alpha-Only Tuition')
+            ->assertSee('450,000')
+            ->assertDontSee('650,000')
             ->assertDontSee('Stranger Kid');
     }
 
@@ -175,8 +187,9 @@ class ParentDashboardPhase5Test extends TestCase
         $this->actingAs($this->parent)
             ->get(route('parent.dashboard', ['child' => $this->studentA->id]))
             ->assertOk()
-            ->assertSee('No results published')
-            ->assertSee('Alpha-Only Tuition');
+            ->assertSee('No released results yet')
+            ->assertSee('450,000')
+            ->assertDontSee('Beta-Only Tuition');
     }
 
     public function test_children_page_also_groups_by_school(): void

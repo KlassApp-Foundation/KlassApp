@@ -119,14 +119,31 @@ class MarksReleaseTest extends TestCase
         $this->fakeGraph();
     }
 
-    private function releaseNow(User $user, ?int $linkId, string $area = 'admin', ?int $examId = null): \Illuminate\Testing\TestResponse
+    private function releaseNow(User $user, ?int $linkId, string $area = 'admin', ?int $examId = null, ?string $reason = null): \Illuminate\Testing\TestResponse
     {
-        return $this->actingAs($user)->post('/' . $area . '/marks/releases', [
+        $payload = [
             'exam_id' => $examId ?? $this->examId(),
             'standard_link_id' => $linkId,
             'when' => 'now',
             'timezone' => 'Africa/Kampala',
+        ];
+        if ($reason !== null) {
+            $payload['release_reason'] = $reason;
+        }
+
+        return $this->actingAs($user)->post('/' . $area . '/marks/releases', $payload);
+    }
+
+    /** Phase 6b: let this school's class teachers release their own class. */
+    private function allowTeachersToRelease(string $which = 'demo'): void
+    {
+        $school = $this->fx[$which]['school'];
+        \App\Models\SchoolDetail::create([
+            'school_id' => $school->id,
+            'meta_key' => \App\Helpers\SiteHelper::TEACHERS_MAY_RELEASE_MARKS_KEY,
+            'meta_value' => '1',
         ]);
+        \App\Helpers\SiteHelper::forgetTeachersMayReleaseMarks((int) $school->id);
     }
 
     private function amina(): string
@@ -210,7 +227,8 @@ class MarksReleaseTest extends TestCase
 
     public function test_task9_a_real_schools_release_sends_nothing(): void
     {
-        // A real school's parent, opted in, with an open 24h window: still nothing.
+        // A real school's parent, opted in, with an open 24h window: still nothing,
+        // because Phase 6 leaves the per-release switch off unless the admin sets it.
         WhatsAppUser::where('school_id', $this->fx['real']['school']->id)->update(['last_inbound_at' => now()]);
 
         $this->releaseNow($this->admin('real'), null, 'admin', $this->examId('real'))->assertRedirect();
@@ -218,8 +236,9 @@ class MarksReleaseTest extends TestCase
         $this->assertSame([], $this->outbound());
         $release = MarksRelease::sole();
         $this->assertSame('released', $release->status);
+        $this->assertFalse((bool) $release->whatsapp_send);
         $this->assertSame(0, $release->result['sent']);
-        $this->assertSame(['Not a demo school: release messages are sent only in the demo for now' => 1], $release->result['reasons']);
+        $this->assertSame(['WhatsApp was switched off for this release' => 1], $release->result['reasons']);
     }
 
     public function test_task9_kill_switch_sends_nothing(): void
@@ -266,7 +285,7 @@ class MarksReleaseTest extends TestCase
         $this->bind(self::BOUND);
         $admin = $this->admin();
         $this->releaseNow($admin, null)->assertRedirect();
-        $this->releaseNow($admin, $this->link()->id)->assertRedirect();
+        $this->releaseNow($admin, $this->link()->id, 'admin', null, 'A mark was corrected after the first release.')->assertRedirect();
 
         $this->assertCount(1, $this->outbound());
         $second = MarksRelease::orderByDesc('id')->first();
@@ -333,8 +352,10 @@ class MarksReleaseTest extends TestCase
     {
         $this->bind(self::BOUND);
         $teacher = $this->teacher();
+        // Phase 6b: a class teacher releases only once the school allows it.
+        $this->allowTeachersToRelease('demo');
 
-        $this->actingAs($teacher)->get('/teacher/marks/releases/new')->assertOk()->assertSee('Release marks');
+        $this->actingAs($teacher)->get('/teacher/marks/releases/new')->assertOk()->assertSee('Marks Release');
         $this->releaseNow($teacher, $this->link()->id, 'teacher')->assertRedirect();
 
         $this->assertSame([self::BOUND], array_column($this->outbound(), 'to'));
@@ -346,10 +367,20 @@ class MarksReleaseTest extends TestCase
         $teacher = $this->teacher();
         $this->releaseNow($teacher, null, 'teacher')->assertForbidden();
 
-        $otherLink = StandardLink::create(['school_id' => $teacher->school_id, 'academic_year_id' => $this->link()->academic_year_id, 'standard_id' => $this->link()->standard_id, 'section_id' => $this->link()->section_id, 'stream' => 'B', 'status' => 1]);
+        // Teaching stream A does not release stream B. The class head does.
+        $streamB = StandardLink::create(['school_id' => $teacher->school_id, 'academic_year_id' => $this->link()->academic_year_id, 'standard_id' => $this->link()->standard_id, 'section_id' => $this->link()->section_id, 'stream' => 'B', 'status' => 1]);
+        $this->releaseNow($teacher, $streamB->id, 'teacher')->assertForbidden();
+        $this->assertSame(0, MarksRelease::count());
+        \App\Models\Section::query()->whereKey($this->link()->section_id)->where('school_id', $teacher->school_id)->update(['class_teacher_id' => $teacher->id]);
+        $this->releaseNow($teacher, $streamB->id, 'teacher')->assertRedirect();
+        $this->assertSame(1, MarksRelease::count());
+
+        // Another class (another section) is still not theirs.
+        $section = \App\Models\Section::create(['school_id' => $teacher->school_id, 'name' => 'P.6', 'status' => 1]);
+        $otherLink = StandardLink::create(['school_id' => $teacher->school_id, 'academic_year_id' => $this->link()->academic_year_id, 'standard_id' => $this->link()->standard_id, 'section_id' => $section->id, 'stream' => 'A', 'status' => 1]);
         $this->releaseNow($teacher, $otherLink->id, 'teacher')->assertForbidden();
 
-        $this->assertSame(0, MarksRelease::count());
+        $this->assertSame(1, MarksRelease::count());
     }
 
     public function test_task9_teacher_who_is_not_a_class_teacher_cannot_release(): void
@@ -441,13 +472,13 @@ class MarksReleaseTest extends TestCase
         $html = $response->getContent();
 
         $this->assertStringContainsString('data-testid="marks-release-controls"', $html);
-        $this->assertStringContainsString('.mr-bar { display: flex; flex-wrap: nowrap;', $html);
-        $this->assertStringContainsString('.mr-control:has(select[name="exam_id"]) { flex: 2 1 12rem; min-width: 10rem; max-width: none; }', $html);
-        $this->assertStringContainsString('.mr-when-at { flex: 0 1 12.5rem; min-width: 11.5rem; max-width: 14rem; }', $html);
+        $this->assertStringContainsString('data-testid="release-aside"', $html);
+        $this->assertStringContainsString('.mr-page { display: grid;', $html);
+        $this->assertStringContainsString('minmax(0, 1fr) minmax(240px, 340px)', $html);
+        $this->assertStringNotContainsString('flex-wrap: nowrap', $html);
         $this->assertMatchesRegularExpression(
-            '/@media \(max-width: 1100px\) \{ \.mr-bar \{ flex-wrap: wrap; \} \}/',
+            '/@media \(max-width: 767px\) \{\s*\.mr-page \{ grid-template-columns: minmax\(0, 1fr\);/',
             $html,
-            'Only the compact breakpoint should wrap the release bar',
         );
     }
 
@@ -489,6 +520,8 @@ class MarksReleaseTest extends TestCase
         $this->actingAs($admin)->get('/admin/marks/classes')->assertOk()->assertSee('data-testid="release-marks-button"', false);
 
         $teacher = $this->teacher();
+        // Phase 6b: the button follows the same setting as the release itself.
+        $this->allowTeachersToRelease('demo');
         $this->actingAs($teacher)->get('/teacher/exam/marks')->assertOk()->assertSee('data-testid="release-marks-button"', false);
 
         $notClassTeacher = $this->teacher('real', false);

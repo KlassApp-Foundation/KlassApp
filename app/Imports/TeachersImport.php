@@ -13,6 +13,7 @@ use App\Traits\RegisterUser;
 use App\Models\Country;
 use App\Models\City;
 use App\Models\User;
+use App\Services\PlanLimitService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Session;
@@ -20,6 +21,12 @@ use Illuminate\Support\Facades\Session;
 class TeachersImport implements ToCollection, WithHeadingRow
 {
     use RegisterUser;
+
+    public int $skippedByPlan = 0;
+
+    public ?string $planMessage = null;
+
+    public function __construct(private ?int $maxNewTeachers = null) {}
 
     public function collection(Collection $rows)
     {
@@ -31,6 +38,8 @@ class TeachersImport implements ToCollection, WithHeadingRow
                                 ->first();
 
             $insertedcount = 0;
+            $country = \App\Models\School::query()->whereKey($school_id)->value('registration_country');
+            $country = is_string($country) ? $country : null;
 
             foreach ($rows as $row) {
 
@@ -109,7 +118,7 @@ class TeachersImport implements ToCollection, WithHeadingRow
                 $teacher = new \stdClass();
                 $teacher->firstname        = $row['firstname'];
                 $teacher->lastname         = $row['lastname'] ?? null;
-                $teacher->mobile_no        = $row['mobile_no'] ?? null;
+                $teacher->mobile_no        = \App\Support\PhoneCountry::normalise((string) ($row['mobile_no'] ?? ''), $country);
                 $teacher->email            = !empty($row['email'] ?? null) ? strtolower($row['email']) : null;
                 $teacher->gender           = $row['gender'] ?? null;
 
@@ -140,21 +149,33 @@ class TeachersImport implements ToCollection, WithHeadingRow
                 |--------------------------------------------------------------------------
                 */
                 $exists = User::where('school_id', $school_id)
-                    ->where(function ($query) use ($teacher, $employee_id) {
-                        $query->where('mobile_no', $teacher->mobile_no)
-                              ->orWhereHas('teacherprofile', function ($q) use ($employee_id) {
-                                  $q->where('employee_id', $employee_id);
-                              });
+                    ->where(function ($query) use ($teacher, $employee_id, $country, $school_id) {
+                        $query->whereHas('teacherprofile', function ($q) use ($employee_id) {
+                            $q->where('employee_id', $employee_id);
+                        });
+                        if (! empty($teacher->mobile_no)) {
+                            $query->orWhere(function ($phone) use ($teacher, $country, $school_id) {
+                                $phone->matchingPhone((string) $teacher->mobile_no, $country, (int) $school_id);
+                            });
+                        }
                     })
                     ->exists();
 
                 if (!$exists) {
-                    $this->CreateTeacher($teacher, $school_id, $academic_year, "", 5);
+                    if ($this->maxNewTeachers !== null && $insertedcount >= $this->maxNewTeachers) {
+                        $this->skippedByPlan++;
+                        $this->planMessage ??= app(PlanLimitService::class)->message((int) $school_id, 'teachers');
+                        continue;
+                    }
+
+                    $this->CreateTeacher($teacher, $school_id, $academic_year, "", 5, true);
                     $insertedcount++;
                 }
             }
 
             Session::put('insertedcount', $insertedcount);
+            Session::put('plan_skipped', $this->skippedByPlan);
+            Session::put('plan_message', $this->planMessage);
 
         } catch (Exception $e) {
             Log::error('Teacher Import Error: ' . $e->getMessage());

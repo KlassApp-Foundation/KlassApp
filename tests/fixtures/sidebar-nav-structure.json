@@ -132,17 +132,31 @@
                             "url": "admin/exams",
                             "children": [
                                 {
-                                    "label": "Exams and marks",
-                                    "url": "admin/exams",
+                                    "label": "Exam sets",
+                                    "url": "admin/exams/sets",
                                     "paths": [
-                                        "admin/exams*",
-                                        "admin/exam*",
-                                        "admin/marks*",
-                                        "admin/mark*"
+                                        "admin/exams/sets",
+                                        "admin/exams/sets/*"
                                     ]
                                 },
                                 {
-                                    "label": "Release marks",
+                                    "label": "Exams and marks",
+                                    "url": "admin/marks",
+                                    "paths": [
+                                        "admin/marks*",
+                                        "admin/mark*",
+                                        "admin/exams",
+                                        "admin/exams/add-new",
+                                        "admin/exams/store",
+                                        "admin/exams/*/edit",
+                                        "admin/exams/*/update",
+                                        "admin/exams/*/marksheet",
+                                        "admin/exams/*/marks*",
+                                        "admin/exams/*/archive"
+                                    ]
+                                },
+                                {
+                                    "label": "Marks Release",
                                     "url": "admin/marks/releases/new",
                                     "paths": [
                                         "admin/marks/releases*"
@@ -441,6 +455,7 @@
             "prefix": "student",
             "layout": "flat",
             "item_class": "py-3 px-3 dashboard-menu-item",
+            "active_class": "active dashboard-active",
             "items": [
                 {
                     "label": "Dashboard",
@@ -455,6 +470,11 @@
                     "active": [
                         "marks",
                         "mark"
+                    ],
+                    "paths": [
+                        "student/marks",
+                        "student/marks/*",
+                        "student/report"
                     ]
                 },
                 {
@@ -462,6 +482,14 @@
                     "url": "student/attendance",
                     "active": [
                         "attendance"
+                    ]
+                },
+                {
+                    "label": "Fees",
+                    "route": "student.fees",
+                    "paths": [
+                        "student/fees",
+                        "student/fees/*"
                     ]
                 },
                 {
@@ -533,35 +561,23 @@
             "prefix": "parent",
             "layout": "flat",
             "item_class": "py-3 px-3 dashboard-menu-item",
+            "active_class": "active dashboard-active",
             "items": [
                 {
                     "label": "Dashboard",
                     "route": "parent.dashboard",
-                    "active": [
-                        "dashboard"
-                    ]
-                },
-                {
-                    "label": "Children",
-                    "route": "parent.children",
-                    "active": [
-                        "children"
-                    ]
-                },
-                {
-                    "label": "Fees",
-                    "resolver": "parent_child",
-                    "child_path": "fees",
                     "paths": [
-                        "parent/*/fees"
+                        "parent/dashboard",
+                        "parent/dashboard/*"
                     ]
                 },
                 {
-                    "label": "Grades",
+                    "label": "Marks",
                     "resolver": "parent_child",
                     "child_path": "grades",
                     "paths": [
-                        "parent/*/grades"
+                        "parent/children/*/grades",
+                        "parent/children/*/report"
                     ]
                 },
                 {
@@ -569,7 +585,22 @@
                     "resolver": "parent_child",
                     "child_path": "attendance",
                     "paths": [
-                        "parent/*/attendance"
+                        "parent/children/*/attendance"
+                    ]
+                },
+                {
+                    "label": "Fees",
+                    "resolver": "parent_child",
+                    "child_path": "fees",
+                    "paths": [
+                        "parent/children/*/fees"
+                    ]
+                },
+                {
+                    "label": "Children",
+                    "route": "parent.children",
+                    "paths": [
+                        "parent/children"
                     ]
                 }
             ]
@@ -793,3 +824,4 @@
         }
     }
 }
+

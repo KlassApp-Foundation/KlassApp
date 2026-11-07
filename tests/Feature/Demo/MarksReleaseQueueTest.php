@@ -115,11 +115,16 @@ class MarksReleaseQueueTest extends TestCase
         Http::preventStrayRequests();
     }
 
-    private function releaseNow(User $admin): \Illuminate\Testing\TestResponse
+    private function releaseNow(User $admin, ?string $reason = null): \Illuminate\Testing\TestResponse
     {
-        return $this->actingAs($admin)->post('/admin/marks/releases', [
+        $payload = [
             'exam_id' => $this->examId(), 'standard_link_id' => null, 'when' => 'now', 'timezone' => 'Africa/Kampala',
-        ]);
+        ];
+        if ($reason !== null) {
+            $payload['release_reason'] = $reason;
+        }
+
+        return $this->actingAs($admin)->post('/admin/marks/releases', $payload);
     }
 
     private function work(): void
@@ -242,7 +247,7 @@ class MarksReleaseQueueTest extends TestCase
 
         // Releasing again re-sends only to the failed number.
         $this->graphWithFailures(0);
-        $this->releaseNow($admin)->assertSessionHas('status', 'Queued 1 message. Refresh this page to see each one sent.');
+        $this->releaseNow($admin, 'Retry the failed number.')->assertSessionHas('status', 'Queued 1 message. Refresh this page to see each one sent.');
         $this->work();
         $this->assertSame([self::FAILING], array_column($this->outbound(), 'to'));
     }

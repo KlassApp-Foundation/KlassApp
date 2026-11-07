@@ -3,7 +3,12 @@
 
 @section('title', 'Set Your Password — ' . ($school->name ?? 'KlassApp'))
 
+@push('head')
+  <meta name="referrer" content="no-referrer">
+@endpush
+
 @section('content')
+@php($submitLabel = $submitLabel ?? 'Create account')
 <div class="ap-page" data-ap-paper="vintage" data-ap-layout="split" data-ap-screen="invite-set-password" data-testid="invite-password-form">
   @include('auth.preview._paper-bg')
   <div class="ap-shell">
@@ -61,7 +66,7 @@
             <input type="password" id="password_confirmation" name="password_confirmation" class="ap-input" required autocomplete="new-password" minlength="8" data-testid="invite-password-confirm-input">
           </div>
 
-          <button type="submit" class="ap-submit" data-testid="invite-submit-btn">Create account</button>
+          <button type="submit" class="ap-submit" data-testid="invite-submit-btn">{{ $submitLabel }}</button>
         </form>
 
         <div class="ap-note">

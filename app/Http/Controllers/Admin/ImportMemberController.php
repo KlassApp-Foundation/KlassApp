@@ -6,6 +6,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Requests\ImportMemberRequest;
+use App\Support\FailureLog;
 use App\Services\ToshiActionService;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
@@ -16,8 +17,6 @@ use App\Traits\LogActivity;
 use App\Traits\Common;
 use League\Csv\Writer;
 use App\Models\User;
-use Exception;
-use Illuminate\Support\Facades\Log;
 
 class ImportMemberController extends Controller
 {
@@ -31,8 +30,7 @@ class ImportMemberController extends Controller
      */
     public function index()
     {
-      //
-      return view('admin/member/import/import');
+      return redirect()->route('admin.students.import');
     }
 
     /**
@@ -45,9 +43,20 @@ class ImportMemberController extends Controller
 
       try
       {
-        Excel::import(new UsersImport,$request->file('import_file'));
+        // Import up to the plan's remaining student slots; report the rest.
+        $plan = app(\App\Services\PlanLimitService::class)->status((int) $school_id, 'students');
+        $import = new UsersImport($plan['remaining']);
+        Excel::import($import, $request->file('import_file'));
 
-        $insertedcount = \Session::get('insertedcount');
+        $insertedcount = (int) \Session::get('insertedcount');
+        $planSkipped = (int) ($import->skippedByPlan ?? \Session::get('plan_skipped', 0));
+        $planNotice = app(\App\Services\PlanLimitService::class)
+            ->importNotice((int) $school_id, 'students', $insertedcount, $planSkipped);
+
+        $failures = \Session::get('import_row_failures', []);
+        if (! is_array($failures)) {
+            $failures = [];
+        }
         if($insertedcount > 0)
         {
           $message= trans('messages.import_success_msg',['module' => 'Student']);
@@ -62,22 +71,30 @@ class ImportMemberController extends Controller
           );
           $redirect = back()->with('successmessage',$insertedcount.' '.trans('messages.insert_success_msg'));
         }
+        elseif ($planNotice !== null)
+        {
+          $redirect = back();
+        }
         else
         {
           $redirect = back()->with('failmessage',trans('messages.insert_failure_msg'));
         }
-        \Session::forget('insertedcount');
+        \Session::forget(['insertedcount', 'plan_skipped', 'plan_message', 'import_row_failures']);
+        if ($failures !== []) {
+            $redirect = $redirect->with('import_row_failures', array_slice($failures, 0, 50));
+        }
 
-        // ── Over plan limit is a NOTICE, never a block: every row above was saved. ──
-        $overLimit = ToshiActionService::enforcePlanLimit($school_id, 'students');
-
-        return $overLimit['success']
-            ? $redirect
-            : $redirect->with('overlimit', $overLimit['message']);
+        return $planNotice !== null
+            ? $redirect->with('overlimit', $planNotice)
+            : $redirect;
       }
-      catch(Exception $e)
+      catch(\Throwable $e)
       {
-        Log::error('ImportMemberController@importUsers failed: ' . $e->getMessage());
+        FailureLog::write(
+            'ImportMemberController@importUsers failed',
+            $e,
+            (int) (Auth::user()->school_id ?? 0)
+        );
         return back()->with('failmessage', 'Import failed due to an error. Please check your file format and try again.');
       }
     }

@@ -189,13 +189,15 @@
                 $school,
                 $runningUserId !== null ? (int) $runningUserId : null,
             );
-            $runningNow = $running['current_key'];
-            $runningNowLabel = is_string($runningNow) && $runningNow !== ''
-                ? (\App\Services\OnboardingStepsService::ALL_STEPS[$runningNow]['label'] ?? $runningNow)
-                : null;
+            // Counters come from the same $steps list the step card renders, so the
+            // card, this panel and the URL cannot disagree. OnboardingProgress now
+            // supplies only the "what's set up" lines.
+            $runningDone = $this->doneCount;
+            $runningTotal = $this->stepCount;
+            $runningNowLabel = $this->nowLabel;
         @endphp
         <details class="manual-wizard-summary-details" open>
-            <summary>Setup {{ $running['done'] }} of {{ $running['total'] }}</summary>
+            <summary>Setup {{ $runningDone }} of {{ $runningTotal }}</summary>
             @if($runningNowLabel)
                 <p class="manual-wizard-summary-now">Now: {{ $runningNowLabel }}</p>
             @endif
@@ -212,3 +214,15 @@
     </aside>
     </div>
 </div>
+
+@script
+<script>
+    // ?step= follows the step card. The component owns the key; this only writes
+    // it to the address bar without a round trip.
+    $wire.on('wizard-url', (event) => {
+        const url = new URL(window.location.href);
+        url.searchParams.set('step', event.step);
+        window.history.replaceState({}, '', url);
+    });
+</script>
+@endscript

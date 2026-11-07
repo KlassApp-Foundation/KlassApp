@@ -297,6 +297,7 @@ Summary: Classes: {classes}, {streams}
 | `standards.name` | Each class must have a name. | Give each class a name. |
 | `standards.duplicate` | Duplicate class name: P.1. | Use each class name only once in the list. |
 | `standards.stream_duplicate` | Primary One, stream A is listed more than once. | List each stream once for that class. |
+| `standards.stream_exists` | Primary One, stream B: a stream with that name already exists. | Choose a stream name that is not already used in that class. |
 | `standards.stream_missing` | Primary One, stream A doesn't exist. | Use a stream that is already on that class, or add it before referring to it. |
 | `standards.stream_students` | Primary One, stream A still has students. | Move those students to another class or stream, then remove it. |
 | `standards.confirm` | Add or confirm your classes first. | Add at least one class, or confirm once classes are already on the school. |

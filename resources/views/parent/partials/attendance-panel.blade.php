@@ -8,6 +8,15 @@
             <span class="ds-badge ds-badge-sm ds-badge-unpaid">Absent {{ $attendance['absent'] }}</span>
             <span class="ds-badge ds-badge-sm ds-badge-info">Records {{ $attendance['total'] }}</span>
         </div>
+        @if (!empty($attendance['weeks']) && !empty($attendance['this_week']))
+            <p class="text-sm mb-4" data-testid="parent-attendance-this-week" style="color: var(--d-muted);">
+                @if (($attendance['this_week']['recorded'] ?? 0) > 0)
+                    This week: <strong>{{ $attendance['this_week']['present'] }} of {{ $attendance['this_week']['total'] }} days</strong> present.
+                @else
+                    No register saved this week yet.
+                @endif
+            </p>
+        @endif
         @if (!empty($attendance['recent_absences']))
             <p class="text-xs font-semibold uppercase tracking-wider mb-2" style="color: var(--d-muted);">Recent absences</p>
             <ul class="space-y-2">

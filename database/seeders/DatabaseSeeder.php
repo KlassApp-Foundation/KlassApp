@@ -2,90 +2,33 @@
 
 namespace Database\Seeders;
 
-use Database\Seeders\result\ClassesSeeder;
-use Database\Seeders\result\ExamTableSeeder;
-use Database\Seeders\result\ExamTypes;
-use Database\Seeders\result\MarksTableSeeder;
-use Database\Seeders\result\RemarksTableSeeder;
 use Illuminate\Database\Seeder;
 
+/**
+ * php artisan migrate:fresh --seed
+ *
+ * Runs reference data only. Demo schools are a separate seeder:
+ *
+ *     php artisan db:seed --class=DemoSeeder
+ *
+ * Set SEED_DEMO_SCHOOLS=true to run them from this class as well.
+ * DemoSeeder refuses when APP_ENV=production.
+ */
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     *
-     * @return void
-     */
-    public function run()
+    public function run(): void
     {
+        $this->call(ReferenceSeeder::class);
 
-        $this->call(UsergroupTableSeeder::class);
-        $this->call(CountriesTableSeeder::class);
-        $this->call(StatesTableSeeder::class);
-        $this->call(CitiesTableSeeder::class);
-        $this->call(PlansTableSeeder::class);
-        $this->call(MailTemplatesSeeder::class);
-        $this->call(SettingsTableSeeder::class);
-        $this->call(SmsTemplatesTableSeeder::class);
-        $this->call(KeywordsTableSeeder::class);
-        $this->call(QualificationTableSeeder::class);
-        $this->call(AbsentReasonsTableSeeder::class);
-        $this->call(RolesTableSeeder::class);
-        $this->call(EmisSchoolTableSeeder::class);
-       
-        $this->call(UsersSiteAdminTableSeeder::class);
-        
-        $this->call(SchoolsTableSeeder::class);  //test //
-        $this->call(SchoolDetailsTableSeeder::class);  //test //
-        $this->call(AcademicYearsTableSeeder::class);  //test //
-        $this->call(SectionsTableSeeder::class);  //test //
-        $this->call(StandardsTableSeeder::class); //test //
-        $this->call(SubjectsTableSeeder::class); //test //
-        //$this->call(UsersTableSeeder::class);  //test
-        $this->call(UsersSchoolAdminTableSeeder::class);  //Experimental //
-        $this->call(UsersTeacherTableSeeder::class);  //Experimental //
-       $this->call(StandardsLinkTableSeeder::class); //test //
-        // $this->call(UsersStudentTableSeeder::class);  //Experimental //
-       
-        $this->call(SubscriptionsTableSeeder::class);  //test //
+        if ($this->demoRequested()) {
+            $this->call(DemoSeeder::class);
+        }
+    }
 
-        $this->call(TeacherTableSeeder::class); //test //
-       
-        $this->call(BooksCategoryTableSeeder::class); //test //
-        $this->call(BooksTableSeeder::class); //test //
+    private function demoRequested(): bool
+    {
+        $raw = $_ENV['SEED_DEMO_SCHOOLS'] ?? $_SERVER['SEED_DEMO_SCHOOLS'] ?? getenv('SEED_DEMO_SCHOOLS');
 
-        //$this->call(AssignmentTableSeeder::class); //test
-        //$this->call(StudentAssignmentTableSeeder::class); //test
-        $this->call(ScholasticGradesTableSeeder::class); //test //
-        $this->call(NonScholasticGradesTableSeeder::class); //test //
-        $this->call(LeaveTypesTableSeeder::class); //test //
-        $this->call(RoleUsersTableSeeder::class);
-        //$this->call(FeesTableSeeder::class); //test
-        //$this->call(FeePaymentsTableSeeder::class); //test
-   
-        $this->call(HolidaySeeder::class);//test //
-        //$this->call(LessonPlanTableSeeder::class);//test
-        $this->call(PageCategoryTableSeeder::class);//test
-  
-       /* $this->call(CategoryTableSeeder::class); //test //
-        $this->call(VendorsTableSeeder::class); //test //
-        $this->call(CategoryVendorsTableSeeder::class); //test //
-        $this->call(ProductsTableSeeder::class); //test //
-        $this->call(ProductCodesTableSeeder::class); //test //
-        $this->call(LocationsTableSeeder::class); //test // */ 
-
-        $this->call(PayCategoryTableSeeder::class);
-        $this->call(PayrollItemTableSeeder::class);
-        $this->call(TransactionTypeTableSeeder::class);
-        
-        $this->call(TrasactionAccountTableSeeder::class);
-          
-        // added student performance tracking system for Ugandan schools
-        $this->call(ClassesSeeder::class);
-        $this->call(RemarksTableSeeder::class);
-        $this->call(ExamTypes::class);
-        $this->call(ExamTableSeeder::class);
-        $this->call(MarksTableSeeder::class);
-        
+        return filter_var($raw, FILTER_VALIDATE_BOOLEAN);
     }
 }

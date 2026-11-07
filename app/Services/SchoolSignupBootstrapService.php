@@ -147,28 +147,7 @@ class SchoolSignupBootstrapService
             return null;
         }
 
-        $digits = preg_replace('/\D+/', '', $trimmed) ?? '';
-        if ($digits === '') {
-            return null;
-        }
-
-        if (str_starts_with($digits, '0')) {
-            $digits = substr($digits, 1);
-        }
-
-        if (str_starts_with($digits, '256') && strlen($digits) === 12) {
-            return '+'.$digits;
-        }
-
-        if (preg_match('/^7[0578]\d{7}$/', $digits)) {
-            return '+256'.$digits;
-        }
-
-        if (str_starts_with($trimmed, '+') && strlen($digits) >= 9) {
-            return '+'.$digits;
-        }
-
-        return '+'.$digits;
+        return \App\Support\PhoneCountry::normalise($trimmed, 'Uganda');
     }
 
     private function createPlaceholderSchool(
@@ -198,10 +177,6 @@ class SchoolSignupBootstrapService
             'updated_at' => Carbon::now(),
         ];
 
-        if ($country !== null && trim($country) !== '') {
-            $payload['registration_country'] = trim($country);
-        }
-
         // Force null past the column default ('uneb') when the DB still has a default.
         // is_test is not fillable. Set it on the insert so a test school is
         // flagged before any later observer save.
@@ -218,7 +193,14 @@ class SchoolSignupBootstrapService
             $school->refresh();
         }
 
-        return $school;
+        // A blank answer means the onboarding default (#1246); persisting it
+        // keeps registration_country and country_id together (#1249).
+        $countryName = $country !== null && trim($country) !== ''
+            ? trim($country)
+            : OnboardingStepsService::DEFAULT_COUNTRY;
+        OnboardingStepsService::persistCountry($school, $countryName);
+
+        return $school->fresh();
     }
 
     /**

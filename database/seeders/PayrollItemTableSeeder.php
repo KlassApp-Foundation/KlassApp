@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Database\ReferenceUpsert;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class PayrollItemTableSeeder extends Seeder
 {
@@ -12,8 +12,6 @@ class PayrollItemTableSeeder extends Seeder
      */
     public function run(): void
     {
-        $now = now();
-
         // Realistic payroll items for Ugandan schools (private + semi-private)
         // These are standard/common — schools can add custom ones via admin
         $payrollItems = [
@@ -90,17 +88,14 @@ class PayrollItemTableSeeder extends Seeder
         ];
 
         foreach ($payrollItems as $item) {
-            DB::table('payroll_items')->updateOrInsert(
-                [
-                    'key'  => $item['key'],
-                    'name' => $item['name'],
-                ],
-                [
-                    'type'       => $item['type'],
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]
-            );
+            // The column enum is earning|deduction|defined. "neutral" is not a stored value.
+            $type = $item['type'] === 'neutral' ? 'defined' : $item['type'];
+            ReferenceUpsert::sync('payroll_items', [
+                'key' => $item['key'],
+                'name' => $item['name'],
+            ], [
+                'type' => $type,
+            ]);
         }
     }
 }

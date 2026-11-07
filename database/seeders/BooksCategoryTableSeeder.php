@@ -18,14 +18,18 @@ class BooksCategoryTableSeeder extends Seeder
         $schools = School::where('status',1)->get();
         foreach ($schools as $school) 
         {
-            $categories = ["Mathematics", "Biology", "Chemistry", "Entrepreneurship", "Physics", "Geography", "Religious Education", "Agriculture", "English Language", "History and Political Education
-", "Kiswahili", "Physical Education (PE)", "", 'Astro Physics', 'Arts', 'Economics', 'Computer Studies', 'History', 'Music', 'Technology', 'Magazines', 'Question Bank', 'Projects'];
+            $categories = ['Mathematics', 'Biology', 'Chemistry', 'Entrepreneurship', 'Physics', 'Geography', 'Religious Education', 'Agriculture', 'English Language', 'History and Political Education', 'Kiswahili', 'Physical Education (PE)', 'Astro Physics', 'Arts', 'Economics', 'Computer Studies', 'History', 'Music', 'Technology', 'Magazines', 'Question Bank', 'Projects'];
             foreach ($categories as $category) 
             {
+                if ($category === '') {
+                    continue;
+                }
                 DB::table('books_category')->updateOrInsert(
-                    ['category'  =>   $category,],
                     [
-                    'school_id'        =>   $school->id,
+                        'school_id' => $school->id,
+                        'category' => $category,
+                    ],
+                    [
                     'created_at'       =>   now(),
                     'updated_at'       =>   now(),
                 ]);

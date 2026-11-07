@@ -120,9 +120,8 @@ class MarksImportViewsTest extends TestCase
         $this->assertStringContainsString('2</strong> marks already saved', $html);
         $this->assertStringContainsString(route('teacher.exam.marks.view', $this->exam), $html);
 
-        // The form must not prefill saved values (deliberately unchanged behaviour).
-        $this->assertStringNotContainsString('value="80"', $html);
-        $this->assertStringNotContainsString('value="65"', $html);
+        $this->assertStringContainsString('value="80"', $html);
+        $this->assertStringContainsString('value="65"', $html);
     }
 
 }

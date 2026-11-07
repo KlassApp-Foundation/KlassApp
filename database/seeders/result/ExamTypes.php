@@ -2,59 +2,21 @@
 
 namespace Database\Seeders\result;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Database\ReferenceUpsert;
+use App\Reference\ExamTypeCatalog;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class ExamTypes extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $types = [
-            [
-                'name' => 'Beginning Of Term',
-                'code' => 'BOT',
-            ],
-            [
-                'name' => 'Weekly Exams',
-                'code' => 'WE',
-            ],
-            [
-                'name' => 'Mid Term',
-                'code' => 'MID',
-            ],
-             [
-                'name' => 'Monthly Exams',
-                'code' => 'ME',
-            ],
-             [
-                'name' => 'Weekly Exams',
-                'code' => 'WE',
-            ],
-            [
-                'name' => 'End Of Term',
-                'code' => 'EOT',
-            ],
-            [
-                'name' => 'Mock Exam',
-                'code' => 'MOCK',
-            ],
-            [
-                'name' => 'Pre Mock Exam',
-                'code' => 'PreMOCK',
-            ],
-            [
-                'name' => 'End Of Year',
-                'code' => 'FINAL',
-            ],
-        ];
-
-        foreach ($types as $type){
-            DB::table('exam_types')->insert($type);
+        foreach (ExamTypeCatalog::all() as $type) {
+            ReferenceUpsert::sync('exam_types', ['code' => $type['code']], [
+                'name' => $type['name'],
+                'contributes_to_report_total' => $type['contributes_to_report_total'],
+            ]);
         }
-        $this->command->info("Exam types seeded successfully!");
+
+        $this->command?->info('Exam types seeded.');
     }
 }

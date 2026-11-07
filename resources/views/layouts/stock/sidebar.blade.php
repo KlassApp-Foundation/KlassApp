@@ -1,11 +1,3 @@
 {{-- SPDX-License-Identifier: MIT --}}
-<div class="w-full lg:w-48 md:w-48 bg-red-800 text-white h-full">
-  <div class="min-h-full header-wrapper-b hidden lg:block md:block ">
-   @include('layouts.partials.sidebar-menu', ['role' => 'stock'])
-  </div>
-</div>
-<div id="res_sidebar" role="dialog" aria-modal="true" aria-label="Main menu" class="w-full lg:w-48 md:w-48  hidden lg:hidden md:hidden librarian-sidebar res_sidebar">
-  <div class="min-h-full header-wrapper-b lg:hidden md:hidden bg-blue-700 text-white">
-   @include('layouts.partials.sidebar-menu', ['role' => 'stock'])
-  </div>
-</div>
+{{-- Shared role shell: see layouts/partials/role-sidebar.blade.php. --}}
+@include('layouts.partials.role-sidebar', ['role' => 'stock', 'notifyMode' => 'library', 'roleClass' => 'librarian-sidebar'])

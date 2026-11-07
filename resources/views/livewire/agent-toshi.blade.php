@@ -581,7 +581,7 @@
                 || $actionStep === 'onboarding_plan_selection'
             ))
             <div style="display: flex; flex-direction: column; gap: 8px; padding: 8px 0;" data-testid="toshi-plan-cards">
-                @php $plans = \App\Models\Plan::where('is_active', 1)->orderBy('order')->get(); @endphp
+                @php $plans = \App\Models\Plan::where('is_active', 1)->where('is_platform_only', 0)->orderBy('order')->get(); @endphp
                 @forelse($plans as $plan)
                 <button wire:click="selectPlan({{ $plan->id }})"
                         class="toshi-option-card"
@@ -1519,7 +1519,7 @@
                             || $actionStep === 'onboarding_plan_selection'
                         ))
                         <div style="display: flex; flex-direction: column; gap: 8px; padding: 4px 0;" data-testid="toshi-plan-cards">
-                            @php $plans = \App\Models\Plan::where('is_active', 1)->orderBy('order')->get(); @endphp
+                            @php $plans = \App\Models\Plan::where('is_active', 1)->where('is_platform_only', 0)->orderBy('order')->get(); @endphp
                             @forelse($plans as $plan)
                             <button wire:click="selectPlan({{ $plan->id }})"
                                     class="toshi-option-card"

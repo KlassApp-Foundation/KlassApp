@@ -62,14 +62,15 @@ class MarksTableSeeder extends Seeder
 
                        
                         // Random marks & comment
-                        $marks   = rand(45, 95);
-                         $grade = ($marks >= 80) 
-                             ? "A" 
-                             : (($marks >= 75) 
-                                 ? "B" 
-                                 : (($marks >= 65) 
-                                     ? "C" 
-                                     : "E"));
+                        $marks = 70;
+                        $grade = 'C';
+                        $teacherId = $exam->teacher_id ?? User::query()
+                            ->where('school_id', $school->id)
+                            ->where('usergroup_id', 5)
+                            ->value('id');
+                        if ($teacherId === null) {
+                            continue;
+                        }
                         DB::table('marks')->updateOrInsert(
                             [
                                 'student_id'  => $student->id,
@@ -78,7 +79,7 @@ class MarksTableSeeder extends Seeder
                             ],
                             [
                                 'school_id'     => $school->id,
-                                'teacher_id'    => $student->school_id ? rand(1, 100) : null, // fake teacher ID
+                                'teacher_id'    => $teacherId,
                                 'marks'         => $marks,
                                 'remark_id'       => $remark->id,
                                 "grade" =>         $grade,

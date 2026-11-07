@@ -77,4 +77,61 @@ class StudentIdGeneratorServiceTest extends TestCase
         $this->assertSame('KLS0070001', $id);
         $this->assertSame('KLS0070001', $user->fresh()->registration_number);
     }
+
+    public function test_school_ids_past_999_do_not_collide_and_a_taken_id_is_skipped(): void
+    {
+        $small = StudentIdGeneratorService::format(1, 5);
+        $wide = StudentIdGeneratorService::format(100, 10001);
+        $other = StudentIdGeneratorService::format(1001, 1);
+
+        $this->assertSame('KLS0010005', $small);
+        $this->assertSame('KLS00100010001', $wide);
+        $this->assertSame('KLS01001000001', $other);
+        $this->assertNotSame($small, $wide);
+        $this->assertNotSame($small, $other);
+        $this->assertNotSame($wide, $other);
+
+        foreach ([$small, $wide, $other] as $id) {
+            $this->assertTrue(StudentIdGeneratorService::isValid($id), $id);
+            $this->assertSame(1, preg_match(StudentIdGeneratorService::PATTERN, $id));
+            $this->assertSame(1, preg_match('/^'.StudentIdGeneratorService::HTML_PATTERN.'$/i', $id));
+        }
+        $this->assertFalse(StudentIdGeneratorService::isValid('KLS-100-10001'));
+        $this->assertFalse(StudentIdGeneratorService::isValid('KLS-1-5'));
+        $this->assertSame(0, preg_match('/'.StudentIdGeneratorService::HTML_PATTERN.'/', 'KLS-1-5'));
+
+        $legacy = fn (int $school, int $seq) => sprintf('KLS%03d%04d', $school, $seq);
+        $this->assertSame('KLS10010001', $legacy(100, 10001));
+        $this->assertSame($legacy(100, 10001), $legacy(1001, 1));
+        $this->assertNotSame($wide, $legacy(100, 10001));
+        $this->assertNotSame($other, $legacy(1001, 1));
+
+        DB::table('student_id_sequences')->insert([
+            ['school_id' => 100, 'next_seq' => 10001],
+            ['school_id' => 1001, 'next_seq' => 1],
+        ]);
+
+        $this->assertSame($wide, StudentIdGeneratorService::next(100));
+        $this->assertSame($other, StudentIdGeneratorService::next(1001));
+
+        \App\Models\User::factory()->create([
+            'school_id' => 100,
+            'usergroup_id' => 6,
+            'registration_number' => StudentIdGeneratorService::format(100, 10002),
+        ]);
+
+        $this->assertSame(StudentIdGeneratorService::format(100, 10003), StudentIdGeneratorService::next(100));
+    }
+
+    public function test_format_refuses_a_value_that_does_not_fit_in_five_and_six_digits(): void
+    {
+        foreach ([[100000, 1], [1, 1000000], [100000, 1000000]] as [$school, $seq]) {
+            try {
+                StudentIdGeneratorService::format($school, $seq);
+                $this->fail("school {$school} sequence {$seq} should have been refused");
+            } catch (\InvalidArgumentException $e) {
+                $this->assertStringContainsString('5 school digits and 6 sequence digits', $e->getMessage());
+            }
+        }
+    }
 }

@@ -13,14 +13,14 @@ return [
     |
     */
 
-    'password_update' => 'Password Updated',
+    'password_update' => 'Password changed. You are still signed in here; any other device has been signed out.',
     'password_wrong' => 'Password Wrong',
     'update_avatar' => 'Avatar Updated Succesfully',
     'failed_avatar' => 'Failed To Updtae The Avatar',
     'userprofile_update' => ' User Profile Updated ',
     'userprofile_failed' => ' Profile Update Failed',
     'profile_update' => 'Profile Updated',
-    'password_update' => 'Password Updated',
+    'password_update' => 'Password changed. You are still signed in here; any other device has been signed out.',
     'credentials_update' => 'User credentials Updated Succesfully',
     
     

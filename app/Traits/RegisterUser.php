@@ -4,6 +4,8 @@
  */
 namespace App\Traits;
 
+use App\Services\TeacherAccountInviteService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\StudentParentLink;
 use App\Models\StudentAcademic;
@@ -13,6 +15,7 @@ use App\Models\ParentProfile;
 use App\Models\Alumniprofile;
 use App\Models\Userprofile;
 use Illuminate\Support\Str;
+use App\Support\FailureLog;
 use App\Support\UserProvisioning;
 use App\Models\Scholastic;
 use App\Models\User;
@@ -39,8 +42,16 @@ trait RegisterUser
      * @param int $usergroup_id User group id for the student
      * @return \App\Models\User Newly created user
      */
+    public ?string $createUserFailure = null;
+
+    public ?\Throwable $createUserException = null;
+
+    public ?\Throwable $createParentException = null;
+
     public function CreateUser($data , $school_id , $academic_year_id , $path , $usergroup_id)
     {
+        $this->createUserFailure = null;
+        $this->createUserException = null;
         \DB::beginTransaction();
         try
         {
@@ -64,7 +75,7 @@ trait RegisterUser
             // race-safe generator. A non-KLS admission number from an old file is kept
             // as the school's own student id instead of corrupting the KLS field.
             $providedRegistration = trim((string) ($data->registration_number ?? ''));
-            if ($providedRegistration !== '' && preg_match('/^KLS\d{7}$/i', $providedRegistration)) {
+            if ($providedRegistration !== '' && StudentIdGeneratorService::isValid($providedRegistration)) {
                 $klsNumber = $providedRegistration;
             } else {
                 $klsNumber = StudentIdGeneratorService::next((int) $school_id);
@@ -206,8 +217,9 @@ trait RegisterUser
         catch(Exception $e)
         {
             \DB::rollBack();
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
+            $this->createUserException = $e;
+            $this->createUserFailure = null;
+            FailureLog::write('CreateUser failed', $e, (int) $school_id);
         }
     }
 
@@ -375,6 +387,7 @@ trait RegisterUser
      */
     public function CreateParent($student_id ,$data , $school_id , $usergroup_id)
     {
+        $this->createParentException = null;
         \DB::beginTransaction();
         try
         {
@@ -486,8 +499,8 @@ trait RegisterUser
         catch(Exception $e)
         {
             \DB::rollBack();
-            Log::info($e->getMessage());
-            //dd($e->getMessage());
+            $this->createParentException = $e;
+            FailureLog::write('CreateParent failed', $e, (int) $school_id);
         }
     }
 
@@ -585,7 +598,7 @@ trait RegisterUser
      * @param int $usergroup_id Teacher role id
      * @return \App\Models\User Newly created teacher
      */
-    public function CreateTeacher($data , $school_id , $academic_year , $path , $usergroup_id)
+    public function CreateTeacher($data , $school_id , $academic_year , $path , $usergroup_id, bool $adminBulk = false)
     {
         \DB::beginTransaction();
         try
@@ -599,9 +612,15 @@ trait RegisterUser
                 $user->name = $data->name;
             }
 // dd($data);
-            $provisioning = UserProvisioning::randomPasswordAttributes();
-            $user->password                 = $provisioning['password'];
-            $user->is_reset                 = $provisioning['is_reset'];
+            if ((int) $usergroup_id === 5) {
+                $user->password = null;
+                $user->is_reset = 0;
+                $user->status = 'active';
+            } else {
+                $provisioning = UserProvisioning::randomPasswordAttributes();
+                $user->password = $provisioning['password'];
+                $user->is_reset = $provisioning['is_reset'];
+            }
             $user->email                    = $data->email;
             $user->mobile_no                = $data->mobile_no;
             $user->email_verification_code  = Str::random(40);
@@ -753,6 +772,22 @@ trait RegisterUser
             }
 
             \DB::commit();
+
+            if ((int) $usergroup_id === 5) {
+                $actor = Auth::user();
+                $actor = $actor instanceof User && (int) $actor->school_id === (int) $user->school_id ? $actor : null;
+                app(TeacherAccountInviteService::class)->inviteIfNeeded(
+                    $user,
+                    $actor,
+                    null,
+                    null,
+                    true,
+                    $adminBulk
+                        ? \App\Services\TeacherInviteLinkService::CONTEXT_ADMIN_BULK
+                        : \App\Services\TeacherInviteLinkService::CONTEXT_INTERACTIVE,
+                );
+            }
+
             return $user;
         }
         catch(Exception $e)

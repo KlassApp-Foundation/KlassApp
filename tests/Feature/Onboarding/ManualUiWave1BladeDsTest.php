@@ -119,11 +119,12 @@ class ManualUiWave1BladeDsTest extends TestCase
         $response->assertOk();
         $response->assertSee('ds-card', false);
         $response->assertSee('ds-form-group', false);
-        $response->assertSee('name="standard_id"', false);
-        $response->assertSee('name="section_id"', false);
-        $response->assertSee('name="academic_term_id"', false);
         $response->assertSee('name="name"', false);
         $response->assertSee('name="amount"', false);
+        $response->assertSee('name="fee_type"', false);
+        $response->assertSee('name="duration"', false);
+        $response->assertSee('name="applies_to"', false);
+        $response->assertSee('name="academic_term_id"', false);
     }
 
     public function test_standards_create_header_uses_ds_page_head(): void

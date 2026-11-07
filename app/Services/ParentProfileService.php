@@ -61,6 +61,7 @@ class ParentProfileService
             'role' => $relation !== '' ? $this->titleLabel($relation) : 'Parent',
             'status' => (string) $parent->status,
             'status_label' => $this->statusLabel((string) $parent->status),
+            'can_resend' => app(StudentParentAccountInviteService::class)->canResend($parent),
             'phone' => filled($parent->mobile_no) ? (string) $parent->mobile_no : 'Not recorded',
             'email' => filled($parent->email) ? (string) $parent->email : 'Not recorded',
             'last_login' => $this->lastLogin($schoolId, $parent->id),

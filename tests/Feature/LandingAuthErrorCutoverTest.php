@@ -2,10 +2,19 @@
 
 namespace Tests\Feature;
 
+use Tests\Concerns\CreatesSignupCountriesTable;
 use Tests\TestCase;
 
 class LandingAuthErrorCutoverTest extends TestCase
 {
+    use CreatesSignupCountriesTable;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->createSignupCountriesTable();
+    }
+
     public function test_home_serves_landing_v2_with_protocol_cores_and_vintage_hero(): void
     {
         $response = $this->get('/');

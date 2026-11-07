@@ -11,6 +11,7 @@ use App\Models\SchoolPayTransaction;
 use App\Models\StudentAcademic;
 use App\Models\User;
 use App\Models\School;
+use App\Services\FeePaymentRecorder;
 use App\Services\FeePositionService;
 use Flowframe\Trend\Trend;
 use Flowframe\Trend\TrendValue;
@@ -71,45 +72,53 @@ class FeePaymentController extends Controller
         return view('admin.fees.payment-create', compact('students', 'feeCategories'));
     }
 
-    public function store(Request $request)
+    public function searchStudents(Request $request)
     {
-        $schoolId = Auth::user()->school_id;
-
-        $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'amount' => 'required|numeric|min:1',
-            'fee_category_id' => [
-                'required',
-                'exists:fees_categories,id',
-                function (string $attribute, mixed $value, \Closure $fail) use ($schoolId): void {
-                    if (! FeesCategories::where('school_id', $schoolId)->where('id', $value)->exists()) {
-                        $fail('The selected fee category does not belong to your school.');
-                    }
-                },
-            ],
-            'payment_method' => 'nullable|string|max:50',
-            'reference' => 'nullable|string|max:255',
-            'paid_on' => 'nullable|date',
-            'notes' => 'nullable|string|max:1000',
-        ]);
-
-        $student = User::where('school_id', $schoolId)->where('id', $validated['user_id'])->first();
-        if (! $student) {
-            return back()->withErrors(['user_id' => 'Student not found in your school.']);
+        $schoolId = (int) Auth::user()->school_id;
+        $term = trim((string) $request->query('q', ''));
+        if ($term === '') {
+            return response()->json(['students' => []]);
         }
 
-        FeePayment::create([
-            'school_id' => $schoolId,
-            'fee_category_id' => $validated['fee_category_id'],
-            'user_id' => $validated['user_id'],
-            'amount' => $validated['amount'],
-            'paid_on' => $validated['paid_on'] ?? now()->toDateString(),
-            'payment_method' => $validated['payment_method'] ?? null,
-            'reference' => $validated['reference'] ?? null,
-            'notes' => $validated['notes'] ?? null,
-            'recorded_by' => Auth::id(),
-            'status' => 'paid',
+        $like = '%'.addcslashes($term, '%_\\').'%';
+
+        $students = User::query()
+            ->where('school_id', $schoolId)
+            ->where('usergroup_id', 6)
+            ->where('status', 'active')
+            ->whereNull('deleted_at')
+            ->where(function ($query) use ($like, $schoolId) {
+                $query->where('name', 'like', $like)
+                    ->orWhere('registration_number', 'like', $like)
+                    ->orWhereHas('userprofile', function ($profile) use ($like) {
+                        $profile->where('registration_number', 'like', $like);
+                    })
+                    ->orWhereHas('studentAcademicLatest.standardLink.section', function ($section) use ($like, $schoolId) {
+                        $section->where('sections.school_id', $schoolId)
+                            ->where('sections.name', 'like', $like);
+                    });
+            })
+            ->with(['studentAcademicLatest.standardLink.section', 'userprofile'])
+            ->orderBy('name')
+            ->limit(20)
+            ->get();
+
+        return response()->json([
+            'students' => $students->map(fn (User $student) => [
+                'id' => $student->id,
+                'name' => $student->displayName ?: $student->name,
+                'admission_number' => $student->admissionNumber(),
+                'class' => $student->studentAcademicLatest?->standardLink?->section?->name,
+            ])->values(),
         ]);
+    }
+
+    public function store(Request $request)
+    {
+        $schoolId = (int) Auth::user()->school_id;
+        $recorder = app(FeePaymentRecorder::class);
+        $validated = $request->validate($recorder->rules($schoolId));
+        $recorder->record($schoolId, (int) Auth::id(), $validated);
 
         return redirect()->route('admin.fee-payments')->with('successmessage', 'Payment recorded successfully!');
     }

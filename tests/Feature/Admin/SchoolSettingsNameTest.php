@@ -72,7 +72,7 @@ class SchoolSettingsNameTest extends TestCase
         ]);
     }
 
-    public function test_settings_form_shows_school_name_not_platform_sitename(): void
+    public function test_school_admin_cannot_open_platform_branding(): void
     {
         $school = School::create([
             'name' => 'UI Review Demo School',
@@ -90,17 +90,16 @@ class SchoolSettingsNameTest extends TestCase
             'status' => 'active',
         ]);
 
-        $html = $this->actingAs($admin)
+        $this->actingAs($admin)
             ->get('/admin/settings/generalsettings')
-            ->assertOk()
-            ->getContent();
+            ->assertForbidden();
 
-        $this->assertStringContainsString('School Name', $html);
-        $this->assertStringContainsString('UI Review Demo School', $html);
-        $this->assertStringNotContainsString('name="sitename"', $html);
+        $this->assertSame('UI Review Demo School', $school->fresh()->name);
+        $this->assertSame('School-Plus', DB::table('settings')->where('key', 'sitetitle')->value('value'));
+        $this->assertSame('School-Plus', DB::table('settings')->where('key', 'sitename')->value('value'));
     }
 
-    public function test_settings_store_updates_school_name_not_platform_sitename(): void
+    public function test_school_admin_cannot_write_platform_branding_or_rename_via_that_form(): void
     {
         $school = School::create([
             'name' => 'Old School Name',
@@ -120,12 +119,15 @@ class SchoolSettingsNameTest extends TestCase
 
         $this->actingAs($admin)
             ->post('/admin/settings/generalsettings', [
-                'sitetitle' => 'School-Plus',
+                'sitetitle' => 'Taken Over Title',
                 'school_name' => 'Renamed Demo School',
             ])
-            ->assertRedirect();
+            ->assertForbidden();
 
-        $this->assertSame('Renamed Demo School', $school->fresh()->name);
+        $this->assertSame('Old School Name', $school->fresh()->name);
+        $this->assertSame('School-Plus', DB::table('settings')->where('key', 'sitetitle')->value('value'));
         $this->assertSame('School-Plus', DB::table('settings')->where('key', 'sitename')->value('value'));
+        $this->assertSame('images/logo.png', DB::table('settings')->where('key', 'sitelogo')->value('value'));
+        $this->assertSame('images/favicon.png', DB::table('settings')->where('key', 'favicon')->value('value'));
     }
 }

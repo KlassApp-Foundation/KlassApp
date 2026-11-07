@@ -7,6 +7,7 @@ Route::prefix('children')->group(function () {
     Route::get('/{student}/fees', 'ChildDataController@fees')->whereNumber('student')->name('parent.children.fees');
     Route::get('/{student}/grades', 'ChildDataController@grades')->whereNumber('student')->name('parent.children.grades');
     Route::get('/{student}/attendance', 'ChildDataController@attendance')->whereNumber('student')->name('parent.children.attendance');
+    Route::get('/{student}/report', 'ChildDataController@report')->whereNumber('student')->name('parent.children.report');
 });
 
 // Notifications (same contract as the other roles: the shared Vue components call

@@ -142,7 +142,7 @@ class RepairOrphanStudentAcademicsTest extends TestCase
         $this->assertNotNull($academic);
         $this->assertSame((int) $this->link->id, (int) $academic->standardLink_id);
         $this->assertSame((int) $this->year->id, (int) $academic->academic_year_id);
-        $this->assertMatchesRegularExpression('/^KLS\d{7}$/', (string) $academic->klassapp_student_id);
+        $this->assertTrue(\App\Services\StudentIdGeneratorService::isValid((string) $academic->klassapp_student_id));
         $this->assertNull(Cache::get('studentCount_'.$this->school->id));
     }
 

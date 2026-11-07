@@ -5,15 +5,24 @@ namespace App\Support;
 use App\Models\User;
 
 /**
- * Role-aware account links for the shared profile dropdown.
+ * Account links for the shared account menu (layouts/partials/profile-dropdown).
  *
- * Only returns URLs for routes that actually exist on that portal
- * (verified against routes/* — do not invent /student/editprofile etc.).
+ * `profile` and `change_password` are the SAME role-agnostic pages for every role
+ * (routes/account.php), so a teacher, a parent, a student, staff and a school admin all get
+ * the same menu: Profile, Change password, Log out. The other keys are optional extras that
+ * only some portals have, and only point at routes that exist on that portal (verified
+ * against routes/*: do not invent /student/editprofile etc.).
  */
 class PortalProfileLinks
 {
+    /** The pages every signed-in role shares. */
+    public const PROFILE = '/account/profile';
+
+    public const CHANGE_PASSWORD = '/account/password';
+
     /**
      * @return array{
+     *     profile: ?string,
      *     change_password: ?string,
      *     change_avatar: ?string,
      *     edit_profile: ?string,
@@ -24,55 +33,19 @@ class PortalProfileLinks
     {
         // The public demo admin cannot change its password, avatar or profile.
         if ($user->isPublicDemo()) {
-            return ['change_password' => null, 'change_avatar' => null, 'edit_profile' => null, 'settings' => '/admin/settings'];
+            return ['profile' => null, 'change_password' => null, 'change_avatar' => null, 'edit_profile' => null, 'settings' => '/admin/settings'];
         }
 
-        $ug = (int) $user->usergroup_id;
-
-        return match ($ug) {
-            1 => [ // SiteAdmin / Superadmin
-                'change_password' => '/superadmin/changepassword',
-                'change_avatar' => '/superadmin/changeavatar',
-                'edit_profile' => null,
-                'settings' => '/superadmin/settings',
-            ],
-            3 => [ // SchoolAdmin
-                'change_password' => '/admin/changepassword',
-                'change_avatar' => '/admin/changeavatar',
-                'edit_profile' => '/admin/editprofile',
-                'settings' => '/admin/settings',
-            ],
-            5 => [ // Teacher
-                'change_password' => '/teacher/changepassword',
-                'change_avatar' => '/teacher/changeavatar',
-                'edit_profile' => null,
-                'settings' => null,
-            ],
-            6 => [ // Student — password only
-                'change_password' => '/student/changepassword',
-                'change_avatar' => null,
-                'edit_profile' => null,
-                'settings' => null,
-            ],
-            10 => [ // Receptionist
-                'change_password' => '/receptionist/changepassword',
-                'change_avatar' => '/receptionist/changeavatar',
-                'edit_profile' => null,
-                'settings' => null,
-            ],
-            11 => [ // Accountant
-                'change_password' => '/accountant/changepassword',
-                'change_avatar' => '/accountant/changeavatar',
-                'edit_profile' => null,
-                'settings' => null,
-            ],
-            // Parent (7), Librarian (8), Alumni (9), Subadmin (4), Stock (12): no account mutators
-            default => [
-                'change_password' => null,
-                'change_avatar' => null,
-                'edit_profile' => null,
-                'settings' => null,
-            ],
+        $extras = match ((int) $user->usergroup_id) {
+            1 => ['change_avatar' => '/superadmin/changeavatar', 'edit_profile' => null, 'settings' => '/superadmin/settings'],
+            3 => ['change_avatar' => '/admin/changeavatar', 'edit_profile' => '/admin/editprofile', 'settings' => '/admin/settings'],
+            5 => ['change_avatar' => '/teacher/changeavatar', 'edit_profile' => null, 'settings' => null],
+            10 => ['change_avatar' => '/receptionist/changeavatar', 'edit_profile' => null, 'settings' => null],
+            11 => ['change_avatar' => '/accountant/changeavatar', 'edit_profile' => null, 'settings' => null],
+            // Student, parent, librarian, alumni, sub-admin, stock: no avatar or extra pages.
+            default => ['change_avatar' => null, 'edit_profile' => null, 'settings' => null],
         };
+
+        return ['profile' => self::PROFILE, 'change_password' => self::CHANGE_PASSWORD] + $extras;
     }
 }

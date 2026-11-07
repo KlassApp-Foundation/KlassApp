@@ -179,9 +179,13 @@ class ToshiFeesYearlyAndTermsCurrentTest extends TestCase
 
         $this->artisan('plans:ensure')->assertSuccessful();
 
-        $names = DB::table('plans')->orderBy('order')->pluck('name')->all();
+        $names = DB::table('plans')->where('is_platform_only', 0)->orderBy('order')->pluck('name')->all();
         $this->assertSame(['freemium', 'growth', 'premium'], $names);
         $this->assertEquals(35, (float) DB::table('plans')->where('name', 'growth')->value('amount'));
         $this->assertSame(1, (int) DB::table('plans')->where('name', 'premium')->value('is_custom_pricing'));
+
+        $this->assertSame('Early adopter', DB::table('plans')->where('name', 'early_adopter')->value('display_name'));
+        $this->assertSame(1, (int) DB::table('plans')->where('name', 'early_adopter')->value('is_platform_only'));
+        $this->assertSame(0, (int) DB::table('plans')->where('name', 'early_adopter')->value('no_of_students'));
     }
 }

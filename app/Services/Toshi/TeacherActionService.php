@@ -97,8 +97,8 @@ class TeacherActionService
         if (! $exam) {
             return self::result(false, "Exam not found: {$data['exam_id']}");
         }
-        if ((int) ($exam->teacher_id ?? 0) !== (int) $teacher->id) {
-            return self::result(false, 'You can only enter marks for exams assigned to you.');
+        if (! app(\App\Services\ExamAuthorization::class)->canActOnExam($teacher, $exam)) {
+            return self::result(false, 'You can only enter marks for an exam assigned to you, or for a class you teach.');
         }
 
         $student = self::findStudentInSchool($schoolId, $data['student']);

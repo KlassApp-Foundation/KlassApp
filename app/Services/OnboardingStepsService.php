@@ -27,6 +27,11 @@ use Illuminate\Support\Facades\Schema;
 class OnboardingStepsService
 {
     /**
+     * Country pre-selected during signup and setup until a school chooses another.
+     */
+    public const DEFAULT_COUNTRY = 'Uganda';
+
+    /**
      * Canonical approximate-size buckets for onboarding (wizard + Toshi).
      * Matches auth/onboarding.blade.php — not the broader superadmin CreateSchool set.
      *
@@ -195,6 +200,20 @@ class OnboardingStepsService
     public static function isUganda(?string $country): bool
     {
         return (new UgandaOnboardingProfile())->matches($country);
+    }
+
+    /**
+     * The country an onboarding answer means when the person left it blank.
+     *
+     * This is the only place that decides the default. Toshi v1 and the v2
+     * wizard both call it and store what it returns; neither keeps its own
+     * "?: 'Uganda'" fallback, so the rule cannot drift between them.
+     */
+    public static function countryOrDefault(?string $answer): string
+    {
+        $answer = trim((string) $answer);
+
+        return $answer !== '' ? $answer : self::DEFAULT_COUNTRY;
     }
 
     public static function isUnebCurriculum(?string $curriculum): bool
@@ -491,6 +510,7 @@ class OnboardingStepsService
     {
         $plans = Plan::query()
             ->where('is_active', 1)
+            ->where('is_platform_only', 0)
             ->where(function ($q) {
                 $q->whereRaw('LOWER(name) in (?, ?, ?)', ['freemium', 'growth', 'premium'])
                     ->orWhereRaw('LOWER(display_name) in (?, ?, ?)', ['freemium', 'growth', 'premium']);
@@ -499,7 +519,11 @@ class OnboardingStepsService
             ->get();
 
         if ($plans->isEmpty()) {
-            return Plan::query()->where('is_active', 1)->orderBy('order')->first();
+            return Plan::query()
+                ->where('is_active', 1)
+                ->where('is_platform_only', 0)
+                ->orderBy('order')
+                ->first();
         }
 
         $sorted = $plans->sortBy(function (Plan $plan) {
@@ -525,21 +549,46 @@ class OnboardingStepsService
     public static function persistCountry(School $school, string $countryName): void
     {
         $countryName = trim($countryName);
-        $school->registration_country = $countryName;
+        $matches = self::activeCountriesMatching($countryName);
+        $country = $matches->count() === 1 ? $matches->first() : null;
 
-        if (Schema::hasColumn('schools', 'country_id')) {
-            $country = Country::query()
-                ->where(function ($q) use ($countryName) {
-                    $q->whereRaw('LOWER(name) = ?', [strtolower($countryName)])
-                        ->orWhereRaw('LOWER(short_name) = ?', [strtolower($countryName)]);
-                })
-                ->first();
-            if ($country) {
-                $school->country_id = $country->id;
-            }
+        // A code such as UG is how a row is found. The saved name is the
+        // countries.name, so the two fields cannot disagree.
+        $school->registration_country = $country?->name ?? $countryName;
+
+        if ($country && Schema::hasColumn('schools', 'country_id')) {
+            $school->country_id = $country->id;
         }
 
         $school->save();
+    }
+
+    /**
+     * Live countries rows whose name or short code is $value. More than one
+     * match is returned so the caller does not pick a row by accident.
+     * Soft-deleted rows are not matches.
+     *
+     * @return \Illuminate\Support\Collection<int, Country>
+     */
+    public static function activeCountriesMatching(string $value): \Illuminate\Support\Collection
+    {
+        $value = trim($value);
+        if ($value === '' || ! Schema::hasTable('countries')) {
+            return collect();
+        }
+
+        $query = Country::query()->where(function ($inner) use ($value): void {
+            $inner->whereRaw('LOWER(name) = ?', [strtolower($value)]);
+            if (Schema::hasColumn('countries', 'short_name')) {
+                $inner->orWhereRaw('LOWER(short_name) = ?', [strtolower($value)]);
+            }
+        });
+
+        if (Schema::hasColumn('countries', 'deleted_at')) {
+            $query->whereNull('deleted_at');
+        }
+
+        return $query->orderBy('id')->limit(2)->get();
     }
 
     /**

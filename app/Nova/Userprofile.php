@@ -70,7 +70,7 @@ class Userprofile extends Resource
 
             Text::make('Lastname','lastname')->sortable()->rules('nullable' , 'alpha' ,' max:15'),
 
-            Text::make('Alternate No.','alternate_no')->sortable()->rules('nullable' , 'numeric', 'digits:10')->hideFromIndex(),
+            Text::make('Alternate No.','alternate_no')->sortable()->rules('nullable', 'string', 'max:20')->hideFromIndex(),
 
             Select::make('Gender','gender')->options([
                'male' => 'Boy',

@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Database\ReferenceUpsert;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class RolesTableSeeder extends Seeder
 {
@@ -12,8 +12,6 @@ class RolesTableSeeder extends Seeder
      */
     public function run(): void
     {
-        $now = now();
-
         $roles = [
             [
                 'id'           => 1,
@@ -98,16 +96,9 @@ class RolesTableSeeder extends Seeder
         ];
 
         foreach ($roles as $role) {
-            DB::table('roles')->updateOrInsert(
-                ['id' => $role['id']],
-                [
-                    'name'         => $role['name'],
-                    'display_name' => $role['display_name'],
-                    'description'  => $role['description'],
-                    'created_at'   => $now,
-                    'updated_at'   => $now,
-                ]
-            );
+            $id = $role['id'];
+            unset($role['id']);
+            ReferenceUpsert::sync('roles', ['id' => $id], $role);
         }
     }
 }

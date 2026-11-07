@@ -2,67 +2,41 @@
 
 namespace Database\Seeders;
 
-// use DB;
+use App\Database\ReferenceUpsert;
+use App\Reference\CountryCodes;
+use App\Reference\Geography;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
+/**
+ * Depends on CountriesTableSeeder. Every state is inserted against
+ * a country row that already exists. Uganda gets its four regions.
+ * Every other country gets one state.
+ */
 class StatesTableSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
+        foreach (array_keys(CountryCodes::corrected()) as $countryName) {
+            $countryId = DB::table('countries')->where('name', $countryName)->value('id');
+            if ($countryId === null) {
+                throw new RuntimeException("StatesTableSeeder requires country {$countryName}. Seed countries first.");
+            }
 
-      $states = [
-        ['country' => 'Uganda', 'name' => 'UG', 'status' => '1'],
-        ['country' => 'Kenya', 'name' => 'KE', 'status' => '1'],
-        ['country' => 'Tanzania', 'name' => 'TZ', 'status' => '1'],
-        ['country' => 'Rwanda', 'name' => 'RW', 'status' => '1'],
-        ['country' => 'Burundi', 'name' => 'BU', 'status' => '1'],
-        ['country' => 'South Sudan', 'name' => 'SS', 'status' => '1'],
-        ['country' => 'DRC', 'name' => 'DR', 'status' => '1'],
-        ['country' => 'Nigeria', 'name' => 'NG', 'status' => '1'],
-        ['country' => 'Egypt', 'name' => 'EG', 'status' => '1'],
-        ['country' => 'Other', 'name' => 'OTHER', 'status' => '1']
-        ];
-       $ugandanRegions = [
-           ['name' => 'Central'],
-           ['name' => 'Eastern'],
-           ['name' => 'Northern'],
-           ['name' => 'Western'],
-        ];
+            $names = $countryName === 'Uganda'
+                ? Geography::ugandaRegions()
+                : [Geography::otherStateNames()[$countryName]];
 
-      foreach($states as $state){
-        $country = DB::table("countries")->where("name", $state['country'])->first();
-
-        if(!$country){
-          continue;
+            foreach ($names as $name) {
+                ReferenceUpsert::sync('states', [
+                    'country_id' => $countryId,
+                    'name' => $name,
+                ], [
+                    'status' => 1,
+                    'deleted_at' => null,
+                ]);
+            }
         }
-
-        if ($state['country'] === 'Uganda') {
-                // Special handling for Uganda → use regions instead of country code
-                foreach ($ugandanRegions as $region) {
-                    DB::table('states')->updateOrInsert(
-                        [
-                            'country_id' => $country->id,
-                            'name'       => $region['name'],  
-                        ],
-                        [
-                            'status'     => $state['status'],
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]
-                    );
-                }
-            }else{
-        DB::table("states")->updateOrInsert(
-          ['country_id'=> $country->id,
-           'name' => $state["name"],
-          ],
-          [
-        'status'    => $state['status'],
-        'created_at'=> now(),
-        'updated_at'=> now(), 
-        ]);
-        }
-      }
     }
-    }
+}

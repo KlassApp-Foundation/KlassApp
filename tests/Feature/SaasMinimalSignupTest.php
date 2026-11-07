@@ -6,6 +6,7 @@ use App\Mail\EmailVerificationCodeMail;
 use App\Models\AcademicYear;
 use App\Models\School;
 use App\Models\User;
+use App\Services\OnboardingEngine;
 use App\Services\OnboardingStepsService;
 use App\Services\SchoolSignupBootstrapService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -90,7 +91,8 @@ class SaasMinimalSignupTest extends TestCase
             return true;
         });
 
-        $this->post('/register/verify', ['code' => $code])->assertRedirect('/admin/dashboard');
+        $this->post('/register/verify', ['code' => $code])
+            ->assertRedirect(OnboardingEngine::setupDestination($school->fresh(), $user->id));
         $this->assertAuthenticated();
         $this->assertSame(1, (int) $user->fresh()->email_verified);
 
@@ -171,11 +173,11 @@ class SaasMinimalSignupTest extends TestCase
 
         $response = $this->get('/auth/google/callback');
 
-        $response->assertRedirect('/admin/dashboard');
         $this->assertAuthenticated();
 
         $user = User::where('email', 'okello@example.com')->first();
         $this->assertNotNull($user);
+        $response->assertRedirect(OnboardingEngine::setupDestination($user->school, $user->id));
         if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'google_id')) {
             $this->assertSame('google-123', $user->google_id);
         }
@@ -202,11 +204,11 @@ class SaasMinimalSignupTest extends TestCase
 
         $response = $this->get('/auth/google/callback');
 
-        $response->assertRedirect('/admin/dashboard');
         $this->assertAuthenticated();
 
         $user = User::where('email', 'amina@example.com')->first();
         $this->assertNotNull($user);
+        $response->assertRedirect(OnboardingEngine::setupDestination($user->school, $user->id));
         $this->assertNull($user->mobile_no);
         $this->assertSame(3, (int) $user->usergroup_id);
         if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'google_id')) {
@@ -232,7 +234,9 @@ class SaasMinimalSignupTest extends TestCase
             'email' => 'first-google@example.com',
             'name' => 'First User',
         ]);
-        $this->get('/auth/google/callback')->assertRedirect('/admin/dashboard');
+        $firstResponse = $this->get('/auth/google/callback');
+        $firstUser = User::where('email', 'first-google@example.com')->firstOrFail();
+        $firstResponse->assertRedirect(OnboardingEngine::setupDestination($firstUser->school, $firstUser->id));
         auth()->logout();
 
         $this->mockGoogleUser([
@@ -240,7 +244,9 @@ class SaasMinimalSignupTest extends TestCase
             'email' => 'second-google@example.com',
             'name' => 'Second User',
         ]);
-        $this->get('/auth/google/callback')->assertRedirect('/admin/dashboard');
+        $secondResponse = $this->get('/auth/google/callback');
+        $secondUser = User::where('email', 'second-google@example.com')->firstOrFail();
+        $secondResponse->assertRedirect(OnboardingEngine::setupDestination($secondUser->school, $secondUser->id));
 
         $first = User::where('email', 'first-google@example.com')->first();
         $second = User::where('email', 'second-google@example.com')->first();
@@ -263,9 +269,9 @@ class SaasMinimalSignupTest extends TestCase
 
         $response = $this->get('/auth/google/callback');
 
-        $response->assertRedirect('/admin/dashboard');
         $user = User::where('email', 'noname@example.com')->first();
         $this->assertNotNull($user);
+        $response->assertRedirect(OnboardingEngine::setupDestination($user->school, $user->id));
         // UserprofileObserver rewrites users.name to a username; school uses bootstrap first-name.
         $this->assertSame("Google's School", $user->school->name);
         $this->assertNull($user->mobile_no);

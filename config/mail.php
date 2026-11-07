@@ -1,5 +1,23 @@
 <?php
 
+// env() returns an empty string when the variable is set but blank, and then
+// ignores the default. A blank MAIL_FROM_ADDRESS (as in .env.example) must
+// not leave outbound mail without a From header.
+$configuredFrom = env('MAIL_FROM_ADDRESS');
+$fromAddress = is_string($configuredFrom) && filter_var($configuredFrom, FILTER_VALIDATE_EMAIL)
+    ? $configuredFrom
+    : 'connect@klassapp.xyz';
+
+$configuredName = env('MAIL_FROM_NAME');
+$fromName = is_string($configuredName) && trim($configuredName) !== ''
+    ? trim($configuredName)
+    : 'KlassApp';
+
+$configuredLogChannel = env('MAIL_LOG_CHANNEL');
+$logChannel = is_string($configuredLogChannel) && trim($configuredLogChannel) !== ''
+    ? trim($configuredLogChannel)
+    : null;
+
 return [
 
     /*
@@ -48,7 +66,7 @@ return [
 
         'log' => [
             'transport' => 'log',
-            'channel' => env('MAIL_LOG_CHANNEL'),
+            'channel' => $logChannel,
         ],
 
         'array' => [
@@ -71,8 +89,10 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'connect@klassapp.xyz'),
-        'name' => env('MAIL_FROM_NAME', 'KlassApp'),
+        'address' => $fromAddress,
+        'name' => $fromName,
+        // True when MAIL_FROM_ADDRESS was missing or not a valid email.
+        'used_default_address' => $fromAddress !== $configuredFrom,
     ],
 
     /*

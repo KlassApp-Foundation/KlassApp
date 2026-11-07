@@ -110,11 +110,12 @@
                     </button>
                     @endif
                 @endif
-                @if(($setup['summary'] ?? []) !== [])
+                @php $setupLines = array_values($setup['labels'] ?? []); @endphp
+                @if($setupLines !== [])
                     <details class="dv2-setup-summary" data-testid="dashboard-v2-setup-summary">
                         <summary>What's set up</summary>
                         <ul>
-                            @foreach($setup['summary'] as $line)
+                            @foreach($setupLines as $line)
                                 <li>{{ $line }}</li>
                             @endforeach
                         </ul>
@@ -161,7 +162,7 @@
                 <p>Your dashboard fills in as you add students, take attendance and enter marks. You can add them one by one or import a spreadsheet.</p>
                 <span style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
                     <a class="dv2-btn" href="{{ url('/admin/student/add') }}">Add student</a>
-                    <a class="dv2-btn dv2-btn--soft" href="{{ url('/admin/student/import') }}">Import a list</a>
+                    <a class="dv2-btn dv2-btn--soft" href="{{ url('/admin/students/import') }}" data-testid="dashboard-v2-import-students">Import a list</a>
                 </span>
             </div>
         @else
@@ -228,11 +229,18 @@
                     @if(count($charts['per_class'] ?? []) > 0)
                         @php
                             $pc = $charts['per_class'];
-                            $pcAria = implode(', ', array_map(fn ($r) => $r['label'].' '.$r['value'].'%', $pc));
+                            $pcAria = implode(', ', array_map(fn ($r) => $r['label'].' '.($r['value'] === null ? 'No marks yet' : $r['value'].'%'), $pc));
                         @endphp
                         <div class="hbars" role="img" aria-label="Performance by class: {{ $pcAria }}">
                             @foreach($pc as $row)
-                                <div class="hb"><span>{{ $row['label'] }}</span><span class="t"><i style="width:{{ min(100, (float) $row['value']) }}%"></i></span><b>{{ $row['value'] }}%</b></div>
+                                <div class="hb" data-testid="dashboard-performance-class">
+                                    <span>{{ $row['label'] }}</span>
+                                    @if($row['value'] === null)
+                                        <span class="t"></span><b>No marks yet</b>
+                                    @else
+                                        <span class="t"><i style="width:{{ min(100, (float) $row['value']) }}%"></i></span><b>{{ $row['value'] }}%</b>
+                                    @endif
+                                </div>
                             @endforeach
                         </div>
                         <a class="dv2-btn dv2-btn--soft" style="margin-top:12px" href="{{ route('admin.marks.classes') }}" data-testid="dashboard-v2-view-class-marks">View marks by class</a>

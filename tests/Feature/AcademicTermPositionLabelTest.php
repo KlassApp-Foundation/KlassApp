@@ -69,7 +69,8 @@ class AcademicTermPositionLabelTest extends TestCase
         $this->assertStringNotContainsString('Third Term', $adminBlade);
         $this->assertStringNotContainsString('Third Term', $teacherBlade);
         $this->assertStringContainsString('positionLabel()', $adminBlade);
-        $this->assertStringContainsString('positionLabel()', $teacherBlade);
+        // The teacher page now shows the term's name (demo board: "Term 3, 2026"), still read from the model.
+        $this->assertStringContainsString('academicTerm', $teacherBlade);
     }
 
     public function test_three_term_year_still_numbers_sequentially(): void

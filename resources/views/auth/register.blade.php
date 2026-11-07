@@ -240,7 +240,7 @@
 
         <div class="klass-field">
           <label class="klass-label" for="phone">Phone (WhatsApp)</label>
-          <input id="phone" type="tel" class="klass-input{{ $errors->has('phone') ? ' is-invalid' : '' }}" name="phone" value="{{ old('phone') }}" placeholder="0701234567 or +256701234567" required autocomplete="tel">
+          <input id="phone" type="tel" class="klass-input{{ $errors->has('phone') ? ' is-invalid' : '' }}" name="phone" value="{{ old('phone', '+256') }}" placeholder="0701234567 or +1 415 555 2671" required autocomplete="tel">
           @if ($errors->has('phone'))
             <span class="klass-error" role="alert">{{ $errors->first('phone') }}</span>
           @endif

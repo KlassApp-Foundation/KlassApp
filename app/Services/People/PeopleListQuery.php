@@ -7,9 +7,11 @@ use App\Models\ActivityLog;
 use App\Models\StandardLink;
 use App\Models\StudentParentLink;
 use App\Models\TeacherInvite;
+use App\Services\TeacherAccountInviteService;
 use App\Models\Teacherlink;
 use App\Models\User;
 use App\Models\WhatsAppUser;
+use App\Support\ClassListOrder;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -69,9 +71,12 @@ class PeopleListQuery
                     ['text' => $student->status === 'active' ? 'Active' : 'Inactive', 'badge' => $student->status === 'active' ? 'ok' : 'off'],
                 ],
                 'menu' => [
-                    ['label' => 'View profile', 'href' => url('/admin/student/show/'.$student->name)],
-                    ['label' => 'Edit', 'href' => url('/admin/student/edit/'.$student->name)],
-                    ['label' => 'Move to class', 'href' => url('/admin/student/edit/'.$student->name)],
+                    ['label' => 'Open profile', 'href' => url('/admin/students/'.$student->id)],
+                    ['label' => 'Record marks', 'href' => url('/admin/students/'.$student->id).'?action=marks'],
+                    ['label' => 'Record attendance', 'href' => (int) ($student->class_link_id ?? 0) > 0
+                        ? route('admin.attendance.register', ['standardLink_id' => (int) $student->class_link_id])
+                        : url('/admin/students/'.$student->id).'?action=attendance'],
+                    ['label' => 'Record a payment', 'href' => url('/admin/students/'.$student->id).'?action=pay'],
                     ['label' => 'Message parent', 'href' => $parent ? url('/admin/parent/show/'.$parent['slug']) : url('/admin/parents')],
                 ],
             ];
@@ -83,8 +88,8 @@ class PeopleListQuery
         return $this->envelope('students', 'Students', $admin, $search, $chip, $paginator, $rows, $counts['all'], [
             'placeholder' => 'Search name or KLS number',
             'add_label' => 'Add student',
-            'add_url' => url('/admin/student/add'),
-            'import_url' => url('/admin/import'),
+            'add_url' => url('/admin/students/import'),
+            'import_url' => url('/admin/students/import'),
             'empty_copy' => 'Add students one by one, or import a spreadsheet with names and classes.',
             'columns' => ['KLS number', 'Class', 'Parent or guardian', 'Status'],
             'bulk' => [
@@ -142,7 +147,8 @@ class PeopleListQuery
         $rows = [];
         foreach ($paginator as $teacher) {
             $email = strtolower((string) $teacher->email);
-            $invite = $this->inviteLabel($teacher, isset($pendingEmails[$email]));
+            $accountInvites = app(TeacherAccountInviteService::class);
+            $invite = $this->inviteLabel($teacher, isset($pendingEmails[$email]), $accountInvites);
             $teaches = $subjects[$teacher->id] ?? [];
             $classes = $classOf[$teacher->id] ?? [];
             $role = $this->teacherRole($teacher);
@@ -162,12 +168,14 @@ class PeopleListQuery
                     ['text' => $invite, 'badge' => $invite === 'Joined' ? 'ok' : ($invite === 'Invited' ? 'info' : 'warn')],
                     ['text' => $teacher->status === 'active' ? 'Active' : 'Inactive', 'badge' => $teacher->status === 'active' ? 'ok' : 'off'],
                 ],
-                'menu' => [
+                'menu' => array_values(array_filter([
                     ['label' => 'View profile', 'href' => url('/admin/teacher/show/'.$teacher->name)],
                     ['label' => 'Edit', 'href' => url('/admin/teacher/edit/'.$teacher->name)],
-                    ['label' => 'Send invite', 'href' => url('/admin/teacher/edit/'.$teacher->name)],
+                    $accountInvites->canResend($teacher)
+                        ? ['label' => 'Resend setup link', 'href' => url('/admin/teacher/show/'.$teacher->name.'/resend-setup'), 'method' => 'post']
+                        : null,
                     ['label' => 'Assign classes', 'href' => url('/admin/teacher/show/classes/'.$teacher->name)],
-                ],
+                ])),
             ];
         }
 
@@ -266,7 +274,7 @@ class PeopleListQuery
             'placeholder' => 'Search name or phone',
             'add_label' => 'Add parent',
             'add_url' => url('/admin/parent/add'),
-            'import_url' => url('/admin/import'),
+            'import_url' => url('/admin/import/parents'),
             'empty_copy' => 'Parents are added with their children, or you can add them here and link them.',
             'columns' => ['Children', 'Phone', 'WhatsApp', 'Last login'],
             'bulk' => [
@@ -375,14 +383,56 @@ class PeopleListQuery
         return url('/admin/student/export').'?'.http_build_query($params);
     }
 
+    /**
+     * The picker value is one standards_link id. A named stream is that
+     * stream only. A blank stream is the class itself: every stream row on
+     * that section, and name-encoded "{Class} {Label}" sections. Filtering
+     * by the level (standard_id) or by the base section alone dropped the
+     * students who sit on those streams.
+     */
     private function applyClassAndStream(Builder $query, StandardLink $link): void
     {
-        $query->where('standards_link.standard_id', $link->standard_id)
-            ->where('standards_link.section_id', $link->section_id);
-        $stream = trim((string) $link->stream);
-        if ($stream !== '') {
-            $query->where('standards_link.stream', $stream);
+        $query->whereIn('latest_sa.standardLink_id', $this->classFilterLinkIds($link));
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function classFilterLinkIds(StandardLink $link): array
+    {
+        $ids = [(int) $link->id];
+        if (trim((string) $link->stream) !== '') {
+            return $ids;
         }
+
+        if ($link->section_id) {
+            $siblings = StandardLink::query()
+                ->where('school_id', $link->school_id)
+                ->where('academic_year_id', $link->academic_year_id)
+                ->where('section_id', $link->section_id)
+                ->pluck('id');
+            foreach ($siblings as $id) {
+                $ids[] = (int) $id;
+            }
+        }
+
+        $sectionName = trim((string) ($link->section?->name ?? ''));
+        if ($sectionName !== '') {
+            $prefix = str_replace(['%', '_'], ['\\%', '\\_'], mb_strtolower($sectionName)).' %';
+            $childIds = StandardLink::query()
+                ->where('standards_link.school_id', $link->school_id)
+                ->where('standards_link.academic_year_id', $link->academic_year_id)
+                ->where('standards_link.section_id', '!=', $link->section_id)
+                ->join('sections', 'sections.id', '=', 'standards_link.section_id')
+                ->where('sections.school_id', $link->school_id)
+                ->whereRaw("LOWER(sections.name) LIKE ? ESCAPE '\\'", [$prefix])
+                ->pluck('standards_link.id');
+            foreach ($childIds as $id) {
+                $ids[] = (int) $id;
+            }
+        }
+
+        return array_values(array_unique($ids));
     }
 
     private function studentQuery(int $schoolId): Builder
@@ -670,6 +720,7 @@ class PeopleListQuery
     {
         return TeacherInvite::query()
             ->where('school_id', $schoolId)
+            ->whereIn('role', ['class_teacher', 'teacher'])
             ->whereNull('claimed_at')
             ->where('expires_at', '>', now())
             ->selectRaw('lower(email)');
@@ -744,6 +795,7 @@ class PeopleListQuery
 
         return TeacherInvite::query()
             ->where('school_id', $schoolId)
+            ->whereIn('role', ['class_teacher', 'teacher'])
             ->whereNull('claimed_at')
             ->where('expires_at', '>', now())
             ->get()
@@ -752,9 +804,12 @@ class PeopleListQuery
             ->all();
     }
 
-    private function inviteLabel(User $teacher, bool $pending): string
+    private function inviteLabel(User $teacher, bool $pending, TeacherAccountInviteService $invites): string
     {
-        if ((int) $teacher->email_verified === 1) {
+        if (! $invites->emailIsUsable($teacher->email)) {
+            return 'No email yet';
+        }
+        if ($invites->hasSignedIn($teacher)) {
             return 'Joined';
         }
         if ($pending) {
@@ -900,11 +955,16 @@ class PeopleListQuery
             return [];
         }
 
-        return StandardLink::query()
-            ->with(['section', 'standard'])
-            ->where('school_id', $schoolId)
-            ->where('academic_year_id', $yearId)
-            ->orderBy('id')
+        return ClassListOrder::orderLinks(
+            StandardLink::query()
+                ->with(['section', 'standard'])
+                ->where('standards_link.school_id', $schoolId)
+                ->where('standards_link.academic_year_id', $yearId)
+                ->where(function ($status): void {
+                    $status->where('standards_link.status', 1)
+                        ->orWhere('standards_link.status', '1');
+                })
+        )
             ->get()
             ->map(fn (StandardLink $link) => [
                 'id' => $link->id,

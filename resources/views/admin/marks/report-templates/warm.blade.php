@@ -408,7 +408,8 @@
                 <td>{{ isset($examinedSubjectCount) ? $examinedSubjectCount * 100 : count($subjects) * 100 }}</td>
                 <td><strong>{{ $total }}</strong></td>
                 @if ($showAgg) <td><strong>{{ $eotAgg ?? ($grade['agg'] ?? '-') }}</strong></td> @endif
-                <td colspan="2" class="division-cell">@if ($showAgg) DIVISION: <strong>{{ $eotDivision }}</strong> @endif</td>
+                <td colspan="2" class="division-cell">@if ($showDivision) DIVISION: <strong>{{ $eotDivision }}</strong> @endif
+                @if ($showPoints) POINTS: <strong>{{ $eotAgg ?? ($grade['agg'] ?? '-') }}</strong> @endif</td>
             </tr>
         </table>
 

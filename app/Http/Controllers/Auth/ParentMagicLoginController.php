@@ -58,6 +58,10 @@ class ParentMagicLoginController extends Controller
             abort(403, 'This login link has already been used.');
         }
 
+        // A parent may have no password at all: imported guardians without an
+        // email are created without one, and this single-use link from their
+        // WhatsApp number is how they get in. Setting up a password is
+        // optional for them, never a prerequisite.
         Auth::login($user);
         $request->session()->regenerate();
 

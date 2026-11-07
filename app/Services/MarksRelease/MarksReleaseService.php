@@ -2,14 +2,17 @@
 
 namespace App\Services\MarksRelease;
 
+use App\Helpers\SiteHelper;
 use App\Jobs\SendMarksReleaseMessage;
 use App\Models\Academics\Exam;
 use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\Marks;
+use App\Models\AcademicTerm;
 use App\Models\MarksRelease;
 use App\Models\School;
 use App\Models\Section;
 use App\Models\StandardLink;
+use App\Models\StudentParentLink;
 use App\Models\StudentAcademic;
 use App\Models\Subject;
 use App\Models\User;
@@ -23,6 +26,7 @@ use App\Services\Results\ResultSheet;
 use App\Services\Results\ResultsQuery;
 use App\Services\Results\ResultsService;
 use App\Services\DemoSchoolCommsGuard;
+use App\Services\WhatsApp\TemplateGate;
 use App\Services\WhatsAppBusinessService;
 use App\Support\DemoStudentCode;
 use Carbon\CarbonImmutable;
@@ -36,13 +40,20 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 /**
  * Release an exam's marks to parents on WhatsApp (Task 9 Tier 2).
  *
- * Who may release: a school admin (any class, or the whole school) and a
- * class teacher (only their own class and stream). Nobody else.
+ * Who may release: a school admin (any class, or the whole school) always, and
+ * a class teacher for their own class — every stream of it when they are its
+ * class head — unless the school has turned teachers_may_release_marks off.
+ * Nobody else. links() is the one list both rules read.
  *
- * Who gets a message: ONLY numbers with an ACTIVE demo binding (BIND, inside
- * the TTL) to a student in scope, in a DEMO school. Every other recipient is
- * skipped with a reason, and nothing at all is sent when
- * WHATSAPP_REPLIES_ENABLED is false. A release runs once: it is claimed
+ * Who gets a message: in a demo school, numbers with an active demo binding
+ * (BIND, inside the TTL) to a student in scope. In a real school, an approved,
+ * opted-in parent of a student in scope, and only as the results_released
+ * template, and only when realSendBlocker() allows it. After that,
+ * WHATSAPP_DEMO_ONLY_RECIPIENTS still stops a real school: while it is on,
+ * the release sends nothing. An older sitting
+ * messages the students who have marks for that exam, not the current class.
+ * Every other recipient is skipped with a reason, and nothing at all is sent
+ * when WHATSAPP_REPLIES_ENABLED is false. A release runs once: it is claimed
  * (scheduled → sending) in one UPDATE, and a number never gets the same
  * student's marks for the same exam twice, even across releases.
  *
@@ -57,6 +68,9 @@ final class MarksReleaseService
     public const USERGROUP_SCHOOL_ADMIN = 3;
 
     public const USERGROUP_TEACHER = 5;
+
+    /** @var array<int, true> release ids whose demo webhook was already posted */
+    private array $demoWebhookRecorded = [];
 
     public function __construct(private readonly WhatsAppBusinessService $whatsApp) {}
 
@@ -85,15 +99,40 @@ final class MarksReleaseService
 
         $query = StandardLink::query()
             ->with('section')
-            ->where('school_id', $user->school_id)
-            ->whereIn('academic_year_id', $this->currentYearIds((int) $user->school_id));
+            ->where('standards_link.school_id', $user->school_id)
+            ->whereIn('standards_link.academic_year_id', $this->currentYearIds((int) $user->school_id));
 
         if ($this->isSchoolAdmin($user)) {
-            return $query->orderBy('section_id')->orderBy('stream')->get();
+            return \App\Support\ClassListOrder::orderLinks($query)->get();
         }
 
         if ((int) $user->usergroup_id === self::USERGROUP_TEACHER) {
-            return $query->where('class_teacher_id', $user->id)->orderBy('section_id')->orderBy('stream')->get();
+            // On unless the school turned it off: a class teacher could always
+            // release their own stream's marks, and that must not change for a
+            // school that never touched the switch.
+            if (! SiteHelper::teachersMayReleaseMarks((int) $user->school_id)) {
+                return collect();
+            }
+
+            // A stream teacher releases only the stream that names them.
+            // A class head (sections.class_teacher_id) releases every stream
+            // of that class. Teaching one stream does not make someone the head.
+            $headedSections = Section::query()
+                ->where('school_id', $user->school_id)
+                ->where('class_teacher_id', $user->id)
+                ->pluck('id');
+
+            // Qualified with standards_link.: ClassListOrder::orderLinks() joins
+            // sections and standards, and sections has its own class_teacher_id,
+            // so a bare column name is ambiguous there.
+            return \App\Support\ClassListOrder::orderLinks(
+                $query->where(function ($rows) use ($user, $headedSections) {
+                    $rows->where('standards_link.class_teacher_id', $user->id);
+                    if ($headedSections->isNotEmpty()) {
+                        $rows->orWhereIn('standards_link.section_id', $headedSections);
+                    }
+                })
+            )->get();
         }
 
         return collect();
@@ -153,10 +192,11 @@ final class MarksReleaseService
     /**
      * @param  string|null  $localWhen  "Y-m-d\TH:i" in $timezone, or null for now
      */
-    public function create(User $user, int $examId, ?int $standardLinkId, ?string $localWhen, ?string $timezone, ?string $overrideReason = null): MarksRelease
+    public function create(User $user, int $examId, ?int $standardLinkId, ?string $localWhen, ?string $timezone, bool $confirmPast = false, bool $whatsappSend = false, ?string $releaseReason = null): MarksRelease
     {
         [$anchor, $link] = $this->authorise($user, $examId, $standardLinkId);
-        $override = $this->requireApproval($user, $anchor, $link, $overrideReason);
+        $this->requireApproval($user, $anchor, $link);
+        $this->requirePastConfirmation($anchor, $confirmPast);
         $timezone = $this->timezone($timezone);
         $when = $this->scheduledAt($localWhen, $timezone);
 
@@ -169,6 +209,8 @@ final class MarksReleaseService
             'status' => MarksRelease::STATUS_SCHEDULED,
             'created_by' => $user->id,
             'timezone' => $timezone,
+            'whatsapp_send' => $whatsappSend,
+            'release_reason' => $releaseReason,
         ]);
 
         $properties = [
@@ -177,10 +219,8 @@ final class MarksReleaseService
             'standard_link_id' => $release->standard_link_id,
             'scheduled_at_utc' => $release->scheduled_at->format('Y-m-d H:i:s'),
             'timezone' => $timezone,
+            'whatsapp_send' => $whatsappSend,
         ];
-        if ($override !== null) {
-            $properties['override_reason'] = $override;
-        }
 
         activity('marks_release')->performedOn($release)->causedBy($user)
             ->withProperties($properties)
@@ -203,29 +243,83 @@ final class MarksReleaseService
     }
 
     /**
-     * Refuse the release until every subject in scope is approved.
-     * A school admin may pass a reason of at least 10 characters. That
-     * reason is returned so the caller can log it. A teacher cannot override.
+     * Who a release would tell. Display only: nothing is sent from here.
+     *
+     * @param  list<int>|null  $linkIds  null is every class in the sitting
+     * @return array{classes: list<array{name: string, parents: int, whatsapp: int}>, parents: int, whatsapp: int}
      */
-    public function requireApproval(User $user, Exam $anchor, ?StandardLink $link, ?string $overrideReason): ?string
+    public function audienceSummary(User $user, int $examId, ?array $linkIds): array
+    {
+        $schoolId = (int) $user->school_id;
+        $anchor = Exam::query()->where('school_id', $schoolId)->find($examId);
+        if ($anchor === null) {
+            return ['classes' => [], 'parents' => 0, 'whatsapp' => 0];
+        }
+
+        $links = $linkIds === null
+            ? [null]
+            : StandardLink::query()->with('section')->where('school_id', $schoolId)->whereIn('id', $linkIds)->get()->all();
+
+        $byClass = [];
+        foreach ($links as $link) {
+            foreach ($this->students($schoolId, $anchor, $link) as [$studentId, $classLink]) {
+                $name = trim((string) (($classLink->section?->name ?? 'Class').' '.($classLink->stream ?? '')));
+                $byClass[$name][(int) $studentId] = (int) $studentId;
+            }
+        }
+
+        $studentIds = [];
+        foreach ($byClass as $ids) {
+            foreach ($ids as $id) {
+                $studentIds[$id] = $id;
+            }
+        }
+
+        $parentLinks = $studentIds === []
+            ? collect()
+            : StudentParentLink::query()
+                ->where('school_id', $schoolId)
+                ->where('status', 1)
+                ->whereIn('student_id', array_values($studentIds))
+                ->get(['student_id', 'parent_id']);
+
+        $whatsappParents = $parentLinks->isEmpty()
+            ? []
+            : WhatsAppUser::query()
+                ->where('school_id', $schoolId)
+                ->where('opted_in', true)
+                ->whereIn('user_id', $parentLinks->pluck('parent_id')->map(fn ($id) => (int) $id)->unique()->all())
+                ->pluck('user_id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+
+        $classes = [];
+        $parentTotal = 0;
+        $whatsappTotal = 0;
+        foreach ($byClass as $name => $ids) {
+            $parents = $parentLinks->whereIn('student_id', array_values($ids))->pluck('parent_id')->map(fn ($id) => (int) $id)->unique();
+            $onWhatsapp = $parents->filter(fn (int $id) => in_array($id, $whatsappParents, true))->count();
+            $classes[] = ['name' => $name, 'parents' => $parents->count(), 'whatsapp' => $onWhatsapp];
+            $parentTotal += $parents->count();
+            $whatsappTotal += $onWhatsapp;
+        }
+
+        return ['classes' => $classes, 'parents' => $parentTotal, 'whatsapp' => $whatsappTotal];
+    }
+
+    /**
+     * Refuse the release until every subject in scope is approved. There is no
+     * override: a school admin and a class teacher meet the same rule. The
+     * message names every subject that is not approved yet.
+     */
+    public function requireApproval(User $user, Exam $anchor, ?StandardLink $link): void
     {
         $blocked = array_values(array_filter(
             $this->approvalRows($user, $anchor, $link),
             fn (array $row) => $row['state'] !== 'approved',
         ));
         if ($blocked === []) {
-            return null;
-        }
-
-        $reason = trim((string) $overrideReason);
-        if ($this->isSchoolAdmin($user) && $reason !== '') {
-            if (mb_strlen($reason) < 10 || mb_strlen($reason) > 500) {
-                throw ValidationException::withMessages([
-                    'override_reason' => 'Give a reason of at least 10 characters to release before every subject is approved.',
-                ]);
-            }
-
-            return $reason;
+            return;
         }
 
         $names = implode(', ', array_map(fn (array $row) => $row['name'].($row['class_name'] !== '' ? ' ('.$row['class_name'].')' : ''), $blocked));
@@ -242,13 +336,24 @@ final class MarksReleaseService
     {
         $sectionIds = $link
             ? [(int) $link->section_id]
-            : $this->links($user)->pluck('section_id')->map(fn ($id) => (int) $id)->unique()->values()->all();
+            : Exam::query()
+                ->where('school_id', $user->school_id)
+                ->where('exam_type_id', $anchor->exam_type_id)
+                ->where('academic_term_id', $anchor->academic_term_id)
+                ->where('academic_year_id', $anchor->academic_year_id)
+                ->whereNull('deleted_at')
+                ->pluck('section_id')
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values()
+                ->all();
 
         $exams = Exam::query()
             ->with('subject')
             ->where('school_id', $user->school_id)
             ->where('exam_type_id', $anchor->exam_type_id)
             ->where('academic_term_id', $anchor->academic_term_id)
+            ->where('academic_year_id', $anchor->academic_year_id)
             ->whereIn('section_id', $sectionIds === [] ? [-1] : $sectionIds)
             ->whereNull('deleted_at')
             ->whereNotNull('subject_id')
@@ -298,29 +403,89 @@ final class MarksReleaseService
      */
     public function authorise(User $user, int $examId, ?int $standardLinkId): array
     {
-        $exam = $this->exams($user)->firstWhere('id', $examId);
-        if (! $exam) {
+        $anchor = Exam::query()->where('school_id', $user->school_id)->find($examId);
+        if ($anchor === null) {
             throw new HttpException(404);
         }
-        $anchor = Exam::query()->where('school_id', $user->school_id)->findOrFail($examId);
+        // The picker lists one id per sitting. A past sitting whose class is
+        // gone this year is not in that list, and a whole-school release of it
+        // is still the students who sat.
+        $listed = $this->exams($user)->firstWhere('id', $examId);
 
         if ($standardLinkId === null) {
             if (! $this->isSchoolAdmin($user)) {
                 throw new HttpException(403, 'Only a school admin can release marks for every class.');
             }
+            if ($listed === null && ! $this->isPastSitting($anchor)) {
+                throw new HttpException(404);
+            }
 
             return [$anchor, null];
+        }
+
+        if ($listed === null) {
+            throw new HttpException(404);
         }
 
         $link = $this->links($user)->firstWhere('id', $standardLinkId);
         if (! $link) {
             throw new HttpException(403, 'You can release marks only for your own class.');
         }
-        if (! in_array((int) $link->id, $exam['link_ids'], true)) {
+        if (! in_array((int) $link->id, $listed['link_ids'], true)) {
             throw ValidationException::withMessages(['standard_link_id' => 'This class has no marks for that exam.']);
         }
 
         return [$anchor, $link];
+    }
+
+    // ── Past sittings ────────────────────────────────────────────
+
+    /** True when the sitting belongs to a term or year earlier than the current one. */
+    public function sittingIsPast(int $schoolId, int $examId): bool
+    {
+        $anchor = Exam::query()->where('school_id', $schoolId)->whereKey($examId)->first();
+
+        return $anchor !== null && $this->isPastSitting($anchor);
+    }
+
+    /**
+     * A sitting is past when its academic year is not the school's current one,
+     * or when the school has a current term and the sitting is in another term.
+     * The current year's current term is never past, so the ordinary release
+     * never asks. The test is a comparison against the school's own rows, not a
+     * date comparison: a school that has not rolled its terms over keeps the
+     * term it marked current.
+     */
+    public function isPastSitting(Exam $anchor): bool
+    {
+        $schoolId = (int) $anchor->school_id;
+        $currentYearId = DB::table('academic_years')
+            ->where('school_id', $schoolId)
+            ->where('status', 1)
+            ->value('id');
+        if ($currentYearId !== null && (int) $anchor->academic_year_id !== (int) $currentYearId) {
+            return true;
+        }
+
+        $currentTermId = AcademicTerm::query()
+            ->where('school_id', $schoolId)
+            ->where('status', 'current')
+            ->value('id');
+
+        return $currentTermId !== null && (int) $anchor->academic_term_id !== (int) $currentTermId;
+    }
+
+    /** Refuse a past sitting until the form says confirm_past. */
+    public function requirePastConfirmation(Exam $anchor, bool $confirmed): void
+    {
+        if ($confirmed || ! $this->isPastSitting($anchor)) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'confirm_past' => 'This sitting is from an earlier term or year (' . $this->examLabel($anchor)
+                . '). Tick the confirmation to release it anyway.',
+        ]);
     }
 
     public function timezone(?string $timezone): string
@@ -497,6 +662,11 @@ final class MarksReleaseService
         foreach ($names as $subjectId => $name) {
             $key = mb_strtolower($name);
             $cell = $row?->cell($subjectId);
+            if ($cell !== null && $cell->status === ResultCell::ABSENT) {
+                $cells[$key] = ['mark' => 'AB', 'grade' => '—'];
+
+                continue;
+            }
             if ($cell === null || $cell->status !== ResultCell::MARKED || $cell->mark === null || $row === null) {
                 $cells[$key] = null;
 
@@ -543,12 +713,17 @@ final class MarksReleaseService
         return $ran;
     }
 
-    /** Run one release if it is due and not yet claimed. False when it was not ours to run. */
+    /**
+     * Run one release if it is due and not yet claimed. False when it was not ours to run.
+     *
+     * A failed release saved and sent nothing, so the same row can be run again
+     * without a reason. The scheduler still picks up only scheduled rows.
+     */
     public function run(int $releaseId): bool
     {
         $claimed = MarksRelease::query()
             ->whereKey($releaseId)
-            ->where('status', MarksRelease::STATUS_SCHEDULED)
+            ->whereIn('status', [MarksRelease::STATUS_SCHEDULED, MarksRelease::STATUS_FAILED])
             ->where('scheduled_at', '<=', CarbonImmutable::now('UTC')->format('Y-m-d H:i:s'))
             ->update(['status' => MarksRelease::STATUS_SENDING, 'updated_at' => now()]);
         if ($claimed !== 1) {
@@ -556,13 +731,43 @@ final class MarksReleaseService
         }
 
         $release = MarksRelease::with(['school', 'exam', 'standardLink'])->findOrFail($releaseId);
-        [$result, $jobs] = $this->deliver($release);
+        [$result, $jobs, $webhookStudents] = $this->deliver($release);
 
-        $release->forceFill([
-            'status' => MarksRelease::STATUS_RELEASED,
-            'released_at' => CarbonImmutable::now('UTC'),
-            'result' => $result,
-        ])->save();
+        // The release row and every snapshot are one unit: all saved or none.
+        // A release that cannot write its records did not happen. The demo
+        // webhook is registered only after the snapshots are written, and
+        // DB::afterCommit drops it if this transaction rolls back.
+        try {
+            DB::transaction(function () use ($release, $result, $webhookStudents): void {
+                $release->forceFill([
+                    'status' => MarksRelease::STATUS_RELEASED,
+                    'released_at' => CarbonImmutable::now('UTC'),
+                    'result' => $result,
+                ])->save();
+
+                app(\App\Services\Records\SnapshotService::class)->capture($release, $release->release_reason);
+
+                if ($webhookStudents !== null) {
+                    DB::afterCommit(function () use ($release, $webhookStudents): void {
+                        $this->recordDemoWebhook($release, $webhookStudents);
+                    });
+                }
+            });
+        } catch (\Throwable $e) {
+            Log::error('Release failed: ' . $e->getMessage(), ['release_id' => $releaseId]);
+            $release->forceFill(['status' => MarksRelease::STATUS_FAILED])->save();
+
+            return false;
+        }
+
+        // PHPUnit wraps each test in a transaction that never commits, so
+        // afterCommit would be discarded and the test would not see the
+        // webhook. A real outer transaction must wait for that outermost
+        // commit: posting here would send a webhook for a release that can
+        // still roll back. recordDemoWebhook runs once.
+        if ($webhookStudents !== null && app()->runningUnitTests() && DB::transactionLevel() > 0) {
+            $this->recordDemoWebhook($release, $webhookStudents);
+        }
 
         activity('marks_release')->performedOn($release)->causedBy($release->creator)
             ->withProperties(['queued' => $result['queued'], 'skipped' => $result['skipped'], 'reasons' => $result['reasons']])
@@ -607,15 +812,32 @@ final class MarksReleaseService
             return;
         }
         if ((int) ($release->school?->is_demo ?? 0) !== 1) {
-            $skip('Not a demo school: release messages are sent only in the demo for now');
+            // The same gates as the queue pass, re-read now: the switch can be
+            // turned off, or the template un-approved, between queueing and sending.
+            if (($blocked = $this->realSendBlocker($release)) !== null) {
+                $skip($blocked);
 
-            return;
-        }
-        $binding = $this->activeBindings((int) $release->school_id, $studentId)->firstWhere('id', $bindingId);
-        if (! $binding || $this->dedupeKey((string) $binding->phone, $studentId) !== $key) {
-            $skip('The number stopped following this student before the message went out');
+                return;
+            }
+            // The demo-only guard is the outer fallback for a real number.
+            if ((bool) config('services.whatsapp.demo_only_recipients')) {
+                $skip('Not a demo school: release messages are sent only in the demo for now');
 
-            return;
+                return;
+            }
+            $binding = $this->parentRecipientById((int) $release->school_id, $studentId, $bindingId);
+            if (! $binding || $this->dedupeKey((string) $binding->phone, $studentId) !== $key) {
+                $skip('The parent link was not approved, or the parent opted out, before the message went out');
+
+                return;
+            }
+        } else {
+            $binding = $this->activeBindings((int) $release->school_id, $studentId)->firstWhere('id', $bindingId);
+            if (! $binding || $this->dedupeKey((string) $binding->phone, $studentId) !== $key) {
+                $skip('The number stopped following this student before the message went out');
+
+                return;
+            }
         }
         if (isset($this->alreadySent($release, ['sent'])[$key])) {
             $skip('Already sent to this number');
@@ -633,7 +855,15 @@ final class MarksReleaseService
         try {
             $response = DemoSchoolCommsGuard::duringBoundDemoRelease(
                 (string) $binding->phone,
-                fn () => $this->whatsApp->sendText((string) $binding->phone, $text, 'marks_release', $binding->user_id ? (int) $binding->user_id : null),
+                fn () => (int) ($release->school?->is_demo ?? 0) === 1
+                    ? $this->whatsApp->sendText((string) $binding->phone, $text, 'marks_release', $binding->user_id ? (int) $binding->user_id : null)
+                    : $this->whatsApp->sendTemplate(
+                        (string) $binding->phone,
+                        TemplateGate::RESULTS_RELEASED,
+                        $this->resultsReleasedVariables($release, $binding, $studentId),
+                        null,
+                        'marks_release',
+                    ),
             );
         } catch (\Throwable $e) {
             $response = ['success' => false, 'error' => $e->getMessage()];
@@ -726,7 +956,7 @@ final class MarksReleaseService
      * Decide who gets a message. Returns the result (each recipient "queued",
      * everyone else "skipped" with a reason) and the jobs to dispatch.
      *
-     * @return array{0: array<string, mixed>, 1: array<int, SendMarksReleaseMessage>}
+     * @return array{0: array<string, mixed>, 1: array<int, SendMarksReleaseMessage>, 2: array<int, array{code:string, class:string}>|null}
      */
     private function deliver(MarksRelease $release): array
     {
@@ -735,6 +965,7 @@ final class MarksReleaseService
         $messages = [];
         $repliesOn = (bool) config('services.whatsapp.replies_enabled');
         $isDemo = (int) ($school?->is_demo ?? 0) === 1;
+        $demoOnly = (bool) config('services.whatsapp.demo_only_recipients');
         $alreadySent = $this->alreadySent($release, ['sent', 'queued', 'retrying']);
         $released = [];
         $jobs = [];
@@ -758,8 +989,17 @@ final class MarksReleaseService
 
                 continue;
             }
-            if (! $isDemo) {
-                // Task 9 sends only for demo schools; real schools are not messaged yet.
+            if (! $isDemo && ($blocked = $this->realSendBlocker($release)) !== null) {
+                // The switch and the Meta template belong to the real-school path:
+                // a demo follow-along send is not a school sending a template.
+                // Reported before the demo-only guard.
+                $skip($blocked);
+
+                continue;
+            }
+            if (! $isDemo && $demoOnly) {
+                // Outer fallback: while the demo-only guard is on, nothing can
+                // leave a real school, whatever the release says.
                 $skip('Not a demo school: release messages are sent only in the demo for now');
 
                 continue;
@@ -774,11 +1014,28 @@ final class MarksReleaseService
 
             $released[] = ['code' => $code, 'class' => trim(($link->section?->name ?? '') . ' ' . ($link->stream ?? ''))];
 
-            $bindings = $this->activeBindings((int) $release->school_id, (int) $studentId);
-            if ($bindings->isEmpty()) {
-                $skip('No number is following this student');
+            if ($isDemo) {
+                $bindings = $this->activeBindings((int) $release->school_id, (int) $studentId);
+                if ($bindings->isEmpty()) {
+                    $skip('No number is following this student');
 
-                continue;
+                    continue;
+                }
+            } else {
+                // A recipient is an approved, linked parent of a student in this
+                // class and sitting, who has not opted out. Anything else is listed
+                // with its reason instead of being messaged.
+                [$bindings, $refused] = $this->parentRecipients((int) $release->school_id, (int) $studentId);
+                foreach ($refused as [$row, $reason]) {
+                    $skip($reason, $this->mask((string) $row->phone));
+                }
+                if ($bindings->isEmpty()) {
+                    if ($refused === []) {
+                        $skip('No approved, linked parent for this student');
+                    }
+
+                    continue;
+                }
             }
 
             foreach ($bindings as $binding) {
@@ -796,13 +1053,45 @@ final class MarksReleaseService
             }
         }
 
+        $webhookStudents = ($repliesOn && $isDemo) ? $released : null;
+
         return [
             $this->totals([
                 'messages' => $messages,
-                'webhook' => ($repliesOn && $isDemo) ? $this->postWebhook($release, $released) : 'not sent',
+                'webhook' => $webhookStudents !== null ? 'pending' : 'not sent',
             ]),
             $jobs,
+            $webhookStudents,
         ];
+    }
+
+    /**
+     * Demo n8n webhook. Called from DB::afterCommit, so a rolled-back release
+     * never posts. Runs at most once per release on this service instance:
+     * an outer test transaction also calls it after the release savepoint
+     * commits, and the afterCommit callback must not post a second time.
+     *
+     * @param  array<int, array{code:string, class:string}>  $students
+     */
+    private function recordDemoWebhook(MarksRelease $release, array $students): void
+    {
+        $id = (int) $release->id;
+        if (isset($this->demoWebhookRecorded[$id])) {
+            return;
+        }
+        $this->demoWebhookRecorded[$id] = true;
+
+        $status = $this->postWebhook($release, $students);
+        $fresh = MarksRelease::query()
+            ->where('school_id', $release->school_id)
+            ->whereKey($id)
+            ->first();
+        if ($fresh === null) {
+            return;
+        }
+        $result = $fresh->result ?? [];
+        $result['webhook'] = $status;
+        $fresh->forceFill(['result' => $result])->save();
     }
 
     /**
@@ -846,6 +1135,67 @@ final class MarksReleaseService
 
             return 'failed: no response';
         }
+    }
+
+    /** Why a real-school release may not send right now, or null when it may. */
+    private function realSendBlocker(MarksRelease $release): ?string
+    {
+        if (! (bool) $release->whatsapp_send) {
+            return 'WhatsApp was switched off for this release';
+        }
+
+        return app(TemplateGate::class)->blocker(TemplateGate::RESULTS_RELEASED);
+    }
+
+    /**
+     * The approved, linked, opted-in parents of one student.
+     *
+     * @return array{0: Collection<int, WhatsAppUser>, 1: array<int, array{0: WhatsAppUser, 1: string}>}
+     */
+    private function parentRecipients(int $schoolId, int $studentId): array
+    {
+        $links = StudentParentLink::query()
+            ->where('school_id', $schoolId)
+            ->where('student_id', $studentId)
+            ->orderBy('id')
+            ->get();
+
+        $rows = WhatsAppUser::query()
+            ->where('school_id', $schoolId)
+            ->whereIn('user_id', $links->pluck('parent_id')->map(fn ($id) => (int) $id)->all())
+            ->orderBy('id')
+            ->get(['id', 'phone', 'user_id', 'opted_in'])
+            ->keyBy(fn (WhatsAppUser $row) => (int) $row->user_id);
+
+        $eligible = collect();
+        $refused = [];
+        foreach ($links as $link) {
+            $row = $rows->get((int) $link->parent_id);
+            if ($row === null) {
+                continue; // no number on file: nothing to send to, and nothing to explain
+            }
+            if ((int) $link->status !== 1) {
+                $refused[] = [$row, 'This parent link is not approved'];
+
+                continue;
+            }
+            if (! (bool) $row->opted_in) {
+                $refused[] = [$row, 'This parent opted out of WhatsApp results'];
+
+                continue;
+            }
+            $eligible->push($row);
+        }
+
+        return [$eligible, $refused];
+    }
+
+    /** One parent by WhatsApp row id, still approved and still opted in. */
+    private function parentRecipientById(int $schoolId, int $studentId, int $whatsappUserId): ?WhatsAppUser
+    {
+        [$eligible] = $this->parentRecipients($schoolId, $studentId);
+
+        return $eligible->firstWhere('id', $whatsappUserId);
     }
 
     /** Numbers with an active BIND to this student (inside the TTL), in this school. */
@@ -900,12 +1250,22 @@ final class MarksReleaseService
     }
 
     /**
-     * Students in scope, current academic year, with the class they are in.
+     * Students in scope, with the class used to read their marks.
+     *
+     * The current sitting uses this year's enrolment in the released class.
+     * An older sitting uses the students who have marks for that exam. The
+     * current class list is the wrong roster once pupils have moved on.
      *
      * @return \Generator<int, array{0:int, 1:StandardLink}>
      */
     private function students(int $schoolId, Exam $anchor, ?StandardLink $link): \Generator
     {
+        if ($this->isPastSitting($anchor)) {
+            yield from $this->studentsWhoSat($schoolId, $anchor, $link);
+
+            return;
+        }
+
         $sections = Exam::query()
             ->where('school_id', $schoolId)
             ->where('exam_type_id', $anchor->exam_type_id)
@@ -930,6 +1290,129 @@ final class MarksReleaseService
                 yield [(int) $id, $classLink];
             }
         }
+    }
+
+    /**
+     * Students with marks for this sitting, in this school. Not the current class.
+     *
+     * @return \Generator<int, array{0:int, 1:StandardLink}>
+     */
+    private function studentsWhoSat(int $schoolId, Exam $anchor, ?StandardLink $link): \Generator
+    {
+        $exams = Exam::query()
+            ->where('school_id', $schoolId)
+            ->where('exam_type_id', $anchor->exam_type_id)
+            ->where('academic_term_id', $anchor->academic_term_id)
+            ->when($link !== null, fn ($query) => $query->where('section_id', $link->section_id))
+            ->whereNull('deleted_at')
+            ->get(['id', 'section_id']);
+
+        if ($exams->isEmpty()) {
+            return;
+        }
+
+        $sectionByExam = [];
+        foreach ($exams as $exam) {
+            $sectionByExam[(int) $exam->id] = (int) $exam->section_id;
+        }
+
+        $rows = Marks::query()
+            ->where('school_id', $schoolId)
+            ->whereIn('exam_id', array_keys($sectionByExam))
+            ->orderBy('student_id')
+            ->get(['student_id', 'exam_id', 'section_id']);
+
+        if ($rows->isEmpty()) {
+            return;
+        }
+
+        $allowed = User::query()
+            ->where('school_id', $schoolId)
+            ->whereIn('id', $rows->pluck('student_id')->unique()->all())
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->flip();
+
+        $seen = [];
+        foreach ($rows as $mark) {
+            $studentId = (int) $mark->student_id;
+            if (! isset($allowed[$studentId])) {
+                continue;
+            }
+            $sectionId = (int) ($mark->section_id ?: ($sectionByExam[(int) $mark->exam_id] ?? 0));
+            if ($sectionId === 0) {
+                continue;
+            }
+            if ($link !== null && $sectionId !== (int) $link->section_id) {
+                continue;
+            }
+            $key = $studentId.'-'.$sectionId;
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $classLink = $this->linkForSatSection($schoolId, $anchor, $sectionId, $link);
+            if ($classLink === null) {
+                continue;
+            }
+            yield [$studentId, $classLink];
+        }
+    }
+
+    /** The class whose section the exam belongs to, so the marks lookup stays on that sitting. */
+    private function linkForSatSection(int $schoolId, Exam $anchor, int $sectionId, ?StandardLink $selected): ?StandardLink
+    {
+        if ($selected !== null && (int) $selected->section_id === $sectionId) {
+            $selected->loadMissing('section');
+
+            return $selected;
+        }
+
+        $yearId = (int) $anchor->academic_year_id;
+        $historical = StandardLink::query()
+            ->with('section')
+            ->where('school_id', $schoolId)
+            ->where('section_id', $sectionId)
+            ->when($yearId > 0, fn ($query) => $query->where('academic_year_id', $yearId))
+            ->orderBy('id')
+            ->first();
+        if ($historical !== null) {
+            return $historical;
+        }
+
+        return StandardLink::query()
+            ->with('section')
+            ->where('school_id', $schoolId)
+            ->where('section_id', $sectionId)
+            ->orderBy('id')
+            ->first();
+    }
+
+    /**
+     * Body variables for results_released: parent, school, student, sitting.
+     *
+     * @return array{0:string,1:string,2:string,3:string}
+     */
+    private function resultsReleasedVariables(MarksRelease $release, WhatsAppUser $parentRow, int $studentId): array
+    {
+        $schoolId = (int) $release->school_id;
+        $parent = User::query()->where('school_id', $schoolId)->whereKey($parentRow->user_id)->first();
+        $student = User::query()->where('school_id', $schoolId)->whereKey($studentId)->first();
+        $release->loadMissing(['exam.examType', 'exam.academicTerm', 'school']);
+
+        return [
+            $this->templateParameter((string) ($parent?->name ?? ''), 'Parent'),
+            $this->templateParameter((string) ($release->school?->name ?? ''), 'The school'),
+            $this->templateParameter((string) ($student?->name ?? ''), 'your child'),
+            $this->templateParameter($release->exam ? $this->examLabel($release->exam) : '', 'results'),
+        ];
+    }
+
+    private function templateParameter(string $value, string $fallback): string
+    {
+        $value = trim((string) preg_replace('/\s+/u', ' ', $value));
+
+        return $value !== '' ? $value : $fallback;
     }
 
     private function message(?School $school, Exam $anchor, int $studentId, StandardLink $link): ?string

@@ -47,7 +47,7 @@ class UsersSchoolAdminTableSeeder extends Seeder
             }
 
             // Helper to create user + profile + teacher profile safely
-            $createStaff = function ($roleName, $emailPrefix, $designation) use ($school, $academicYear, $uganda, $cityId) {
+            $createStaff = function ($roleName, $emailPrefix, $profession, $designation) use ($school, $academicYear, $uganda, $cityId) {
                 $email = $emailPrefix . '@' . Str::slug($school->name, '') . '.sch.ug';
 
                 // Safe user creation
@@ -56,7 +56,7 @@ class UsersSchoolAdminTableSeeder extends Seeder
                     [
                         'school_id'    => $school->id,
                         'name'         => ucfirst($roleName) . ' ' . $school->name,
-                        'mobile_no'    => '+256 77' . rand(1000000, 9999999),
+                        'mobile_no'    => '+256770'.str_pad((string) $school->id, 3, '0', STR_PAD_LEFT).str_pad((string) $this->getUserGroupIdForRole($roleName), 3, '0', STR_PAD_LEFT),
                         'usergroup_id' => $this->getUserGroupIdForRole($roleName), // map role to group ID
                         'password'     => bcrypt('password123'), // change in real life!
                     ]
@@ -70,7 +70,7 @@ class UsersSchoolAdminTableSeeder extends Seeder
                         'usergroup_id'  => $user->usergroup_id,
                         'firstname'     => ucfirst($roleName),
                         'lastname'      => 'Staff',
-                        'profession'    => $designation,
+                        'profession'    => $profession,
                         'address'       => 'School Office, ' . $school->name . ', Kampala',
                         'country_id'    => $uganda->id,
                         'city_id'       => $cityId,
@@ -93,11 +93,12 @@ class UsersSchoolAdminTableSeeder extends Seeder
             };
 
             // Create each role safely
-            $createStaff('admin', 'admin', 'Principal / Administrator');
-            $createStaff('librarian', 'librarian', 'Librarian');
-            $createStaff('receptionist', 'reception', 'Receptionist / Secretary');
-            $createStaff('bursar', 'bursar', 'Bursar / Accountant');
-            $createStaff('store_keeper', 'store', 'Store Keeper / Procurement');
+            // profession and designation are enums. The labels below are the stored values.
+            $createStaff('admin', 'admin', 'admin', 'principal');
+            $createStaff('librarian', 'librarian', 'librarian', 'librarian');
+            $createStaff('receptionist', 'reception', 'others', 'receptionist');
+            $createStaff('bursar', 'bursar', 'others', 'accountant');
+            $createStaff('store_keeper', 'store', 'others', 'stock_keeper');
         }
 
         $this->command->info('Seeded admin & support staff for ' . $schools->count() . ' schools.');

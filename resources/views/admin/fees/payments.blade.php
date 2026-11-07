@@ -41,14 +41,17 @@
         <form method="POST" action="{{ route('admin.fee-payments.store') }}" id="fees-inline-record-form">
             @csrf
             <div class="grid grid-cols-1 md:grid-cols-3 gap-x-4">
-                <x-form-group
-                    label="Student"
-                    name="user_id"
-                    type="select"
-                    required
-                    :options="$students->mapWithKeys(fn ($s) => [$s->id => ($s->displayName ?: $s->name)])->prepend('Select student...', '')->toArray()"
-                    :error="$errors->first('user_id')"
-                />
+                <div class="ds-form-group">
+                    <label class="ds-form-label ds-form-label-required" for="fee-student-search">Student</label>
+                    <input type="search" id="fee-student-search" class="ds-form-input" data-testid="fee-student-search" placeholder="Name, admission number, or class" autocomplete="off" value="{{ old('student_label') }}">
+                    <input type="hidden" name="user_id" id="fee-student-id" value="{{ old('user_id') }}">
+                    <ul id="fee-student-results" data-testid="fee-student-results" hidden style="margin:6px 0 0; padding:0; list-style:none; border:1px solid #CBD5E1; background:#fff; color:#0F172A;"></ul>
+                    <p id="fee-student-picked" data-testid="fee-student-picked" class="ds-form-help"></p>
+                    @if($errors->first('user_id'))
+                        <p class="ds-form-error">{{ $errors->first('user_id') }}</p>
+                    @endif
+                    <p class="ds-form-help">Search by name, admission number, or class. The payment is recorded against the student's total unless you allocate it.</p>
+                </div>
                 <x-form-group
                     label="Amount (UGX)"
                     name="amount"
@@ -67,14 +70,14 @@
                 />
             </div>
             <x-form-group
-                label="Fee Category"
+                label="Allocate to a fee"
                 name="fee_category_id"
                 type="select"
-                required
-                :options="['' => 'Select fee category...'] + $feeCategories->mapWithKeys(function ($fee) {
+                :options="['' => 'Against the student\'s total'] + $feeCategories->mapWithKeys(function ($fee) {
                     return [$fee->id => $fee->labeledName().' — '.number_format((float) $fee->amount, 0).' UGX'];
                 })->toArray()"
                 :error="$errors->first('fee_category_id')"
+                help="Leave this on the student's total. Choose a fee only when the payment belongs to that fee."
             />
             <div class="flex flex-wrap gap-2 mt-1">
                 <button type="submit" class="ds-btn ds-btn-primary text-sm" id="fees-save-payment">Save payment</button>
@@ -85,7 +88,63 @@
     </x-card>
 </div>
 
-@if(!empty($balances))
+@php
+    $feeState = (string) request()->query('state', '');
+    if (! in_array($feeState, ['loading', 'error', 'empty'], true) || ! app()->environment(['local', 'testing'])) {
+        $feeState = '';
+    }
+    $classOptions = collect($balances ?? [])->pluck('class_label')->filter()->unique()->values();
+@endphp
+@if($feeState === 'loading')
+    <section data-testid="fee-loading" aria-busy="true">
+        <div class="family-sk" style="height:24px;width:40%;"></div>
+        <div class="family-sk" style="height:48px;"></div>
+        <p>Loading balances…</p>
+    </section>
+@elseif($feeState === 'error' || $errors->any())
+    <section data-testid="fee-error" role="alert" class="family-alert">
+        <strong>The payment wasn't recorded</strong>
+        <p>Nothing was saved and no receipt went out. Your amount and date are still in the form.</p>
+        <a class="ds-btn ds-btn-primary" href="{{ url()->current() }}">Try again</a>
+    </section>
+@endif
+@if($feeState === '')
+<div class="family-filters" data-testid="fee-class-filter">
+    <button type="button" class="family-filters-open ds-btn ds-btn-outline" data-testid="family-filters-open">Filters</button>
+    <div id="fee-filters-sheet" class="family-filters-sheet">
+        <label for="fee-class-select">Class</label>
+        <select id="fee-class-select">
+            <option value="">All classes</option>
+            @foreach($classOptions as $className)
+                <option value="{{ $className }}">{{ $className }}</option>
+            @endforeach
+        </select>
+        <label><input type="checkbox" id="fee-only-owe"> Only students who owe</label>
+    </div>
+</div>
+<script>
+document.addEventListener('click', function (event) {
+    var open = event.target.closest && event.target.closest('[data-testid="family-filters-open"]');
+    var sheet = document.getElementById('fee-filters-sheet');
+    if (open && sheet) sheet.classList.toggle('is-open');
+});
+document.addEventListener('change', function (event) {
+    if (event.target.id !== 'fee-class-select' && event.target.id !== 'fee-only-owe') return;
+    var wanted = document.getElementById('fee-class-select').value;
+    document.querySelectorAll('.fee-balance-row').forEach(function (row) {
+        var show = wanted === '' || row.getAttribute('data-class') === wanted;
+        row.hidden = !show;
+    });
+});
+</script>
+@endif
+@if($feeState === 'empty')
+    <section class="family-empty" data-testid="fees-paid-up">
+        <h2>Every student is paid up</h2>
+        <p>Nothing to remind. New balances appear here when a fee is added or a term starts.</p>
+    </section>
+@endif
+@if(!empty($balances) && $feeState === '')
     <div data-testid="fee-balances" style="margin-bottom: 16px;">
         @if(session('reminder_result'))
             <p data-testid="fee-reminder-result" data-tone="{{ session('reminder_tone') === 'ready' ? 'ready' : 'plain' }}" style="margin: 0 0 8px; color: {{ session('reminder_tone') === 'ready' ? '#15803D' : '#0F172A' }};">{{ session('reminder_result') }}</p>
@@ -94,11 +153,11 @@
             <div style="padding: 12px 16px; font-weight: 700; color: #0F172A;">Students with a balance</div>
             <x-table :headers="['', 'Student', 'Balance', '']" striped>
                 @foreach($balances as $row)
-                    <tr data-testid="fee-balance-row">
+                    <tr class="fee-balance-row" data-testid="fee-balance-row" data-class="{{ $row['class_label'] ?? '' }}">
                         <td>
                             <input form="fee-reminder-bulk" type="checkbox" name="student_ids[]" value="{{ $row['id'] }}" data-parents="{{ $row['parents'] }}" aria-label="Select {{ $row['name'] }}">
                         </td>
-                        <td>{{ $row['name'] }}</td>
+                        <td>{{ $row['name'] }}<br><span>{{ $row['class_label'] ?? '' }}</span></td>
                         <td>UGX {{ number_format($row['balance'], 0) }}</td>
                         <td>
                             <form method="POST" action="{{ route('admin.fee-payments.reminders') }}" class="fee-remind-form" style="margin: 0;">
@@ -235,6 +294,55 @@
         saving.innerHTML = '<span class="ds-save-indicator__dot" aria-hidden="true"></span>Saving…';
         btn.insertAdjacentElement('beforebegin', saving);
     });
+
+    var search = document.getElementById('fee-student-search');
+    var results = document.getElementById('fee-student-results');
+    var picked = document.getElementById('fee-student-picked');
+    var studentId = document.getElementById('fee-student-id');
+    var searchUrl = @json(route('admin.fee-payments.students'));
+    var searchTimer = null;
+    if (search && results && studentId) {
+        search.addEventListener('input', function () {
+            studentId.value = '';
+            if (picked) picked.textContent = '';
+            window.clearTimeout(searchTimer);
+            var q = search.value.trim();
+            if (q.length < 1) {
+                results.hidden = true;
+                results.innerHTML = '';
+                return;
+            }
+            searchTimer = window.setTimeout(function () {
+                fetch(searchUrl + '?q=' + encodeURIComponent(q), { headers: { 'Accept': 'application/json' } })
+                    .then(function (response) { return response.json(); })
+                    .then(function (payload) {
+                        results.innerHTML = '';
+                        var students = payload.students || [];
+                        students.forEach(function (student) {
+                            var item = document.createElement('li');
+                            var button = document.createElement('button');
+                            button.type = 'button';
+                            button.className = 'ds-btn ds-btn-ghost text-sm';
+                            button.setAttribute('data-testid', 'fee-student-result');
+                            button.setAttribute('data-id', String(student.id));
+                            var label = student.name;
+                            if (student.admission_number) label += ' · ' + student.admission_number;
+                            if (student.class) label += ' · ' + student.class;
+                            button.textContent = label;
+                            button.addEventListener('click', function () {
+                                studentId.value = String(student.id);
+                                search.value = student.name;
+                                if (picked) picked.textContent = label;
+                                results.hidden = true;
+                            });
+                            item.appendChild(button);
+                            results.appendChild(item);
+                        });
+                        results.hidden = students.length === 0;
+                    });
+            }, 200);
+        });
+    }
 
     var indicator = document.getElementById('fees-save-indicator');
     if (indicator) {
