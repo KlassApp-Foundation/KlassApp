@@ -257,7 +257,21 @@ Opening the register with no stream now keeps every stream of the base class (`A
 
 Admins and a class head of a base class still have the wider school access from the previous pass. A teacher who only holds one stream cannot open the other stream. Mark all present sets every student currently on the register to Present in the browser and does not save until Save attendance (`register.blade.php`, `data-testid="mark-all-present"`).
 
-Tests: `tests/Feature/Teacher/WholeClassRegisterTest.php` (synthetic Primary Four, 60 on E and 58 on W). Also `AttendanceRegisterTest` and `SchoolRegisterAccessTest`.
+Tests: `tests/Feature/Teacher/WholeClassRegisterTest.php` (synthetic Primary Four, 60 on E and 58 on W, with the head stored on the base section). Also `AttendanceRegisterTest` and `SchoolRegisterAccessTest`.
+
+## 4d. Base-link class head and base exams, 8 November
+
+The 7 November fixture put the class head on the base section. That is not the reported shape. Manzi supplied local-agent read-only findings on 8 November. This session did not open a live database. The regression uses synthetic people and factory ids. The relationships match the findings.
+
+Reported shape, anonymized: `standards_link.stream` is null on every link. There is no parent-section column and no `attendance_scope` row, so the scope falls back to `classes_i_teach`. There are no `class_teacher_links` rows for the class head. The base section `Primary Four` has `class_teacher_id` null and its link has no students. The head is `class_teacher_id` on that base link, and also on the `Primary Four E` section and its link. `Primary Four W` is a separate section and link, with a different teacher. Sixty active students sit on the E link and fifty-eight on the W link, via `student_academics.standardLink_id` only. Both links share the year and the `primary` standard. `ClassStructureService::resolveBaseSection` groups a stream by the shortest `sections.name` where the stream name matches `CONCAT(base.name, ' ')`.
+
+`headedBaseIds` already saw the base link, but `registerScope` never used it. `mayTakeAnyRegister` looks only at `sections.class_teacher_id`, which is empty on the base, so the head was not given the school. The attendance-scope query then returned the base link and E, and the roster was 60. The heading could still say the whole class, because the empty base link and E were grouped together. A link with a stream label on an undivided section stays a stream teacher (`AttendanceRegisterTest`, stream B). Expanding a base head adds that class's stream links for the school and year (`AttendanceController::expandHeadedBases`). It does not open other classes, and a subject assignment on one stream does not open the other.
+
+Record marks used only the student's stream section. The findings put twelve exams on the base section (`Primary Seven`, and the same for Primary Four) and none on the stream sections. `StudentMarksDraftService` now asks `ClassStructureService::resolveBaseSection` and lists exams on the student's section and that base. A sibling stream's exam stays off the page. A same-school admin can save that draft; another school is not found.
+
+Mark all present is a browser control. The teacher layout mounts Vue on `#app` after inline scripts, so a listener bound to the original radios never saw the click. The register is `v-pre`, the click is delegated from `document`, and it sets the Present radio's checked state and the green `is-present` label. It does not save. Save attendance still posts `rows_json`. On a filtered register the button says it sets only the students on that register.
+
+Tests: `tests/Feature/Teacher/BaseLinkHeadRegisterTest.php`, `tests/Feature/StudentProfile/StreamStudentBaseExamTest.php`. The visible radio check is `tests/Browser/mark-all-present.php` (Chrome). It is skipped where Chrome is not installed.
 
 ## 5. Things lost or changed by choosing one side
 

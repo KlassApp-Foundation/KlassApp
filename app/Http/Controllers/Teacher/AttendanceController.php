@@ -511,7 +511,12 @@ class AttendanceController extends Controller
                 })
                 ->get();
             foreach ($fromLinks as $link) {
-                if ($link->section && $structure->isBaseSection($link->section)) {
+                // A stream label on this same section is a stream teacher, not the
+                // head of the class. The reported head link has a null stream and
+                // points at the undivided base section.
+                if ($link->section
+                    && trim((string) ($link->stream ?? '')) === ''
+                    && $structure->isBaseSection($link->section)) {
                     $ids[] = (int) $link->section_id;
                 }
             }
@@ -575,9 +580,7 @@ class AttendanceController extends Controller
             ->whereIn('section_id', $headSectionIds)
             ->get();
 
-        $streams = $allowed->merge($headStreams)
-            ->unique('id')
-            ->values()
+        $streams = $this->expandHeadedBases($schoolId, $teacherId, $year, $allowed->merge($headStreams)->unique('id'))
             ->sortBy(fn (StandardLink $link) => trim((string) ($link->section?->name ?? '')).'|'.trim((string) ($link->stream ?? '')))
             ->values();
 
@@ -707,7 +710,7 @@ class AttendanceController extends Controller
         }
 
         $links = $group['links']->values();
-        $whole = $links->count() > 1 || in_array((int) $base->id, $headed, true) || $this->mayTakeAnyRegister($schoolId, $userId);
+        $whole = $this->coversEveryStream($base, $links, $schoolId, (int) $scope['year']->id);
 
         return [
             'section' => $base,
@@ -717,8 +720,94 @@ class AttendanceController extends Controller
             'stream_choices' => $choices,
             'single_stream_id' => $links->count() === 1 ? (int) $links->first()->id : null,
             'class_name' => (string) $base->name,
-            'whole_class' => $whole && $links->count() > 1,
+            'whole_class' => $whole,
         ];
+    }
+
+    /**
+     * A base head may be the class teacher of the base section, or of the
+     * base section's standards_link while the section row itself is empty.
+     * Add that class's stream links for this school and year. Other classes
+     * stay out. A subject assignment or a stream-only class teacher is not a
+     * base head, so those links are not added here.
+     *
+     * @param  \Illuminate\Support\Collection<int, StandardLink>  $streams
+     * @return \Illuminate\Support\Collection<int, StandardLink>
+     */
+    private function expandHeadedBases(int $schoolId, int $teacherId, \App\Models\AcademicYear $year, $streams)
+    {
+        $baseIds = $this->headedBaseIds($schoolId, $teacherId);
+        if ($baseIds === []) {
+            return $streams->values();
+        }
+
+        $structure = app(ClassStructureService::class);
+        $sectionIds = [];
+        $sections = Section::query()->where('school_id', $schoolId)->whereIn('id', $baseIds)->get();
+        foreach ($sections as $section) {
+            foreach ($structure->classSectionIds($section) as $id) {
+                $sectionIds[] = (int) $id;
+            }
+        }
+        $sectionIds = array_values(array_unique($sectionIds));
+        if ($sectionIds === []) {
+            return $streams->values();
+        }
+
+        $extra = StandardLink::query()
+            ->with(['section', 'standard'])
+            ->where('school_id', $schoolId)
+            ->where('academic_year_id', $year->id)
+            ->whereIn('section_id', $sectionIds)
+            ->where(function ($query) {
+                $query->where('status', 1)->orWhere('status', '1');
+            })
+            ->get();
+
+        return $streams->merge($extra)->unique('id')->values();
+    }
+
+    /**
+     * Whole class means every stream section of this base is on the register.
+     * A base link plus one stream is not the whole class.
+     *
+     * @param  \Illuminate\Support\Collection<int, StandardLink>  $links
+     */
+    private function coversEveryStream(Section $base, $links, int $schoolId, int $yearId): bool
+    {
+        $named = array_values(array_filter(
+            app(ClassStructureService::class)->classSectionIds($base),
+            fn (int $id) => $id !== (int) $base->id
+        ));
+
+        if ($named === []) {
+            return $links->count() > 1;
+        }
+
+        $active = StandardLink::query()
+            ->where('school_id', $schoolId)
+            ->where('academic_year_id', $yearId)
+            ->whereIn('section_id', $named)
+            ->where(function ($query) {
+                $query->where('status', 1)->orWhere('status', '1');
+            })
+            ->pluck('section_id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->all();
+
+        if ($active === []) {
+            return $links->count() > 1;
+        }
+
+        $present = $links->map(fn ($link) => (int) $link->section_id)->unique()->all();
+        foreach ($active as $id) {
+            if (! in_array($id, $present, true)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

@@ -7,6 +7,7 @@ use App\Models\Academics\Exam;
 use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\Marks;
 use App\Models\User;
+use App\Services\ClassStructureService;
 use App\Services\Marks\ExamMarkWriter;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -38,12 +39,12 @@ class StudentMarksDraftService
      */
     public function sittings(User $student): array
     {
-        $sectionId = $this->sectionId($student);
-        if ($sectionId === null) {
+        $sectionIds = $this->sectionIds($student);
+        if ($sectionIds === []) {
             return [];
         }
 
-        return $this->classExams($student, $sectionId)
+        return $this->classExams($student, $sectionIds)
             ->groupBy(fn (Exam $e) => $e->exam_type_id.':'.$e->academic_term_id)
             ->map(fn ($group) => [
                 'key' => $group->first()->exam_type_id.':'.$group->first()->academic_term_id,
@@ -63,12 +64,12 @@ class StudentMarksDraftService
      */
     public function subjects(User $student, int $examTypeId, int $termId): array
     {
-        $sectionId = $this->sectionId($student);
-        if ($sectionId === null) {
+        $sectionIds = $this->sectionIds($student);
+        if ($sectionIds === []) {
             return [];
         }
 
-        $exams = $this->classExams($student, $sectionId)
+        $exams = $this->classExams($student, $sectionIds)
             ->filter(fn (Exam $e) => (int) $e->exam_type_id === $examTypeId && (int) $e->academic_term_id === $termId)
             ->values();
         $marks = Marks::query()
@@ -104,12 +105,12 @@ class StudentMarksDraftService
     {
         $this->authorizeProfileAction($actor, $student);
 
-        $sectionId = $this->sectionId($student);
-        if ($sectionId === null) {
+        $sectionIds = $this->sectionIds($student);
+        if ($sectionIds === []) {
             throw ValidationException::withMessages(['marks' => 'This student is not in a class this year, so marks cannot be added.']);
         }
 
-        $exams = $this->classExams($student, $sectionId)
+        $exams = $this->classExams($student, $sectionIds)
             ->filter(fn (Exam $e) => (int) $e->exam_type_id === $examTypeId && (int) $e->academic_term_id === $termId)
             ->keyBy('id');
         if ($exams->isEmpty()) {
@@ -193,25 +194,43 @@ class StudentMarksDraftService
         return ['saved' => $saved, 'skipped' => $skipped];
     }
 
-    private function sectionId(User $student): ?int
+    /**
+     * The student's own section, plus the base class when the student is on
+     * a stream. Sibling streams stay out. Exams for the class are stored on
+     * the base section; stream sections often have none.
+     *
+     * @return list<int>
+     */
+    private function sectionIds(User $student): array
     {
-        $id = $this->enrollment->current($student)?->standardLink?->section_id;
+        $section = $this->enrollment->current($student)?->standardLink?->section;
+        if ($section === null || (int) $section->school_id !== (int) $student->school_id) {
+            return [];
+        }
 
-        return $id ? (int) $id : null;
+        $base = app(ClassStructureService::class)->resolveBaseSection($section);
+        if ((int) $base->school_id !== (int) $section->school_id) {
+            $base = $section;
+        }
+
+        return array_values(array_unique([(int) $section->id, (int) $base->id]));
     }
 
-    /** @return \Illuminate\Support\Collection<int, Exam> */
-    private function classExams(User $student, int $sectionId)
+    /**
+     * @param  list<int>  $sectionIds
+     * @return \Illuminate\Support\Collection<int, Exam>
+     */
+    private function classExams(User $student, array $sectionIds)
     {
         $year = $this->enrollment->year((int) $student->school_id);
-        if (! $year) {
+        if (! $year || $sectionIds === []) {
             return collect();
         }
 
         return Exam::query()
             ->with(['subject', 'teacher', 'examType', 'academicTerm', 'standard'])
             ->where('school_id', $student->school_id)
-            ->where('section_id', $sectionId)
+            ->whereIn('section_id', $sectionIds)
             ->where('academic_year_id', $year->id)
             ->whereNull('deleted_at')
             ->get();

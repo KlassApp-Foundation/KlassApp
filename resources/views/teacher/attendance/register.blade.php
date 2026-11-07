@@ -20,7 +20,7 @@
     }
 </style>
 
-<div class="dashboard-shell dashboard-shell--teacher px-4 md:px-6 py-4" data-testid="teacher-attendance-register">
+<div class="dashboard-shell dashboard-shell--teacher px-4 md:px-6 py-4" data-testid="teacher-attendance-register" v-pre>
     @include('layouts.partials.page-header', [
         'title' => 'Take attendance',
         'subtitle' => 'Everyone is present unless you tap Absent. Save once.',
@@ -161,9 +161,10 @@
                     <span data-absent-count>{{ $absentCount }}</span> absent
                     · <span class="font-semibold">{{ $students->count() }}</span> students
                 </p>
-                <div class="flex flex-wrap gap-2">
+                <div class="flex flex-wrap items-center gap-2">
                     <button type="button" class="ds-btn ds-btn-outline ds-btn-md" data-testid="mark-all-present">Mark all present</button>
                     <button type="submit" class="ds-btn ds-btn-primary ds-btn-md" data-testid="save-attendance">Save attendance</button>
+                    <span class="text-xs" style="color: var(--d-muted);" data-testid="mark-all-scope">{{ $wholeClass ? 'Sets every student in this class. Nothing is saved until Save attendance.' : 'Sets every student on this register. Other streams stay unchanged until you open them. Nothing is saved until Save attendance.' }}</span>
                 </div>
             </div>
         </form>
@@ -203,72 +204,100 @@
             filterStreams();
         }
 
-        var rows = Array.prototype.slice.call(document.querySelectorAll('[data-attendance-row]'));
+        function liveRows() {
+            var root = document.querySelector('[data-testid="teacher-attendance-register"]');
+            return root ? Array.prototype.slice.call(root.querySelectorAll('[data-attendance-row]')) : [];
+        }
 
         function paint(row) {
             var checked = row.querySelector('input[type="radio"]:checked');
             row.dataset.status = checked ? checked.value : '1';
+            row.style.background = row.dataset.status === '0' ? '#FEF2F2' : '#F0FDF4';
+            row.style.borderColor = row.dataset.status === '0' ? '#FECACA' : '#BBF7D0';
             Array.prototype.forEach.call(row.querySelectorAll('.attendance-choice'), function (label) {
                 var input = label.querySelector('input');
-                label.classList.toggle('is-selected', !!input.checked);
-                label.classList.toggle('is-present', input.checked && input.value === '1');
-                label.classList.toggle('is-absent', input.checked && input.value === '0');
+                var on = !!(input && input.checked);
+                var present = on && input.value === '1';
+                var absent = on && input.value === '0';
+                label.classList.toggle('is-selected', on);
+                label.classList.toggle('is-present', present);
+                label.classList.toggle('is-absent', absent);
+                // The register sits inside the Vue root, which does not keep the
+                // page stylesheet on these controls. Paint the colour directly.
+                label.style.background = present ? '#DCFCE7' : (absent ? '#FEE2E2' : '#FFFFFF');
+                label.style.borderColor = present ? '#15803D' : (absent ? '#B91C1C' : '#CBD5E1');
+                label.style.color = present ? '#166534' : (absent ? '#7F1D1D' : '#334155');
             });
         }
 
         function counts() {
             var present = 0;
             var absent = 0;
-            rows.forEach(function (row) {
+            liveRows().forEach(function (row) {
                 if (row.dataset.status === '0') absent++; else present++;
             });
             Array.prototype.forEach.call(document.querySelectorAll('[data-present-count]'), function (el) { el.textContent = present; });
             Array.prototype.forEach.call(document.querySelectorAll('[data-absent-count]'), function (el) { el.textContent = absent; });
         }
 
-        var markAll = document.querySelector('[data-testid="mark-all-present"]');
-        if (markAll) {
-            markAll.addEventListener('click', function () {
-                rows.forEach(function (row) {
-                    var present = row.querySelector('input[type="radio"][value="1"]');
-                    if (present) present.checked = true;
-                    paint(row);
-                });
-                counts();
-            });
-        }
-
-        rows.forEach(function (row) {
-            Array.prototype.forEach.call(row.querySelectorAll('input[type="radio"]'), function (input) {
-                input.addEventListener('change', function () {
-                    paint(row);
-                    counts();
-                });
-            });
+        function markRowPresent(row) {
+            var present = row.querySelector('input[type="radio"][value="1"]');
+            var absent = row.querySelector('input[type="radio"][value="0"]');
+            if (absent) {
+                absent.checked = false;
+                absent.removeAttribute('checked');
+            }
+            if (present) {
+                present.checked = true;
+                present.setAttribute('checked', 'checked');
+            }
             paint(row);
-        });
-        counts();
-
-        var form = document.querySelector('[data-testid="attendance-form"]');
-        if (form) {
-            form.addEventListener('submit', function () {
-                var payload = {};
-                rows.forEach(function (row) {
-                    var checked = row.querySelector('input[type="radio"]:checked');
-                    var comment = row.querySelector('input[name$="[comment]"]');
-                    payload[row.dataset.userId] = {
-                        status: checked ? checked.value : '1',
-                        comment: comment ? comment.value : ''
-                    };
-                });
-                var hidden = document.getElementById('attendance-rows-json');
-                if (hidden) hidden.value = JSON.stringify(payload);
-                // One JSON field instead of two inputs per learner.
-                Array.prototype.forEach.call(form.querySelectorAll('[data-attendance-row] input'), function (input) {
-                    input.disabled = true;
-                });
-            });
         }
+
+        // The layout mounts Vue on #app after this script, which replaces the
+        // register nodes. Listen on document, and paint again after that mount.
+        document.addEventListener('click', function (event) {
+            var button = event.target.closest('[data-testid="mark-all-present"]');
+            if (!button) return;
+            event.preventDefault();
+            liveRows().forEach(markRowPresent);
+            counts();
+        });
+
+        document.addEventListener('change', function (event) {
+            if (!event.target.matches || !event.target.matches('[data-attendance-row] input[type="radio"]')) return;
+            var row = event.target.closest('[data-attendance-row]');
+            if (!row) return;
+            paint(row);
+            counts();
+        });
+
+        document.addEventListener('submit', function (event) {
+            var form = event.target;
+            if (!form.matches || !form.matches('[data-testid="attendance-form"]')) return;
+            var payload = {};
+            liveRows().forEach(function (row) {
+                var checked = row.querySelector('input[type="radio"]:checked');
+                var comment = row.querySelector('input[name$="[comment]"]');
+                payload[row.dataset.userId] = {
+                    status: checked ? checked.value : '1',
+                    comment: comment ? comment.value : ''
+                };
+            });
+            var hidden = document.getElementById('attendance-rows-json');
+            if (hidden) hidden.value = JSON.stringify(payload);
+            Array.prototype.forEach.call(form.querySelectorAll('[data-attendance-row] input'), function (input) {
+                input.disabled = true;
+            });
+        });
+
+        function boot() {
+            filterStreams();
+            liveRows().forEach(paint);
+            counts();
+        }
+
+        window.addEventListener('load', boot);
     })();
 </script>
 @endpush
