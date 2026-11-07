@@ -55,7 +55,7 @@ Each PR was merged with `git merge --no-ff` at its head SHA as of 5 November. "B
 
 **Stacks that are behind their own base** (the base branch got commits after the PR was cut; merging in order hides it, merging a PR on its own does not): #1240 behind #1239, #1241 behind #1240, #1244 behind #1243, #1272 behind #1261, #1281 and #1280 behind #1272. #1243 carries a late commit ("Legacy O-level bands are the school's own table", with a migration) that #1244 and everything above it do not have. Merge the stacks bottom-up, or rebase each PR onto its base first.
 
-**Authors.** #1246, #1248, #1249, #1250, #1251, #1252, #1256 and #1258 are by `Bariyo123`; the other 32 are by `Mucunguzi256`. AGENTS.md rule 25 says an outside contributor's PR needs a genuine human review before merge. I do not know whether `Bariyo123` is on the team, so I treated this as a question for you (see section 8) and reviewed none of those eight.
+**Authors.** #1246, #1248, #1249, #1250, #1251, #1252, #1256 and #1258 are by `Bariyo123`; the other 32 are by `Mucunguzi256`. On 7 November Manzi confirmed that `Bariyo123` is KlassApp's own Grok agent account, an internal account, not an outside contributor. AGENTS.md rule 25 does not apply to those eight pull requests. They stay drafts on this rehearsal: this note is not a merge approval, and nothing here is merged or deployed.
 
 ## 3. Every conflict and how it was resolved
 
@@ -249,6 +249,16 @@ Still only `integration/monday-2026-11-09`. No deploy, no runbook edit, no push 
 
 Local PHPUnit for this pass (sqlite memory): `SimpleRosterFormTest`, `SchoolRegisterAccessTest`, `PeopleListTest`, `StudentsRosterKitContractTest`, `AttendanceRegisterTest`, `ParentCrossSchoolIsolationTest`. The browser pass is separate from those tests and from CI.
 
+## 4c. Whole-class register, 7 November
+
+Streams are separate sections named "{Class} {Label}" (`ClassStructureService`). The register used to treat each of those sections as its own class, so Take attendance opened the first stream (Primary Four E) and left Primary Four W off the roster.
+
+Opening the register with no stream now keeps every stream of the base class (`AttendanceController::resolveRegisterSelection`). The class list is the base class. The stream list is Whole class, E, or W. A stream column shows the label. Saving one stream writes only that stream's posted rows; the other stream's saved absences stay. Take attendance on the teacher home and the attendance index points at the headed base class, not the first stream (`TeacherHomeBoard::attendanceUrl`, attendance index `$registerUrl`).
+
+Admins and a class head of a base class still have the wider school access from the previous pass. A teacher who only holds one stream cannot open the other stream. Mark all present sets every student currently on the register to Present in the browser and does not save until Save attendance (`register.blade.php`, `data-testid="mark-all-present"`).
+
+Tests: `tests/Feature/Teacher/WholeClassRegisterTest.php` (synthetic Primary Four, 60 on E and 58 on W). Also `AttendanceRegisterTest` and `SchoolRegisterAccessTest`.
+
 ## 5. Things lost or changed by choosing one side
 
 These are the places where two PRs wanted the same file and one side's behaviour is now gone from the integrated build. Decide before Monday whether each is acceptable.
@@ -321,7 +331,7 @@ The instruction was to choose the safest option, write it down and carry on.
 3. **No pushes to PR branches.** Every fix is on the integration branch; section 4 says where it belongs.
 4. **Tests:** where a test described behaviour the merged screens no longer have, I changed the test to the new behaviour and said so (section 6); I did not skip or disable a test to get green, except where noted there.
 5. **`knowledge.md`:** every PR adds a session note at the top; the notes from both sides were kept. I added none of my own (AGENTS.md rule 20 asks for it in a normal session; this branch is a rehearsal and will not be merged).
-6. **Bariyo123's PRs (#1246 to #1258):** merged into the rehearsal because you asked for them, but not reviewed; AGENTS.md rule 25 applies before any of them is merged. I did not ask whether this person is on the team.
+6. **Bariyo123's PRs (#1246, #1248, #1249, #1250, #1251, #1252, #1256, #1258):** brought into the rehearsal as drafts. On 7 November Manzi confirmed `Bariyo123` is KlassApp's own Grok agent, not an outside contributor, so rule 25 does not apply to these eight. That confirmation is not a merge approval. The draft-only, no-merge, and no-deploy limits still apply.
 7. **Reviews:** comment-only reviews on #1269, #1270, #1277, #1279, #1281, #1282, #1283 and #1284: no approvals, no change requests. Links are in the PR comment on #1285.
 8. **Local test run:** the full suite is slow here (the Demo suites take most of the time), so CI on the draft PR was the arbiter; I ran targeted suites locally.
 9. **No Cloud access.** The runbook is written from the repository, not from a look at Cloud.

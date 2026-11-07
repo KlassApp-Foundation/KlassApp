@@ -19,6 +19,7 @@ use App\Models\AbsentReason;
 use App\Traits\LogActivity;
 use App\Helpers\SiteHelper;
 use App\Models\Attendance;
+use App\Services\ClassStructureService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -77,6 +78,12 @@ class AttendanceController extends Controller
                 ->get()
             : collect();
 
+        $registerUrl = route('teacher.attendance.register');
+        $headed = $this->headedBaseIds($schoolId, $teacherId);
+        if ($headed !== []) {
+            $registerUrl = route('teacher.attendance.register', ['section_id' => $headed[0]]);
+        }
+
         return view('teacher.attendance.index', [
             'records' => $records,
             'sections' => $sections,
@@ -84,6 +91,7 @@ class AttendanceController extends Controller
             'selectedSection' => $selectedSection,
             'selectedStream' => $selectedStream,
             'selectedDate' => $selectedDate,
+            'registerUrl' => $registerUrl,
         ]);
     }
 
@@ -264,20 +272,24 @@ class AttendanceController extends Controller
 
         $present = $students->where('status', 1)->count();
         $absent = $students->where('status', 0)->count();
+        $route = $this->registerRouteName();
 
         return view('teacher/attendance/register', [
             'scopeReady' => $scope['year'] !== null,
-            'sections' => $scope['sections'],
-            'streams' => $scope['streams'],
+            'sections' => $selection['classes'],
+            'streamChoices' => $selection['stream_choices'],
             'selectedSection' => $selection['section']?->id,
-            'selectedStream' => $selection['streams']->count() === 1 ? $selection['streams']->first()->id : null,
+            'selectedStream' => $selection['single_stream_id'],
             'selectedDate' => $selectedDate,
             'selectedSession' => $selectedSession,
-            'className' => $selection['section']?->name,
+            'className' => $selection['class_name'],
             'isClassHead' => $selection['is_class_head'],
+            'wholeClass' => $selection['whole_class'],
             'students' => $students,
             'presentCount' => $present,
             'absentCount' => $absent,
+            'filterUrl' => route($route),
+            'saveUrl' => route($route.'.save'),
         ]);
     }
 
@@ -325,10 +337,12 @@ class AttendanceController extends Controller
             ]);
         }
 
+        $postedSection = isset($validated['section_id']) ? (int) $validated['section_id'] : null;
+        $postedStream = isset($validated['standardLink_id']) ? (int) $validated['standardLink_id'] : null;
         $selection = $this->resolveRegisterSelection(
             $scope,
-            isset($validated['section_id']) ? (int) $validated['section_id'] : null,
-            isset($validated['standardLink_id']) ? (int) $validated['standardLink_id'] : null,
+            $postedSection > 0 ? $postedSection : null,
+            $postedStream > 0 ? $postedStream : null,
         );
 
         if ($selection['streams']->isEmpty()) {
@@ -410,9 +424,10 @@ class AttendanceController extends Controller
             'date' => $date->toDateString(),
             'session' => $validated['session'],
         ];
-        if ($selection['streams']->count() === 1) {
-            $params['standardLink_id'] = $selection['streams']->first()->id;
-        } elseif ($selection['section'] !== null) {
+        if ($selection['single_stream_id'] !== null) {
+            $params['standardLink_id'] = $selection['single_stream_id'];
+        }
+        if ($selection['section'] !== null) {
             $params['section_id'] = $selection['section']->id;
         }
 
@@ -453,13 +468,59 @@ class AttendanceController extends Controller
             return false;
         }
 
+        $structure = app(ClassStructureService::class);
+
         return Section::query()
             ->where('school_id', $schoolId)
             ->where('class_teacher_id', $userId)
             ->where(function ($query) {
                 $query->where('status', 1)->orWhere('status', '1');
             })
-            ->exists();
+            ->get()
+            ->contains(fn (Section $section) => $structure->isBaseSection($section));
+    }
+
+    /**
+     * Base classes this person heads: the undivided section, not a name-encoded stream.
+     *
+     * @return list<int>
+     */
+    private function headedBaseIds(int $schoolId, int $userId): array
+    {
+        $structure = app(ClassStructureService::class);
+        $ids = Section::query()
+            ->where('school_id', $schoolId)
+            ->where('class_teacher_id', $userId)
+            ->where(function ($query) {
+                $query->where('status', 1)->orWhere('status', '1');
+            })
+            ->get()
+            ->filter(fn (Section $section) => $structure->isBaseSection($section))
+            ->map(fn (Section $section) => (int) $section->id)
+            ->all();
+
+        $year = SiteHelper::getAcademicYear($schoolId);
+        if ($year) {
+            $fromLinks = StandardLink::query()
+                ->with('section')
+                ->where('school_id', $schoolId)
+                ->where('academic_year_id', $year->id)
+                ->where('class_teacher_id', $userId)
+                ->where(function ($query) {
+                    $query->where('status', 1)->orWhere('status', '1');
+                })
+                ->get();
+            foreach ($fromLinks as $link) {
+                if ($link->section && $structure->isBaseSection($link->section)) {
+                    $ids[] = (int) $link->section_id;
+                }
+            }
+        }
+
+        $ids = array_values(array_unique($ids));
+        sort($ids);
+
+        return $ids;
     }
 
     /**
@@ -535,11 +596,36 @@ class AttendanceController extends Controller
     }
 
     /**
+     * A class is the undivided base section. Its streams are name-encoded sections
+     * ("Primary Four E") and any extra standards_link rows on the base itself.
+     * Opening the register with no stream keeps every stream. It does not fall
+     * through to the first stream.
+     *
      * @param  array{year: ?\App\Models\AcademicYear, streams: \Illuminate\Support\Collection, sections: \Illuminate\Support\Collection, head_section_ids: list<int>}  $scope
-     * @return array{section: ?\App\Models\Section, streams: \Illuminate\Support\Collection, is_class_head: bool}
+     * @return array{
+     *     section: ?\App\Models\Section,
+     *     streams: \Illuminate\Support\Collection,
+     *     is_class_head: bool,
+     *     classes: \Illuminate\Support\Collection,
+     *     stream_choices: list<array{id: int, label: string, base_id: int}>,
+     *     single_stream_id: ?int,
+     *     class_name: ?string,
+     *     whole_class: bool
+     * }
      */
     private function resolveRegisterSelection(array $scope, ?int $sectionId, ?int $standardLinkId): array
     {
+        $empty = [
+            'section' => null,
+            'streams' => collect(),
+            'is_class_head' => false,
+            'classes' => collect(),
+            'stream_choices' => [],
+            'single_stream_id' => null,
+            'class_name' => null,
+            'whole_class' => false,
+        ];
+
         $schoolId = (int) ($scope['year']->school_id ?? 0);
         if ($schoolId > 0 && $standardLinkId !== null && $standardLinkId > 0) {
             $linkSchool = StandardLink::query()->whereKey($standardLinkId)->value('school_id');
@@ -554,51 +640,140 @@ class AttendanceController extends Controller
             }
         }
 
-        $streams = $scope['streams'];
-        if ($streams->isEmpty()) {
-            return ['section' => null, 'streams' => collect(), 'is_class_head' => false];
+        $groups = $this->classGroups($scope);
+        if ($groups->isEmpty()) {
+            return $empty;
+        }
+
+        $classes = $groups->map(fn (array $group) => $group['section'])->values();
+        $choices = [];
+        foreach ($groups as $baseId => $group) {
+            foreach ($group['links'] as $link) {
+                $label = $this->streamLabel($group['section'], $link);
+                if ($label === '—') {
+                    continue;
+                }
+                $choices[] = [
+                    'id' => (int) $link->id,
+                    'label' => $label,
+                    'base_id' => (int) $baseId,
+                ];
+            }
+        }
+
+        $userId = (int) Auth::id();
+        $headed = $this->headedBaseIds($schoolId, $userId);
+        $headed = array_values(array_filter($headed, fn (int $id) => $groups->has($id)));
+
+        if (($sectionId === null || $sectionId <= 0) && ($standardLinkId === null || $standardLinkId <= 0)) {
+            if ($headed !== []) {
+                $sectionId = $headed[0];
+            } elseif ($this->mayTakeAnyRegister($schoolId, $userId)) {
+                $sectionId = (int) $classes->first()->id;
+            } else {
+                $standardLinkId = (int) $groups->first()['links']->first()->id;
+            }
         }
 
         if ($standardLinkId !== null && $standardLinkId > 0) {
-            $stream = $streams->firstWhere('id', $standardLinkId);
+            $stream = $scope['streams']->firstWhere('id', $standardLinkId);
             if ($stream === null) {
                 abort(403, 'You are not allowed to record attendance for this class.');
             }
+            $base = $this->baseOf($stream->section);
+            $group = $groups->get((int) $base->id);
+            $label = $this->streamLabel($base, $stream);
 
             return [
-                'section' => $stream->section,
+                'section' => $base,
                 'streams' => collect([$stream]),
-                'is_class_head' => in_array((int) $stream->section_id, $scope['head_section_ids'], true),
+                'is_class_head' => in_array((int) $base->id, $headed, true),
+                'classes' => $classes,
+                'stream_choices' => $choices,
+                'single_stream_id' => (int) $stream->id,
+                'class_name' => trim($base->name.($label !== '' && $label !== '—' ? ' · '.$label : '')),
+                'whole_class' => false,
             ];
         }
 
-        if ($sectionId !== null && $sectionId > 0) {
-            $section = $scope['sections']->firstWhere('id', $sectionId);
-            if ($section === null) {
-                abort(403, 'You are not allowed to record attendance for this class.');
+        $requested = $sectionId !== null ? Section::query()->where('school_id', $schoolId)->whereKey($sectionId)->first() : null;
+        if ($requested === null) {
+            abort(403, 'You are not allowed to record attendance for this class.');
+        }
+        $base = $this->baseOf($requested);
+        $group = $groups->get((int) $base->id);
+        if ($group === null) {
+            abort(403, 'You are not allowed to record attendance for this class.');
+        }
+
+        $links = $group['links']->values();
+        $whole = $links->count() > 1 || in_array((int) $base->id, $headed, true) || $this->mayTakeAnyRegister($schoolId, $userId);
+
+        return [
+            'section' => $base,
+            'streams' => $links,
+            'is_class_head' => in_array((int) $base->id, $headed, true) || $this->mayTakeAnyRegister($schoolId, $userId),
+            'classes' => $classes,
+            'stream_choices' => $choices,
+            'single_stream_id' => $links->count() === 1 ? (int) $links->first()->id : null,
+            'class_name' => (string) $base->name,
+            'whole_class' => $whole && $links->count() > 1,
+        ];
+    }
+
+    /**
+     * @param  array{year: ?\App\Models\AcademicYear, streams: \Illuminate\Support\Collection, sections: \Illuminate\Support\Collection, head_section_ids: list<int>}  $scope
+     * @return \Illuminate\Support\Collection<int, array{section: \App\Models\Section, links: \Illuminate\Support\Collection<int, StandardLink>}>
+     */
+    private function classGroups(array $scope): \Illuminate\Support\Collection
+    {
+        $groups = [];
+        foreach ($scope['streams'] as $link) {
+            if (! $link->section) {
+                continue;
             }
-
-            $isClassHead = in_array((int) $section->id, $scope['head_section_ids'], true);
-            $sectionStreams = $isClassHead
-                ? StandardLink::query()
-                    ->with(['section', 'standard'])
-                    ->where('school_id', (int) $section->school_id)
-                    ->where('academic_year_id', (int) $scope['year']->id)
-                    ->where('status', 1)
-                    ->where('section_id', (int) $section->id)
-                    ->orderBy('stream')
-                    ->get()
-                : $streams->where('section_id', (int) $section->id)->values();
-
-            return ['section' => $section, 'streams' => $sectionStreams, 'is_class_head' => $isClassHead];
+            $base = $this->baseOf($link->section);
+            $id = (int) $base->id;
+            if (! isset($groups[$id])) {
+                $groups[$id] = ['section' => $base, 'links' => collect()];
+            }
+            $groups[$id]['links']->push($link);
         }
 
-        $headSectionId = $scope['head_section_ids'][0] ?? null;
-        if ($headSectionId !== null && $scope['sections']->contains('id', $headSectionId)) {
-            return $this->resolveRegisterSelection($scope, (int) $headSectionId, null);
+        return collect($groups)
+            ->sortBy(fn (array $group) => mb_strtolower((string) $group['section']->name))
+            ->map(function (array $group) {
+                $group['links'] = $group['links']
+                    ->sortBy(fn (StandardLink $link) => $this->streamLabel($group['section'], $link))
+                    ->values();
+
+                return $group;
+            });
+    }
+
+    private function baseOf(Section $section): Section
+    {
+        $base = app(ClassStructureService::class)->resolveBaseSection($section);
+
+        return (int) $base->school_id === (int) $section->school_id ? $base : $section;
+    }
+
+    private function streamLabel(Section $base, StandardLink $link): string
+    {
+        $stored = trim((string) ($link->stream ?? ''));
+        if ($stored !== '') {
+            return $stored;
         }
 
-        return $this->resolveRegisterSelection($scope, null, (int) $streams->first()->id);
+        $section = $link->section;
+        $name = trim((string) ($section?->name ?? ''));
+        $baseName = trim((string) $base->name);
+        $prefix = $baseName.' ';
+        if ($name !== '' && $baseName !== '' && str_starts_with($name, $prefix)) {
+            return trim(substr($name, strlen($prefix)));
+        }
+
+        return '—';
     }
 
     /**
@@ -642,13 +817,16 @@ class AttendanceController extends Controller
                 }
 
                 $record = $existing->get($row->user_id);
-                $stream = trim((string) ($row->standardLink?->section?->name ?? '').' '.(string) ($row->standardLink?->stream ?? ''));
+                $label = '—';
+                if ($row->standardLink?->section) {
+                    $label = $this->streamLabel($this->baseOf($row->standardLink->section), $row->standardLink);
+                }
 
                 return [
                     'user_id' => (int) $row->user_id,
                     'name' => $name,
                     'stream_id' => (int) $row->standardLink_id,
-                    'stream' => $stream !== '' ? $stream : 'No stream',
+                    'stream' => $label,
                     'status' => $record ? (int) $record->status : 1,
                     'comment' => (string) ($record->remarks ?? ''),
                 ];

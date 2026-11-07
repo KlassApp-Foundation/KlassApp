@@ -55,7 +55,7 @@ final class TeacherHomeBoard
             'week_total' => $head ? count($this->studentIds($schoolId, $yearId, [(int) $head->id])) : 0,
             'streams' => $this->streams($schoolId, $yearId, $links),
             'empty' => $links->isEmpty(),
-            'attendance_url' => route('teacher.attendance.register'),
+            'attendance_url' => $this->attendanceUrl($head),
             'marks_url' => route('teacher.exam.marks'),
         ];
     }
@@ -335,6 +335,20 @@ final class TeacherHomeBoard
         $gender = mb_strtolower(trim((string) $user->userprofile?->gender));
 
         return in_array($gender, ['m', 'male', 'boy', 'man'], true);
+    }
+
+    private function attendanceUrl(?StandardLink $head): string
+    {
+        if ($head === null || $head->section === null) {
+            return route('teacher.attendance.register');
+        }
+
+        $base = app(\App\Services\ClassStructureService::class)->resolveBaseSection($head->section);
+        if ((int) $base->school_id !== (int) $head->section->school_id) {
+            $base = $head->section;
+        }
+
+        return route('teacher.attendance.register', ['section_id' => $base->id]);
     }
 
     private function className(StandardLink $link): string

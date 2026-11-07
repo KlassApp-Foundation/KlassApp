@@ -44,7 +44,7 @@
         </div>
     @endif
 
-    <form method="GET" action="{{ route('teacher.attendance.register') }}" class="ds-card ds-card-padding-default mt-6" data-testid="attendance-filters">
+    <form method="GET" action="{{ $filterUrl }}" class="ds-card ds-card-padding-default mt-6" data-testid="attendance-filters">
         <div class="grid gap-4 md:grid-cols-4">
             <label class="block">
                 <span class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Class</span>
@@ -56,11 +56,11 @@
             </label>
             <label class="block">
                 <span class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Stream</span>
-                <select name="standardLink_id" id="attendance-stream" class="ds-form-input ds-form-select w-full">
+                <select name="standardLink_id" id="attendance-stream" class="ds-form-input ds-form-select w-full" data-testid="attendance-stream-filter">
                     <option value="">{{ $isClassHead ? 'Whole class' : 'All my streams' }}</option>
-                    @foreach ($streams as $stream)
-                        <option value="{{ $stream->id }}" data-section="{{ $stream->section_id }}" @selected((int) $selectedStream === (int) $stream->id)>
-                            {{ trim(($stream->section?->name ?? '').' '.($stream->stream ?? '')) ?: 'No stream' }}
+                    @foreach ($streamChoices as $choice)
+                        <option value="{{ $choice['id'] }}" data-section="{{ $choice['base_id'] }}" @selected((int) $selectedStream === (int) $choice['id'])>
+                            {{ $choice['label'] }}
                         </option>
                     @endforeach
                 </select>
@@ -100,7 +100,7 @@
             </p>
         </div>
     @else
-        <form method="POST" action="{{ route('teacher.attendance.register.save') }}" data-testid="attendance-form">
+        <form method="POST" action="{{ $saveUrl }}" data-testid="attendance-form">
             @csrf
             <input type="hidden" name="section_id" value="{{ $selectedSection }}">
             <input type="hidden" name="standardLink_id" value="{{ $selectedStream }}">
@@ -112,11 +112,11 @@
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <div>
                         <h2 class="text-lg font-semibold" data-testid="attendance-class-name">
-                            {{ $className ?: 'Your class' }}@if (! empty($selectedStream) && $selectedStream !== null) <span class="text-sm font-normal" style="color: var(--d-muted);">· one stream</span>@endif
+                            {{ $className ?: 'Your class' }}@if (! $wholeClass && $selectedStream) <span class="text-sm font-normal" style="color: var(--d-muted);">· one stream</span>@endif
                         </h2>
                         <p class="mt-1 text-sm" style="color: var(--d-muted);">
                             {{ \Carbon\Carbon::parse($selectedDate)->format('l, j M Y') }} · {{ $selectedSession === 'afternoon' ? 'Afternoon' : 'Morning' }}
-                            @if ($isClassHead) · class head: every stream @endif
+                            @if ($wholeClass && $isClassHead) · class head: every stream @endif
                         </p>
                     </div>
                     <p class="text-sm font-semibold">
@@ -134,7 +134,7 @@
                         <div data-attendance-row data-status="{{ $status }}" data-user-id="{{ $student['user_id'] }}" data-testid="attendance-row">
                             <div class="min-w-0">
                                 <p class="truncate text-sm font-semibold" data-testid="attendance-student-name">{{ $student['name'] }}</p>
-                                <p class="truncate text-xs" style="color: var(--d-muted);">{{ $student['stream'] }}</p>
+                                <p class="truncate text-xs" style="color: var(--d-muted);" data-testid="attendance-stream-label">Stream {{ $student['stream'] }}</p>
                             </div>
                             <div class="flex gap-2" role="radiogroup" aria-label="{{ $student['name'] }} was">
                                 <label class="attendance-choice" data-choice="present">
@@ -161,7 +161,10 @@
                     <span data-absent-count>{{ $absentCount }}</span> absent
                     · <span class="font-semibold">{{ $students->count() }}</span> students
                 </p>
-                <button type="submit" class="ds-btn ds-btn-primary ds-btn-md" data-testid="save-attendance">Save attendance</button>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" class="ds-btn ds-btn-outline ds-btn-md" data-testid="mark-all-present">Mark all present</button>
+                    <button type="submit" class="ds-btn ds-btn-primary ds-btn-md" data-testid="save-attendance">Save attendance</button>
+                </div>
             </div>
         </form>
     @endif
@@ -221,6 +224,18 @@
             });
             Array.prototype.forEach.call(document.querySelectorAll('[data-present-count]'), function (el) { el.textContent = present; });
             Array.prototype.forEach.call(document.querySelectorAll('[data-absent-count]'), function (el) { el.textContent = absent; });
+        }
+
+        var markAll = document.querySelector('[data-testid="mark-all-present"]');
+        if (markAll) {
+            markAll.addEventListener('click', function () {
+                rows.forEach(function (row) {
+                    var present = row.querySelector('input[type="radio"][value="1"]');
+                    if (present) present.checked = true;
+                    paint(row);
+                });
+                counts();
+            });
         }
 
         rows.forEach(function (row) {
