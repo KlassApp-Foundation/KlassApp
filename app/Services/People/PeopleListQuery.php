@@ -71,9 +71,12 @@ class PeopleListQuery
                     ['text' => $student->status === 'active' ? 'Active' : 'Inactive', 'badge' => $student->status === 'active' ? 'ok' : 'off'],
                 ],
                 'menu' => [
-                    ['label' => 'View profile', 'href' => url('/admin/student/show/'.$student->name)],
-                    ['label' => 'Edit', 'href' => url('/admin/student/edit/'.$student->name)],
-                    ['label' => 'Move to class', 'href' => url('/admin/student/edit/'.$student->name)],
+                    ['label' => 'Open profile', 'href' => url('/admin/students/'.$student->id)],
+                    ['label' => 'Record marks', 'href' => url('/admin/students/'.$student->id).'?action=marks'],
+                    ['label' => 'Record attendance', 'href' => (int) ($student->class_link_id ?? 0) > 0
+                        ? route('admin.attendance.register', ['standardLink_id' => (int) $student->class_link_id])
+                        : url('/admin/students/'.$student->id).'?action=attendance'],
+                    ['label' => 'Record a payment', 'href' => url('/admin/students/'.$student->id).'?action=pay'],
                     ['label' => 'Message parent', 'href' => $parent ? url('/admin/parent/show/'.$parent['slug']) : url('/admin/parents')],
                 ],
             ];

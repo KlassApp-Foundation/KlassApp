@@ -5219,6 +5219,13 @@ td a.btn-danger:hover {
 .family-bar__fill { width: 100%; background: #15803D; border-radius: 6px 6px 0 0; }
 .teacher-row { border-top: 1px solid #E2E8F0; padding-top: 8px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
 .teacher-actions > a { min-height: 44px; }
+.family-scroll { overflow-x: auto; max-width: 100%; }
+.family-scroll table { min-width: 36rem; border-collapse: collapse; }
+.family-scroll th, .family-scroll td { white-space: nowrap; padding: 8px 10px; text-align: left; }
+.roster-simple-form { display: flex; flex-direction: column; gap: 12px; max-width: 32rem; width: 100%; }
+.roster-simple-form label { display: flex; flex-direction: column; gap: 4px; font-weight: 600; color: #1E293B; }
+.roster-simple-form .ds-input { width: 100%; max-width: 100%; box-sizing: border-box; min-height: 44px; }
+.roster-simple-error { margin: 0; color: #B91C1C; font-size: 0.85rem; }
 @media (max-width: 767px) {
     .family-page { padding: 0; }
     .family-main { border-radius: 0; border-left: 0; border-right: 0; padding: 16px; }

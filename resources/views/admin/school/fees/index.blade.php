@@ -38,8 +38,8 @@
         @else
             <section class="family-table-card">
                 <h2>Fee structure</h2>
-                <div style="overflow-x:auto;">
-                    <table style="width:100%;border-collapse:collapse;">
+                <div class="family-scroll">
+                    <table>
                         <thead>
                             <tr>
                                 <th>Fee</th><th>Amount</th><th>Duration</th><th>Applies to</th><th>Actions</th>
@@ -64,7 +64,7 @@
                 @if($classTotals === [])
                     <p>Add classes to see a total for each one.</p>
                 @else
-                    <table style="width:100%;border-collapse:collapse;">
+                    <div class="family-scroll"><table>
                         <thead><tr><th>Classes</th><th>Term total</th><th>Year total</th></tr></thead>
                         <tbody>
                             @foreach($classTotals as $row)
@@ -75,7 +75,7 @@
                                 </tr>
                             @endforeach
                         </tbody>
-                    </table>
+                    </table></div>
                 @endif
                 <p>Termly fees count every term. Yearly fees count in Term 1 only. One-off fees count once, in the term they're charged.</p>
             </section>

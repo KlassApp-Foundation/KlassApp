@@ -416,8 +416,50 @@ class AttendanceController extends Controller
             $params['section_id'] = $selection['section']->id;
         }
 
-        return redirect()->route('teacher.attendance.register', $params)
+        return redirect()->route($this->registerRouteName(), $params)
             ->with('successmessage', 'Attendance saved for '.$saved.' '.(($saved === 1) ? 'student' : 'students').'.');
+    }
+
+    /**
+     * Admins and class heads use the same register. A save from the admin
+     * address stays on that address.
+     */
+    private function registerRouteName(): string
+    {
+        $name = (string) optional(request()->route())->getName();
+
+        return str_starts_with($name, 'admin.attendance.register')
+            ? 'admin.attendance.register'
+            : 'teacher.attendance.register';
+    }
+
+    /**
+     * School admins and a class head (sections.class_teacher_id) may open any
+     * class or stream in their own school. A stream teacher keeps the
+     * attendance_scope list.
+     */
+    private function mayTakeAnyRegister(int $schoolId, int $userId): bool
+    {
+        $user = Auth::user();
+        if ($user === null || (int) $user->id !== $userId || (int) $user->school_id !== $schoolId) {
+            return false;
+        }
+
+        if (in_array((int) $user->usergroup_id, [3, 4], true)) {
+            return true;
+        }
+
+        if ((int) $user->usergroup_id !== 5) {
+            return false;
+        }
+
+        return Section::query()
+            ->where('school_id', $schoolId)
+            ->where('class_teacher_id', $userId)
+            ->where(function ($query) {
+                $query->where('status', 1)->orWhere('status', '1');
+            })
+            ->exists();
     }
 
     /**
@@ -430,6 +472,28 @@ class AttendanceController extends Controller
         $year = SiteHelper::getAcademicYear($schoolId);
         if (! $year) {
             return ['year' => null, 'streams' => collect(), 'sections' => collect(), 'head_section_ids' => []];
+        }
+
+        if ($this->mayTakeAnyRegister($schoolId, $teacherId)) {
+            $streams = StandardLink::query()
+                ->with(['section', 'standard'])
+                ->where('school_id', $schoolId)
+                ->where('academic_year_id', $year->id)
+                ->where(function ($query) {
+                    $query->where('status', 1)->orWhere('status', '1');
+                })
+                ->get()
+                ->sortBy(fn (StandardLink $link) => trim((string) ($link->section?->name ?? '')).'|'.trim((string) ($link->stream ?? '')))
+                ->values();
+
+            $sections = $streams->pluck('section')->filter()->unique('id')->sortBy('name')->values();
+
+            return [
+                'year' => $year,
+                'streams' => $streams,
+                'sections' => $sections,
+                'head_section_ids' => $sections->pluck('id')->map(fn ($id) => (int) $id)->all(),
+            ];
         }
 
         $allowed = SiteHelper::attendanceScopeStandardLinks($schoolId, $teacherId);
@@ -476,6 +540,20 @@ class AttendanceController extends Controller
      */
     private function resolveRegisterSelection(array $scope, ?int $sectionId, ?int $standardLinkId): array
     {
+        $schoolId = (int) ($scope['year']->school_id ?? 0);
+        if ($schoolId > 0 && $standardLinkId !== null && $standardLinkId > 0) {
+            $linkSchool = StandardLink::query()->whereKey($standardLinkId)->value('school_id');
+            if ($linkSchool !== null && (int) $linkSchool !== $schoolId) {
+                abort(403, 'You are not allowed to record attendance for this class.');
+            }
+        }
+        if ($schoolId > 0 && $sectionId !== null && $sectionId > 0) {
+            $sectionSchool = Section::query()->whereKey($sectionId)->value('school_id');
+            if ($sectionSchool !== null && (int) $sectionSchool !== $schoolId) {
+                abort(403, 'You are not allowed to record attendance for this class.');
+            }
+        }
+
         $streams = $scope['streams'];
         if ($streams->isEmpty()) {
             return ['section' => null, 'streams' => collect(), 'is_class_head' => false];

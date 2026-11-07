@@ -18,7 +18,7 @@ class StudentsRosterKitContractTest extends TestCase
         $this->assertStringContainsString('x-people-list', $blade);
         $this->assertStringContainsString('}} match', $component);
         $this->assertStringContainsString('data-people-check', $component);
-        $this->assertStringContainsString('/admin/student/edit/', file_get_contents(app_path('Services/People/PeopleListQuery.php')));
+        $this->assertStringContainsString('?action=marks', file_get_contents(app_path('Services/People/PeopleListQuery.php')));
     }
 
     public function test_x_table_still_emits_ds_table_ledger_for_pulse(): void

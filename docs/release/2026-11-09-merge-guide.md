@@ -214,7 +214,40 @@ Who sees which exam: `markableExams()` (`TeacherHomeBoard.php:117-140`) is this 
 
 **Local tests for this pass** (PHP 8.4.27, PHPUnit, sqlite `:memory:`): teacher dashboard files 33 tests / 151 assertions before the register-URL assertion; after it, `TeacherHomeMarksTilesTest`, `ClassReportClassOrderTest`, `CountryDefaultTest`, `CountryDefaultServiceContractTest`, the yearly-fee test, the import-failure test and the history class-order test together were 26 tests / 232 assertions, 0 failures. An earlier combined run of the integration trio, exam-set redirect, class-marks order and the teacher files was 52 tests / 273 assertions, 0 failures. No MySQL in this session. No browser session.
 
-**Not a code blocker, do not treat as done.** This PR stays a draft. Nothing was merged or deployed. `docs/release/2026-11-09-deploy-runbook.md` still says the teacher home dropped these tiles; that file was left unchanged on purpose. CI for the commit that adds this audit is the GitHub check run on #1285, not the `bae6afe4` result in section 6.
+**Not a code blocker, do not treat as done.** This PR stays a draft. Nothing was merged or deployed. `docs/release/2026-11-09-deploy-runbook.md` still says the teacher home dropped these tiles; that file was left unchanged on purpose. CI for `1b9d080d` (the teacher-home commit) finished green: check, mysql-84-migrations, reference-seed, scan, secret scan, and test-guard. GitBook also passed. That run is not this later pass.
+
+## 4b. 7 November, second pass
+
+Still only `integration/monday-2026-11-09`. No deploy, no runbook edit, no push to another branch.
+
+**Student list menu.** Edit and Move to class are gone. Each row now has Open profile, Record marks, Record attendance, Record a payment (`PeopleListQuery.php:74-79`). Marks and payment open that student's profile dialogs (`profile.blade.php` reads `?action=`). Attendance opens the one-click register on that student's stream (`admin.attendance.register`). Tests: `PeopleListTest::test_student_row_shows_kls_class_and_parent_and_links_to_the_profile`, `SimpleRosterFormTest::test_each_row_action_opens_a_real_page_for_this_student`.
+
+**Attendance.** A school admin (groups 3 and 4) and a class head (`sections.class_teacher_id`) may open any class or stream in their own school (`AttendanceController.php:441-462` and `:477-496`). Admin routes: `routes/admin.php:580-581`. A stream teacher keeps the old attendance scope. Another school's class is refused. Tests: `SchoolRegisterAccessTest` and the existing `AttendanceRegisterTest`.
+
+**Edit forms.** The student form asks for name, class, stream, gender, date of birth, parent name, and parent phone (`resources/views/admin/students/simple-edit.blade.php`, `StudentController.php:295` and `:327`, `SimpleRosterForm.php`). The parent form asks for name, phone, and email (`resources/views/admin/parent/edit.blade.php`). Those columns match the student upload template (`StudentUploadTemplateService.php:103-114`) and the parent import (name, phone, email). The parent phone is stored on the parent, not the student. Class and stream must already exist this year. Address, notes, LIN, school student id, and the student's own phone stay as stored. Tests: `SimpleRosterFormTest`.
+
+**Fees table.** On a phone the fee tables were squeezing "Applies to". They now scroll inside `.family-scroll` (`dashboard-refresh.css`, `fees/index.blade.php`).
+
+**Visual audit.** Local only. `php artisan serve` on sqlite, seeded with `ReferenceSeeder` and `DemoJuniorSchoolSeeder` (school slug `demo-junior-school`, synthetic). Chrome, after hydration, viewports 1280×800 and 375×812. No page-level horizontal overflow and no content under the sidebar. The edge "K" is the Toshi handle. Shots are under `/opt/cursor/artifacts/visual-audit/` and are attached on the PR comment.
+
+| Screen | Route | Role | 1280 | 375 | Finding |
+|---|---|---|---|---|---|
+| Exam sets | `/admin/exams/sets` | admin | 200 | 200 | Empty Term III state, layout holds |
+| Marks entry | `/teacher/exam/marks` | teacher | 200 | 200 | Populated exam list |
+| Marks grid | `/teacher/exam/132/marks/enter` | teacher | 200 | 200 | Teacher's own exam; an unrelated exam id is 403 |
+| Approvals | `/admin/approvals` | admin | 200 | 200 | Empty queue |
+| Mark sheet | `/teacher/marks/sheet` | teacher | 200 | 200 | Filter prompt, no overflow |
+| Class marks | `/admin/marks/classes` | admin | 200 | 200 | Class list in level order |
+| Marks Release | `/admin/marks/releases/new` | admin | 200 | 200 | Sheet scrolls inside the page |
+| Report cards | `/admin/reports/cards` | admin | 200 | 200 | Class screen |
+| Student profile | `/admin/students/16` | admin | 200 | 200 | Tabs scroll sideways on a phone |
+| Fees | `/admin/fees-categories` | admin | 200 | 200 | Phone table scrolled after the fix (`fees-375-before.png`) |
+| Teacher home | `/teacher/dashboard` | teacher | 200 | 200 | Marks tiles and Marks Release inside the page 8 board |
+| Parent portal | `/parent/dashboard` | parent | 200 | 200 | Two children |
+| Student portal | `/student/dashboard` | student | 200 | 200 | Marks, attendance, fees cards |
+| Import students | `/admin/students/import` | admin | 200 | 200 | Template and upload |
+
+Local PHPUnit for this pass (sqlite memory): `SimpleRosterFormTest`, `SchoolRegisterAccessTest`, `PeopleListTest`, `StudentsRosterKitContractTest`, `AttendanceRegisterTest`, `ParentCrossSchoolIsolationTest`. The browser pass is separate from those tests and from CI.
 
 ## 5. Things lost or changed by choosing one side
 

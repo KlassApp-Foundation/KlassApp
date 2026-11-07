@@ -18,6 +18,9 @@
         if (in_array($key, ['date', 'status', 'comment'], true)) { $openDialog = 'attendance'; break; }
         if ($key === 'photo') { $openDialog = 'photo'; break; }
     }
+    if ($openDialog === null && in_array((string) request()->query('action'), ['pay', 'marks', 'attendance'], true)) {
+        $openDialog = (string) request()->query('action');
+    }
     $oldSitting = old('sitting', $sittings[0]['key'] ?? '');
     $defaultAmount = $fees['owed'] > 0 ? number_format($fees['owed']) : '';
     $genericError = $errors->first();

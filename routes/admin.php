@@ -576,6 +576,9 @@ Route::get( '/downloadformat', 'ImportMemberController@downloadFormat' );
     Route::post( '/studenthomework/edit/{id}', 'StudentHomeworkController@update' );
 
 //attendance
+	// One-click register (#1277), for a school admin, any class in this school.
+	Route::get('/attendance/register', [\App\Http\Controllers\Teacher\AttendanceController::class, 'register'])->name('admin.attendance.register');
+	Route::post('/attendance/register', [\App\Http\Controllers\Teacher\AttendanceController::class, 'saveRegister'])->name('admin.attendance.register.save');
 	//add
 	Route::get('/attendance', 'AttendanceController@index');
 	Route::get( '/attendance/list', 'AttendanceController@list' );
