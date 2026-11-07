@@ -195,9 +195,10 @@ class StudentMarksDraftService
     }
 
     /**
-     * The student's own section, plus the base class when the student is on
-     * a stream. Sibling streams stay out. Exams for the class are stored on
-     * the base section; stream sections often have none.
+     * Enrolment link, then that link's section, then the same
+     * ClassStructureService::resolveBaseSection the marks roster uses.
+     * Exams on the base section are included. Exams on the student's own
+     * stream stay. A sibling stream's exams do not.
      *
      * @return list<int>
      */

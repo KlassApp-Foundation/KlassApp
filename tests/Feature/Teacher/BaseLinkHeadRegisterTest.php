@@ -194,6 +194,24 @@ class BaseLinkHeadRegisterTest extends TestCase
         $this->actingAs($this->westTeacher)
             ->get(route('teacher.attendance.register', ['standardLink_id' => $this->eastLink->id]))
             ->assertForbidden();
+
+        $westBase = $this->actingAs($this->westTeacher)
+            ->get(route('teacher.attendance.register', ['section_id' => $this->base->id]))
+            ->assertOk();
+        $this->assertSame(58, substr_count($westBase->getContent(), 'data-testid="attendance-row"'));
+        $westBase->assertDontSee('EAST 1');
+        $this->assertNotContains('E', $this->streamOptionLabels($westBase->getContent()));
+
+        $this->actingAs($this->westTeacher)->post(route('teacher.attendance.register.save'), [
+            'section_id' => $this->base->id,
+            'standardLink_id' => $this->eastLink->id,
+            'date' => now()->toDateString(),
+            'session' => 'forenoon',
+            'rows' => [
+                $this->eastIds[0] => ['status' => '0', 'comment' => ''],
+            ],
+        ])->assertForbidden();
+        $this->assertSame(0, Attendance::query()->count());
     }
 
     public function test_saving_one_stream_does_not_write_the_other_and_the_other_school_stays_out(): void
@@ -317,10 +335,60 @@ class BaseLinkHeadRegisterTest extends TestCase
         $this->actingAs($this->head)
             ->get(route('teacher.attendance.register', ['standardLink_id' => $sevenLink->id]))
             ->assertForbidden();
+        $this->actingAs($this->head)->post(route('teacher.attendance.register.save'), [
+            'standardLink_id' => $sevenLink->id,
+            'date' => now()->toDateString(),
+            'session' => 'forenoon',
+            'rows' => [
+                $sevenPupil->id => ['status' => '1', 'comment' => ''],
+            ],
+        ])->assertForbidden();
+        $this->assertSame(0, Attendance::query()->where('user_id', $sevenPupil->id)->count());
         $this->actingAs($this->head)
             ->get(route('teacher.attendance.register'))
             ->assertOk()
             ->assertDontSee('SEVEN');
+    }
+
+    public function test_a_base_section_head_gets_only_that_class(): void
+    {
+        $sevenBase = Section::create([
+            'school_id' => $this->school->id, 'name' => 'Primary Seven', 'status' => 1, 'class_teacher_id' => null,
+        ]);
+        $sevenEast = Section::create([
+            'school_id' => $this->school->id, 'name' => 'Primary Seven E', 'status' => 1,
+        ]);
+        $sevenWest = Section::create([
+            'school_id' => $this->school->id, 'name' => 'Primary Seven W', 'status' => 1,
+        ]);
+        $sectionHead = $this->user(5, 'Seven Head');
+        $sevenBase->forceFill(['class_teacher_id' => $sectionHead->id])->save();
+        $this->link($sevenBase, null, $this->year);
+        $sevenEastLink = $this->link($sevenEast, null, $this->year);
+        $sevenWestLink = $this->link($sevenWest, null, $this->year);
+        $this->students($sevenEastLink, 'SEVENE', 2);
+        $this->students($sevenWestLink, 'SEVENW', 2);
+
+        $page = $this->actingAs($sectionHead)->get(route('teacher.attendance.register'))->assertOk();
+        $this->assertSame(4, substr_count($page->getContent(), 'data-testid="attendance-row"'));
+        $page->assertSee('SEVENE 1');
+        $page->assertSee('SEVENW 1');
+        $page->assertDontSee('EAST 1');
+        $page->assertDontSee('WEST 1');
+        $this->assertSame(['Whole class', 'E', 'W'], $this->streamOptionLabels($page->getContent()));
+
+        $this->actingAs($sectionHead)
+            ->get(route('teacher.attendance.register', ['standardLink_id' => $this->eastLink->id]))
+            ->assertForbidden();
+        $this->actingAs($sectionHead)->post(route('teacher.attendance.register.save'), [
+            'standardLink_id' => $this->eastLink->id,
+            'date' => now()->toDateString(),
+            'session' => 'forenoon',
+            'rows' => [
+                $this->eastIds[0] => ['status' => '1', 'comment' => ''],
+            ],
+        ])->assertForbidden();
+        $this->assertSame(0, Attendance::query()->where('user_id', $this->eastIds[0])->count());
     }
 
     public function test_a_subject_assignment_does_not_open_another_stream(): void

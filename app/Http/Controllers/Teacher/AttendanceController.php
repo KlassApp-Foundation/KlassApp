@@ -234,8 +234,8 @@ class AttendanceController extends Controller
      * One-click register: every student in the class or stream, Present by
      * default, one tap to mark Absent, an optional comment, one save.
      *
-     * A class head (sections.class_teacher_id) gets every stream of the
-     * section. A stream teacher gets the streams the school's attendance
+     * A class head gets every stream of the base they head, and no other
+     * class. A stream teacher gets the streams the school's attendance
      * scope already allows; under classes_i_teach that includes the streams
      * they subject-teach, never another teacher's class.
      */
@@ -449,9 +449,9 @@ class AttendanceController extends Controller
     }
 
     /**
-     * School admins and a class head (sections.class_teacher_id) may open any
-     * class or stream in their own school. A stream teacher keeps the
-     * attendance_scope list.
+     * School admins may open any class in their own school. A class head does
+     * not use this path: headedBaseIds() limits them to the streams of the
+     * base they head.
      */
     private function mayTakeAnyRegister(int $schoolId, int $userId): bool
     {
@@ -460,24 +460,7 @@ class AttendanceController extends Controller
             return false;
         }
 
-        if (in_array((int) $user->usergroup_id, [3, 4], true)) {
-            return true;
-        }
-
-        if ((int) $user->usergroup_id !== 5) {
-            return false;
-        }
-
-        $structure = app(ClassStructureService::class);
-
-        return Section::query()
-            ->where('school_id', $schoolId)
-            ->where('class_teacher_id', $userId)
-            ->where(function ($query) {
-                $query->where('status', 1)->orWhere('status', '1');
-            })
-            ->get()
-            ->contains(fn (Section $section) => $structure->isBaseSection($section));
+        return in_array((int) $user->usergroup_id, [3, 4], true);
     }
 
     /**
@@ -742,66 +725,69 @@ class AttendanceController extends Controller
         }
 
         $structure = app(ClassStructureService::class);
-        $sectionIds = [];
-        $sections = Section::query()->where('school_id', $schoolId)->whereIn('id', $baseIds)->get();
-        foreach ($sections as $section) {
-            foreach ($structure->classSectionIds($section) as $id) {
-                $sectionIds[] = (int) $id;
-            }
-        }
-        $sectionIds = array_values(array_unique($sectionIds));
-        if ($sectionIds === []) {
-            return $streams->values();
-        }
-
         $extra = StandardLink::query()
             ->with(['section', 'standard'])
             ->where('school_id', $schoolId)
             ->where('academic_year_id', $year->id)
-            ->whereIn('section_id', $sectionIds)
             ->where(function ($query) {
                 $query->where('status', 1)->orWhere('status', '1');
             })
-            ->get();
+            ->get()
+            ->filter(function (StandardLink $link) use ($structure, $baseIds, $schoolId) {
+                $section = $link->section;
+                if ($section === null || (int) $section->school_id !== $schoolId) {
+                    return false;
+                }
+                $base = $structure->resolveBaseSection($section);
+
+                return (int) $base->school_id === $schoolId
+                    && in_array((int) $base->id, $baseIds, true);
+            });
 
         return $streams->merge($extra)->unique('id')->values();
     }
 
     /**
-     * Whole class means every stream section of this base is on the register.
-     * A base link plus one stream is not the whole class.
+     * Whole class means every real stream of this base is on the register.
+     * The empty base link (label "—", no students) is not a stream, and a
+     * link count is not the test.
      *
      * @param  \Illuminate\Support\Collection<int, StandardLink>  $links
      */
     private function coversEveryStream(Section $base, $links, int $schoolId, int $yearId): bool
     {
-        $named = array_values(array_filter(
-            app(ClassStructureService::class)->classSectionIds($base),
-            fn (int $id) => $id !== (int) $base->id
-        ));
-
-        if ($named === []) {
-            return $links->count() > 1;
-        }
-
-        $active = StandardLink::query()
+        $structure = app(ClassStructureService::class);
+        $streamIds = StandardLink::query()
+            ->with('section')
             ->where('school_id', $schoolId)
             ->where('academic_year_id', $yearId)
-            ->whereIn('section_id', $named)
             ->where(function ($query) {
                 $query->where('status', 1)->orWhere('status', '1');
             })
-            ->pluck('section_id')
-            ->map(fn ($id) => (int) $id)
+            ->get()
+            ->filter(function (StandardLink $link) use ($structure, $base, $schoolId) {
+                $section = $link->section;
+                if ($section === null || (int) $section->school_id !== $schoolId) {
+                    return false;
+                }
+                $resolved = $structure->resolveBaseSection($section);
+                if ((int) $resolved->id !== (int) $base->id || (int) $resolved->school_id !== $schoolId) {
+                    return false;
+                }
+
+                return $this->streamLabel($base, $link) !== '—';
+            })
+            ->map(fn (StandardLink $link) => (int) $link->id)
             ->unique()
+            ->values()
             ->all();
 
-        if ($active === []) {
-            return $links->count() > 1;
+        if ($streamIds === []) {
+            return false;
         }
 
-        $present = $links->map(fn ($link) => (int) $link->section_id)->unique()->all();
-        foreach ($active as $id) {
+        $present = $links->map(fn ($link) => (int) $link->id)->all();
+        foreach ($streamIds as $id) {
             if (! in_array($id, $present, true)) {
                 return false;
             }

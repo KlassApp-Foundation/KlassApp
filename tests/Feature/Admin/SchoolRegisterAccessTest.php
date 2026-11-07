@@ -18,8 +18,10 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * Admins and class heads may open the one-click register for any class in
- * their school. Stream teachers stay on their own streams.
+ * Admins may open the one-click register for any class in their school.
+ * A class head may open only the streams of the base they head. Stream
+ * teachers stay on their own streams. The earlier school-wide class-head
+ * rule is superseded.
  */
 class SchoolRegisterAccessTest extends TestCase
 {
@@ -126,17 +128,28 @@ class SchoolRegisterAccessTest extends TestCase
         ]);
     }
 
-    public function test_a_class_head_can_open_another_class_in_the_same_school(): void
+    public function test_a_class_head_cannot_read_or_save_another_class(): void
     {
-        $this->actingAs($this->classHead)
-            ->get(route('teacher.attendance.register', ['standardLink_id' => $this->otherStream->id]))
-            ->assertOk()
-            ->assertSee('OTHER PUPIL');
-
         $this->actingAs($this->classHead)
             ->get(route('teacher.attendance.register', ['section_id' => $this->ownStream->section_id]))
             ->assertOk()
-            ->assertSee('P.4');
+            ->assertSee('P.4')
+            ->assertDontSee('OTHER PUPIL');
+
+        $this->actingAs($this->classHead)
+            ->get(route('teacher.attendance.register', ['standardLink_id' => $this->otherStream->id]))
+            ->assertForbidden();
+
+        $this->actingAs($this->classHead)->post(route('teacher.attendance.register.save'), [
+            'standardLink_id' => $this->otherStream->id,
+            'date' => now()->toDateString(),
+            'session' => 'forenoon',
+            'rows' => [
+                $this->pupil->id => ['status' => '1', 'comment' => ''],
+            ],
+        ])->assertForbidden();
+
+        $this->assertSame(0, Attendance::query()->count());
     }
 
     public function test_a_stream_teacher_cannot_open_another_class(): void
