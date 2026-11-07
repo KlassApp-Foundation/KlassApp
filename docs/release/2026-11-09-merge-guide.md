@@ -271,7 +271,7 @@ Record marks used only the student's stream section. The findings put twelve exa
 
 Mark all present is a browser control. The teacher layout mounts Vue on `#app` after inline scripts, so a listener bound to the original radios never saw the click. The register is `v-pre`, the click is delegated from `document`, and it sets the Present radio's checked state and the green `is-present` label. It does not save. Save attendance still posts `rows_json`. On a filtered register the button says it sets only the students on that register.
 
-Tests: `tests/Feature/Teacher/BaseLinkHeadRegisterTest.php`, `tests/Feature/StudentProfile/StreamStudentBaseExamTest.php`. The visible radio check is `tests/Browser/mark-all-present.php` (Chrome). It is skipped where Chrome is not installed.
+Tests: `tests/Feature/Teacher/BaseLinkHeadRegisterTest.php`, `tests/Feature/StudentProfile/StreamStudentBaseExamTest.php`. The visible radio check is `tests/Browser/mark-all-present.php` (Chrome). The full-suite job skips it so a browser session cannot hold that job; it runs where Chrome is installed outside that job.
 
 ## 5. Things lost or changed by choosing one side
 
