@@ -9,8 +9,8 @@ use App\Models\Academics\Marks;
 use App\Models\Attendance;
 use App\Models\StandardLink;
 use App\Models\StudentAcademic;
-use App\Models\Teacherlink;
 use App\Models\User;
+use App\Services\ExamAuthorization;
 use App\Support\AttendanceDays;
 use App\Support\DashboardGreeting;
 use Carbon\Carbon;
@@ -46,8 +46,10 @@ final class TeacherHomeBoard
             'class_names' => $links->map(fn (StandardLink $link) => $this->className($link))->unique()->values()->all(),
             'student_count' => count($studentIds),
             'to_mark' => $attention['to_mark'],
+            'upcoming_exams' => $attention['upcoming_exams'],
             'returned' => $attention['returned'],
             'rows' => $attention['rows'],
+            'corrections' => $attention['corrections'],
             'subjects' => $head ? $this->subjectAverages($schoolId, $head) : [],
             'week' => $head ? $this->week($schoolId, $yearId, (int) $head->id) : [],
             'week_total' => $head ? count($this->studentIds($schoolId, $yearId, [(int) $head->id])) : 0,
@@ -106,28 +108,75 @@ final class TeacherHomeBoard
     }
 
     /**
-     * @param  Collection<int, StandardLink>  $links
-     * @return array{to_mark: int, returned: int, rows: list<array<string, mixed>>}
+     * Exams this person may mark: their own (exam.teacher_id), plus every exam in a
+     * class they head. A subject allocation does not open another teacher's exam.
+     * Another school's exams never match.
+     *
+     * @return Collection<int, Exam>
      */
-    private function attention(User $teacher, int $schoolId, Collection $links): array
+    private function markableExams(User $teacher, int $schoolId, int $yearId): Collection
     {
-        $linkIds = $links->pluck('id')->all();
-        if ($linkIds === []) {
-            return ['to_mark' => 0, 'returned' => 0, 'rows' => []];
+        if ($schoolId <= 0 || $yearId <= 0) {
+            return collect();
         }
 
-        $exams = Exam::query()
+        $headedSections = app(ExamAuthorization::class)->sectionIdsForClassTeacher($teacher, $schoolId, $yearId);
+
+        return Exam::query()
             ->where('school_id', $schoolId)
-            ->where('teacher_id', $teacher->id)
-            ->whereIn('section_id', $links->pluck('section_id')->filter()->all())
+            ->where('academic_year_id', $yearId)
+            ->where(function ($query) use ($teacher, $headedSections) {
+                $query->where('teacher_id', $teacher->id);
+                if ($headedSections !== []) {
+                    $query->orWhereIn('section_id', $headedSections);
+                }
+            })
             ->with(['subject', 'examType', 'section'])
             ->orderBy('id')
             ->get();
+    }
+
+    /**
+     * Open exams still to be marked (status undone or done). That is the count the
+     * old "Upcoming exams" tile showed. A sitting whose date has already passed is
+     * left out; an unscheduled open exam still counts.
+     */
+    private function isUpcoming(Exam $exam): bool
+    {
+        if (! in_array((string) $exam->status, ['undone', 'done'], true)) {
+            return false;
+        }
+
+        return $exam->scheduled_at === null || $exam->scheduled_at->greaterThanOrEqualTo(now());
+    }
+
+    /**
+     * @param  Collection<int, StandardLink>  $links
+     * @return array{to_mark: int, upcoming_exams: int, returned: int, rows: list<array<string, mixed>>, corrections: list<array<string, mixed>>}
+     */
+    private function attention(User $teacher, int $schoolId, Collection $links): array
+    {
+        $empty = ['to_mark' => 0, 'upcoming_exams' => 0, 'returned' => 0, 'rows' => [], 'corrections' => []];
+        if ($schoolId <= 0) {
+            return $empty;
+        }
+
+        $year = SiteHelper::getAcademicYear($schoolId);
+        $yearId = $year ? (int) $year->id : 0;
+        $exams = $this->markableExams($teacher, $schoolId, $yearId);
+        if ($exams->isEmpty()) {
+            return $empty;
+        }
 
         $rows = [];
+        $corrections = [];
         $toMark = 0;
         $returned = 0;
+        $upcoming = 0;
         foreach ($exams as $exam) {
+            if ($this->isUpcoming($exam)) {
+                $upcoming++;
+            }
             $submission = ExamMarksSubmission::query()
                 ->where('school_id', $schoolId)
                 ->where('exam_id', $exam->id)
@@ -140,17 +189,20 @@ final class TeacherHomeBoard
                 ->count('student_id');
             $link = $links->first(fn (StandardLink $item) => (int) $item->section_id === (int) $exam->section_id);
             $expected = $link ? count($this->studentIds($schoolId, (int) $exam->academic_year_id, [(int) $link->id])) : 0;
-            $title = trim(($link ? $this->className($link) : (string) $exam->section?->name).' '.($exam->subject?->name ?? '').' · '.($exam->examType?->name ?? 'Exam'));
+            $title = trim(($link ? $this->className($link) : (string) ($exam->section?->name ?? 'Class')).' '.($exam->subject?->name ?? '').' · '.($exam->examType?->name ?? 'Exam'));
 
-            if ($submission && $submission->approval_status === 'rejected') {
+            if ($submission && ($submission->approval_status === 'rejected' || $submission->status === 'reopened')) {
                 $returned++;
-                $rows[] = [
+                $reason = trim((string) ($submission->rejection_reason ?: $submission->reopen_reason));
+                $row = [
                     'state' => 'Returned',
                     'title' => $title,
-                    'detail' => $submission->rejection_reason ? '"'.$submission->rejection_reason.'"' : 'Returned for fixing.',
+                    'detail' => $reason !== '' ? '"'.$reason.'"' : 'Returned for fixing.',
                     'action' => 'Fix and resubmit',
                     'url' => route('teacher.exam.marks.enter', $exam),
                 ];
+                $rows[] = $row;
+                $corrections[] = $row;
                 continue;
             }
             if ($submission && $submission->approval_status === 'approved') {
@@ -177,7 +229,13 @@ final class TeacherHomeBoard
             ];
         }
 
-        return ['to_mark' => $toMark, 'returned' => $returned, 'rows' => $rows];
+        return [
+            'to_mark' => $toMark,
+            'upcoming_exams' => $upcoming,
+            'returned' => $returned,
+            'rows' => $rows,
+            'corrections' => $corrections,
+        ];
     }
 
     /**

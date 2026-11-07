@@ -174,12 +174,14 @@ class DashboardTest extends TestCase
             'standardLink_id' => $link->id, 'subject_id' => $subject->id, 'teacher_id' => $this->teacher->id,
         ]);
 
-        // The "Upcoming Exams" tile is gone (#1283 page-8 board). The board's "exams to mark"
-        // count is the same question: open exams this person can mark.
-        $this->actingAs($this->teacher)->get('/teacher/dashboard')->assertOk();
+        $html = $this->actingAs($this->teacher)->get('/teacher/dashboard')->assertOk()->getContent();
         $board = app(TeacherHomeBoard::class)->forTeacher($this->teacher);
 
+        $this->assertSame(1, (int) $board['upcoming_exams']);
         $this->assertSame(1, (int) $board['to_mark']);
+        $this->assertMatchesRegularExpression('/data-testid="upcoming-exams-count">\s*1\s*</', $html);
+        $this->assertStringContainsString('Upcoming exams', $html);
+        $this->assertStringContainsString('Marks needing you', $html);
     }
 
     public function test_dashboard_shows_marks_entry_banner(): void

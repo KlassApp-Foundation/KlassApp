@@ -32,14 +32,35 @@
                 <div class="teacher-actions" data-testid="teacher-quick-actions">
                     <a class="ds-btn ds-btn-primary" href="{{ $board['attendance_url'] }}">Take attendance{{ $board['head_class'] ? ' · '.$board['head_class'] : '' }}</a>
                     <a class="ds-btn ds-btn-outline" href="{{ route('teacher.exam.marks') }}">Enter marks</a>
+                    @include('marks-releases._button', ['area' => 'teacher', 'class' => 'ds-btn ds-btn-outline'])
                 </div>
             </div>
             <div class="family-cards teacher-kpis">
                 <div class="family-card"><strong>{{ $board['class_count'] }}</strong><span>my classes · {{ implode(', ', $board['class_names']) }}</span></div>
                 <div class="family-card"><strong data-testid="teacher-students">{{ $board['student_count'] }}</strong><span>my students</span></div>
-                <a class="family-card" href="{{ route('teacher.exam.marks') }}"><strong>{{ $board['to_mark'] }}</strong><span>exams to mark</span></a>
-                <div class="family-card"><strong>{{ $board['returned'] }}</strong><span>returned for fixing</span></div>
+                <a class="family-card" href="{{ route('teacher.exam.marks') }}" data-testid="teacher-marks-needing-you" aria-label="Marks needing you, {{ $board['to_mark'] }} exams to mark">
+                    <strong data-testid="marks-needing-you-count">{{ $board['to_mark'] }}</strong>
+                    <span>Marks needing you</span>
+                </a>
+                <a class="family-card" href="{{ route('teacher.exam.marks') }}" data-testid="teacher-upcoming-exams">
+                    <strong data-testid="upcoming-exams-count">{{ $board['upcoming_exams'] }}</strong>
+                    <span>Upcoming exams</span>
+                </a>
+                <div class="family-card"><strong data-testid="teacher-returned-count">{{ $board['returned'] }}</strong><span>returned for fixing</span></div>
             </div>
+            <section class="family-table-card" data-testid="teacher-marks-entry">
+                <h2>Marks &amp; corrections</h2>
+                <p>Returned work that needs fixing.</p>
+                @forelse($board['corrections'] as $row)
+                    <article class="teacher-row" data-testid="teacher-correction">
+                        <h3>{{ $row['title'] }}</h3>
+                        <p>{{ $row['detail'] }}</p>
+                        <a class="ds-btn ds-btn-primary ds-btn-sm" href="{{ $row['url'] }}" data-testid="teacher-marks-entry-link">{{ $row['action'] }}</a>
+                    </article>
+                @empty
+                    <p data-testid="teacher-corrections-empty">No returned work needs fixing.</p>
+                @endforelse
+            </section>
             <section class="family-table-card" data-testid="teacher-attention">
                 <h2>Marks needing attention</h2>
                 @forelse($board['rows'] as $row)

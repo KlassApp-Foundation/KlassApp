@@ -138,7 +138,8 @@ class ClassTeacherDashboardStreamsTest extends TestCase
         $this->assertStringNotContainsString("You haven't been assigned any classes yet", $html);
         $this->assertSame('1', $this->dashboardCount($html, 'students'), 'My students');
         $this->assertSame('1', $this->dashboardCount($html, 'classes'), 'My classes');
-        // The page-8 dashboard (#1283) has no "Upcoming Exams" tile; exams to mark are the teacher's own.
+        $this->assertMatchesRegularExpression('/data-testid="upcoming-exams-count">\s*1\s*</', $html);
+        $this->assertStringContainsString('data-testid="release-marks-button"', $html);
     }
 
     public function test_section_class_teacher_without_a_stream_teacher_is_counted(): void

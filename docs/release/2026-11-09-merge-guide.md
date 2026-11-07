@@ -183,11 +183,44 @@ These are the changes **you need to apply to the individual PR branches** (I did
 
 Section 5 lists the test fixes. Items that are changes to **tests or screens that belong to other PRs** are marked with the PR.
 
+## 4a. Audit on 7 November 2026
+
+Checked on `integration/monday-2026-11-09` only. No individual PR branch was pushed. The deploy runbook was not edited.
+
+**What changed in this pass.** The page 8 teacher home (`resources/views/teacher/dashboard/dashboard.blade.php`, `app/Services/Teacher/TeacherHomeBoard.php`) keeps its layout and gains the marks tiles that section 5 had recorded as dropped:
+
+- Exams still to enter are the tile **Marks needing you** (`dashboard.blade.php:41-43`, count `TeacherHomeBoard.php:48` and `:233`). The accessible name still says "exams to mark".
+- **Upcoming exams** (`dashboard.blade.php:45-47`) counts open exams (`status` undone or done) whose date is today or later, or that have no date (`TeacherHomeBoard.php:144-151`). A sitting that has already passed is not upcoming; it still counts under Marks needing you when marks are not in.
+- **Marks & corrections** (`dashboard.blade.php:51-62`) lists returned or reopened work and the reason (`TeacherHomeBoard.php:190-205`).
+- **Marks Release** is the existing button (`dashboard.blade.php:35`, `resources/views/marks-releases/_button.blade.php:4-8`). It shows only when `MarksReleaseService::canRelease()` is true: a section class head or a stream class teacher, and only while the school switch is on. A subject teacher does not see it. Approval and reason rules were not changed. AB handling in `ExamMarkWriter` was not changed.
+
+Who sees which exam: `markableExams()` (`TeacherHomeBoard.php:117-140`) is this school's current year, and either `exam.teacher_id` is this teacher or the section is one they head (`ExamAuthorization::sectionIdsForClassTeacher`). A subject allocation does not open another teacher's exam. Below 768px the tiles stay two columns and the action links go full width (`public/css/dashboard-refresh.css:5222-5228`). Take attendance still points at the one-click register (`TeacherHomeBoard.php:58`).
+
+**Section 4, item by item.** All eleven are present. The only new test for them is the class-list order test; the other ten already had tests and needed no code change.
+
+| # | Present | Code | Test that checks it | Blocker |
+|---|---|---|---|---|
+| 1 | Yes | `MarksReleaseService.php:125-134` qualifies `standards_link.class_teacher_id` and `standards_link.section_id`, then `ClassListOrder::orderLinks()` | `tests/Feature/Integration/MarksReleaseTeacherLinksTest.php` | None |
+| 2 | Yes | One `DEFAULT_COUNTRY` at `OnboardingStepsService.php:32`. No second declaration | `tests/Feature/Onboarding/CountryDefaultTest.php`, `CountryDefaultServiceContractTest.php` (the class loads) | None |
+| 3 | Yes | `ExamMarkWriter::requiresCorrection()` returns `writesAreRefused()` (`ExamMarkWriter.php:156-158`). Absent (`AB`) handling is untouched (`:138-141`) | `tests/Feature/Integration/MarkWriterRequiresCorrectionTest.php` | None. Rebase of #1280/#1281 onto #1272 is still a home-branch step; this branch was not pushed to those PRs |
+| 4 | Yes | `ImportStudents::importRows()` / `applyFinishedUpload()` keep the engine's skipped rows (`ImportStudents.php:204`, `:225-265`) | `tests/Feature/Integration/ImportStudentsPlanLimitTest.php` | None |
+| 5 | Yes | `TeacherHomeBoard::classes()` uses `currentYearStandardLinkIds()` and scopes `school_id` + `academic_year_id` (`TeacherHomeBoard.php:75-84`) | `tests/Feature/Teacher/ClassTeacherDashboardStreamsTest.php` (`test_section_class_teacher_without_a_stream_teacher_is_counted`) | None |
+| 6 | Yes | `attendance_url` is `teacher.attendance.register` (`TeacherHomeBoard.php:58`) | `TeacherHomeMarksTilesTest` asserts that URL on the class head's page. The register itself is `tests/Feature/Teacher/AttendanceRegisterTest.php` | None |
+| 7 | Yes | Year total line after Balance (`family-fees.blade.php:29-31`) | `tests/Feature/Admin/FeeStructureAndPaymentTest.php::test_yearly_fee_counts_once_in_its_due_term_and_the_year_total` | None |
+| 8 | Yes | `session('import_row_failures')` list (`import-students.blade.php:8-11`) | `tests/Feature/Admin/StudentImportFailureReportTest.php::test_a_database_error_shows_a_plain_message_and_logs_the_sql` | None |
+| 9 | Yes | `ClassMarksController::show()` lists active classes, drops name-encoded streams, `ClassLevelOrder::sort` (`ClassMarksController.php:34-49`). It does not filter with `LatestExamMarks` before the list | `tests/Feature/Academics/BaseClassViewFixesTest.php::test_performance_and_class_marks_list_every_class_in_level_order` | None |
+| 10 | Yes | `ClassReportScreen::classes()` carries `standard.order` as `level` and sorts by level then label (`ClassReportScreen.php:53-57`) | `tests/Feature/ReportCards/ClassReportClassOrderTest.php` (names that would sort the other way by alphabet). `StudentListClassOrderAndFilterTest::test_report_cards_list_classes_by_level_then_stream` covers the history page, which uses `ClassListOrder::sortLinks` | None |
+| 11 | Yes | The class-teacher exam-set test expects the set page | `tests/Feature/Exams/ExamSetServiceTest.php:226` asserts `teacher.exam-sets.show` | None. The assertion lives on this branch. #1272 was not pushed |
+
+**Local tests for this pass** (PHP 8.4.27, PHPUnit, sqlite `:memory:`): teacher dashboard files 33 tests / 151 assertions before the register-URL assertion; after it, `TeacherHomeMarksTilesTest`, `ClassReportClassOrderTest`, `CountryDefaultTest`, `CountryDefaultServiceContractTest`, the yearly-fee test, the import-failure test and the history class-order test together were 26 tests / 232 assertions, 0 failures. An earlier combined run of the integration trio, exam-set redirect, class-marks order and the teacher files was 52 tests / 273 assertions, 0 failures. No MySQL in this session. No browser session.
+
+**Not a code blocker, do not treat as done.** This PR stays a draft. Nothing was merged or deployed. `docs/release/2026-11-09-deploy-runbook.md` still says the teacher home dropped these tiles; that file was left unchanged on purpose. CI for the commit that adds this audit is the GitHub check run on #1285, not the `bae6afe4` result in section 6.
+
 ## 5. Things lost or changed by choosing one side
 
 These are the places where two PRs wanted the same file and one side's behaviour is now gone from the integrated build. Decide before Monday whether each is acceptable.
 
-- **Teacher dashboard (#1283 wins).** The home page no longer has the Marks Release button, the "Marks needing you" tile, the "Upcoming Exams" tile (#1240) or the "Marks & corrections" card. #1240's test `test_upcoming_exams_counts_open_exams_this_person_can_mark` has nothing to assert against.
+- **Teacher dashboard (#1283 wins the layout).** On 5 November the page 8 board replaced the old tiles. On 7 November those tiles were put back inside that board (section 4a): Marks needing you, Upcoming exams, Marks & corrections, and Marks Release for someone who may release. The five old `dv2` tiles were not brought back. `test_upcoming_exams_counts_open_exams_this_person_can_mark` again reads the Upcoming exams count on the page.
 - **Parent attendance (#1282 wins over #1277).** #1277's `weeks[].present/total/recorded` and `this_week` keys are gone; #1282's `weeks[].present_label/full` and half-day wording are used. #1277's `ParentAttendanceWeeksTest` must be rewritten for #1282's shape.
 - **Student dashboard attendance (#1281 wins).** Shows `AttendanceDays::phrase()` text ("4½ days present"), not a number.
 - **Sidebars (#1265 wins over #1282 and #1283).** One shared `role-sidebar` include; #1282/#1283's CSS still applies because the markup matches.
@@ -196,7 +229,7 @@ These are the places where two PRs wanted the same file and one side's behaviour
 
 ## 6. Test results
 
-**CI on the integration branch (commit `bae6afe4`): all six checks green.** `test-guard` ran the full suite: **3611 tests, 0 failures, 0 errors, 9 skipped**, no known-failures entries. `mysql-84-migrations`, `reference-seed` (migrate:fresh --seed and a second seed on MySQL 8.4 and SQLite), `check`, `scan` and `secret scan` also passed. I had no MySQL locally, so those two jobs are the MySQL evidence.
+**CI on the integration branch (commit `bae6afe4`): all six checks green.** `test-guard` ran the full suite: **3611 tests, 0 failures, 0 errors, 9 skipped**, no known-failures entries. `mysql-84-migrations`, `reference-seed` (migrate:fresh --seed and a second seed on MySQL 8.4 and SQLite), `check`, `scan` and `secret scan` also passed. I had no MySQL locally, so those two jobs are the MySQL evidence. That result is for `bae6afe4` only. The 7 November teacher-home restoration is a later commit; its checks are the run on that commit (section 4a).
 
 How it got there:
 1. First run (merge only): `test-guard` produced no junit at all, because PHP fataled on the duplicate `DEFAULT_COUNTRY` constant (fix 2). Reproduced locally with `paratest`.
@@ -207,8 +240,8 @@ Tests I changed on the integration branch, and the PR each belongs to (apply the
 
 | Test | PR | Why it failed | Change |
 |---|---|---|---|
-| `Teacher/ClassTeacherDashboardStreamsTest` (3) | #1269 | read the old dashboard's KPI tiles; #1283 has none | read the board's "my classes" and "my students" counts; dropped the "Upcoming Exams" count |
-| `Teacher/DashboardTest::test_upcoming_exams_counts_open_exams_this_person_can_mark` | #1240 | the "Upcoming Exams" tile is gone | gives the teacher the class, asserts the board's `to_mark` is 1 |
+| `Teacher/ClassTeacherDashboardStreamsTest` (3) | #1269 | read the old dashboard's KPI tiles; #1283 has none | reads the board's "my classes" and "my students" counts. 7 November also checks Upcoming exams and Marks Release for the stream class teacher |
+| `Teacher/DashboardTest::test_upcoming_exams_counts_open_exams_this_person_can_mark` | #1240 | the "Upcoming Exams" tile was gone on 5 November | 7 November puts the count back on the page 8 tile (`data-testid="upcoming-exams-count"`) |
 | `Teacher/TeacherDashboardKpiTilesTest` (first test) | #1265 | asserted the five tiles on the teacher home | asserts the page-8 board and its empty state |
 | `Parent/ParentAttendanceWeeksTest` (3) | #1277 | #1282's attendance shape (whole days need both sessions; weeks without a register are left out) | helper writes both sessions for a present day; asserts #1282's keys |
 | `Admin/ImportEntryPointTest` | #1250 | #1269 moved student import to `/admin/students/import` | asserts the new address and the `/admin/import` redirect |
@@ -251,7 +284,7 @@ CI ran `php artisan migrate --force` on an empty MySQL 8.4 database for this bra
 The instruction was to choose the safest option, write it down and carry on.
 
 1. **Conflicts:** where one PR replaced a shared shell or screen (sidebars, teacher dashboard, parent attendance, class marks), I kept the newer shared version and listed what was lost (section 5) rather than hand-porting features I could not test in a browser.
-2. **Teacher dashboard:** took #1283 whole. The alternative (keep the old file and drop the new design) would have thrown away a whole screen.
+2. **Teacher dashboard:** took #1283's page 8 layout. On 7 November the marks tiles were added back inside that layout (section 4a), not by restoring the old five-tile page.
 3. **No pushes to PR branches.** Every fix is on the integration branch; section 4 says where it belongs.
 4. **Tests:** where a test described behaviour the merged screens no longer have, I changed the test to the new behaviour and said so (section 6); I did not skip or disable a test to get green, except where noted there.
 5. **`knowledge.md`:** every PR adds a session note at the top; the notes from both sides were kept. I added none of my own (AGENTS.md rule 20 asks for it in a normal session; this branch is a rehearsal and will not be merged).
