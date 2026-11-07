@@ -292,8 +292,9 @@ class StudentController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($name, SimpleRosterForm $form)
+    public function edit($name)
     {
+      $form = app(SimpleRosterForm::class);
       $user = User::findByExactNameInSchool($name, (int) Auth::user()->school_id, 6);
       if ($user === null) { abort(404); }
       if (! Gate::allows('member', $user)) {
@@ -324,8 +325,9 @@ class StudentController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $name, SimpleRosterForm $form)
+    public function update(Request $request, $name)
     {
+      $form = app(SimpleRosterForm::class);
       $school_id = (int) Auth::user()->school_id;
       $user = User::findByExactNameInSchool($name, $school_id, 6);
       if ($user === null) {

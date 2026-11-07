@@ -274,8 +274,9 @@ class ParentController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($name, \App\Services\People\SimpleRosterForm $form)
+    public function edit($name)
     {
+        $form = app(\App\Services\People\SimpleRosterForm::class);
         $schoolId = (int) Auth::user()->school_id;
         $user = User::where('name', $name)->where('school_id', $schoolId)->where('usergroup_id', 7)->first();
         if ($user === null) {
@@ -300,8 +301,9 @@ class ParentController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $name, \App\Services\People\SimpleRosterForm $form)
+    public function update(Request $request, $name)
     {
+        $form = app(\App\Services\People\SimpleRosterForm::class);
         $schoolId = (int) Auth::user()->school_id;
         $user = User::where('name', $name)->where('school_id', $schoolId)->where('usergroup_id', 7)->first();
         if ($user === null) {
