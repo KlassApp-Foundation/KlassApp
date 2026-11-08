@@ -20,6 +20,13 @@ class UserFactory extends Factory
 {
     protected $model = User::class;
 
+    /**
+     * One bcrypt hash of "password" per process. Tests that log in with
+     * "password" still pass Hash::check; a caller that sets password
+     * replaces this value after the definition runs.
+     */
+    protected static ?string $password = null;
+
     public function definition()
     {
 
@@ -27,7 +34,7 @@ class UserFactory extends Factory
         'name' => $this->faker->unique()->userName,
         'email' => $this->faker->unique()->safeEmail,
         'mobile_no' => $this->faker->unique()->randomNumber($nbDigits = 9, $strict = false),
-        'password' => bcrypt('password'),
+        'password' => static::$password ??= bcrypt('password'),
         'email_verification_code' => \Illuminate\Support\Str::random(40),
         'email_verified' => 1,
         'usergroup_id' => 6, // student by default; tests override
