@@ -470,45 +470,7 @@ class AttendanceController extends Controller
      */
     private function headedBaseIds(int $schoolId, int $userId): array
     {
-        $structure = app(ClassStructureService::class);
-        $ids = Section::query()
-            ->where('school_id', $schoolId)
-            ->where('class_teacher_id', $userId)
-            ->where(function ($query) {
-                $query->where('status', 1)->orWhere('status', '1');
-            })
-            ->get()
-            ->filter(fn (Section $section) => $structure->isBaseSection($section))
-            ->map(fn (Section $section) => (int) $section->id)
-            ->all();
-
-        $year = SiteHelper::getAcademicYear($schoolId);
-        if ($year) {
-            $fromLinks = StandardLink::query()
-                ->with('section')
-                ->where('school_id', $schoolId)
-                ->where('academic_year_id', $year->id)
-                ->where('class_teacher_id', $userId)
-                ->where(function ($query) {
-                    $query->where('status', 1)->orWhere('status', '1');
-                })
-                ->get();
-            foreach ($fromLinks as $link) {
-                // A stream label on this same section is a stream teacher, not the
-                // head of the class. The reported head link has a null stream and
-                // points at the undivided base section.
-                if ($link->section
-                    && trim((string) ($link->stream ?? '')) === ''
-                    && $structure->isBaseSection($link->section)) {
-                    $ids[] = (int) $link->section_id;
-                }
-            }
-        }
-
-        $ids = array_values(array_unique($ids));
-        sort($ids);
-
-        return $ids;
+        return app(ClassStructureService::class)->headedBaseIds($schoolId, $userId);
     }
 
     /**

@@ -279,6 +279,19 @@ Performance by class shows an en dash on a class with no marks, and one caption 
 
 Skipped. One Present/Absent switch was not attempted, so the register at `88e98925` stays as it is. Assign classes still opens `TeacherShowController::showClasses`, which returns the teacher's subject rows as JSON and is not an assignment page. The legacy teacher edit form has no class-assignment step. Replacing that would be a new form, so it was left. Parent linking, WhatsApp auto-linking, teacher form redesign, class details, the subjects roster, timetable and calendar, name-based edit routes, and imported-name uppercasing were not started.
 
+## 4f. Class roster page for a base class with streams, 8 November
+
+`/admin/classes/{base}` (and `/teacher/classes/{id}/manage`) used to load only the `standards_link` rows of the one section in the URL. On a school where streams are their own sections (Riverside shape: "Primary Four" with "Primary Four E" and "Primary Four W", enrolments only on the stream links) the base page showed "Main stream, 0 students".
+
+Fix, nothing else changed:
+- `RosterScopeService::classPage()` (new) resolves the requested section to its base with `ClassStructureService::resolveBaseSection()`, gathers the stream links of `classSectionIds()` for the chosen academic year, hides the undivided base link when nobody is enrolled on it, and labels each stream from its section name (E, W). It returns `null` for a class with no streams, so those classes keep the old code path unchanged.
+- Scope, same as the register: admin sees every stream; a class head (`headedBaseIds()`) sees every stream of the class they head; any other teacher sees only the streams they teach (`applyTeacherStreamVisibility`); nothing visible is a 404. Everything is scoped by `school_id`.
+- `ClassStructureService::headedBaseIds()` is the register's private method moved here unchanged so the register and the roster share one implementation; `Teacher\AttendanceController::headedBaseIds()` now delegates to it.
+- `RosterScopeService::studentsForStream()` gained an optional `$classScoped` argument (default false, so every existing caller behaves as before). The roster passes true for a head, who is not the teacher of each stream but is authorised for the class.
+- `Show.php` and `show.blade.php`: stream cards show the label and the student count.
+
+Tests: `tests/Feature/ClassRosterStreamsTest.php` (7 tests) on the Riverside-shaped fixture: base page shows E (60) and W (58); the W-only teacher sees only W and cannot widen the view; the head sees both streams and gets 404 on another class (with and without streams); another school's class is not found; a class without streams is unchanged. With the page changes reverted, 5 of the 7 fail. The register tests (`BaseLinkHeadRegisterTest`, `WholeClassRegisterTest`), `ClassRosterLivewireTest` and the two `RosterScopeService` suites still pass. Eight other tests in the attendance/roster family (`SimpleRosterFormTest` 4, `BackgroundRosterUploadTest` 4) fail identically with and without this change in this session.
+
 ## 5. Things lost or changed by choosing one side
 
 These are the places where two PRs wanted the same file and one side's behaviour is now gone from the integrated build. Decide before Monday whether each is acceptable.

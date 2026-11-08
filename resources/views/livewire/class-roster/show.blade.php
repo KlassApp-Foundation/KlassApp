@@ -39,7 +39,7 @@
                         <div class="rounded-2xl border p-4 transition {{ $selectedStream?->id === $stream->id ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'border-slate-200 bg-slate-50' }}">
                             <button wire:click="selectStream({{ $stream->id }})" type="button" class="w-full text-left">
                                 <div class="flex items-center justify-between gap-3">
-                                    <span class="text-lg font-bold text-slate-950">{{ $stream->stream ?: 'Main stream' }}</span>
+                                    <span class="text-lg font-bold text-slate-950">{{ $row['label'] }}@if($row['count'] !== null) <span class="text-sm font-semibold text-slate-500" data-testid="stream-count-{{ $stream->id }}">({{ $row['count'] }})</span>@endif</span>
                                     <span class="rounded-full bg-white px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">{{ $stream->standard?->name ?: 'Level pending' }}</span>
                                 </div>
                                 <p class="mt-3 text-xs font-bold uppercase tracking-wider text-slate-400">Effective teacher</p>
@@ -65,7 +65,7 @@
             <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                 <div class="flex flex-col justify-between gap-4 border-b border-slate-100 pb-5 md:flex-row md:items-end">
                     <div>
-                        <p class="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700">{{ $selectedStream->stream ?: 'Main stream' }} · student roster</p>
+                        <p class="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700">{{ $selectedLabel }} · student roster</p>
                         <h2 class="mt-1 text-xl font-bold text-slate-950">{{ $students->total() }} {{ \Illuminate\Support\Str::plural('student', $students->total()) }}</h2>
                         @if(!$fullStudentDetail)
                             <p class="mt-2 text-xs text-amber-700">Subject view: student details are limited to your assigned subject context.</p>

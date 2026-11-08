@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Helpers\SiteHelper;
 use App\Models\AcademicYear;
 use App\Models\School;
 use App\Models\Section;
@@ -47,6 +48,57 @@ class ClassStructureService
         }
 
         return $candidates->sortBy(fn (Section $s) => strlen((string) $s->name))->first();
+    }
+
+    /**
+     * Base classes this person heads: the undivided section, not a name-encoded stream.
+     * A head is the class teacher of the base section or of a base standards_link
+     * (no stream label) in the current academic year. One implementation shared by
+     * the attendance register and the class roster page.
+     *
+     * @return list<int>
+     */
+    public function headedBaseIds(int $schoolId, int $userId): array
+    {
+        $structure = $this;
+        $ids = Section::query()
+            ->where('school_id', $schoolId)
+            ->where('class_teacher_id', $userId)
+            ->where(function ($query) {
+                $query->where('status', 1)->orWhere('status', '1');
+            })
+            ->get()
+            ->filter(fn (Section $section) => $structure->isBaseSection($section))
+            ->map(fn (Section $section) => (int) $section->id)
+            ->all();
+
+        $year = SiteHelper::getAcademicYear($schoolId);
+        if ($year) {
+            $fromLinks = StandardLink::query()
+                ->with('section')
+                ->where('school_id', $schoolId)
+                ->where('academic_year_id', $year->id)
+                ->where('class_teacher_id', $userId)
+                ->where(function ($query) {
+                    $query->where('status', 1)->orWhere('status', '1');
+                })
+                ->get();
+            foreach ($fromLinks as $link) {
+                // A stream label on this same section is a stream teacher, not the
+                // head of the class. The reported head link has a null stream and
+                // points at the undivided base section.
+                if ($link->section
+                    && trim((string) ($link->stream ?? '')) === ''
+                    && $structure->isBaseSection($link->section)) {
+                    $ids[] = (int) $link->section_id;
+                }
+            }
+        }
+
+        $ids = array_values(array_unique($ids));
+        sort($ids);
+
+        return $ids;
     }
 
     public function isBaseSection(Section $section): bool
