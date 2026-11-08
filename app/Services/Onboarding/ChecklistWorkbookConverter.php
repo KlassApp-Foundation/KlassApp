@@ -2,7 +2,7 @@
 
 namespace App\Services\Onboarding;
 
-use App\Support\PhoneCountry;
+use App\Services\Phones\PhoneE164Converter;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date as XlDate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -743,34 +743,15 @@ final class ChecklistWorkbookConverter
 
     private function phone(string $raw, string $tab, int $row, string $field): string
     {
-        $raw = trim($raw);
-        if ($raw === '') {
-            return '';
-        }
-        $digits = preg_replace('/\D/', '', $raw) ?? '';
-        $explicit = str_starts_with($raw, '+') || str_starts_with($digits, '00');
-        $spec = PhoneCountry::spec($this->country);
-        $fail = function (string $why) use ($tab, $row, $field, $raw): string {
-            $this->flag($tab, $row, $field, "\"{$raw}\" not converted: {$why}.");
+        // One phone rule for the whole app: the same converter phones:to-e164 uses (#1286).
+        $result = (new PhoneE164Converter)->convert($raw, $this->country);
+        if ($result['status'] === PhoneE164Converter::UNPARSEABLE) {
+            $this->flag($tab, $row, $field, '"'.trim($raw).'" not converted: '.$result['reason'].'.');
 
             return '';
-        };
-        if ($digits === '') {
-            return $fail('no digits');
         }
-        if ($spec === null && ! $explicit) {
-            return $fail('the school has no known country, so a local number cannot be completed');
-        }
-        if ($spec !== null && ! $explicit) {
-            $ok = fn (string $n) => strlen($n) >= $spec['min'] && strlen($n) <= $spec['max'] && ! preg_match('/^0+$/', $n);
-            $withCode = str_starts_with($digits, $spec['code']) && $ok(substr($digits, strlen($spec['code'])));
-            if (! str_starts_with($digits, '0') && ! $withCode && ! $ok($digits)) {
-                return $fail('cannot tell which country this number is for');
-            }
-        }
-        $e164 = PhoneCountry::normalise($raw, $this->country);
 
-        return $e164 ?? $fail('not a valid phone number');
+        return (string) ($result['value'] ?? '');
     }
 
     private function date(mixed $v): ?string
