@@ -418,11 +418,7 @@ class PeopleListQuery
         }
 
         $base = $this->baseSection($link);
-        $selectedIsStream = $base && (
-            (int) $link->section_id !== (int) $base->id
-            || trim((string) $link->stream) !== ''
-        );
-        if ($selectedIsStream) {
+        if ($base && (int) $link->section_id !== (int) $base->id) {
             return [(int) $link->id];
         }
 

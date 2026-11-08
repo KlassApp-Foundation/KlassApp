@@ -12,8 +12,9 @@ class StudentsRosterKitContractTest extends TestCase
         $component = file_get_contents(resource_path('views/components/people-list.blade.php'));
 
         $this->assertStringContainsString('ds-page-head', file_get_contents(resource_path('views/layouts/partials/page-header.blade.php')));
-        $this->assertStringContainsString('Import list', $blade);
+        $this->assertStringNotContainsString('Import list', $blade);
         $this->assertStringContainsString('Add student', $blade);
+        $this->assertStringContainsString("/admin/student/add", $blade);
         $this->assertStringContainsString('students-roster', $blade);
         $this->assertStringContainsString('x-people-list', $blade);
         $this->assertStringContainsString('}} match', $component);

@@ -107,16 +107,15 @@ class StudentListClassOrderAndFilterTest extends TestCase
 
         $labels = $this->pickerLabels($html);
         $this->assertSame(
-            ['Baby Class', 'P.1', 'P.5 · A', 'P.5 · B', 'S.1 · East'],
+            ['Baby Class', 'P.1', 'P.5', 'S.1'],
             $labels
         );
         $this->assertStringContainsString('standard='.$this->links['p5a']->id, $html);
-        $this->assertStringContainsString('standard='.$this->links['p5b']->id, $html);
     }
 
     public function test_picking_a_stream_returns_only_that_stream(): void
     {
-        $streamA = $this->actingAs($this->admin)->get('/admin/students?standard='.$this->links['p5a']->id);
+        $streamA = $this->actingAs($this->admin)->get('/admin/students?standard='.$this->links['p5a']->id.'&stream='.$this->links['p5a']->id);
         $streamA->assertOk();
         $streamA->assertSee('Carol Stream');
         $streamA->assertDontSee('David Stream');
@@ -124,7 +123,7 @@ class StudentListClassOrderAndFilterTest extends TestCase
         $streamA->assertDontSee('Amina Baby');
         $streamA->assertDontSee('Eva Senior');
 
-        $streamB = $this->actingAs($this->admin)->get('/admin/students?standard='.$this->links['p5b']->id);
+        $streamB = $this->actingAs($this->admin)->get('/admin/students?standard='.$this->links['p5a']->id.'&stream='.$this->links['p5b']->id);
         $streamB->assertOk();
         $streamB->assertSee('David Stream');
         $streamB->assertDontSee('Carol Stream');
