@@ -21,7 +21,7 @@ Design note only. No code changes. Serves **T-072**. References are to `main` at
 
 1. **The 10,000th student of one school.** `%04d` does not truncate: sequence 10000 gives `KLS00110000` (8 digits). The `User` and `StudentAcademic` saving guards reject it, so creating that student throws. The sequence counter has already moved on.
 2. **A school with id 1000 or more.** `%03d` widens the same way (`KLS10000001`) and fails the same guards.
-3. **Plain widening is ambiguous.** If the fix were just to let the ID grow, `KLS10000001` could mean school 1000 sequence 1, or school 100 sequence 00001 (five-digit sequence). Because `klassapp_student_id` is unique across all schools, that is a real collision risk, and `SeedStudentIdSequences` would split it wrongly.
+3. **Plain widening is ambiguous.** If the fix were just to let the ID grow, school 1011 sequence 1 and school 101 sequence 10,001 would both be `KLS10110001`. Because `klassapp_student_id` is unique across all schools, that is a real collision risk, and `SeedStudentIdSequences` would split it wrongly.
 
 ## Proposal
 
