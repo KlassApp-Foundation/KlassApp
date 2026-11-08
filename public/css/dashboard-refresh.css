@@ -5031,3 +5031,104 @@ td a.btn-danger:hover {
     .wa-lr-actions__row { justify-content: stretch; }
     .wa-lr-actions__row .wa-lr-btn { flex: 1 1 auto; }
 }
+
+/* Phone header (teacher and student shells): the account card's name and email
+   are min-content wide, so below 768px the right cluster starts on top of the
+   hamburger and a tap on the menu hits Search. Keep the menu, search, bell and
+   avatar as separate 44px targets. The school name ellipsises. From 768px up
+   the desktop sidebar is the menu and this block does not apply. */
+@media (max-width: 767px) {
+    .navbar.dashboard-themed-header {
+        display: flex;
+        align-items: center;
+        flex-wrap: nowrap;
+        overflow: hidden;
+        gap: 4px;
+        padding-left: 4px;
+        padding-right: 4px;
+    }
+    .navbar.dashboard-themed-header .nav-brand {
+        display: flex;
+        align-items: center;
+        flex: 1 1 auto;
+        min-width: 44px;
+        overflow: hidden;
+        gap: 0;
+    }
+    .navbar.dashboard-themed-header #mobile-menu-trigger {
+        flex: 0 0 44px;
+        width: 44px !important;
+        height: 44px !important;
+        min-width: 44px;
+        min-height: 44px;
+        margin-right: 0;
+        position: relative;
+        z-index: 2;
+    }
+    .navbar.dashboard-themed-header .nav-school-line {
+        flex: 1 1 auto;
+        min-width: 0;
+        flex-wrap: nowrap;
+        overflow: hidden;
+    }
+    .navbar.dashboard-themed-header .nav-school-name,
+    .navbar.dashboard-themed-header .nav-school-term {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .navbar.dashboard-themed-header #command-palette-trigger {
+        flex: 0 0 44px;
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+        margin: 0;
+        padding: 0;
+        justify-content: center;
+        box-sizing: border-box;
+    }
+    .navbar.dashboard-themed-header #command-palette-trigger span,
+    .navbar.dashboard-themed-header #command-palette-trigger kbd {
+        display: none !important;
+    }
+    .navbar.dashboard-themed-header #command-palette-trigger + div > a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    .navbar.dashboard-themed-header #command-palette-trigger + div > a > div {
+        padding: 0 !important;
+    }
+    .navbar.dashboard-themed-header .navbar-menu {
+        margin-left: 0 !important;
+    }
+    .navbar.dashboard-themed-header .account-card {
+        flex: 0 0 44px;
+        width: 44px;
+        min-width: 44px;
+    }
+    .navbar.dashboard-themed-header .account-card__identity,
+    .navbar.dashboard-themed-header .account-card__chevron {
+        display: none;
+    }
+    .navbar.dashboard-themed-header .account-card__trigger {
+        width: 44px;
+        min-width: 44px;
+        height: 44px;
+        min-height: 44px;
+        padding: 0;
+        gap: 0;
+        grid-template-columns: 1fr;
+        justify-items: center;
+        box-sizing: border-box;
+    }
+}
