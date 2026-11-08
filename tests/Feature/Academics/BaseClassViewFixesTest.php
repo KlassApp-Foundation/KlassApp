@@ -168,7 +168,7 @@ class BaseClassViewFixesTest extends TestCase
         $this->assertNull($charts[2]['value']);
 
         $this->actingAs($admin)->get('/admin/dashboard')->assertOk()
-            ->assertSeeInOrder(['Primary One', 'P.2', 'No marks yet', 'S.1', 'No marks yet']);
+            ->assertSeeInOrder(['Primary One', 'P.2', '–', 'S.1', '–', '– no marks yet']);
 
         $this->actingAs($admin)->get('/admin/marks/classes')->assertOk()
             ->assertSeeInOrder(['Primary One', 'P.2', 'S.1']);

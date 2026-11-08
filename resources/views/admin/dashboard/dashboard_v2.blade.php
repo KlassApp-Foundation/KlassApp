@@ -229,20 +229,24 @@
                     @if(count($charts['per_class'] ?? []) > 0)
                         @php
                             $pc = $charts['per_class'];
-                            $pcAria = implode(', ', array_map(fn ($r) => $r['label'].' '.($r['value'] === null ? 'No marks yet' : $r['value'].'%'), $pc));
+                            $pcAria = implode(', ', array_map(fn ($r) => $r['label'].' '.($r['value'] === null ? 'no marks yet' : $r['value'].'%'), $pc));
+                            $pcMissing = collect($pc)->contains(fn ($r) => $r['value'] === null);
                         @endphp
                         <div class="hbars" role="img" aria-label="Performance by class: {{ $pcAria }}">
                             @foreach($pc as $row)
                                 <div class="hb" data-testid="dashboard-performance-class">
                                     <span>{{ $row['label'] }}</span>
                                     @if($row['value'] === null)
-                                        <span class="t"></span><b>No marks yet</b>
+                                        <span class="t"></span><b data-testid="dashboard-performance-empty">–</b>
                                     @else
                                         <span class="t"><i style="width:{{ min(100, (float) $row['value']) }}%"></i></span><b>{{ $row['value'] }}%</b>
                                     @endif
                                 </div>
                             @endforeach
                         </div>
+                        @if($pcMissing)
+                            <p class="dv2-kpi-sub" data-testid="dashboard-performance-caption">– no marks yet</p>
+                        @endif
                         <a class="dv2-btn dv2-btn--soft" style="margin-top:12px" href="{{ route('admin.marks.classes') }}" data-testid="dashboard-v2-view-class-marks">View marks by class</a>
                         @include('marks-releases._button', ['area' => 'admin', 'class' => 'dv2-btn dv2-btn--soft', 'style' => 'margin-top:12px'])
                     @else

@@ -42,7 +42,12 @@
             </div>
 
             <fieldset class="mb-5">
-                <legend class="form-label">Exam types</legend>
+                <div class="mb-2 flex items-center justify-between gap-3">
+                    <legend class="form-label" style="margin:0;">Exam types</legend>
+                    @unless($isTeacher)
+                        <a href="{{ url('/admin/settings/exam-types') }}" data-testid="manage-exam-types">Manage exam types</a>
+                    @endunless
+                </div>
                 <div class="exam-set-types" data-testid="exam-set-types">
                     @foreach($types as $type)
                         <label class="exam-set-type">

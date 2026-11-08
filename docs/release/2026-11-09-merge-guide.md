@@ -273,6 +273,12 @@ Mark all present is a browser control. The teacher layout mounts Vue on `#app` a
 
 Tests: `tests/Feature/Teacher/BaseLinkHeadRegisterTest.php`, `tests/Feature/StudentProfile/StreamStudentBaseExamTest.php`. The visible radio check is `tests/Browser/mark-all-present.php` (Chrome). The full-suite job skips it so a browser session cannot hold that job; it runs where Chrome is installed outside that job.
 
+## 4e. Admin review quick fixes, 8 November
+
+Performance by class shows an en dash on a class with no marks, and one caption under the card: "– no marks yet". A sidebar group that contains the current page stays expanded and is not filled; only the current item is. The students header keeps Add student, pointed at the add form, and drops Import list. The add form links to the existing import. The class filter uses `ClassStructureService::resolveBaseSection`, the same resolver as the register, and a base with streams offers Whole class / each stream (`StudentStreamFilterTest`). An active name on a class roster links to that student's profile. Resend setup link opens a confirmation that names the email and does not send until Confirm resend; WhatsApp is labelled as not sent for staff links. Exam set create links Manage exam types to the existing exam-type settings.
+
+Skipped. One Present/Absent switch was not attempted, so the register at `88e98925` stays as it is. Assign classes still opens `TeacherShowController::showClasses`, which returns the teacher's subject rows as JSON and is not an assignment page. The legacy teacher edit form has no class-assignment step. Replacing that would be a new form, so it was left. Parent linking, WhatsApp auto-linking, teacher form redesign, class details, the subjects roster, timetable and calendar, name-based edit routes, and imported-name uppercasing were not started.
+
 ## 5. Things lost or changed by choosing one side
 
 These are the places where two PRs wanted the same file and one side's behaviour is now gone from the integrated build. Decide before Monday whether each is acceptable.

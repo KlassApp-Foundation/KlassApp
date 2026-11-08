@@ -90,7 +90,13 @@
                             <tbody class="divide-y divide-slate-50">
                                 @foreach($students as $studentAcademic)
                                     <tr wire:key="student-{{ $studentAcademic->id }}" class="text-slate-700">
-                                        <td class="px-3 py-3 font-semibold text-slate-900">{{ $studentAcademic->user?->name ?: 'Unnamed student' }}</td>
+                                        <td class="px-3 py-3 font-semibold text-slate-900">
+                                            @if($studentAcademic->user && $studentAcademic->user->status === 'active')
+                                                <a href="{{ $this->isAdmin() ? url('/admin/students/'.$studentAcademic->user->id) : url('/teacher/student/show/'.rawurlencode((string) $studentAcademic->user->name)) }}" data-testid="roster-student-link">{{ $studentAcademic->user->name ?: 'Unnamed student' }}</a>
+                                            @else
+                                                {{ $studentAcademic->user?->name ?: 'Unnamed student' }}
+                                            @endif
+                                        </td>
                                         <td class="px-3 py-3 font-mono text-xs text-slate-600">{{ $studentAcademic->klassapp_student_id ?: '—' }}</td>
                                         <td class="px-3 py-3"><span class="rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">{{ ucfirst($studentAcademic->user?->status ?: 'unknown') }}</span></td>
                                         @if($fullStudentDetail)

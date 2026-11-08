@@ -235,6 +235,14 @@ class TeacherCreatedInviteTest extends TestCase
         $firstHash = $first->token_hash;
 
         $this->get('/admin/teachers')->assertOk()->assertSee('Resend setup link');
+        Mail::assertQueued(TeacherInviteLinkMail::class, 1);
+        $this->get('/admin/teacher/show/'.$teacher->name.'?resend=1')
+            ->assertOk()
+            ->assertSee('resend.teacher@example.test', false)
+            ->assertSee('Confirm resend', false)
+            ->assertSee('WhatsApp is not sent for staff setup links', false)
+            ->assertDontSee('/invite/teacher/', false);
+        Mail::assertQueued(TeacherInviteLinkMail::class, 1);
         $this->post('/admin/teacher/show/'.$teacher->name.'/resend-setup')
             ->assertRedirect('/admin/teacher/show/'.$teacher->name);
 

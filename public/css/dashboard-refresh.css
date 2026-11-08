@@ -4745,10 +4745,10 @@ body.ka-drawer-open .dashboard-content-area select {
 .sidebar-v3-link.is-ancestor,
 .sidebar-v3-link.is-ancestor:hover {
     background: transparent;
-    color: #14532D;
-    font-weight: 700;
+    color: #1E293B;
+    font-weight: 500;
 }
-.sidebar-v3-link.is-ancestor .ka-nav-icon { color: #15803D; }
+.sidebar-v3-link.is-ancestor .ka-nav-icon { color: #1E293B; }
 #admin-sidebar.admin-sidebar .sidebar-v3-link.active,
 #res_sidebar.admin-sidebar .sidebar-v3-link.active {
     background: #E7F6EC;
@@ -4881,7 +4881,7 @@ body.sidebar-collapsed #admin-sidebar .sidebar-v3-link:hover { background: #F1F5
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-link.active,
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-link.active:hover { background: #DCFCE7; color: #14532D; }
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-link.is-ancestor,
-body.sidebar-collapsed #admin-sidebar .sidebar-v3-link.is-ancestor:hover { background: transparent; color: #14532D; }
+body.sidebar-collapsed #admin-sidebar .sidebar-v3-link.is-ancestor:hover { background: transparent; color: #1E293B; }
 body.sidebar-collapsed #admin-sidebar .sidebar-v3-item { position: relative; }
 #ka-rail-tip {
     position: fixed; z-index: 80; transform: translateY(-50%);

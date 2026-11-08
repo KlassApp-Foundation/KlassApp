@@ -26,10 +26,19 @@
     >
         <x-slot:actions>
             @if(!empty($page['can_resend']))
-                <form method="POST" action="{{ url('/admin/teacher/show/'.$editKey.'/resend-setup') }}" style="margin:0;">
-                    @csrf
-                    <button type="submit" style="{{ $btn }}" data-testid="resend-setup-link">Resend setup link</button>
-                </form>
+                <button type="button" style="{{ $btn }}" data-testid="resend-setup-link" data-open-resend>Resend setup link</button>
+                <dialog id="resend-setup" data-testid="resend-setup-dialog" style="margin:auto;border:1px solid #E2E8F0;border-radius:12px;padding:16px;color:#0F172A;max-width:420px;" @if(request()->boolean('resend')) open @endif>
+                    <form method="POST" action="{{ url('/admin/teacher/show/'.$editKey.'/resend-setup') }}">
+                        @csrf
+                        <h2 style="margin:0 0 8px;font-size:16px;">Resend setup link</h2>
+                        <p style="margin:0 0 8px;color:#475569;font-size:14px;">Send a new setup link to <strong data-testid="resend-destination">{{ $teacher->email }}</strong>. The previous link stops working.</p>
+                        <p style="margin:0 0 16px;color:#475569;font-size:14px;">WhatsApp is not sent for staff setup links.</p>
+                        <div style="display:flex;gap:8px;justify-content:flex-end;">
+                            <button type="button" data-close-resend style="{{ $btn }}">Cancel</button>
+                            <button type="submit" style="{{ $btn }}border:0;background:#15803D;color:#fff;" data-testid="confirm-resend">Confirm resend</button>
+                        </div>
+                    </form>
+                </dialog>
             @endif
             <a href="{{ $editUrl }}" style="{{ $btn }}">Edit</a>
             <div style="position:relative;">
@@ -181,6 +190,15 @@
             dialog.close();
             button.focus();
         });
+        var resend = document.getElementById('resend-setup');
+        var openResend = document.querySelector('[data-open-resend]');
+        var closeResend = document.querySelector('[data-close-resend]');
+        if (resend && openResend) {
+            openResend.addEventListener('click', function () { resend.showModal(); });
+        }
+        if (resend && closeResend) {
+            closeResend.addEventListener('click', function () { resend.close(); });
+        }
     }
     if (document.readyState === 'complete') {
         bindTeacherMore();

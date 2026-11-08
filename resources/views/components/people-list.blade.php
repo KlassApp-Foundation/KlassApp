@@ -22,6 +22,9 @@
         @if(!empty($list['standard']))
             <input type="hidden" name="standard" value="{{ $list['standard'] }}">
         @endif
+        @if(!empty($list['stream']))
+            <input type="hidden" name="stream" value="{{ $list['stream'] }}">
+        @endif
         <label class="people-search">
             <span class="people-sr">Search {{ strtolower($list['title']) }}</span>
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -53,6 +56,13 @@
                 @endif
             @endforeach
         </div>
+        @if(!empty($list['stream_picker']['options']))
+            <div class="people-chips" role="group" aria-label="Stream" data-testid="student-stream-filter">
+                @foreach($list['stream_picker']['options'] as $option)
+                    <a class="people-chip" href="{{ $option['href'] }}" aria-pressed="{{ $option['pressed'] ? 'true' : 'false' }}">{{ $option['label'] }}</a>
+                @endforeach
+            </div>
+        @endif
         @if($showSelection)
             <button type="button" class="people-select" data-people-select aria-pressed="false">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg>
