@@ -48,7 +48,7 @@ class NavigationCommandTest extends TestCase
         // school_id null: the class-teacher-only items stay hidden without a DB read
         $teacher = NavigationCommand::destinationsFor($this->user(5, null));
 
-        $this->assertSame(['Dashboard', 'Children'], array_values($parent));
+        $this->assertSame(['Dashboard', 'Children', 'Connected tools'], array_values($parent));
 
         // a parent must never be offered admin/teacher destinations
         $this->assertStringNotContainsString('/admin/', implode(' ', array_keys($parent)));
@@ -83,7 +83,7 @@ class NavigationCommandTest extends TestCase
         $this->actingAs($this->user(7));
         $command = new NavigationCommand();
 
-        $this->assertCount(2, $command->searchDestination(''));
+        $this->assertCount(3, $command->searchDestination(''));
         $hits = $command->searchDestination('child');
         $this->assertCount(1, $hits);
         $this->assertSame('Children', $hits[0]->getName());

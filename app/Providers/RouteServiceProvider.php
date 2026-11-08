@@ -55,6 +55,7 @@ class RouteServiceProvider extends ServiceProvider
         //$this->mapStaticRoutes(); //static routes hidden
         $this->mapAdminRoutes();
         $this->mapSettingsRoutes();
+        $this->mapGoogleConnectorRoutes();
         $this->mapInventoryRoutes();
         $this->mapStockRoutes();
         $this->mapLibrarianRoutes();
@@ -113,6 +114,12 @@ class RouteServiceProvider extends ServiceProvider
             ->middleware(['web','auth', 'fullschooladmin', \App\Http\Middleware\SendRealSchoolToshiOnboardingToWizard::class])
             ->namespace($this->adminNamespace)
             ->group(base_path('routes/setting.php'));
+    }
+
+    protected function mapGoogleConnectorRoutes()
+    {
+        Route::namespace($this->namespace)
+            ->group(base_path('routes/google.php'));
     }
 
     protected function mapInventoryRoutes()

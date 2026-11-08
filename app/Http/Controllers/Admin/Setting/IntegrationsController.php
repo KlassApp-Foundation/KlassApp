@@ -54,6 +54,10 @@ class IntegrationsController extends Controller
             // Otherwise the route would 500 on dynamic-registration absence.
             'slackConnectable' => config('services.slack_mcp.mode') === 'live'
                 && filled(config('services.slack_mcp.client_id')),
+            'googleConnectors' => app(\App\Services\Google\GoogleConnectionService::class)
+                ->cardRows(Auth::user()),
+            'googleAllow' => app(\App\Services\Google\GoogleConnectionService::class)
+                ->allowRows((int) $schoolId),
         ]);
     }
 

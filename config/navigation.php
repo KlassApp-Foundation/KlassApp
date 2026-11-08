@@ -176,6 +176,7 @@ return [
                         [
                             'label' => 'Settings', 'icon' => 'settings', 'url' => 'admin/settings', 'condition' => 'school_admin',
                             'children' => [
+                                ['label' => 'My connected tools', 'url' => 'settings/connected-tools', 'paths' => ['settings/connected-tools*']],
                                 ['label' => 'School details', 'url' => 'admin/schooldetails', 'paths' => ['admin/schooldetails*']],
                                 ['label' => 'Academic years and terms', 'url' => 'admin/academics', 'paths' => ['admin/academics*', 'admin/academic-term*', 'admin/academic/*']],
                                 ['label' => 'Data exports', 'url' => 'admin/reports', 'paths' => ['admin/reports']],
@@ -219,6 +220,7 @@ return [
                 ['label' => 'Class Streams', 'icon' => 'classes', 'route' => 'teacher.class-stream.index', 'active' => ['class-streams'], 'condition' => 'class_streams', 'a_class' => 'flex items-center', 'testid' => 'ct-streams-nav'],
                 ['label' => 'Notices', 'icon' => 'notices', 'route' => 'teacher.notices.index', 'active' => ['notices', 'notice']],
                 ['label' => 'Events', 'icon' => 'calendar', 'url' => 'teacher/events', 'active' => ['events']],
+                ['label' => 'Connected tools', 'icon' => 'settings', 'url' => 'settings/connected-tools', 'paths' => ['settings/connected-tools*']],
             ],
         ],
 
@@ -239,6 +241,7 @@ return [
                 ['label' => 'Holidays', 'icon' => 'holidays', 'url' => 'student/holidays', 'active' => ['holidays', 'holiday']],
                 ['label' => 'Chats', 'icon' => 'chats', 'url' => 'student/conversations', 'active' => ['chats', 'chat', 'conversations']],
                 ['label' => 'Activity', 'icon' => 'activity', 'url' => 'student/activity', 'active' => ['activity']],
+                ['label' => 'Connected tools', 'icon' => 'settings', 'url' => 'settings/connected-tools', 'paths' => ['settings/connected-tools*']],
             ],
         ],
 
@@ -253,6 +256,7 @@ return [
                 ['label' => 'Fees', 'icon' => 'fees', 'resolver' => 'parent_child', 'child_path' => 'fees', 'paths' => ['parent/*/fees']],
                 ['label' => 'Grades', 'icon' => 'grades', 'resolver' => 'parent_child', 'child_path' => 'grades', 'paths' => ['parent/*/grades']],
                 ['label' => 'Attendance', 'icon' => 'attendance', 'resolver' => 'parent_child', 'child_path' => 'attendance', 'paths' => ['parent/*/attendance']],
+                ['label' => 'Connected tools', 'icon' => 'settings', 'url' => 'settings/connected-tools', 'paths' => ['settings/connected-tools*']],
             ],
         ],
 
