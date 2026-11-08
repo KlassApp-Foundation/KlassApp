@@ -2,7 +2,7 @@
 
 Design only. No code changes. Serves **T-095** (parents recorded against one or more students; a WhatsApp link button on the parent's phone) and **T-096** (automatic linking for parents who share a phone).
 
-> **Where I stopped.** This is a first pass written at the end of a one-hour session. It maps the existing linking code and proposes the three changes with the safety rules. Not done: wireframes for the admin screens, a trace of every caller of `ParentLinkService::linkByStudentId()` (one direct caller in `app/Http/Controllers/Api/WhatsAppController.php:1154` was not traced), and the message copy for the WhatsApp templates. Those are marked below.
+> **Status.** Complete as a design. Added in a second pass: the trace of every caller of `ParentLinkService::linkByStudentId()`, wireframes for the admin screens (described in text) and the WhatsApp message copy. Still not done: any code, and answers to the open questions at the end.
 
 References are to `main` at `01d87832`.
 
@@ -66,6 +66,101 @@ The common case: two parents, one phone, one or more children.
 - School scope: a code or KLS number from another school never links; every query scoped by `school_id`.
 - Unlink by the first parent's admin removes only that parent's link.
 
+## Trace of every caller of `ParentLinkService::linkByStudentId()`
+
+`linkByStudentId()` is the single place that creates the parent and the link. It does not check entitlement; whoever calls it must. Callers on `main` at `01d87832`:
+
+| Caller | Reached by | Entitlement check before the call |
+| --- | --- | --- |
+| `ApprovalDecisionService.php:203` | An admin approving a `ParentLinkRequest` | The admin's decision. This is the intended path. |
+| `WhatsAppController::linkParentToStudent()` (`Api/WhatsAppController.php:1154`), called from **line 969** | The in-flight "Yes, link me" button (`link_{studentId}`) | Not routed through the approval board. |
+| `WhatsAppController::linkParentToStudent()`, called from **line 1074** | A parent typing the school's own student ID or board registration number | Not routed through the approval board. |
+| `SetupUiReviewDemoSchool.php:232` | A demo setup command | Runs only for the demo school; synthetic data. |
+
+Separately, `processCodeVerificationForMeta()` (the School Pay code path, around line 1208) writes the `WhatsAppUser` row and links the number directly when the student has no parent yet, also without the approval board.
+
+So today the KlassApp number path (`requestKlassAppNumberLink`) and the Request Link form go through approval, but three other paths can link without an admin. The rules in "What stops a wrong parent from linking" are written for the approved design; these direct paths do not follow them (no second factor, no rate limit, no notification).
+
+**Proposal for the callers:** every WhatsApp path files a `ParentLinkRequest` through `ParentLinkRequestService` and ends in the one confirm step above. `linkParentToStudent()` stops calling `linkByStudentId()` itself. Button payloads carry a signed, expiring reference, never a bare record id. A test per path (rule 40) proves that none of them links without either an admin approval or the two-factor confirm.
+
+## Admin screens (wireframes, described)
+
+Built from the admin design system (`design/system/concepts/admin-mvp`), not the legacy dashboard kits.
+
+**A. Parent profile, "Children" card** (existing parent page, replaces the single student field)
+
+```
+Children                                              [ + Add child ]
+------------------------------------------------------------------
+ (avatar) Amara Example      Primary Three East      KLS0000123   [Unlink]
+ (avatar) Tendo Example      Baby Class              KLS0000456   [Unlink]
+------------------------------------------------------------------
+WhatsApp   ● Linked  +256 7xx xxx 456        [ Send link on WhatsApp ]
+           Last message 3 days ago
+```
+- "+ Add child" opens a multi-select search (name or KLS number), scoped to the school, with checkboxes. Save writes through `ParentLinkService`.
+- "Send link on WhatsApp" is visible only when the parent has a phone and is "Not linked". It sends the template below and shows "Sent, expires in 7 days". When Linked it is replaced by the linked phone.
+- Empty state: "No children linked yet. Add a child so this parent can see fees and results."
+
+**B. Add parent (modal or page)**
+```
+Parent name  [______________]     Phone  [+256 ___ ______]
+Children     [ search name or KLS number            v ]  (chips: Amara x  Tendo x)
+[ ] Send the WhatsApp link now
+                                     [ Cancel ]  [ Save parent ]
+```
+- Typing a phone that already belongs to a parent in this school shows an inline banner under the field: "Grace Example already has this number. [ Add the children to Grace ] [ This is a different person ]". Choosing the second makes a second parent on the same phone (the T-096 case).
+
+**C. Link request board** (existing `LinkRequestBoard`, three additions)
+```
+Request from +256 7xx xxx 456   "Grace E."   asked for: Amara (Primary Three)
+ Matched: phone on file ✓   child's KLS number ✓   date of birth ✗ (not given)
+ How: typed KLS number                       Code: none
+ [ Approve ]  [ Reject ]  [ Ask the parent a question ]
+```
+- A "Matched" row lists what matched and what did not, so an admin decides on evidence.
+- Automatically linked second parents appear in a "Linked automatically (last 7 days)" list with `[Unlink]` beside each (existing `unlink`).
+- Empty state: "Nothing waiting. New requests from WhatsApp appear here."
+
+**D. Settings, "Parent linking"** (new, small): code expiry (default 7 days), whether automatic linking of a second parent is allowed for this school (default **off**, consistent with the opt-in rule for new behaviour), and who is notified.
+
+All lists scoped by `school_id`; every row addressed by id.
+
+## WhatsApp message copy (drafts, for Rasta to edit)
+
+Variables in `{braces}`. Template messages (outside the 24-hour window) must be approved by Meta before use; the text below is the proposed content. Keep each message short, plain, no child names in the first message to an unverified number.
+
+1. **Invite to link** (template, sent when a parent is added)
+   > Hello {parent_first_name}. {school_name} uses KlassApp to share fees, results and attendance. Tap the button to connect this number. The link works for 7 days.
+   >
+   > [ Connect on WhatsApp ]
+
+   The button opens a chat with a prefilled `LINK {code}`. No child name appears here.
+
+2. **Linked, first parent**
+   > You are connected to {school_name}. You can now ask for fees, results and attendance for {child_first_name}.
+   > [ Fee balance ] [ Exam results ] [ Attendance ]
+
+3. **Linked, second parent on the same phone** (to the person who just linked)
+   > You are connected as an additional parent for {child_first_name}. Send *HELP* to see what you can ask for.
+
+4. **Ask for proof, second parent** (when a different person messages from a known number)
+   > This number is already used for a parent at {school_name}. To add you as another parent, please send your child's KlassApp ID (it starts with KLS). If you do not have it, tap *Request Link* and the school will review.
+   > [ Request Link ]
+
+5. **Wrong or unknown answer** (identical for "no such child" and "wrong detail")
+   > We could not match that. Check the ID on your child's report card and try again, or tap *Request Link* and the school will review.
+
+6. **Rate limit reached** (never says whether the child exists)
+   > Too many tries for now. Please try again tomorrow or contact the school office.
+
+7. **Notice to the first parent / school admin** (only if the school switched this on; see open question 5)
+   > Another parent has been connected to {child_first_name} at {school_name}. If this is not expected, contact the school office.
+
+8. **Pending, rejected, approved** keep the existing `ParentLinkRequestService` messages.
+
+Copy rules: no mention of other children, no candidate lists, no marks, no fee amounts before linking, and nothing that changes the answer between "not found" and "wrong detail".
+
 ## Open questions for Rasta
 
 1. **What counts as proof?** Is the child's KLS number enough on its own (a parent may see it on a fee receipt), or must it come with a second detail?
@@ -75,4 +170,4 @@ The common case: two parents, one phone, one or more children.
 5. **Notifications.** Is telling the first parent "a second parent was linked" acceptable (it can be sensitive in separated families)?
 6. **Expiry of codes** and where the link button is shown (parent portal, SMS or WhatsApp invite, printed letter).
 7. **Cross-school parents** (one phone, children at two schools): does the code or KLS number linking behave the same, and does the first school see the second?
-8. **The direct call at `WhatsAppController.php:1154`.** Which path is it, and does it bypass approval? Not traced in this pass.
+8. **The direct paths found in the trace** (next section) skip the approval board. Should they be closed before anything in this document is built? Details have been passed to Rasta privately, not recorded here (public repository).
