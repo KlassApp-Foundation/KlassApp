@@ -103,7 +103,7 @@ class TeacherProfileService
 
     public function deactivate(int $schoolId, string $name): User
     {
-        $teacher = $this->find($schoolId, $name);
+        $teacher = \App\Support\PersonByName::forWrite($name, $schoolId, [5], true);
         $teacher->status = 'inactive';
         $teacher->save();
 

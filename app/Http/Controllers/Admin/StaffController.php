@@ -351,10 +351,10 @@ class StaffController extends Controller
      */
     public function destroy($name)
     {
+        // Resolved outside the try so a 404 or the duplicate-name refusal is not swallowed.
+        $user = \App\Support\PersonByName::forWrite((string) $name, (int) Auth::user()->school_id, [4, 8, 10, 11, 12, 13]);
         try
         {
-            $user = User::findByExactNameInSchool($name, (int) Auth::user()->school_id);
-      if ($user === null) { abort(404); }
             $user->delete();
 
             $message=trans('messages.delete_success_msg',['module' => 'Teacher']);

@@ -29,11 +29,10 @@ class UserController extends Controller
 
     public function updateStatus(Request $request,$name)
     {
+      // Never an administrator account; one person only (T-107). Outside the try so the refusal is not swallowed.
+      $user = \App\Support\PersonByName::forWrite((string) $name, (int) Auth::user()->school_id, [4, 5, 6, 7, 8, 10, 11, 12, 13]);
       try
       {
-        $user = User::findByExactNameInSchool($name, (int) Auth::user()->school_id);
-        if ($user === null) { abort(404); }
-
         $this->reset_token($user);
 
         $user->status = $request->status;

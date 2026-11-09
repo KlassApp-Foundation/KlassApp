@@ -328,7 +328,7 @@ class ParentController extends Controller
     public function destroy($name)
     {
         $schoolId = Auth::user()->school_id;
-        $user = User::where('name',$name)->where('school_id', $schoolId)->firstOrFail();
+        $user = \App\Support\PersonByName::forWrite((string) $name, (int) $schoolId, [7]);
 
         \DB::beginTransaction();
         try
