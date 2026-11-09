@@ -156,7 +156,7 @@ Wait. Do not send the message again. This script does not call a model, so that 
 - It does not send email or WhatsApp.
 - It does not create exams, fees, or SchoolPay records.
 - It does not assign homeroom class teachers. Teaching assignments for the eight teachers are written in the teachers step.
-- The cards, and the checklist replies above, do not call a model. A venue with no internet can still run this script. `demo:checklist-reset` leaves the assistant switched on for Northwind Harbour School only. No other school is changed.
+- The approval buttons do not call a model. A free-text question does, once, and falls back to the saved plan if that call cannot finish. A venue with no internet can still run the button script. `demo:checklist-reset` leaves the assistant switched on for Northwind Harbour School only. No other school is changed.
 
 ## The free Gemini key
 
