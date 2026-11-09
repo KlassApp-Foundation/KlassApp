@@ -45,6 +45,10 @@ final class ChecklistWorkbookConverter
 
     private ?string $country = null;
 
+    private ?int $dpaRow = null;
+
+    private string $dpaAnswer = '';
+
     /**
      * @return array{
      *   blocked: ?string, files: array<string,list<list<string>>>, noImporter: array<string,list<list<string>>>,
@@ -74,6 +78,7 @@ final class ChecklistWorkbookConverter
         $out['blocked'] = $this->checkConfirmations($this->sheet($book, 'Confirmations'));
         if ($out['blocked'] !== null) {
             $out['flags'] = $this->flags;
+            $out['dpa'] = $this->dpaPayload();
 
             return $out;
         }
@@ -86,6 +91,7 @@ final class ChecklistWorkbookConverter
                 $out['blocked'] = 'The "All Learners (for import)" tab is empty but these class tabs have rows: '.implode(', ', $filled)
                     .'. The formula values probably did not export; re-export the workbook with values (File > Download > Microsoft Excel after the sheet has finished calculating) and run again.';
                 $out['flags'] = $this->flags;
+                $out['dpa'] = $this->dpaPayload();
 
                 return $out;
             }
@@ -111,12 +117,12 @@ final class ChecklistWorkbookConverter
         $out['noImporter']['classes-and-streams.csv'] = array_merge([['Class', 'Stream', 'Learners (approx.)']], array_map(fn ($c) => [$c['class'], $c['stream'], $c['count']], $classes['list']));
         $out['noImporter']['subjects.csv'] = $subjects['csv'];
 
-        [$students, $guardian, $byClass] = $this->learners($learnerRows, $classes);
+        [$students, $guardian, $byClass, $learnerPlan] = $this->learners($learnerRows, $classes);
         $out['files']['students.csv'] = $students;
         $out['pending']['learner-guardian-details.csv'] = $guardian;
         $out['learnersByClass'] = $byClass;
 
-        $this->terms($this->sheet($book, 'Terms & Exams'), $out);
+        $termPlan = $this->terms($this->sheet($book, 'Terms & Exams'), $out);
         $this->fees($this->sheet($book, 'Fees'), $classes, $out);
         $this->adminContacts($this->sheet($book, 'Admin & Contacts'), $out);
 
@@ -136,6 +142,15 @@ final class ChecklistWorkbookConverter
 
         $out['flags'] = $this->flags;
         $out['counts'] = $this->counts;
+        $out['dpa'] = $this->dpaPayload();
+        $out['planRows'] = [
+            'classes' => $classes['list'],
+            'subjects' => $subjects['plan'] ?? [],
+            'teachers' => $teachers['list'],
+            'assignments' => $links['plan'] ?? [],
+            'students' => $learnerPlan,
+            'terms' => $termPlan,
+        ];
 
         return $out;
     }
@@ -211,15 +226,30 @@ final class ChecklistWorkbookConverter
             }
             if (str_contains($label, 'data processing')) {
                 $found = true;
+                $this->dpaRow = $i + 1;
+                $this->dpaAnswer = $answer === '' ? 'blank' : $this->text($row[1] ?? '');
                 if ($answer !== 'yes') {
-                    return 'The data processing agreement row on Confirmations (row '.($i + 1).') is "'.($answer === '' ? 'blank' : $answer).'", not Yes.';
+                    return 'The data processing agreement row on Confirmations (row '.($i + 1).') is "'.($this->dpaAnswer === '' ? 'blank' : $this->dpaAnswer).'", not Yes.';
                 }
+                $this->dpaAnswer = 'Yes';
             } elseif ($i > 1 && $answer !== '' && $answer !== 'yes') {
                 $this->flag('Confirmations', $i + 1, 'Answer', "Confirmation \"{$this->text($row[0])}\" is not Yes.", 'info');
             }
         }
 
         return $found ? null : 'There is no data processing agreement row on the Confirmations tab.';
+    }
+
+    /**
+     * @return array{tab: string, row: ?int, answer: string}
+     */
+    private function dpaPayload(): array
+    {
+        return [
+            'tab' => 'Confirmations',
+            'row' => $this->dpaRow,
+            'answer' => $this->dpaAnswer,
+        ];
     }
 
     private function classes(?Worksheet $ws): array
@@ -252,7 +282,7 @@ final class ChecklistWorkbookConverter
 
     private function subjects(?Worksheet $ws, array &$out): array
     {
-        $res = ['names' => [], 'csv' => [['Subject', 'Section', 'Classes', 'Counts on report card total', 'Short code']]];
+        $res = ['names' => [], 'plan' => [], 'csv' => [['Subject', 'Section', 'Classes', 'Counts on report card total', 'Short code']]];
         $t = $this->table($ws);
         $tab = 'Subjects';
         foreach ($t['rows'] ?? [] as $r) {
@@ -262,6 +292,11 @@ final class ChecklistWorkbookConverter
             }
             $name = $t['get']($r, 'subject or learning area');
             $res['names'][$this->key($name)] = $name;
+            $res['plan'][] = [
+                'row' => $r['n'],
+                'name' => $name,
+                'classes' => $t['get']($r, 'classes that take it'),
+            ];
             $res['csv'][] = [$name, $t['get']($r, 'section'), $t['get']($r, 'classes that take it'), $t['get']($r, 'counts on report card total?'), $t['get']($r, 'short code')];
             $this->accept($tab);
         }
@@ -303,7 +338,7 @@ final class ChecklistWorkbookConverter
 
     private function assignments(?Worksheet $ws, array $teachers, array $subjects, array $classes): array
     {
-        $res = ['rows' => [], 'byTeacher' => []];
+        $res = ['rows' => [], 'byTeacher' => [], 'plan' => []];
         $t = $this->table($ws);
         $tab = 'Teaching Assignments';
         foreach ($t['rows'] ?? [] as $r) {
@@ -337,6 +372,13 @@ final class ChecklistWorkbookConverter
                 continue;
             }
             $res['rows'][] = [$teacher['name'], $subjectName, $class, $stream, $teacher['phone']];
+            $res['plan'][] = [
+                'row' => $n,
+                'teacher' => $teacher['name'],
+                'subject' => $subjectName,
+                'class' => $class,
+                'stream' => $stream,
+            ];
             $a = &$res['byTeacher'][$teacher['key']];
             $a['subjects'] = array_values(array_unique(array_merge($a['subjects'] ?? [], [$subjectName])));
             $a['classes'] = array_values(array_unique(array_merge($a['classes'] ?? [], [$class])));
@@ -367,10 +409,11 @@ final class ChecklistWorkbookConverter
         return $rows;
     }
 
-    /** @return array{0: list<list<string>>, 1: list<list<string>>, 2: array<string,int>} */
+    /** @return array{0: list<list<string>>, 1: list<list<string>>, 2: array<string,int>, 3: list<array<string, mixed>>} */
     private function learners(?array $t, array $classes): array
     {
         $students = [];
+        $plan = [];
         $guardian = [['Learner', 'Class', 'Stream', 'Parent / guardian email', 'Relationship', 'Second parent / guardian name', 'Second parent / guardian phone']];
         $byClass = [];
         $seen = [];
@@ -409,6 +452,18 @@ final class ChecklistWorkbookConverter
             $seen[$dupKey] ??= $n;
 
             $students[] = [$name, $class, $stream, $t['get']($r, 'parent / guardian full name'), $phone, $g, $dob ?? '', $t['get']($r, 'existing school id number')];
+            $plan[] = [
+                'row' => $n,
+                'name' => $name,
+                'class' => $class,
+                'stream' => $stream,
+                'gender' => $g,
+                'date_of_birth' => $dob ?? '',
+                'parent_name' => $t['get']($r, 'parent / guardian full name'),
+                'parent_phone' => $phone,
+                'parent_email' => $t['get']($r, 'parent / guardian email'),
+                'school_student_id' => $t['get']($r, 'existing school id number'),
+            ];
             $label = $class.($stream !== '' ? ' / '.$stream : '');
             $byClass[$label] = ($byClass[$label] ?? 0) + 1;
             $extra = [$t['get']($r, 'parent / guardian email'), $t['get']($r, 'relationship'), $t['get']($r, 'second parent / guardian name'), $this->phone($t['get']($r, 'second parent / guardian phone'), $tab, $n, 'Second parent / guardian phone')];
@@ -419,13 +474,17 @@ final class ChecklistWorkbookConverter
         }
         ksort($byClass);
 
-        return [$students, $guardian, $byClass];
+        return [$students, $guardian, $byClass, $plan];
     }
 
-    private function terms(?Worksheet $ws, array &$out): void
+    /**
+     * @return list<array{row: int, year: string, name: string, start: string, end: string}>
+     */
+    private function terms(?Worksheet $ws, array &$out): array
     {
+        $plan = [];
         if ($ws === null) {
-            return;
+            return $plan;
         }
         $rows = $ws->toArray(null, true, false, false);
         $tab = 'Terms & Exams';
@@ -501,6 +560,7 @@ final class ChecklistWorkbookConverter
                 continue;
             }
             $terms[] = [$first, $term, $start, $end, $this->text($row[4] ?? '')];
+            $plan[] = ['row' => $n, 'year' => $first, 'name' => $term, 'start' => $start, 'end' => $end];
             $this->accept($tab);
         }
         unset($cols);
@@ -511,6 +571,8 @@ final class ChecklistWorkbookConverter
         if ($grading !== []) {
             $out['pending']['grading.txt'] = [[implode("\n", $grading)]];
         }
+
+        return $plan;
     }
 
     private function fees(?Worksheet $ws, array $classes, array &$out): void

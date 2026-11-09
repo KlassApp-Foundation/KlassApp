@@ -304,6 +304,10 @@ class StudentParentAccountInviteService
 
     private function sendEmail(TeacherInvite $invite, string $token, School $school, string $role): void
     {
+        if (\App\Services\Onboarding\ChecklistInviteHold::active()) {
+            return;
+        }
+
         try {
             Mail::to($invite->email)->queue(new StudentParentSetupLinkMail(
                 name: $invite->name ?? ucfirst($role),

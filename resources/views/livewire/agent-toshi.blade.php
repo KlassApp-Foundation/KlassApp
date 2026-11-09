@@ -86,7 +86,10 @@
         </div>
         <div class="toshi-messages-area"
              x-init="$nextTick(() => $el.scrollTop = $el.scrollHeight); $wire.$watch('messages', () => $nextTick(() => $el.scrollTop = $el.scrollHeight))">
-            @if($mode === 'preview')
+            @if($checklistOnboarding)
+                <livewire:checklist-onboarding />
+            @endif
+            @if($mode === 'preview' && !$checklistOnboarding)
             <div class="toshi-preview-card" data-testid="toshi-preview-coming-soon">
                 @if($publicDemo)
                     <p class="toshi-preview-eyebrow">Coming soon</p>
@@ -911,7 +914,7 @@
 
         @endif {{-- end non-preview messages --}}
 
-        @if($mode === 'preview')
+        @if($mode === 'preview' && !$checklistOnboarding)
         <div class="toshi-composer toshi-composer--preview" data-testid="toshi-composer-preview">
             <div class="toshi-composer-inner">
                 <textarea rows="1"

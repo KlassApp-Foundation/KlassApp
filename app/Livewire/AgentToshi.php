@@ -116,6 +116,8 @@ class AgentToshi extends Component
     public $messages = [];
     public $input = '';
     public $schoolId = null;
+
+    public bool $checklistOnboarding = false;
     public $preview = [];
     /** Public-demo actor: preview card shows the WhatsApp follow-along line. */
     public $publicDemo = false;
@@ -369,6 +371,9 @@ class AgentToshi extends Component
     {
         $user = auth()->user();
         if (!$user) return;
+
+        $this->checklistOnboarding = app(\App\Services\Onboarding\ChecklistOnboardingGate::class)
+            ->enabledFor($user->school_id ? School::query()->find($user->school_id) : null);
 
         // Panel visibility (preview / onboarding / assistant). Scripted setup and
         // the model are gated separately via onboardingEnabled / assistantEnabled.
@@ -4233,9 +4238,34 @@ class AgentToshi extends Component
         $this->botSay($msg);
     }
 
+    private function messageRequestsChecklist(string $text): bool
+    {
+        $lower = strtolower($text);
+
+        return str_contains($lower, 'checklist')
+            && (str_contains($lower, 'onboard') || str_contains($lower, 'set up') || str_contains($lower, 'setup') || str_contains($lower, 'import'));
+    }
+
     // ── Handle user input ──
     public function send()
     {
+        $text = trim((string) $this->input);
+        if ($this->checklistOnboarding && $text !== '' && $this->messageRequestsChecklist($text)) {
+            $this->input = '';
+            $this->dispatch('checklist-onboarding-open');
+
+            return;
+        }
+
+        if ($this->checklistOnboarding && $this->mode === 'preview') {
+            $this->input = '';
+            if ($text !== '') {
+                $this->dispatch('checklist-onboarding-hint');
+            }
+
+            return;
+        }
+
         if ($this->mode === 'preview') {
             $this->input = '';
 

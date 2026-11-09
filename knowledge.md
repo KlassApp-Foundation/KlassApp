@@ -2,6 +2,13 @@
 
 > **Canonical location**: `/Users/mac/projects/KlassApp/knowledge.md` (workspace root). Worktrees (e.g. `KlassApp-main-checkout`) should sync to that path when copies diverge — keep one body of truth; do not maintain parallel divergent session logs.
 
+## Session: 2026-11-09 — T-131 checklist onboarding proof of concept
+
+- **Work:** A demo or test school can onboard from its checklist inside the Toshi panel: upload, a summary with tab and row flags, a confirm-before-write preview for each step, then a completion card. Writes go through OnboardingEngine only. Invites are prepared and not sent. Homeroom class teachers are listed and not written.
+- **Flag:** `toshi.checklist_onboarding_poc`, and only when the school is `is_demo` or `is_test`. A real school sees no change. The demo school stays in preview with the assistant off. The cards are filled from the stored plan. This flow does not call a model.
+- **Branch:** `poc/toshi-checklist-onboarding`, which also contains the #1286 and #1291 branches. Draft pull request only. Not merged. Not deployed.
+- **Demo:** fictional Northwind Harbour School. Workbooks and the 5-minute script are in `docs/demo/`. No production data.
+
 ## Session note — 2026-11-05 — parent and student portals (page 9, draft)
 
 Stacked on `cursor/parent-student-portal-0657` (#1266, not merged). Branch `cursor/parent-student-portals-page9-6ada`. Dashboard cards open Marks, Attendance and Fees. Both portals read `ParentPortalService` released results only. Attendance is one row per session: both sessions present is one day, one present session is a half day, shown as `4½ days present`, `4 days present`, `½ day present`, or `1 day present`. The same wording is on the student dashboard in #1281 (`cursor/base-class-fixes-1cb2`) and on the teacher week chart in #1283 (a half-present student counts as ½). Fees pages do not show attendance days. No new WhatsApp or Toshi messages. Drafts only; not merged, not deployed, and not rebased onto #1265.
