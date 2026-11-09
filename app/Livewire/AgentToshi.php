@@ -812,27 +812,13 @@ class AgentToshi extends Component
      */
     public function jumpToChecklistStep(string $key): void
     {
-        $known = collect(\App\Services\OnboardingStepsService::ALL_STEPS)->has($key);
-        if (! $known) {
+        if (! array_key_exists($key, \App\Services\OnboardingStepsService::ALL_STEPS)) {
             return;
         }
 
-        if ($this->isOnboardingV2Enabled()) {
-            $school = \App\Models\School::find($this->schoolId);
-            if ($school) {
-                $this->enterOnboardingV2($school);
-            }
-
-            return;
-        }
-
-        $this->jumpToIncompleteOnboardingStep($key);
-
-        if ($key === 'plan_selection') {
-            $this->promptPlanSelection();
-        } elseif (! \App\Services\OnboardingStepsService::isStepComplete($key, \App\Models\School::find($this->schoolId), auth()->id())) {
-            $this->botSay(self::onboardingPromptForStep($key));
-        }
+        // The wizard is the only setup surface (D2): a checklist row opens that
+        // step in the wizard. The panel never runs a chat step.
+        $this->redirect(route('admin.onboarding.wizard', ['step' => $key]));
     }
 
     /**
