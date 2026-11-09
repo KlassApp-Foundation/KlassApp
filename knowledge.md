@@ -6,7 +6,7 @@
 
 - **Work:** A demo or test school can onboard from its checklist inside the Toshi panel: upload, a summary with tab and row flags, a confirm-before-write preview for each step, then a completion card. Writes go through OnboardingEngine only. Invites are prepared and not sent. Homeroom class teachers are listed and not written.
 - **Flag:** `toshi.checklist_onboarding_poc`, and only when the school is `is_demo` or `is_test`. A real school sees no change. The demo school stays in preview with the assistant off. The cards are filled from the stored plan. This flow does not call a model.
-- **Branch:** `poc/toshi-checklist-onboarding`, which also contains the #1286 and #1291 branches. Draft pull request only. Not merged. Not deployed.
+- **Branch:** `poc/toshi-checklist-onboarding`, which also contains the #1286 and #1291 branches. Draft [#1307](https://github.com/KlassApp-Foundation/KlassApp/pull/1307). Not merged. Not deployed.
 - **Demo:** fictional Northwind Harbour School. Workbooks and the 5-minute script are in `docs/demo/`. No production data.
 
 ## Session note — 2026-11-05 — parent and student portals (page 9, draft)
