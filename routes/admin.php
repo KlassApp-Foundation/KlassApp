@@ -580,7 +580,7 @@ Route::get( '/downloadformat', 'ImportMemberController@downloadFormat' );
 	Route::get('/attendance/register', [\App\Http\Controllers\Teacher\AttendanceController::class, 'register'])->name('admin.attendance.register');
 	Route::post('/attendance/register', [\App\Http\Controllers\Teacher\AttendanceController::class, 'saveRegister'])->name('admin.attendance.register.save');
 	//add
-	Route::get('/attendance', 'AttendanceController@index');
+	Route::get('/attendance', 'AttendanceController@index')->name('admin.attendance.index');
 	Route::get( '/attendance/list', 'AttendanceController@list' );
 	Route::get( '/attendance/add', 'AttendanceController@create' );
 	Route::post( '/attendance/add', 'AttendanceController@store' );

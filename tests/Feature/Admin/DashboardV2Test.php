@@ -418,6 +418,39 @@ class DashboardV2Test extends TestCase
         }
     }
 
+    public function test_the_attendance_tile_opens_the_attendance_page_not_the_json_feed_for_an_empty_school(): void
+    {
+        $school = $this->makeSchool(['name' => 'Attendance Link Empty School']);
+        $admin = $this->makeAdmin($school);
+
+        $html = $this->render($admin)->assertOk()->getContent();
+        $this->assertAttendanceTileLinksToThePage($html);
+    }
+
+    public function test_the_attendance_tile_opens_the_attendance_page_not_the_json_feed_for_a_school_with_students(): void
+    {
+        $school = $this->makeSchool(['name' => 'Attendance Link Live School']);
+        $admin = $this->makeAdmin($school);
+        $student = User::factory()->create(['school_id' => $school->id, 'usergroup_id' => 6, 'status' => 'active']);
+        Userprofile::create([
+            'user_id' => $student->id, 'school_id' => $school->id, 'usergroup_id' => 6,
+            'firstname' => 'Amina', 'lastname' => 'Pupil', 'gender' => 'female',
+        ]);
+
+        $html = $this->render($admin)->assertOk()->getContent();
+        $this->assertStringContainsString('data-testid="dashboard-v2-kpi-attendance"', $html);
+        $this->assertAttendanceTileLinksToThePage($html);
+    }
+
+    private function assertAttendanceTileLinksToThePage(string $html): void
+    {
+        $page = route('admin.attendance.index');
+        $this->assertSame('/admin/attendance', parse_url($page, PHP_URL_PATH));
+        preg_match('/<a class="dv2-kpi-link" href="([^"]*)" aria-label="Attendance, open the registers"/', $html, $m);
+        $this->assertSame($page, $m[1] ?? null, 'The Attendance tile must link to the attendance page.');
+        $this->assertStringNotContainsString('/admin/attendance/list', $html, 'The dashboard must never link to the JSON data feed.');
+    }
+
     public function test_kpis_match_the_database_for_a_school_with_data(): void
     {
         $school = $this->makeSchool(['name' => 'KPI School']);
