@@ -273,13 +273,13 @@ class SchoolInviteTest extends TestCase
         Mail::assertQueued(SchoolInviteMail::class, fn (SchoolInviteMail $mail) => $mail->hasTo('adopter@school.test'));
     }
 
-    public function test_the_claim_choice_sets_the_toshi_mode_or_opens_the_wizard(): void
+    public function test_the_claim_choice_always_opens_the_wizard(): void
     {
         $school = School::create([
             'name' => 'Choice School',
             'email' => 'choice@test.test',
             'status' => 1,
-            'toshi_mode' => 'preview',
+            'toshi_mode' => 'onboarding',
             'toshi_enabled' => 0,
         ]);
         $user = User::create([
@@ -293,18 +293,17 @@ class SchoolInviteTest extends TestCase
 
         $school->forceFill(['is_test' => 1])->save();
 
+        // Both posted paths go to the wizard; the retired chat mode is cleared.
         $this->actingAs($user)
             ->post(route('onboarding.choice.store'), ['path' => 'toshi'])
-            ->assertRedirect('/admin/dashboard');
+            ->assertRedirect(OnboardingEngine::setupDestination($school->fresh(), $user->id));
 
-        $this->assertSame(ToshiMode::Onboarding, $school->fresh()->toshi_mode);
+        $this->assertSame(ToshiMode::Preview, $school->fresh()->toshi_mode);
         $this->assertSame(0, (int) $school->fresh()->toshi_enabled);
 
         $this->actingAs($user)
             ->post(route('onboarding.choice.store'), ['path' => 'wizard'])
             ->assertRedirect(OnboardingEngine::setupDestination($school->fresh(), $user->id));
-
-        $this->assertSame(ToshiMode::Preview, $school->fresh()->toshi_mode);
     }
 
     public function test_created_by_matches_users_id_and_nulls_on_delete(): void

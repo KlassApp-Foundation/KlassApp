@@ -203,45 +203,6 @@ class SignupClosureTest extends TestCase
         $this->post('/register/verify/resend')->assertRedirect(route('early-access.show'));
     }
 
-    public function test_T2_signup_closed_toshi_create_mode_creates_no_school_for_a_school_admin(): void
-    {
-        $admin = app(SchoolSignupBootstrapService::class)->bootstrapAsOperator([
-            'name' => 'Existing Admin',
-            'email' => 'existing@example.com',
-            'phone' => null,
-            'password' => 'secret123',
-        ]);
-        $this->assertSame(1, School::count());
-
-        $this->actingAs($admin->fresh());
-
-        $this->fillToshiCreateMode(\Livewire\Livewire::test(\App\Livewire\AgentToshi::class), 'Second Closed School', 'second-admin@example.com')
-            ->call('confirmOnboarding');
-
-        $this->assertSame(1, School::count());
-        $this->assertNull(User::where('email', 'second-admin@example.com')->first());
-    }
-
-    public function test_T2_signup_closed_toshi_create_mode_still_works_for_platform_admin(): void
-    {
-        $platform = User::create([
-            'school_id' => null,
-            'usergroup_id' => 1,
-            'name' => 'Platform Admin',
-            'email' => 'platform@example.com',
-            'password' => bcrypt('secret123'),
-            'status' => 'active',
-            'email_verified' => 1,
-        ]);
-
-        $this->actingAs($platform);
-
-        $this->fillToshiCreateMode(\Livewire\Livewire::test(\App\Livewire\AgentToshi::class), 'Operator Created School', 'operator-admin@example.com')
-            ->call('confirmOnboarding');
-
-        $this->assertSame(1, School::where('name', 'Operator Created School')->count());
-    }
-
     private function fillToshiCreateMode($component, string $schoolName, string $adminEmail)
     {
         return $component

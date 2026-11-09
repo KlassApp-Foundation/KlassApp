@@ -149,18 +149,6 @@ class ManualOnboardingParityTest extends TestCase
         $response->assertRedirect('/admin/dashboard');
     }
 
-    public function test_gated_route_still_flags_toshi_onboarding(): void
-    {
-        // Toshi-path regression: the allowlist changes must not stop a gated
-        // route from bouncing an un-onboarded admin back to the dashboard with
-        // the flag that auto-opens Toshi.
-        $this->actingAs($this->admin);
-
-        $this->get('/admin/students')
-            ->assertRedirect('/admin/dashboard')
-            ->assertSessionHas('open_toshi_onboarding', true);
-    }
-
     // ─────────────────────────────────────────────────────────────
     // Full manual onboarding → OnboardingStepsService reports complete
     // ─────────────────────────────────────────────────────────────

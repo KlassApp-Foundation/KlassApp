@@ -51,7 +51,7 @@
                     Set up manually
                 </a>
                 @toshiOnboarding
-                @if(auth()->user()?->school && app(\App\Services\Toshi\ToshiOnboardingPath::class)->openFor(auth()->user()->school))
+                @if(false)
                 <button type="button"
                         class="ds-btn ds-btn-success ds-btn-md"
                         data-testid="setup-banner-toshi"

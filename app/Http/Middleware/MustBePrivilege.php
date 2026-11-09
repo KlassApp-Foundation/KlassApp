@@ -20,10 +20,6 @@ class MustBePrivilege
     {
         $user = \Auth::user();
 
-        if ($redirect = app(SendRealSchoolToshiOnboardingToWizard::class)->redirect($request)) {
-            return $redirect;
-        }
-
         $schoolId = $user->school_id;
         $academicYear = SiteHelper::getAcademicYear($schoolId);
         $standardCount = Standard::where('school_id', $schoolId)->count();
@@ -49,8 +45,7 @@ class MustBePrivilege
                 return $next($request);
             }
 
-            return redirect('/admin/dashboard')
-                ->with('open_toshi_onboarding', true);
+            return redirect('/admin/dashboard');
         }
 
         if ($standardCount === 0) {
