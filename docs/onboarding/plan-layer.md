@@ -13,8 +13,8 @@ One JSON document, produced by `ChecklistWorkbookConverter` (PR #1291) and store
 ```json
 {
   "schema": 1,
-  "source": {"file": "hilltop.xlsx", "sha256": "…", "exported_at": "2026-11-08T09:00:00Z"},
-  "school": {"name": "Hilltop", "country": "Uganda", "curriculum": "uneb"},
+  "source": {"file": "northwind.xlsx", "sha256": "…", "exported_at": "2026-11-08T09:00:00Z"},
+  "school": {"name": "Northwind Academy", "country": "Kenya", "curriculum": "cambridge"},
   "dpa": {"confirmed": true, "tab": "Confirmations", "row": 4, "answer": "Yes"},
   "steps": [
     {
@@ -42,6 +42,7 @@ This holds children's data, so the storage decision is part of the design, not a
 
 | Question | Proposal |
 | --- | --- |
+| At rest | `payload` uses Laravel's `encrypted:array` cast, so the row is unreadable without `APP_KEY`. The same cast applies to any later stored copy of the workbook |
 | Table | `onboarding_plans`: `id`, `school_id`, `created_by`, `source_sha256`, `source_name`, `schema`, `payload` (JSON/LONGTEXT), `status` (`draft`, `previewed`, `applying`, `applied`, `abandoned`), `dpa_confirmed_at`, `expires_at`, timestamps |
 | Who may read | School admins of that school (`school_id` scope), and platform operators only through impersonation, which is already audited. No route returns the raw payload to a parent, teacher or student |
 | Retention | 30 days after `applied` or `abandoned`, then the row is deleted. A scheduled command deletes expired rows; it does not archive them |
@@ -69,16 +70,21 @@ Preview compares the plan with the school's current rows **per step**, using the
 
 The preview result is a list per step: `create`, `exists`, `conflict`, each with its plan row and the existing record id. A conflict is never auto-resolved; the admin either fixes the workbook or accepts "skip this row", which is recorded.
 
-## 4. Confirmation: one per step
+## 4. Confirmation: one per step, and what "one step" means
 
-**Proposal, not a decision (Q6).** The confirmation unit is per **step**, not per tool call and not per row:
+**Proposal, not a decision (Q6).** The confirmation unit is per **step**, not per tool call and not per row. What happens *inside* a confirmed step is the open question, because two defensible models disagree:
 
-- The review shows one card per step: "Classes and streams — 13 create, 1 exists, 0 conflicts", with the flagged rows underneath.
-- Confirm writes that step inside one transaction. Reject writes nothing and returns to the flags.
-- A 240-learner step is one confirmation, not 240. A failed row is reported after the write with its row number and does not roll back the rows that succeeded — unless the step is one where partial data is unusable (teachers, because class-teacher assignment depends on them), in which case the step is all-or-nothing.
-- Who may confirm (school admin only, or also a KlassApp operator) is the bootcamp's call. The design supports both: `confirmed_by` records the actor and whether they were impersonating.
+| | A. All-or-nothing per step | B. Row-level results per step |
+| --- | --- | --- |
+| How | The step's rows run in one transaction; any failure rolls the whole step back | Each row commits; failures are collected and reported with their row number |
+| Good | The school never has half a class list or half a teacher set; a retry is safe because nothing moved | One bad row (a duplicate phone, an unknown stream) does not block the other 239 |
+| Bad | One bad row blocks the whole step until the workbook is fixed | A failed step can leave a school with some classes and not others; downstream steps must tolerate gaps |
+| Fits | Teachers (class-teacher assignment depends on the full set), classes and streams (subjects and students depend on them) | Students and parents (large, independent rows), fees (independent rows) |
 
-This is the only place the design deliberately stops at a proposal, because the audit's Q6 is deferred.
+The review card is the same in both: one card per step, counts and flagged rows, Confirm or Reject. The difference is what Confirm promises.
+
+- **Who may confirm** — school admin only, or also a KlassApp operator — is part of Q6. The design supports both: `confirmed_by` records the actor and whether they were impersonating.
+- **Recommendation to the bootcamp:** B for students and fees, A for teachers, classes and terms. That is a proposal, not a decision.
 
 ## 5. Idempotency
 
