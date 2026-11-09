@@ -193,6 +193,10 @@ PROMPT;
             // confirm card is shown (do not swallow into null/fallbackMessage).
             throw $e;
         } catch (\Throwable $e) {
+            if (\App\Services\Toshi\ToshiRateLimit::isLimited($e)) {
+                throw $e;
+            }
+
             \Illuminate\Support\Facades\Log::error('ToshiOrchestrator failed', [
                 'error' => $e->getMessage(),
                 'query' => $query,

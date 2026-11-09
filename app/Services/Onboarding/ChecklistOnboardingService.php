@@ -408,6 +408,7 @@ final class ChecklistOnboardingService
             'skipped_flags' => [],
             'learners_per_class' => $this->learnersPerClass($path, $studentRows),
             'class_teachers_listed' => count($classTeachers),
+            'class_teachers' => $classTeachers,
             'walk' => self::WALK,
             'walk_index' => 0,
             'skipped_steps' => [],
@@ -1353,6 +1354,108 @@ final class ChecklistOnboardingService
     private function errorFlags(array $payload): array
     {
         return array_values($payload['flags'] ?? []);
+    }
+
+    /**
+     * Numbers and names the checklist chat is allowed to say.
+     *
+     * @return array<string, mixed>
+     */
+    public function conversationBrief(OnboardingPlan $plan): array
+    {
+        $payload = is_array($plan->payload) ? $plan->payload : [];
+        $key = $this->currentKey($payload);
+        $step = null;
+        $school = $plan->school;
+        if ($key !== null && $school !== null) {
+            $preview = $this->previewStep($school, $payload, $key);
+            $step = [
+                'title' => self::TITLES[$key] ?? $key,
+                'proposal' => $this->proposalFor($key),
+                'approve_label' => $this->approveLabel($key, $preview['create']),
+                'create' => $preview['create'],
+                'exists' => $preview['exists'],
+                'conflict' => $preview['conflict'],
+            ];
+        }
+
+        $terms = [];
+        foreach ($payload['steps']['terms']['rows'] ?? [] as $term) {
+            $terms[] = trim((string) $term['name'].' '.(string) $term['start'].' to '.(string) $term['end']);
+        }
+        $classes = [];
+        foreach ($payload['steps']['standards']['rows'] ?? [] as $row) {
+            $classes[(string) $row['name']] = (string) $row['name'];
+        }
+        $subjects = [];
+        foreach ($payload['steps']['subjects']['rows'] ?? [] as $row) {
+            $subjects[] = (string) $row['name'];
+        }
+        $teachers = [];
+        $assignments = [];
+        foreach ($payload['steps']['teachers']['rows'] ?? [] as $row) {
+            $teachers[] = (string) $row['name'];
+            foreach ($row['links'] ?? [] as $link) {
+                $assignments[] = [
+                    'teacher' => (string) $row['name'],
+                    'subject' => (string) ($link['subject'] ?? ''),
+                    'class' => (string) ($link['class'] ?? ''),
+                    'stream' => (string) ($link['stream'] ?? ''),
+                ];
+            }
+        }
+        $learners = [];
+        foreach ($payload['steps']['students']['rows'] ?? [] as $row) {
+            $learners[] = [
+                'name' => (string) ($row['name'] ?? ''),
+                'class' => (string) ($row['class'] ?? ''),
+                'stream' => (string) ($row['stream'] ?? ''),
+                'parent' => (string) ($row['parent_name'] ?? ''),
+            ];
+        }
+        $classTeachers = [];
+        foreach ($payload['class_teachers'] ?? [] as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $classTeachers[] = [
+                'class' => (string) ($row['class'] ?? ''),
+                'stream' => (string) ($row['stream'] ?? ''),
+                'name' => (string) ($row['name'] ?? ''),
+            ];
+        }
+        $flags = [];
+        foreach ($payload['flags'] ?? [] as $flag) {
+            if (! is_array($flag)) {
+                continue;
+            }
+            $flags[] = [
+                'tab' => (string) ($flag['tab'] ?? ''),
+                'row' => isset($flag['row']) ? (int) $flag['row'] : null,
+                'message' => (string) ($flag['message'] ?? ''),
+                'fix' => $this->plainFix($flag),
+            ];
+        }
+
+        $status = (string) $plan->status;
+
+        return [
+            'school' => (string) ($payload['school']['name'] ?? ''),
+            'status' => $status,
+            'active' => $step !== null && in_array($status, ['previewed', 'applying'], true),
+            'stats' => $this->statTiles($payload),
+            'flags' => $flags,
+            'step' => $step,
+            'terms' => $terms,
+            'classes' => array_values($classes),
+            'subjects' => $subjects,
+            'teachers' => $teachers,
+            'assignments' => $assignments,
+            'learners' => $learners,
+            'class_teachers' => $classTeachers,
+            'class_teachers_listed' => (int) ($payload['class_teachers_listed'] ?? count($classTeachers)),
+            'invites_ready' => (int) ($payload['invites_ready'] ?? 0),
+        ];
     }
 
     /**

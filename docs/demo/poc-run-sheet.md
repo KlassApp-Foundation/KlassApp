@@ -20,7 +20,7 @@ Sign in. You land on the school dashboard. If you land on "Setting up without To
 
 ## 0:00 — Open Toshi
 
-On a laptop-width window, click **Toshi** at the bottom right. For this demo school the pill says Toshi.
+On a laptop-width window, click **Toshi** at the bottom right. For this demo school the pill says Toshi. The panel does not start the older 13-step setup list. The checklist is the conversation.
 
 On a phone-width window the pill is not shown. Click the white **K** tab on the right edge. Its label is Toshi.
 
@@ -125,11 +125,41 @@ If you are on the manual wizard, Toshi is hidden there on purpose. Use the dashb
 
 Upload `poc-checklist-workbook-correct.xlsx` and read it. There are no flags. Learners read 120, accepted 120, flagged 0. Every preview says Create 0, Already exists, Conflict 0. Confirming writes nothing. The completion card says **Invites ready: 0**, because the invites were already prepared.
 
+## What Toshi says during this script
+
+A short greeting is enough: "Hi." Toshi answers in one or two lines.
+
+These sentences open the data agreement, the same as the button:
+
+- "set up my school"
+- "here's our checklist"
+- "Please onboard this school from its checklist"
+
+While a step is on screen, Toshi explains that step in one line and names the button. A typed "yes", "ok", or "skip" does not write anything. Use the button.
+
+Questions are answered from the saved plan only. Every number and every name is one Toshi already showed on a card. If you ask something the plan does not contain, Toshi says it does not know that from this checklist.
+
+## If the free model limit appears
+
+The sentence is: "The free model limit was hit. Wait before trying again. Nothing was written, and this was not retried."
+
+Wait. Do not send the message again. This script does not call a model, so that sentence should not appear during the rehearsal. If it does, stop and tell Rasta. Nothing on the cards was written by that failure.
+
 ## What this demo does not do
 
 - It does not send email or WhatsApp.
 - It does not create exams, fees, or SchoolPay records.
 - It does not assign homeroom class teachers. Teaching assignments for the eight teachers are written in the teachers step.
-- It does not call an AI model. The cards are rendered from the saved plan. The configured assistant, which is switched off for this school, is the OpenAI-compatible provider using the model `deepseek-chat`. A venue with no internet can still run this script.
+- The cards, and the checklist replies above, do not call a model. A venue with no internet can still run this script. `demo:checklist-reset` leaves the assistant switched on for Northwind Harbour School only. No other school is changed.
+
+## The free Gemini key
+
+The key in this laptop's gitignored `.env` (`OPENAI_COMPATIBLE_API_KEY`) is a Google AI Studio free-tier key. Google may use free-tier prompts to improve its products. It is for this fictional school only. Never send a real school's data through it. A real school needs a paid key.
+
+The base URL is `https://generativelanguage.googleapis.com/v1beta/openai/` with no `/chat/completions` on the end. The model is `gemini-3.5-flash`. The `TOSHI_LLM_BASE_URL`, `TOSHI_LLM_API_KEY`, and `TOSHI_LLM_MODEL` lines stay unset.
+
+Leave `TOSHI_SDK_V2_ENABLED` false for the rehearsal. On this beta compatibility layer the model can emit a tool call, and the follow-up is then rejected because the function call is missing a thought signature. With that switch off, the panel never starts that loop. The checklist path never starts it either.
+
+Google publishes requests-per-minute, input tokens-per-minute, and requests-per-day as the limits, and shows the project's own numbers in AI Studio. It does not print one free-tier figure for this model. Independent notes on Flash free tier describe about 5 requests a minute and about 20 a day. Stay inside that until Rasta reads this project's own number. Do not add retries.
 
 Screenshots of the cards, at 1280 and 375 pixels, are in `docs/demo/screenshots/`.

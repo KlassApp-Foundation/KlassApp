@@ -147,6 +147,14 @@ class ToshiSdkV2Service
                 return $confirm;
             }
 
+            if (\App\Services\Toshi\ToshiRateLimit::isLimited($e)) {
+                Log::warning('Toshi model rate limited', [
+                    'user_id' => $user->id,
+                ]);
+
+                return \App\Services\Toshi\ToshiRateLimit::adminMessage();
+            }
+
             Log::warning('SDK v2 path failed, falling back', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),

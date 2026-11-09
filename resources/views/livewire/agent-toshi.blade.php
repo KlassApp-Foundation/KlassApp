@@ -64,12 +64,12 @@
                 <img src="{{ asset('images/klassapp-logo.svg') }}" alt="KlassApp">
                 <span>Toshi</span>
             </div>
-            @unless($mode === 'preview')
+            @unless($mode === 'preview' || $checklistOnboarding)
             {{-- Mode dropdown — shared partial --}}
             @include('livewire.partials.toshi-mode-dropdown')
             @endunless
             <div class="toshi-header-actions">
-                @unless($mode === 'preview')
+                @unless($mode === 'preview' || $checklistOnboarding)
                 <button wire:click="resetSchoolOnboarding" class="toshi-header-btn" title="Restart onboarding" data-testid="toshi-restart">
                     ↻ Restart
                 </button>
@@ -728,7 +728,9 @@
 
             {{-- Setup progress — ONE source (OnboardingStepsService): same count and
                  neutral labels as the dashboard setup bar and the sidebar chip. --}}
+            @unless($checklistOnboarding)
             @include('livewire.partials.toshi-setup-checklist', ['variant' => 'dock'])
+            @endunless
             {{-- Review Card (shown on review step) --}}
             @if(!empty($steps) && isset($steps[$step]) && $steps[$step] === 'review' && !empty($reviewData) && empty($reviewData['committed']))
             <div class="toshi-review-card">
@@ -892,7 +894,7 @@
         @endif
 
         {{-- School admin quick actions — suggestion chips row --}}
-        @if($scope === 'school' && $mode === 'assistant' && !$actionStep && !$awaitingConfirm && $schoolId)
+        @if($scope === 'school' && $mode === 'assistant' && !$checklistOnboarding && !$actionStep && !$awaitingConfirm && $schoolId)
         @php
             $availableActions = $this->capabilities['actions'] ?? [];
             $suggestions = array_values(array_filter([
@@ -1028,7 +1030,9 @@
                 </div>
                 @endif
                 {{-- Step progress in the maximized sidebar — same shared source as the dock. --}}
+                @unless($checklistOnboarding)
                 @include('livewire.partials.toshi-setup-checklist', ['variant' => 'modal'])
+                @endunless
                 <div style="margin-top: auto; padding-top: 16px;">
                     <button wire:click="hide" style="font-size: 12px; color: #87867f; background: none; border: none; cursor: pointer; padding: 4px 0; font-family: 'DM Sans', sans-serif;" onmouseover="this.style.color='#5e5d59'" onmouseout="this.style.color='#87867f'">Close</button>
                 </div>
@@ -1760,7 +1764,7 @@
             {{-- Skip step button — shared partial (modal) --}}
             @include('livewire.partials.toshi-skip-button', ['modal' => true])
             {{-- Suggestion chips (modal) --}}
-            @if($scope === 'school' && $mode === 'assistant' && !$actionStep && !$awaitingConfirm && $schoolId)
+            @if($scope === 'school' && $mode === 'assistant' && !$checklistOnboarding && !$actionStep && !$awaitingConfirm && $schoolId)
             @php
                 $availableActions = $this->capabilities['actions'] ?? [];
                 $suggestions = array_values(array_filter([

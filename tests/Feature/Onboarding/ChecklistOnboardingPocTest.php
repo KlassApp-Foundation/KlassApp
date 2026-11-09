@@ -277,11 +277,13 @@ class ChecklistOnboardingPocTest extends TestCase
         User::withTrashed()->whereKey($kept->id)->forceDelete();
         DB::table('schools')->where('id', $real->id)->delete();
 
+        $bystander = $this->school(true, true, 'other-demo');
         $this->artisan('demo:checklist-reset')->assertExitCode(0);
         $school = School::query()->where('slug', DemoChecklistResetCommand::SLUG)->firstOrFail();
         $this->assertTrue((bool) $school->is_demo);
         $this->assertTrue((bool) $school->is_test);
-        $this->assertSame(0, (int) $school->toshi_enabled);
+        $this->assertSame(1, (int) $school->toshi_enabled);
+        $this->assertSame(0, (int) $bystander->fresh()->toshi_enabled);
         $admin = User::query()->where('email', DemoChecklistResetCommand::ADMIN_EMAIL)->firstOrFail();
         $this->assertSame($school->id, $admin->school_id);
 
@@ -396,6 +398,94 @@ class ChecklistOnboardingPocTest extends TestCase
         $this->assertSame('Keep both as written', $card['question']['answers'][0]['label']);
         $this->assertStringContainsString('E', $card['question']['prompt']);
         $this->assertStringContainsString('East', $card['question']['prompt']);
+    }
+
+    public function test_plain_requests_stay_on_the_plan_and_a_typed_yes_writes_nothing(): void
+    {
+        [$school, $admin] = $this->demoAdmin();
+        $this->actingAs($admin);
+        config([
+            'ai.providers.openai-compatible.key' => '',
+            'toshi.api_key' => '',
+        ]);
+
+        Livewire::test(\App\Livewire\AgentToshi::class)
+            ->set('input', 'set up my school')
+            ->call('send')
+            ->assertDispatched('checklist-onboarding-open')
+            ->assertSee('data agreement');
+
+        Livewire::test(\App\Livewire\AgentToshi::class)
+            ->set('input', "here's our checklist")
+            ->call('send')
+            ->assertDispatched('checklist-onboarding-open');
+
+        $talk = app(\App\Services\Onboarding\ChecklistConversation::class);
+        $before = $talk->hear('how many learners?', null, $school->name);
+        $this->assertStringContainsString("don't know", $before['say']);
+        $this->assertSame(0, User::query()->where('school_id', $school->id)->where('usergroup_id', 6)->count());
+
+        $path = (new DemoChecklistWorkbook)->write($this->dir.'/talk.xlsx', true, true, 'Yes');
+        $plan = OnboardingPlan::query()->findOrFail(
+            app(ChecklistOnboardingService::class)->ingest($school, $admin, $path, 'talk.xlsx')['plan_id']
+        );
+        $brief = app(ChecklistOnboardingService::class)->conversationBrief($plan);
+        $learners = (int) collect($brief['stats'])->firstWhere('label', 'Learners')['value'];
+        $teacher = $brief['teachers'][0];
+
+        $count = $talk->hear('is it 999 learners?', $plan->fresh(), $school->name);
+        $this->assertStringContainsString((string) $learners, $count['say']);
+        $this->assertStringNotContainsString('999', $count['say']);
+
+        $who = $talk->hear('who is '.$teacher.'?', $plan->fresh(), $school->name);
+        $this->assertStringContainsString($teacher, $who['say']);
+        $this->assertStringNotContainsString('999', $who['say']);
+
+        $unknown = $talk->hear('what is the head cook\'s favourite colour?', $plan->fresh(), $school->name);
+        $this->assertStringContainsString("don't know that from this checklist", $unknown['say']);
+        $this->assertStringContainsString('button', $unknown['say']);
+
+        $yes = $talk->hear('yes', $plan->fresh(), $school->name);
+        $this->assertStringContainsString('button', $yes['say']);
+        $this->assertFalse($yes['open']);
+        $this->assertSame(0, User::query()->where('school_id', $school->id)->where('usergroup_id', 6)->count());
+        $this->assertSame(0, AcademicTerm::query()->where('school_id', $school->id)->count());
+
+        $why = $talk->hear('why this step?', $plan->fresh(), $school->name);
+        $this->assertStringContainsString($brief['step']['proposal'], $why['say']);
+        $this->assertStringContainsString($brief['step']['approve_label'], $why['say']);
+    }
+
+    public function test_the_checklist_panel_skips_the_old_setup_and_does_not_call_a_model(): void
+    {
+        \Illuminate\Support\Facades\Http::fake();
+        [$school, $admin] = $this->demoAdmin();
+        $school->forceFill(['toshi_enabled' => 1])->save();
+        config([
+            'ai.providers.openai-compatible.key' => 'test-key-not-real',
+            'toshi.api_key' => 'test-key-not-real',
+        ]);
+        $this->actingAs($admin);
+
+        Livewire::test(\App\Livewire\AgentToshi::class)
+            ->assertDontSee("Let's finish setting up")
+            ->assertDontSee('things to set up')
+            ->set('input', 'thanks')
+            ->call('send')
+            ->assertSee("don't know that from this checklist");
+
+        \Illuminate\Support\Facades\Http::assertNothingSent();
+        $this->assertSame(0, User::query()->where('school_id', $school->id)->where('usergroup_id', 6)->count());
+    }
+
+    public function test_a_rate_limit_is_announced_once_and_not_retried(): void
+    {
+        $limited = \Laravel\Ai\Exceptions\RateLimitedException::forProvider('openai-compatible', 429);
+        $this->assertTrue(\App\Services\Toshi\ToshiRateLimit::isLimited($limited));
+        $this->assertFalse(\App\Services\Toshi\ToshiRateLimit::isLimited(new \RuntimeException('ordinary failure')));
+        $message = \App\Services\Toshi\ToshiRateLimit::adminMessage();
+        $this->assertStringContainsString('Nothing was written', $message);
+        $this->assertStringContainsString('not retried', $message);
     }
 
     /**

@@ -382,6 +382,22 @@ class AgentToshi extends Component
             return;
         }
 
+        // The checklist demo is the conversation. Do not resume the 13-step
+        // setup script, and do not restore a session that would.
+        if ($this->checklistOnboarding && $user->school_id) {
+            $this->capabilities = ToshiActionService::getRoleCapabilities($user->usergroup_id);
+            $this->scope = $this->capabilities['scope'] ?? 'school';
+            $this->schoolId = $user->school_id;
+            $this->mode = 'assistant';
+            $this->step = 99;
+            $this->messages = [];
+            $this->visible = false;
+            $this->maximized = false;
+            $this->publicDemo = (bool) $user->isPublicDemo();
+
+            return;
+        }
+
         // Soft-launch preview: panel stays available but never runs scripted
         // onboarding, AI, or MCP — Coming soon card only.
         if ($switch->previewMode($user)) {
@@ -3456,6 +3472,12 @@ class AgentToshi extends Component
                     }
                 }
             } catch (\Throwable $e) {
+                if (\App\Services\Toshi\ToshiRateLimit::isLimited($e)) {
+                    $this->botSay(\App\Services\Toshi\ToshiRateLimit::adminMessage());
+
+                    return;
+                }
+
                 \Log::warning('SDK v2 failed', [
                     'user_id' => $user->id,
                     'error' => $e->getMessage(),
@@ -4238,14 +4260,6 @@ class AgentToshi extends Component
         $this->botSay($msg);
     }
 
-    private function messageRequestsChecklist(string $text): bool
-    {
-        $lower = strtolower($text);
-
-        return str_contains($lower, 'checklist')
-            && (str_contains($lower, 'onboard') || str_contains($lower, 'set up') || str_contains($lower, 'setup') || str_contains($lower, 'import'));
-    }
-
     // ── Handle user input ──
     public function send()
     {
@@ -4257,9 +4271,28 @@ class AgentToshi extends Component
             return;
         }
 
-        if ($this->checklistOnboarding && $text !== '' && $this->messageRequestsChecklist($text)) {
+        if ($this->checklistOnboarding && $text !== '') {
+            $school = $this->schoolId ? \App\Models\School::query()->find($this->schoolId) : null;
+            $plan = $school
+                ? \App\Models\OnboardingPlan::query()->where('school_id', $school->id)->latest('id')->first()
+                : null;
+            $heard = app(\App\Services\Onboarding\ChecklistConversation::class)->hear($text, $plan, (string) ($school->name ?? ''));
+            if ($heard !== null) {
+                $this->userSay($text);
+                $this->input = '';
+                if ($heard['open']) {
+                    $this->dispatch('checklist-onboarding-open');
+                }
+                if ($heard['say'] !== '') {
+                    $this->botSay($heard['say']);
+                }
+
+                return;
+            }
+
+            $this->userSay($text);
             $this->input = '';
-            $this->dispatch('checklist-onboarding-open');
+            $this->botSay("I don't know that from this checklist. Say “set up my school”, or use the button.");
 
             return;
         }
