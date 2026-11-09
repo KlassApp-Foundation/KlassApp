@@ -114,6 +114,23 @@ Every proposal reads from data the school already has: `schools.registration_cou
 | --- | --- | --- |
 | `app/Helpers/WhatsAppPhoneHelper.php:227` | display grouping is special-cased for a 12-digit 256 number | copy or local detail |
 
+## Why this lists 48, when the audit counted 56
+
+The audit read `main` at `01d87832` and counted 56 markers. This catalogue reads `origin/integration/monday-2026-11-09`, where eight of those markers no longer exist because the code they flagged was changed by work already merged into #1285. They are **already fixed on the base**, not out of scope:
+
+| # | Marker on `main` | File | What changed on #1285 |
+| --- | --- | --- | --- |
+| 1 | "a leading 0 or a short number is always rewritten to +256" | `app/Helpers/WhatsAppPhoneHelper.php` | The helper now parses with `libphonenumber` (`PhoneNumberUtil`) instead of prefixing +256 |
+| 2 | "create mode stores Uganda when no country was chosen" | `app/Livewire/AgentToshi.php` | The v1 create payload no longer writes `registration_country`; the marker line is gone |
+| 3 | "a blank country is shown as Uganda" | `app/Livewire/ManualOnboardingWizard.php` | The wizard reads `OnboardingStepsService::countryOrDefault()` and renders a blank as "—" |
+| 4 | "a new parent gets a random password, not an invite link" | `app/Services/OnboardingEngine.php` | Parent creation goes through `StudentParentAccountInviteService` |
+| 5 | "a new student gets a random password, not an invite link" | `app/Services/OnboardingEngine.php` | Student creation sets no password (`is_reset = 1`) and issues a setup invite |
+| 6 | "a new teacher gets a random password, not an invite link" | `app/Services/OnboardingEngine.php` | Teacher creation goes through `TeacherAccountInviteService` |
+| 7 | "adding a teacher stores a random password" | `app/Services/ToshiActionService.php` | Add-teacher uses `TeacherAccountInviteService::emailIsUsable()` and an invite |
+| 8 | "known countries come from a fixed list, not libphonenumber" | `app/Support/PhoneCountry.php` | `PhoneCountry` now delegates to `libphonenumber` |
+
+So: **56 on `main` = 48 still present on the integration base + 8 resolved by merged work**. None of the eight was dropped as out of scope. `adding a parent stores a random password` (`ToshiActionService.php:1391`) is a different marker and is still present — it is row 8 of the account-creation group above.
+
 ## Order of work
 
 1. **Currency and money** — a wrong amount is visible to a parent and is the only group that changes a number rather than a label.
