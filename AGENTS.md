@@ -151,6 +151,7 @@ Section naming convention: `P.1`–`P.7` = Primary One through Primary Seven; `S
 - Database changes: confirm with an actual `SELECT`, not an assumption that the migration "should have" worked.
 - Deploy: production is Laravel Cloud; merging to `main` does not ship (push-to-deploy is off on prod). Trigger and poll per `knowledge.md` (empty-body POST to the deployments endpoint of the production environment), then verify on the live site — not just that the HTTP call returned 201. Do not run `scripts/deploy-manual.sh` against the retired droplet. Standing rule #24.
 - UI chrome: real browser/Playwright at 375 / 414 / 768 / 1280 when the change is user-visible — standing rule #22. Do not close on PHPUnit `assertSee` alone.
+- **A browser or UI check counts only when done by clicking through as a person would.** Visiting a typed URL or query string is not a pass, because the URL can work while the screen is broken.
 - PR ship claims: confirm GitHub API `merged: true` + record merge SHA before stamping `knowledge.md` — standing rule #21.
 - Env vars: a shell-exported var can silently override `.env` via `Dotenv\Repository` reading `getenv()`/`$_SERVER`/`$_ENV` at boot. If an env value looks wrong, check all three sources, not just the `.env` file. Cloud env vars apply only after a **real deployment** (see `knowledge.md`).
 
