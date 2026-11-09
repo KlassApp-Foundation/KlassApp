@@ -1,10 +1,11 @@
 .people-list { color: #0f172a; }
 .people-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-.people-tools { display: flex; align-items: center; gap: 8px; margin: 16px 0; min-width: 0; }
+.people-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 16px 0; min-width: 0; }
 .people-search { position: relative; flex: 1 1 280px; min-width: 280px; }
 .people-search svg { position: absolute; left: 12px; top: 50%; width: 18px; height: 18px; transform: translateY(-50%); stroke: #64748b; fill: none; stroke-width: 2; }
 .people-search input, .people-search input.ds-form-input { width: 100%; height: 44px; min-height: 44px; box-sizing: border-box; padding: 0 12px 0 40px; border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; color: #0f172a; font: inherit; }
-.people-chips { display: flex; gap: 8px; overflow-x: auto; flex: 1 1 auto; min-width: 0; padding-bottom: 2px; }
+/* Chip rows wrap; they must not scroll or clip, or the class menu and the last stream chips are cut off. */
+.people-chips { display: flex; flex-wrap: wrap; gap: 8px; flex: 1 1 auto; min-width: 0; overflow: visible; }
 .people-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border: 1px solid #e2e8f0; border-radius: 999px; background: #fff; color: #334155; text-decoration: none; white-space: nowrap; font-size: 14px; cursor: pointer; }
 .people-chip[aria-pressed="true"] { background: #0f172a; color: #fff; border-color: #0f172a; }
 .people-chip-n { font-variant-numeric: tabular-nums; opacity: 0.8; }
@@ -15,9 +16,15 @@
 .people-picker { position: relative; }
 .people-picker summary { list-style: none; }
 .people-picker summary::-webkit-details-marker { display: none; }
-.people-picker-menu { position: absolute; z-index: 20; top: 48px; left: 0; min-width: 220px; max-height: 280px; overflow: auto; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12); padding: 6px; }
+.people-picker-menu { position: absolute; z-index: 30; top: calc(100% + 4px); left: 0; min-width: 220px; max-width: min(320px, calc(100vw - 32px)); max-height: min(280px, 60vh); overflow: auto; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12); padding: 6px; }
 .people-picker-menu a, .people-picker-empty { display: flex; align-items: center; min-height: 44px; padding: 0 10px; border-radius: 8px; color: #0f172a; text-decoration: none; }
 .people-picker-menu a:hover { background: #f8fafc; }
+@media (max-width: 480px) {
+  /* On a phone the menu spans the chip row, so it cannot run off the right edge. */
+  .people-chips { position: relative; }
+  .people-picker { position: static; }
+  .people-picker-menu { top: auto; left: 0; right: 0; min-width: 0; max-width: none; margin-top: 4px; }
+}
 .people-bulk { position: sticky; top: 0; z-index: 15; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; padding: 8px 12px; border-radius: 12px; background: #0f172a; color: #fff; }
 .people-bulk[hidden], .people-bulk-hint[hidden], .people-loading[hidden], .people-menu-pop[hidden] { display: none !important; }
 .people-bulk-hint { margin: 0 0 12px; padding: 10px 12px; border-radius: 12px; background: #f1f5f9; color: #334155; font-size: 14px; }

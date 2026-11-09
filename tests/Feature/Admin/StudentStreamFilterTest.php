@@ -110,6 +110,49 @@ class StudentStreamFilterTest extends TestCase
         $this->assertMatchesRegularExpression('/sidebar-v3-child[^"]*\\bactive\\b/', $html);
     }
 
+    public function test_the_class_menu_and_stream_chips_are_rendered_and_the_chip_rows_wrap(): void
+    {
+        DB::table('usergroups')->upsert([
+            ['id' => 3, 'name' => 'schooladmin', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 6, 'name' => 'student', 'created_at' => now(), 'updated_at' => now()],
+        ], 'id');
+        $school = School::create([
+            'name' => 'Chip School', 'slug' => 'chip-'.uniqid(),
+            'email' => uniqid().'@t.sch.ug', 'phone' => '+256712'.random_int(100000, 999999),
+            'status' => 1, 'registration_country' => 'Uganda',
+        ]);
+        $year = AcademicYear::create([
+            'school_id' => $school->id, 'name' => '2026', 'description' => 'AY',
+            'start_date' => now()->subMonth()->toDateString(), 'end_date' => now()->addMonths(4)->toDateString(), 'status' => 1,
+        ]);
+        Cache::forget('academic_year_for_school_'.$school->id);
+        $standard = Standard::create(['school_id' => $school->id, 'name' => 'primary', 'order' => 4, 'status' => 1]);
+        $admin = $this->user($school, 3, 'Chip Admin');
+        $baseLink = $this->link($school, $year, $standard, Section::create(['school_id' => $school->id, 'name' => 'Primary Four', 'status' => 1]));
+        $this->link($school, $year, $standard, Section::create(['school_id' => $school->id, 'name' => 'Primary Four E', 'status' => 1]));
+        $this->link($school, $year, $standard, Section::create(['school_id' => $school->id, 'name' => 'Primary Four W', 'status' => 1]));
+
+        $html = $this->actingAs($admin)->get('/admin/students?chip=class&standard='.$baseLink->id)->assertOk()->getContent();
+
+        // The Class menu: a <details> picker inside the chip row, with the base classes as options.
+        $this->assertStringContainsString('<details class="people-picker">', $html);
+        $this->assertStringContainsString('class="people-picker-menu"', $html);
+        $this->assertStringContainsString('Primary Four', $html);
+        // The stream chips: Whole class, E and W.
+        $this->assertMatchesRegularExpression('/data-testid="student-stream-filter".*?Whole class.*?>E<.*?>W</s', $html);
+
+        // The visual result (menu not clipped, chips fully visible at 1280 and 375) needs a real browser click check.
+        // What is pinned here is the cause: the chip rows wrap and do not scroll or clip.
+        $css = file_get_contents(public_path('css/people-list.css'));
+        preg_match('/\.people-chips \{([^}]*)\}/', $css, $rule);
+        $this->assertStringContainsString('flex-wrap: wrap', $rule[1] ?? '');
+        $this->assertStringNotContainsString('overflow-x', $rule[1] ?? '');
+        $this->assertStringNotContainsString('overflow: auto', $rule[1] ?? '');
+        preg_match('/\.people-picker-menu \{([^}]*)\}/', $css, $menu);
+        $this->assertMatchesRegularExpression('/z-index:\s*(\d+)/', $menu[1] ?? '');
+        $this->assertStringContainsString('max-width', $menu[1] ?? '');
+    }
+
     private function link(School $school, AcademicYear $year, Standard $standard, Section $section): StandardLink
     {
         return StandardLink::create([
