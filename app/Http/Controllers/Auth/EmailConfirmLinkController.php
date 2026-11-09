@@ -59,9 +59,8 @@ class EmailConfirmLinkController extends Controller
             Auth::login($user);
             $request->session()->regenerate();
 
-            return redirect(AuthRedirectHelper::dashboardPathForUser($user))
-                ->with('open_toshi_onboarding', true)
-                ->with('successmessage', "Email confirmed. Welcome to KlassApp! Let's set up your school.");
+            return redirect(\App\Services\OnboardingEngine::setupDestination($user->school, $user->id) ?? AuthRedirectHelper::dashboardPathForUser($user))
+                    ->with('successmessage', "Email confirmed. Welcome to KlassApp! Let's set up your school.");
         }
 
         // Any other device: confirmed, but never signed in here. No school name or account data.

@@ -4,89 +4,50 @@ namespace App\Http\Controllers;
 
 use App\Models\School;
 use App\Services\OnboardingEngine;
-use App\Services\Toshi\ToshiOnboardingPath;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
 
+/**
+ * Setup entry. The wizard is the only setup surface
+ * (docs/onboarding/decisions-2026-11.md, D2): this route exists only to send a
+ * school admin to the right wizard step, and never to a chat path.
+ */
 class OnboardingChoiceController extends Controller
 {
-    public function __construct(private ToshiOnboardingPath $paths)
+    public function __construct()
     {
         $this->middleware('auth');
     }
 
-    public function show(Request $request): View|RedirectResponse
+    public function show(Request $request): RedirectResponse
     {
-        $school = $request->user()->school;
-
-        if ($school === null || $school->onboarding_finished_at !== null) {
-            return redirect('/admin/dashboard');
-        }
-
-        if ($request->query('path') === 'toshi') {
-            return $this->selectToshi($school);
-        }
-
-        if ($this->paths->mustUseWizard($school)) {
-            return $this->paths->sendToWizard($school);
-        }
-
-        return view('auth.onboarding-choice', [
-            'school' => $school,
-            'toshiPathAvailable' => $this->paths->openFor($school),
-        ]);
+        return $this->sendToWizard($request);
     }
 
     public function store(Request $request): RedirectResponse
     {
-        $data = $request->validate([
-            'path' => ['required', 'in:wizard,toshi'],
-        ]);
+        return $this->sendToWizard($request);
+    }
 
-        $school = $request->user()->school;
-        abort_if($school === null, 403);
+    private function sendToWizard(Request $request): RedirectResponse
+    {
+        $school = $request->user()?->school;
 
-        if ($school->onboarding_finished_at !== null) {
+        if (! $school instanceof School || $school->onboarding_finished_at !== null) {
             return redirect('/admin/dashboard');
         }
 
-        if ($data['path'] === 'toshi') {
-            return $this->selectToshi($school);
+        // A school parked in the retired chat mode is moved to preview on the
+        // way in; the migration does the same for rows that never come here.
+        if (($school->toshi_mode?->value ?? (string) $school->toshi_mode) === 'onboarding') {
+            $school->forceFill(['toshi_mode' => 'preview', 'toshi_enabled' => 0])->save();
+            $school->refresh();
         }
 
-        return $this->startWizard($school);
-    }
+        $destination = OnboardingEngine::setupDestination($school, (int) $request->user()->id);
 
-    private function selectToshi(School $school): RedirectResponse
-    {
-        if (! $this->paths->openFor($school)) {
-            return $this->paths->sendToWizard($school);
-        }
-
-        $school->forceFill([
-            'toshi_mode' => 'onboarding',
-            'toshi_enabled' => 0,
-        ])->save();
-
-        return redirect('/admin/dashboard')
-            ->with('open_toshi_onboarding', true)
-            ->with('successmessage', 'Toshi is ready to set up your school.');
-    }
-
-    private function startWizard(School $school): RedirectResponse
-    {
-        $school->forceFill([
-            'toshi_mode' => 'preview',
-            'toshi_enabled' => 0,
-        ])->save();
-
-        $destination = OnboardingEngine::setupDestination($school->fresh(), auth()->id());
-
-        if ($destination === null) {
-            return redirect('/admin/dashboard');
-        }
-
-        return redirect()->to($destination);
+        return $destination !== null
+            ? redirect()->to($destination)
+            : redirect('/admin/dashboard');
     }
 }

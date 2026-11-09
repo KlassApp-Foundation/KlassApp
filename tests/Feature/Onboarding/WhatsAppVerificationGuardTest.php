@@ -3,7 +3,6 @@
 namespace Tests\Feature\Onboarding;
 
 use App\Http\Middleware\VerifyCsrfToken;
-use App\Livewire\AgentToshi;
 use App\Models\OnboardingSession;
 use App\Models\School;
 use App\Models\User;
@@ -82,43 +81,6 @@ class WhatsAppVerificationGuardTest extends TestCase
             WhatsAppUser::where('user_id', $this->admin->id)->where('phone', self::PHONE)->first(),
             'A posted phone with forged flags must not link anything — linking only happens by sending the code from WhatsApp.'
         );
-
-        $component = Livewire::test(AgentToshi::class)
-            ->set('mode', 'complete')
-            ->set('schoolId', $this->school->id)
-            ->set('schoolName', $this->school->name)
-            ->set('whatsappPhone', self::PHONE);
-
-        try {
-            $component->set('whatsappVerified', true);
-            $component->set('whatsappSentOtp', '123456');
-        } catch (\Throwable) {
-            // Locked properties reject the browser write. Commit still must
-            // ignore any flag that arrived another way.
-        }
-
-        $component->call('confirmOnboarding');
-        $this->assertNumberStaysUnverified(self::PHONE);
-
-        OnboardingSession::create([
-            'user_id' => $this->admin->id,
-            'school_id' => $this->school->id,
-            'step' => 14,
-            'substep' => 0,
-            'status' => 'draft',
-            'data' => [
-                'mode' => 'complete',
-                'schoolName' => $this->school->name,
-                'whatsappPhone' => self::PHONE,
-                'whatsappVerified' => true,
-                'whatsappSentOtp' => '123456',
-            ],
-        ]);
-
-        Livewire::test(AgentToshi::class)
-            ->call('resumeDraft')
-            ->call('confirmOnboarding');
-        $this->assertNumberStaysUnverified(self::PHONE);
 
         try {
             app(OnboardingEngine::class)->saveWhatsApp(
@@ -250,21 +212,6 @@ class WhatsAppVerificationGuardTest extends TestCase
         Http::fake([
             'graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.TEST']]], 200),
         ]);
-
-        $component = Livewire::test(AgentToshi::class)
-            ->set('mode', 'create')
-            ->set('step', 15)
-            ->set('substep', 2)
-            ->set('schoolCountry', 'Uganda')
-            ->set('whatsappPhone', self::PHONE)
-            ->set('input', self::PHONE)
-            ->call('send');
-
-        $component->assertSee('Sign in before we send a verification code.');
-        $this->assertCount(0, Http::recorded());
-        $this->assertNull(app(WhatsAppOnboardingOtpService::class)->pendingCode());
-        $this->assertNull(app(WhatsAppOnboardingOtpService::class)->grantPhone());
-        $this->assertNull(WhatsAppUser::where('user_id', $this->admin->id)->first());
 
         $direct = app(WhatsAppOnboardingOtpService::class)->sendAdminVerificationCode(0, self::PHONE);
         $this->assertFalse($direct['sent']);

@@ -139,55 +139,6 @@ class ToshiOnboardingDefaultTest extends TestCase
         $this->assertFalse(session()->has('open_toshi_onboarding'));
     }
 
-    public function test_unrecognised_freeform_mid_setup_keeps_step_and_flow_completable(): void
-    {
-        $this->seedSchoolAdmin(ToshiMode::Onboarding);
-
-        // Leave school_name complete so complete-mode lands on student_size.
-        $this->school->update(['name' => "Ada's Primary"]);
-        $this->assertFalse(OnboardingStepsService::isStepComplete('student_size', $this->school->fresh()));
-
-        $component = Livewire::actingAs($this->admin->fresh())
-            ->test(AgentToshi::class)
-            ->assertSet('mode', 'complete');
-
-        // Drive to student_size action if not already there.
-        if ($component->get('actionStep') !== 'onboarding_student_size') {
-            $component->call('jumpToChecklistStep', 'student_size');
-        }
-
-        $component->assertSet('actionStep', 'onboarding_student_size');
-        $stepBefore = $component->get('step');
-        $actionBefore = $component->get('actionStep');
-
-        $component->set('input', 'please just set everything up with AI')
-            ->call('send')
-            ->assertSet('mode', 'complete')
-            ->assertSet('actionStep', $actionBefore)
-            ->assertSet('step', $stepBefore);
-
-        $botTexts = collect($component->get('messages'))
-            ->where('role', 'bot')
-            ->pluck('text')
-            ->implode("\n");
-        $this->assertStringContainsString(
-            "Toshi's assistant is coming soon; for now, please choose one of the options above.",
-            $botTexts,
-        );
-        $this->assertStringContainsString('Roughly how many students', $botTexts);
-
-        // Valid chip answer still advances / completes the step.
-        $component->set('input', 'Up to 500')->call('send');
-
-        $this->school->refresh();
-        $this->assertTrue(
-            OnboardingStepsService::isStepComplete('student_size', $this->school),
-            'Valid size answer after unrecognised free-form must still complete the step',
-        );
-        $this->assertSame('complete', $component->get('mode'));
-        $this->assertNotSame('preview', $component->get('mode'));
-    }
-
     public function test_setup_done_shows_coming_soon_card(): void
     {
         $this->seedSchoolAdmin(ToshiMode::Onboarding);

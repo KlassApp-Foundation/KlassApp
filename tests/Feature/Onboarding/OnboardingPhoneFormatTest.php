@@ -407,58 +407,6 @@ class OnboardingPhoneFormatTest extends TestCase
         $this->assertNull(TeacherInvite::where('email', 'bad-ct@phone-format.sch.ug')->first());
     }
 
-    public function test_toshi_parent_teacher_and_whatsapp_steps_accept_local_numbers(): void
-    {
-        $this->actingAs($this->admin);
-
-        $toshi = Livewire::test(AgentToshi::class)
-            ->set('mode', 'create')
-            ->set('schoolCountry', 'Uganda')
-            ->set('schoolId', $this->school->id);
-
-        $toshi->set('studentFormName', 'Amina Student')
-            ->set('studentFormClass', 'P.1')
-            ->set('studentFormParentPhone', '0765274289')
-            ->call('saveStudent');
-        $this->assertSame('+256765274289', $toshi->get('actionData')['students'][0]['parent_phone']);
-
-        $toshi->set('studentFormName', 'Bad Student')
-            ->set('studentFormClass', 'P.1')
-            ->set('studentFormParentPhone', '12345')
-            ->call('saveStudent');
-        $this->assertCount(1, $toshi->get('actionData')['students']);
-        $this->assertStringContainsString(
-            'Enter your phone number with the country code, e.g. +256 765 274 289.',
-            collect($toshi->get('messages'))->pluck('text')->implode("\n"),
-        );
-
-        $toshi->set('teacherFormName', 'Ada Teacher')
-            ->set('teacherFormPhone', '+256 765 274 289')
-            ->call('saveTeacher');
-        $this->assertSame('+256765274289', $toshi->get('actionData')['teacherPhones']['Ada Teacher']);
-
-        $toshi->set('teacherFormName', 'Bad Teacher')
-            ->set('teacherFormPhone', 'not-a-phone')
-            ->call('saveTeacher');
-        $this->assertArrayNotHasKey('Bad Teacher', $toshi->get('actionData')['teacherPhones']);
-
-        $toshi->set('mode', 'create')
-            ->set('actionStep', null)
-            ->set('step', 15)
-            ->set('substep', 2)
-            ->set('input', '0765274289')
-            ->call('send')
-            ->assertSet('whatsappPhone', '+256765274289');
-
-        $toshi->set('mode', 'create')
-            ->set('actionStep', null)
-            ->set('step', 5)
-            ->set('substep', 4)
-            ->set('input', '256-765-274-289')
-            ->call('send')
-            ->assertSet('schoolPhone', '+256765274289');
-    }
-
     /**
      * @param  array<string, mixed>  $overrides
      * @return array<string, mixed>

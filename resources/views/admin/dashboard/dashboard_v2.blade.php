@@ -37,7 +37,8 @@
 
     $toshiSwitch = app(\App\Services\Toshi\ToshiUiSwitch::class);
     $toshiMode = $school ? $toshiSwitch->mode($v2User) : \App\Enums\ToshiMode::Preview;
-    $toshiPathOpen = $school && app(\App\Services\Toshi\ToshiOnboardingPath::class)->openFor($school);
+    // The wizard is the only setup surface (D2); no chat path is offered.
+    $toshiPathOpen = false;
 
     // Quick actions (kept from v2) — row in the data state, tiles otherwise.
     $quickActions = [

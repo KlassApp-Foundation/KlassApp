@@ -114,51 +114,6 @@ class NoSchoolGetsAiByDefaultTest extends TestCase
         $this->assertSame(ToshiMode::Preview, $school->toshi_mode);
     }
 
-    public function test_toshi_create_mode_path_starts_ai_off(): void
-    {
-        // Mirrors AgentToshi::commitAll create payload after soft-launch 1g fix.
-        $school = School::create([
-            'name' => 'Toshi Create '.Str::random(4),
-            'email' => Str::random(8).'@klassapp.sch.ug',
-            'phone' => '0700000000',
-            'curriculum' => 'uneb',
-            'toshi_enabled' => 0,
-            'toshi_mode' => ToshiMode::configuredDefault(),
-            'status' => 1,
-            'slug' => 'toshi-create-'.Str::random(6),
-            'registration_country' => 'Uganda',
-        ]);
-
-        $admin = User::factory()->create([
-            'school_id' => $school->id,
-            'usergroup_id' => 3,
-            'status' => 'active',
-            'email_verified' => 1,
-        ]);
-        Userprofile::create([
-            'user_id' => $admin->id,
-            'school_id' => $school->id,
-            'usergroup_id' => 3,
-            'firstname' => 'Toshi',
-            'lastname' => 'Admin',
-        ]);
-
-        $this->assertSchoolStartsAiOff($school, $admin);
-
-        // Source contract: create payload must not hardcode toshi_enabled => 1.
-        $source = file_get_contents(app_path('Livewire/AgentToshi.php'));
-        $this->assertDoesNotMatchRegularExpression(
-            "/School::create\(\[[\s\S]*?'toshi_enabled'\s*=>\s*1/",
-            $source,
-            'AgentToshi create mode must not enable AI by default'
-        );
-        $this->assertStringContainsString(
-            'ToshiMode::configuredDefault()',
-            $source,
-            'AgentToshi create mode must use the configured default, not a hardcoded mode'
-        );
-    }
-
     public function test_site_admin_school_service_create_starts_ai_off(): void
     {
         $country = Country::create([

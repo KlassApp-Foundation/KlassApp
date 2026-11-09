@@ -26,22 +26,6 @@ class CountryDefaultServiceContractTest extends TestCase
         $this->assertSame('Kenya', OnboardingStepsService::countryOrDefault('  Kenya  '));
     }
 
-    public function test_toshi_v1_calls_the_service_and_does_not_default_the_country_itself(): void
-    {
-        $source = file_get_contents(base_path('app/Livewire/AgentToshi.php'));
-
-        $this->assertStringContainsString(
-            'OnboardingStepsService::countryOrDefault($this->schoolCountry)',
-            $source,
-            'Toshi v1 stores the country the onboarding service resolves',
-        );
-        $this->assertStringNotContainsString(
-            "schoolCountry ?: 'Uganda'",
-            $source,
-            'Toshi v1 keeps no country fallback of its own',
-        );
-    }
-
     public function test_the_v2_wizard_calls_the_service_and_does_not_default_the_country_itself(): void
     {
         $source = file_get_contents(base_path('app/Livewire/ManualOnboardingWizard.php'));

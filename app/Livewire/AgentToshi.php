@@ -230,9 +230,7 @@ class AgentToshi extends Component
         'students',
         'terms',
         'fees',
-        'exams',
         'whatsapp_verify',
-        'school_pay',
         'plan_selection',
         'review',
     ];
@@ -482,15 +480,21 @@ class AgentToshi extends Component
                 return;
             }
 
-            $this->mode = 'complete';
-            // Drain legacy flash; never auto-maximize after signup (blocks Manual @375).
+            // Toshi no longer runs a setup walkthrough: the wizard is the only
+            // setup surface (docs/onboarding/decisions-2026-11.md, D2). The panel
+            // shows the shared checklist; every row opens the wizard.
+            $this->mode = 'setup';
             session()->pull('open_toshi_onboarding');
-            if (request()->boolean('toshi_onboarding')) {
-                $this->visible = true;
-                $this->maximized = true;
+
+            // The registry driver (v2) stays behind its flag as the later agent
+            // surface; it is reachable only here, never from a setup path choice.
+            if ($this->isOnboardingV2Enabled()) {
+                $this->enterOnboardingV2($school);
+
+                return;
             }
-            $this->botSay("Hello! Let's finish setting up **{$school->name}** on KlassApp.");
-            $this->detectMissingSteps();
+
+            $this->botSay("Setup continues in the **wizard**. Use the checklist above, or open the wizard to pick up where you left off.");
 
             return;
         }
@@ -808,27 +812,13 @@ class AgentToshi extends Component
      */
     public function jumpToChecklistStep(string $key): void
     {
-        $known = collect(\App\Services\OnboardingStepsService::ALL_STEPS)->has($key);
-        if (! $known) {
+        if (! array_key_exists($key, \App\Services\OnboardingStepsService::ALL_STEPS)) {
             return;
         }
 
-        if ($this->isOnboardingV2Enabled()) {
-            $school = \App\Models\School::find($this->schoolId);
-            if ($school) {
-                $this->enterOnboardingV2($school);
-            }
-
-            return;
-        }
-
-        $this->jumpToIncompleteOnboardingStep($key);
-
-        if ($key === 'plan_selection') {
-            $this->promptPlanSelection();
-        } elseif (! \App\Services\OnboardingStepsService::isStepComplete($key, \App\Models\School::find($this->schoolId), auth()->id())) {
-            $this->botSay(self::onboardingPromptForStep($key));
-        }
+        // The wizard is the only setup surface (D2): a checklist row opens that
+        // step in the wizard. The panel never runs a chat step.
+        $this->redirect(route('admin.onboarding.wizard', ['step' => $key]));
     }
 
     /**
@@ -875,51 +865,11 @@ class AgentToshi extends Component
             return;
         }
 
-        // Still incomplete (including optional) — enter/refresh complete mode.
-        if ($this->mode !== 'complete') {
-            $this->mode = 'complete';
-            $this->messages = [];
-            $name = $school->name ?: 'your school';
-            $this->botSay("Hello! Let's finish setting up **{$name}** on KlassApp.");
-            if ($this->isOnboardingV2Enabled()) {
-                $this->enterOnboardingV2($school);
-            } else {
-                $this->jumpToIncompleteOnboardingStep($next['key']);
-                if ($next['key'] === 'plan_selection') {
-                    $this->promptPlanSelection();
-                } else {
-                    $this->botSay(self::onboardingPromptForStep($next['key']));
-                }
-            }
-            $this->persistState();
-
-            return;
-        }
-
-        if ($this->isOnboardingV2Enabled()) {
-            if ($this->actionStep !== 'onboarding_v2') {
-                $this->enterOnboardingV2($school);
-            }
-            $this->persistState();
-
-            return;
-        }
-
-        // Already in complete mode — typically after restoreState(). Keep the restored
-        // step/substep so mid-flow draft progress survives reload, but drop a stale
-        // actionStep that no longer matches the next incomplete step (a stale action
-        // would otherwise hijack the next free-text answer as an onboarding action).
-        $restoredStep = $this->steps[$this->step] ?? null;
-        $expectedAction = self::onboardingActionForKey($next['key']);
-        if ($restoredStep === null
-            || ($this->actionStep !== null && $this->actionStep !== $expectedAction)) {
-            $this->jumpToIncompleteOnboardingStep($next['key']);
-            if ($next['key'] === 'plan_selection') {
-                $this->promptPlanSelection();
-            } else {
-                $this->botSay(self::onboardingPromptForStep($next['key']));
-            }
-        }
+        // Still incomplete (including optional). The wizard is the only setup
+        // surface (D2): show the checklist and point at it, never a chat step.
+        $this->mode = 'setup';
+        $this->messages = [];
+        $this->botSay("Setup continues in the **wizard**. Use the checklist above, or open the wizard to continue.");
         $this->persistState();
     }
 
@@ -1071,8 +1021,7 @@ class AgentToshi extends Component
             'plan_selection' => 'plan_selection',
             // Toshi-only steps (not in OnboardingStepsService::ALL_STEPS) — keep mappable
             // when detectMissingSteps / resume ever surfaces them.
-            'exams' => 'exams',
-            'school_pay' => 'school_pay',
+
         ];
 
         $stepName = $map[$key] ?? null;
@@ -1186,7 +1135,10 @@ class AgentToshi extends Component
         if ($result['status'] === 'done') {
             $this->onboardingV2Options = [];
             if (filled($result['saved_key'] ?? null)) {
-                $this->finishSchoolOnboarding();
+                $school = \App\Models\School::find($this->schoolId);
+                if ($school) {
+                    app(\App\Services\FinishSchoolOnboarding::class)->finish($school);
+                }
             }
             $this->exitCompletingSetupMode('✅ Everything looks set up! Your school is ready to go.');
 
@@ -1921,11 +1873,6 @@ class AgentToshi extends Component
 
             return true;
         }
-        if ($this->showExamForm || ($stepName === 'exams' && $this->substep === 6)) {
-            $this->doneExams();
-
-            return true;
-        }
         if ($this->showTermCurrentPicker || ($stepName === 'terms' && $this->substep === 3)) {
             $this->doneTermsCurrent();
 
@@ -1956,7 +1903,7 @@ class AgentToshi extends Component
             $this->botSay($this->getAssistantGreeting());
             $this->deleteDraft();
         } elseif ($targetMode === 'create' && $this->scope === 'platform') {
-            $this->resetOnboarding(true);
+            $this->botSay('Schools are created through the signup and the **wizard**. Toshi no longer creates a school in chat.');
         }
     }
 
@@ -2567,74 +2514,6 @@ class AgentToshi extends Component
 
     // ── Exam Form ──
 
-    public function showExamFormFn()
-    {
-        $this->awaitingConfirm = false;
-        $this->actionData['exams'] = $this->actionData['exams'] ?? [];
-        $this->showExamForm = true;
-        $this->examFormTerm = '';
-        $this->examFormType = '';
-        $this->examFormStatus = '';
-        $this->examFormLevel = '';
-        $this->examFormClass = '';
-        $this->examFormSubject = '';
-        $this->examFormTeacher = '';
-        $this->substep = 6;
-        $this->botSay("Let's add exams. Use the form below to add each exam.");
-    }
-
-    public function saveExam()
-    {
-        $term = trim($this->examFormTerm);
-        $type = trim($this->examFormType);
-        if ($term === '' || $type === '') return;
-
-        $this->actionData['exams'][] = [
-            'term' => $term,
-            'type' => $type,
-            'status' => $this->examFormStatus,
-            'level' => $this->examFormLevel,
-            'class' => $this->examFormClass,
-            'subject' => $this->examFormSubject,
-            'teacher' => $this->examFormTeacher,
-        ];
-        $this->examFormTerm = '';
-        $this->examFormType = '';
-        $this->examFormStatus = '';
-        $this->examFormLevel = '';
-        $this->examFormClass = '';
-        $this->examFormSubject = '';
-        $this->examFormTeacher = '';
-
-        $count = count($this->actionData['exams']);
-        $this->botSay("Added **{$type}** for **{$term}** ({$count} so far). Add another or click **Continue**.");
-    }
-
-    public function removeExam(int $index): void
-    {
-        if (isset($this->actionData['exams'][$index])) {
-            unset($this->actionData['exams'][$index]);
-            $this->actionData['exams'] = array_values($this->actionData['exams']);
-        }
-    }
-
-    public function doneExams()
-    {
-        if (empty($this->actionData['exams'])) {
-            $this->showExamForm = false;
-            $this->botSay("No exams added. You can add them later from the admin panel.");
-            $this->substep = 0;
-            $this->advance();
-            return;
-        }
-        $this->showExamForm = false;
-        $this->exams = collect($this->actionData['exams'])->pluck('type')->values()->toArray();
-        $count = count($this->exams);
-        $this->botSay("**{$count}** exam(s) ready — they will be created when you confirm setup.");
-        $this->substep = 0;
-        $this->advance();
-    }
-
     public function editBeforeCommit()
     {
         $this->reviewData = [];
@@ -3169,6 +3048,13 @@ class AgentToshi extends Component
                 $this->$key = $value;
             }
         }
+        // The scripted setup modes are retired (D2). A stale session from before
+        // the retirement must land in checklist-only setup, never in a handler.
+        if (in_array($this->mode, ['create', 'complete'], true)) {
+            $this->mode = 'setup';
+            $this->step = 0;
+            $this->substep = 0;
+        }
         // Dock open/closed is owned by localStorage + body/html.toshi-collapsed
         // (toshi-prepaint / toshi-embed). Soft-launch 1b: never restore a prior
         // open/maximized paint — session used to leave $visible=true and the
@@ -3216,9 +3102,7 @@ class AgentToshi extends Component
             'students'        => 'handleStudents',
             'terms'           => 'handleTerms',
             'fees'            => 'handleFees',
-            'exams'           => 'handleExams',
             'whatsapp_verify' => 'handleWhatsAppVerify',
-            'school_pay'      => 'handleSchoolPay',
             'review'          => 'handleReview',
             default           => null,
         };
@@ -4242,6 +4126,16 @@ class AgentToshi extends Component
             return;
         }
 
+        // Setup mode is checklist-only. The old scripted walkthrough is retired
+        // (docs/onboarding/decisions-2026-11.md, D2); free text here must never
+        // reach a step handler or write school data.
+        if ($this->mode === 'setup') {
+            $this->input = '';
+            $this->botSay('Setup runs in the **wizard**. Use the checklist above, or open the wizard to continue.');
+
+            return;
+        }
+
         $text = trim($this->input);
         if ($text === '') return;
 
@@ -4263,10 +4157,8 @@ class AgentToshi extends Component
             $cmd = strtolower(trim(explode(' ', $text)[0]));
             match ($cmd) {
                 '/agent', '/ask' => $this->switchMode('assistant'),
-                '/create', '/school' => $this->switchMode('create'),
                 '/help' => $this->botSay(
                     "**Available commands:**\n" .
-                    ($this->scope === 'platform' ? "• `/create` or `/school` — Start creating a new school\n" : "") .
                     "• `/agent` or `/ask` — Switch to Q&A mode\n" .
                     "• `/status` — Show current mode and school info\n" .
                     "• `/help` — Show this message\n" .
@@ -4277,7 +4169,7 @@ class AgentToshi extends Component
                     "• Mode: **{$this->mode}**\n" .
                     "• Scope: **{$this->scope}**\n" .
                     "• School: " . (\App\Models\School::find($this->schoolId)->name ?? '—') . "\n" .
-                    "• Step: " . ($this->steps[$this->step] ?? '—')
+                    "• Setup: " . ($this->mode === 'setup' ? 'in the wizard' : 'not in setup')
                 ),
                 default => $this->botSay("Unknown command `{$cmd}`. Try `/help` for available commands."),
             };
@@ -4419,9 +4311,7 @@ class AgentToshi extends Component
             'students'        => $this->handleStudents($text),
             'terms'           => $this->handleTerms($text),
             'fees'            => $this->handleFees($text),
-            'exams'           => $this->handleExams($text),
             'whatsapp_verify' => $this->handleWhatsAppVerify($text),
-            'school_pay'      => $this->handleSchoolPay($text),
             'review'          => $this->handleReview($text),
             default           => $this->callStepHandler($text),
         };
@@ -6123,58 +6013,6 @@ class AgentToshi extends Component
     }
 
     // ════════════════════════════════════════════════
-    //  Step 13: Exams (confirm/edit substeps)
-    // ════════════════════════════════════════════════
-    private function handleExams(string $text)
-    {
-        // substep 0: auto-show form
-        if ($this->substep === 0) {
-            if (trim($text) === '') {
-                $this->showExamFormFn();
-                return;
-            }
-            $skip = in_array(strtolower($text), ['skip', 'later', 'no', 'none']);
-            if ($skip) {
-                $this->botSay("Skipped. You can create exams later in the admin panel.");
-                $this->substep = 0;
-                $this->advance();
-                return;
-            }
-            $exam = $this->validateRequired($text, 'Exam name');
-            if ($exam === null) return;
-            $this->exams[] = $exam;
-            $this->botSay("Added **{$exam}**. | Add another exam? (type name or 'done')");
-            $this->substep = 1;
-            return;
-        }
-
-        // substep 1: confirm uploaded exams or add more
-        if ($this->substep === 1) {
-            if (!empty($this->actionData['exams'])) {
-                $yes = in_array(strtolower($text), ['yes', 'y', 'correct', 'right', 'ok']);
-                if ($yes) {
-                    $this->exams = collect($this->actionData['exams'])->pluck('type')->values()->toArray();
-                    $this->botSay("**" . count($this->exams) . "** exam(s) ready — they will be created when you confirm setup.");
-                    $this->substep = 0;
-                    $this->advance();
-                    return;
-                }
-                $this->showExamFormFn();
-                return;
-            }
-            $done = in_array(strtolower($text), ['done', 'no', 'skip', 'later', 'none']);
-            if ($done) {
-                $this->substep = 0;
-                $this->advance();
-                return;
-            }
-            $this->exams[] = trim($text);
-            $this->botSay("Added **" . trim($text) . "**. | Add another exam? (type name or 'done')");
-            return;
-        }
-    }
-
-    // ════════════════════════════════════════════════
     //  Step 14: WhatsApp Verification
     // ════════════════════════════════════════════════
     private function handleWhatsAppVerify(string $text)
@@ -6333,51 +6171,6 @@ class AgentToshi extends Component
     }
 
     // ════════════════════════════════════════════════
-    //  Step 14: School Pay (optional)
-    // ════════════════════════════════════════════════
-    private function handleSchoolPay(string $text)
-    {
-        // substep 0: ask if they want to configure School Pay now
-        if ($this->substep === 0) {
-            // Empty text is the advance()/callStepHandler('') intro — show the prompt.
-            // Treating '' as skip made WhatsApp "Skip this step" also auto-skip School Pay
-            // because advance() always re-enters the next handler with ''.
-            if (trim($text) === '') {
-                $this->botSay("Would you like to configure **School Pay** now?\n\n> **What is School Pay?** It automatically links parent fee payments to student accounts and sends WhatsApp receipts when a payment is made.\n\nType **yes** to continue, or **skip** to do this later.");
-                return;
-            }
-            $skip = in_array(strtolower($text), ['skip', 'later', 'no', 'none']);
-            if ($skip) {
-                $this->botSay("School Pay integration skipped. You can configure it later from the school settings.");
-                $this->substep = 0;
-                $this->advance();
-                return;
-            }
-            // They said yes — ask for the API password
-            $this->botSay("Great! Enter the **School Pay API password** for this school.\n\nYou can find this in your School Pay school portal at schoolpay.co.ug.");
-            $this->substep = 1;
-            return;
-        }
-
-        if ($this->substep === 1) {
-            // Collecting API password
-            $password = trim($text);
-            if (strlen($password) < 4) {
-                $this->botSay("Please enter a valid API password (at least 4 characters).");
-                return;
-            }
-            $this->schoolPayPassword = $password;
-            $this->botSay("✅ School Pay API password saved.");
-            $this->botSay("Make sure your webhook URL is set in the School Pay portal to:\n`https://klassapp.xyz/api/schoolpay/webhook`\n\nYou can also do this later. Moving to review.");
-            $this->substep = 0;
-            $this->advance();
-            return;
-        }
-
-        $this->botSay("Type 'skip' to skip, or enter the API password to configure School Pay.");
-    }
-
-    // ════════════════════════════════════════════════
     //  Step 15: Review & Commit
     // ════════════════════════════════════════════════
     private function handleReview(string $text)
@@ -6513,867 +6306,7 @@ class AgentToshi extends Component
         }
     }
 
-    /**
-     * Same durable finish as the manual wizard: stamp onboarding_finished_at
-     * and run its one-time follow-ups. A second call does not repeat them.
-     */
-    private function finishSchoolOnboarding(): void
-    {
-        if (! $this->schoolId) {
-            return;
-        }
-
-        $school = School::query()->find($this->schoolId);
-        if (! $school) {
-            return;
-        }
-
-        app(FinishSchoolOnboarding::class)->finish($school);
-    }
-
-    /**
-     * Confirm button handler — aliased from "commit" to avoid Alpine.js
-     * which intercepts "commit" as a store mutation keyword and prevents
-     * Livewire from dispatching it from the frontend.
-     */
-    public function confirmOnboarding(): void
-    {
-        $this->commit();
-    }
-
-    /**
-     * Confirm button handler — commits the school to the database.
-     * Also callable by typing "commit" in the chat.
-     */
-    public function commit()
-    {
-        // Pre-flight: check if a school with this name already exists
-        if (empty($this->schoolId) && \App\Models\School::where('name', $this->schoolName)->exists()) {
-            $this->botSay("⚠️ **{$this->schoolName}** already exists in the system. If you want to modify it, use the **Edit** button to change the school name, or start a fresh onboarding.");
-            return;
-        }
-
-        // Create-mode only: a brand-new admin email must be unique.
-        // Complete-mode school admins already exist — blocking on their own
-        // email left Confirm & Complete Setup permanently stuck (review card
-        // never committed, draft terms/fees never persisted).
-        if ($this->mode !== 'complete' && $this->adminEmail
-            && \App\Models\User::where('email', $this->adminEmail)->exists()) {
-            $this->botSay("⚠️ The email **{$this->adminEmail}** is already in use. Use the **Edit** button to choose a different admin email.");
-            return;
-        }
-
-        // Sign-up closed (SIGNUP_ENABLED=false): only platform admins may create
-        // a new school here. Anyone else in create mode creates nothing.
-        if ($this->mode === 'create' && ! config('klassapp.signup_enabled')
-            && (int) (auth()->user()->usergroup_id ?? 0) !== 1) {
-            \Illuminate\Support\Facades\Log::info('Toshi create mode refused: sign-up is closed');
-            $this->botSay('New schools cannot be created right now. Request early access at ' . route('early-access.show') . '.');
-            return;
-        }
-
-        try {
-            $wasComplete = $this->mode === 'complete';
-            $this->resolveCollectedDataForCommit();
-            $this->commitAll();
-            $this->finishSchoolOnboarding();
-            $this->deleteDraft();
-            $this->reviewData['committed'] = true;
-            $this->reviewData['adminEmail'] = $this->adminEmail ?: (auth()->user()->email ?? '');
-            $this->reviewData['adminPhone'] = $this->schoolPhone;
-            // Never store or show the password. Record only whether a link was emailed
-            // or the admin typed a password during setup.
-            $this->reviewData['adminSetPasswordEmailed'] = (bool) $this->adminSetPasswordEmailed;
-            $this->reviewData['adminPasswordChosen'] = trim((string) $this->adminPassword) !== '';
-            $this->reviewData['coAdminEmail'] = $this->coAdminEmail;
-            $this->reviewData['coAdminPromoted'] = (bool) $this->coAdminUserId;
-            $this->reviewData['mode'] = $wasComplete ? 'complete' : $this->mode;
-            $this->step = 99;
-            if ($wasComplete) {
-                // Assistant off → mode=done with next-step links; assistant on → assistant.
-                $schoolName = optional(\App\Models\School::find($this->schoolId))->name ?? 'your school';
-                $this->exitCompletingSetupMode("✅ All done! Your school is set up. Ask me about **{$schoolName}**.");
-            } else {
-                // Super admin stays in create mode to onboard another school.
-                $this->mode = 'create';
-            }
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            $msg = collect($e->errors())->flatten()->first() ?: 'Please check the form and try again.';
-            $this->botSay('⚠️ '.$msg);
-        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
-            \Log::error('Onboarding unique constraint: '.$e->getMessage());
-            $this->botSay('⚠️ '.app(\App\Services\OnboardingEngine::class)->describeUniqueConstraintViolation($e));
-        } catch (\Illuminate\Database\QueryException $e) {
-            \Log::error('Onboarding DB error: ' . $e->getMessage());
-            $code = $e->getCode();
-            if ($code == 23000) {
-                $this->botSay('⚠️ A duplicate value conflicted with an existing record (often email or LIN). Fix the duplicate and try again.');
-            } elseif ($code == 2002 || $code == 1045) {
-                $this->botSay("Unable to connect to the database. Please try again in a moment.");
-            } else {
-                $this->botSay("A database error occurred. Please try again or contact support.");
-            }
-        } catch (\Throwable $e) {
-            \Log::error('Onboarding commit failed: ' . $e->getMessage());
-            $this->botSay("Something unexpected happened: **" . class_basename($e) . "**. Please try again or contact support.");
-        }
-    }
-
     // ════════════════════════════════════════════════
     //  Transform Toshi's string[] fees into engine format
     // ════════════════════════════════════════════════
-
-    /**
-     * Merge session backup and actionData into canonical commit properties so
-     * nested Livewire state collected during the chat survives confirmOnboarding.
-     */
-    private function resolveCollectedDataForCommit(): void
-    {
-        $backup = session('toshi_state');
-        if (is_array($backup) && $backup !== []) {
-            foreach (['actionData', 'terms', 'fees', 'studentList', 'standards', 'subjects'] as $key) {
-                if (! array_key_exists($key, $backup)) {
-                    continue;
-                }
-
-                $backupVal = $backup[$key];
-                $currentVal = $this->{$key} ?? null;
-
-                if ($key === 'actionData' && is_array($backupVal)) {
-                    $currentActionData = is_array($currentVal) ? $currentVal : [];
-                    foreach (['students', 'fees', 'exams', 'subjects', 'teachers'] as $nested) {
-                        $backupNested = $backupVal[$nested] ?? [];
-                        $currentNested = $currentActionData[$nested] ?? [];
-                        if (is_array($backupNested) && count($backupNested) > count($currentNested)) {
-                            $this->actionData[$nested] = $backupNested;
-                        }
-                    }
-
-                    continue;
-                }
-
-                if ($this->isCollectedDataEmpty($currentVal) && ! $this->isCollectedDataEmpty($backupVal)) {
-                    $this->{$key} = $backupVal;
-                }
-            }
-        }
-
-        $this->syncActionDataToCanonicalProperties();
-    }
-
-    private function isCollectedDataEmpty(mixed $value): bool
-    {
-        if ($value === null) {
-            return true;
-        }
-
-        if (is_array($value)) {
-            return $value === [];
-        }
-
-        return $value === '' || $value === false;
-    }
-
-    /**
-     * Copy nested actionData into top-level properties commitAll() reads.
-     */
-    private function syncActionDataToCanonicalProperties(): void
-    {
-        if (! empty($this->actionData['students']) && empty($this->studentList)) {
-            $this->studentList = collect($this->actionData['students'])
-                ->map(fn ($record) => is_array($record) ? trim((string) ($record['name'] ?? '')) : trim((string) $record))
-                ->filter()
-                ->values()
-                ->toArray();
-        }
-
-        if (empty($this->fees) && ! empty($this->actionData['fees'])) {
-            $this->fees = collect($this->actionData['fees'])
-                ->map(fn ($fee) => is_array($fee) ? trim((string) ($fee['name'] ?? '')) : trim((string) $fee))
-                ->filter()
-                ->values()
-                ->toArray();
-        }
-    }
-
-    private function hasFeesToCommit(): bool
-    {
-        if (! empty($this->fees)) {
-            return true;
-        }
-
-        return ! empty($this->actionData['fees']);
-    }
-
-    private function hasExamsToCommit(): bool
-    {
-        if (! empty($this->exams)) {
-            return true;
-        }
-
-        return ! empty($this->actionData['exams']);
-    }
-
-    /**
-     * Structured exam drafts for OnboardingEngine::saveExams().
-     *
-     * @return list<array<string, mixed>>
-     */
-    private function examsForEngine(): array
-    {
-        if (! empty($this->actionData['exams']) && is_array($this->actionData['exams'])) {
-            $structured = [];
-            foreach ($this->actionData['exams'] as $exam) {
-                if (! is_array($exam)) {
-                    continue;
-                }
-                $type = trim((string) ($exam['type'] ?? $exam['name'] ?? ''));
-                if ($type === '') {
-                    continue;
-                }
-                $structured[] = [
-                    'type' => $type,
-                    'term' => trim((string) ($exam['term'] ?? '')),
-                    'status' => trim((string) ($exam['status'] ?? '')),
-                    'level' => trim((string) ($exam['level'] ?? '')),
-                    'class' => trim((string) ($exam['class'] ?? '')),
-                    'subject' => trim((string) ($exam['subject'] ?? '')),
-                    'teacher' => trim((string) ($exam['teacher'] ?? '')),
-                ];
-            }
-            if ($structured !== []) {
-                return $structured;
-            }
-        }
-
-        // Legacy string[] of exam type names — cannot persist without class.
-        return [];
-    }
-
-    /**
-     * Transform collected fees into the structured array format expected by
-     * OnboardingEngine::saveFees(). Prefers actionData rows (amount/class/term)
-     * when the form collected them; falls back to string[] names on $this->fees.
-     */
-    private function feesForEngine(): array
-    {
-        if (! empty($this->actionData['fees']) && is_array($this->actionData['fees'])) {
-            $structured = [];
-            foreach ($this->actionData['fees'] as $index => $fee) {
-                if (! is_array($fee)) {
-                    continue;
-                }
-
-                $name = trim((string) ($fee['name'] ?? ''));
-                if ($name === '') {
-                    continue;
-                }
-
-                $amount = $fee['amount'] ?? 0;
-                $entry = [
-                    'name' => $name,
-                    'amount' => is_numeric($amount) ? (float) $amount : 0,
-                    'row' => isset($fee['row']) && is_numeric($fee['row']) ? (int) $fee['row'] : ($index + 1),
-                ];
-
-                $class = trim((string) ($fee['class'] ?? ''));
-                if ($class !== '') {
-                    $entry['class'] = $class;
-                }
-
-                $level = trim((string) ($fee['level'] ?? ''));
-                if ($level !== '') {
-                    $entry['level'] = $level;
-                }
-
-                $isYearly = ! empty($fee['is_yearly']);
-                $term = trim((string) ($fee['term'] ?? ''));
-                if ($isYearly) {
-                    $entry['is_yearly'] = true;
-                    // Yearly fees are not tied to a term — do not pass term through.
-                } elseif ($term !== '') {
-                    $entry['term'] = $term;
-                    $entry['is_yearly'] = false;
-                }
-
-                $structured[] = $entry;
-            }
-
-            if ($structured !== []) {
-                return $structured;
-            }
-        }
-
-        $structured = [];
-        $row = 1;
-        foreach ($this->fees as $fee) {
-            if (! is_string($fee) || trim($fee) === '') {
-                continue;
-            }
-            $structured[] = [
-                'name' => trim($fee),
-                'amount' => 0,
-                'row' => $row,
-            ];
-            $row++;
-        }
-
-        return $structured;
-    }
-
-    // ════════════════════════════════════════════════
-    //  Commit everything to the database
-    // ════════════════════════════════════════════════
-    /**
-     * Normalize Toshi student drafts for OnboardingEngine::saveStudents().
-     * Passes gender, school_student_id, and lin through as distinct fields
-     * (lin = Uganda national Learner Identification Number).
-     *
-     * @param  list<array<string, mixed>|string>  $studentRecords
-     * @return list<array{name: string, class: string, stream: string, parent: string, parent_phone: string, phone: string, school_student_id: string, lin: string, board_registration_number: string, gender: string, date_of_birth: string}>
-     */
-    private function mapStudentRecordsForEngine(array $studentRecords): array
-    {
-        return array_map(function ($record) {
-            if (is_string($record)) {
-                return [
-                    'name' => trim($record),
-                    'class' => '',
-                    'stream' => '',
-                    'parent' => '',
-                    'parent_phone' => '',
-                    'phone' => '',
-                    'school_student_id' => '',
-                    'lin' => '',
-                    'board_registration_number' => '',
-                    'gender' => '',
-                    'date_of_birth' => '',
-                ];
-            }
-
-            $gender = strtolower(trim((string) ($record['gender'] ?? '')));
-            if (! in_array($gender, ['male', 'female'], true)) {
-                $gender = '';
-            }
-
-            return [
-                'name' => trim((string) ($record['name'] ?? '')),
-                'class' => trim((string) ($record['class'] ?? '')),
-                'stream' => trim((string) ($record['stream'] ?? '')),
-                'parent' => trim((string) ($record['parent'] ?? $record['parent_name'] ?? '')),
-                'parent_phone' => trim((string) ($record['parent_phone'] ?? $record['parentPhone'] ?? '')),
-                'phone' => trim((string) ($record['phone'] ?? '')),
-                'school_student_id' => trim((string) ($record['school_student_id'] ?? '')),
-                'lin' => trim((string) ($record['lin'] ?? $record['learner_id'] ?? '')),
-                'board_registration_number' => trim((string) ($record['board_registration_number'] ?? '')),
-                'gender' => $gender,
-                'date_of_birth' => trim((string) ($record['date_of_birth'] ?? $record['dob'] ?? '')),
-            ];
-        }, $studentRecords);
-    }
-
-    /**
-     * Link the phone verifyAdminCode already checked. Ignores Livewire
-     * properties and restored draft flags.
-     */
-    private function saveVerifiedWhatsAppFromGrant(School $school, int $userId): void
-    {
-        $phone = app(\App\Services\WhatsApp\WhatsAppOnboardingOtpService::class)->grantPhone();
-        if (! is_string($phone) || trim($phone) === '') {
-            return;
-        }
-
-        app(OnboardingEngine::class)->saveWhatsApp($school, $userId, $phone, codeWasVerified: true);
-    }
-
-    private function commitAll()
-    {
-        DB::transaction(function () {
-            // ════════════════════════════════════════════
-            //  CREATE MODE: Full school + admin creation
-            // ════════════════════════════════════════════
-            if ($this->mode === 'create') {
-                $school = School::create([
-                    'name'    => $this->schoolName,
-                    // FLAGGED(product-decision): fallback school email uses the .sch.ug domain. see docs/onboarding-engine-plan.md
-                    'email'   => $this->schoolEmail ?: Str::slug($this->schoolName) . '@klassapp.sch.ug',
-                    // FLAGGED(product-decision): missing phone becomes the Uganda local number 0700000000. see docs/onboarding-engine-plan.md
-                    'phone'   => $this->schoolPhone ?: '0700000000',
-                    'ministry_code' => $this->ministryCode ?: null,
-                    'uneb_center_number' => $this->unebCenterNumber,
-                    // FLAGGED(product-decision): create mode stores uneb when no curriculum was chosen. see docs/onboarding-engine-plan.md
-                    'curriculum'    => $this->curriculum ?: 'uneb',
-                    'school_pay_api_password' => $this->schoolPayPassword ?: null,
-                    'school_pay_webhook_enabled' => $this->schoolPayPassword ? true : false,
-                    // Soft-launch 1g: AI is opt-in — never enable assistant on create.
-                    'toshi_enabled' => 0,
-                    'toshi_mode' => \App\Enums\ToshiMode::configuredDefault(),
-                    'status'  => 1,
-                    'slug'    => Str::slug($this->schoolName),
-                    // The default for a blank answer lives in the onboarding service.
-                    'registration_country' => \App\Services\OnboardingStepsService::countryOrDefault($this->schoolCountry),
-                    'student_size' => $this->studentSize ?: null,
-                ]);
-                if ($this->schoolCountry) {
-                    \App\Services\OnboardingStepsService::persistCountry($school->fresh(), $this->schoolCountry);
-                    $school->refresh();
-                }
-                $this->schoolId = $school->id;
-                $schoolId = $school->id;
-
-                // Create admin user FIRST so we can reference its ID in subscriptions.
-                // A chosen password is stored hashed and is never emailed. When none
-                // was chosen, the account gets an unusable random hash and a signed
-                // set-password link.
-                $this->adminSetPasswordEmailed = false;
-                $chosenPassword = trim((string) $this->adminPassword);
-                $emailSetPasswordLink = $chosenPassword === '';
-                // FLAGGED(product-decision): create mode stores a chosen or random password instead of an invite link. see docs/onboarding-engine-plan.md
-                $password = bcrypt($emailSetPasswordLink ? Str::random(32) : $chosenPassword);
-                $adminUser = User::create([
-                    'school_id' => $school->id, 'usergroup_id' => 3,
-                    'name' => $this->adminName ?: 'School Admin',
-                    // FLAGGED(product-decision): fallback admin email uses the .sch.ug domain. see docs/onboarding-engine-plan.md
-                    'email' => $this->adminEmail ?: 'admin@' . Str::slug($this->schoolName) . '.sch.ug',
-                    'password' => $password,
-                    'is_reset' => $emailSetPasswordLink ? 1 : 0,
-                    'status' => 'active', 'email_verified' => 1,
-                ]);
-                Userprofile::create([
-                    'school_id' => $school->id, 'user_id' => $adminUser->id,
-                    'usergroup_id' => 3, 'firstname' => $this->adminName ?: 'School',
-                    'lastname' => 'Admin', 'status' => 'active',
-                ]);
-
-                if ($emailSetPasswordLink && $adminUser->email) {
-                    try {
-                        $issued = \App\Support\SetPasswordLink::issue($adminUser);
-                        \Mail::to($adminUser->email)->queue(new \App\Mail\SetPasswordLinkMail(
-                            $adminUser->name ?: 'there',
-                            $issued['url'],
-                            $issued['expires_at'],
-                            $issued['minutes'],
-                        ));
-                        $this->adminSetPasswordEmailed = true;
-                    } catch (\Throwable $e) {
-                        \Log::warning('Admin set-password email failed: '.$e->getMessage());
-                    }
-                }
-
-                // ── Plan: delegate to OnboardingEngine for CurrentPlan/TrialService ──
-                // Subscription record is Toshi-specific billing, kept inline.
-                if ($this->selectedPlanId) {
-                    app(OnboardingEngine::class)->savePlan($school, (int) $this->selectedPlanId, skipCompletionCheck: true);
-                    Subscription::create([
-                        'school_id'  => $school->id, 'plan_id' => $this->selectedPlanId,
-                        'user_id'    => $adminUser->id,
-                        'status' => 'pending', 'start_date' => now(), 'end_date' => now()->addYear(),
-                    ]);
-                }
-
-                $academicYear = AcademicYear::create([
-                    'school_id' => $school->id, 'name' => $this->academicYearLabel ?: date('Y'),
-                    'start_date' => now()->startOfYear(), 'end_date' => now()->endOfYear(),
-                    'type' => 'Current Academic Year',
-                    'description' => 'Current Academic Year',
-                ]);
-
-                // Co-admin
-                if ($this->coAdminName && $this->coAdminEmail) {
-                    if (User::where('email', $this->coAdminEmail)->exists()) {
-                        \Log::warning('Co-admin invite skipped: email already in use', [
-                            'school_id' => $school->id,
-                            'email'     => $this->coAdminEmail,
-                        ]);
-                    } else {
-                        ['invite' => $invite, 'token' => $token] = CoAdminInviteLinkService::issue(
-                            $school,
-                            $this->coAdminEmail,
-                            $this->coAdminName,
-                        );
-                        CoAdminInviteLinkService::sendEmail($invite, $token, $school);
-                    }
-                }
-
-                // ── Content steps: delegate to OnboardingEngine ──
-                // Fixes: (1) per-class tier mapping — nursery/primary/o-level/a-level
-                // instead of a single $phase Standard for all classes; (2) SchoolCategorySeeder
-                // now runs when school_category is set; (3) idempotent via firstOrCreate.
-                app(OnboardingEngine::class)->saveStandards($school, $academicYear, $this->standards);
-                if (!empty($this->subjects)) {
-                    app(OnboardingEngine::class)->saveSubjects($school, $academicYear, $this->subjects);
-                }
-
-                // ── Rebuild classLinkMap from DB for student assignment below ──
-                $firstStandardLink = null;
-                $classLinkMap = []; // class name → StandardLink
-
-                foreach ($this->standards as $class) {
-                    $className = $class['name'];
-                    $sections = Section::where('school_id', $school->id)
-                        ->where(function ($q) use ($className) {
-                            $q->where('name', $className)
-                              ->orWhere('name', 'like', $className . ' %');
-                        })->get();
-                    foreach ($sections as $section) {
-                        $link = StandardLink::where('school_id', $school->id)
-                            ->where('section_id', $section->id)
-                            ->where('academic_year_id', $academicYear->id)
-                            ->first();
-                        if ($link) {
-                            $classLinkMap[$className] = $link;
-                            if (!$firstStandardLink) {
-                                $firstStandardLink = $link;
-                            }
-                        }
-                    }
-                }
-
-                // ── Seed MoE default grading scales ──
-                try {
-                    \App\Helpers\GradingHelper::seedAllGradingForSchool($school->id);
-                } catch (\Exception $e) {
-                    \Log::warning('Failed to seed grading scales: ' . $e->getMessage());
-                }
-
-                // ── Teachers: delegate to OnboardingEngine ──
-                // Fixes: random password per teacher (not shared admin password),
-                // is_reset=1 on every account, Userprofile.alternate_no for phone,
-                // email dedup with fallback.
-                $teacherDrafts = array_map(function ($name) {
-                    return [
-                        'name'  => trim((string) $name),
-                        'email' => Str::slug($name) . '@' . Str::slug($this->schoolName) . '.edu',
-                        'phone' => $this->teacherPhones[$name] ?? '',
-                    ];
-                }, $this->teacherList);
-                $teacherResult = app(OnboardingEngine::class)->saveTeachers($school, $academicYear, $teacherDrafts);
-                $teacherOver = \App\Services\ToshiActionService::enforcePlanLimit($school->id, 'teachers');
-                $teacherSkipped = count($teacherResult['skipped'] ?? []);
-                if ($teacherSkipped > 0) {
-                    $reason = $teacherResult['skipped'][0]['reason'] ?? $teacherOver['message'];
-                    $this->botSay("⚠️ {$reason} Created ".count($teacherResult['created'] ?? [])." teacher(s); {$teacherSkipped} not imported.");
-                } elseif (! $teacherOver['success']) {
-                    $this->botSay("⚠️ {$teacherOver['message']}");
-                }
-
-                // Form path (teacherClasses × teacherSubjects) + file-upload path → Teacherlink
-                $this->persistTeacherLinksFromCollectedData($school, $academicYear);
-
-                // ── Students: delegate to OnboardingEngine ──
-                // Fixes: random password per student (not shared admin password),
-                // is_reset=1 on every account, Userprofile with alternate_no for phone,
-                // email dedup with fallback, proper StandardLink resolution.
-                // Gender + school_student_id + board_registration_number pass through to the engine.
-                $studentRecords = !empty($this->actionData['students'])
-                    ? $this->actionData['students']
-                    : array_map(fn($n) => ['name' => $n, 'class' => ''], $this->studentList);
-                $studentDrafts = $this->mapStudentRecordsForEngine($studentRecords);
-                app(OnboardingEngine::class)->saveStudents($school, $academicYear, $studentDrafts);
-
-                // ── Terms: delegate to OnboardingEngine (idempotent via firstOrCreate) ──
-                if (!empty($this->terms)) {
-                    app(OnboardingEngine::class)->saveTerms($school, $academicYear, $this->terms);
-                }
-
-                // ── Fees: delegate to OnboardingEngine (whole-school spread, idempotent) ──
-                if ($this->hasFeesToCommit()) {
-                    app(OnboardingEngine::class)->saveFees($school, $this->feesForEngine());
-                }
-
-                // ── Exams: actually persist (Review previously claimed save with no write path) ──
-                if ($this->hasExamsToCommit()) {
-                    $examDrafts = $this->examsForEngine();
-                    if ($examDrafts === []) {
-                        throw \Illuminate\Validation\ValidationException::withMessages([
-                            'exams' => 'Exams need a class (and usually subject/term) before they can be created. Go back to Exams and fill those fields.',
-                        ]);
-                    }
-                    app(OnboardingEngine::class)->saveExams(
-                        $school,
-                        $academicYear,
-                        $examDrafts,
-                        $adminUser->id
-                    );
-                }
-
-                // WhatsApp is linked only from the session grant written after
-                // the issued code matched. Public whatsappVerified / whatsappPhone
-                // are not proof, including when a draft restores them.
-                $this->saveVerifiedWhatsAppFromGrant($school, $adminUser->id);
-            }
-
-            // ════════════════════════════════════════════
-            //  COMPLETE MODE: Only add missing items
-            // ════════════════════════════════════════════
-            if ($this->mode === 'complete') {
-                $schoolId = $this->schoolId;
-                $user = auth()->user();
-
-                $school = School::find($schoolId);
-                if ($school) {
-                    if ($this->schoolName !== '' && $this->schoolName !== $school->name) {
-                        $unique = app(\App\Services\SchoolSignupBootstrapService::class)->uniqueSchoolName($this->schoolName);
-                        if ($unique !== $school->name) {
-                            // Prefer exact desired name when only this school holds it
-                            if (! School::where('name', $this->schoolName)->where('id', '!=', $school->id)->exists()) {
-                                $unique = $this->schoolName;
-                            }
-                            $school->name = $unique;
-                            $school->slug = Str::slug($unique);
-                        }
-                    }
-                    if ($this->curriculum !== '' && $this->curriculum !== null && $school->curriculum !== $this->curriculum) {
-                        $school->curriculum = $this->curriculum;
-                    }
-                    // Do not overwrite already-set values with empty/null when
-                    // complete-mode is reopened without re-collecting fields.
-                    if (filled($this->schoolCountry)) {
-                        \App\Services\OnboardingStepsService::persistCountry($school, $this->schoolCountry);
-                        $school->refresh();
-                    }
-                    if (filled($this->studentSize) && $school->student_size !== $this->studentSize) {
-                        try {
-                            app(OnboardingEngine::class)->saveStudentSize($school, $this->studentSize);
-                            $school->refresh();
-                        } catch (\Illuminate\Validation\ValidationException $e) {
-                            // Leave existing value if draft/input is not a canonical bucket.
-                        }
-                    }
-                    if (filled($this->ministryCode)) {
-                        $school->ministry_code = $this->ministryCode;
-                    }
-                    if ($this->unebCenterNumber !== null
-                        && \Illuminate\Support\Facades\Schema::hasColumn('schools', 'uneb_center_number')) {
-                        $school->uneb_center_number = $this->unebCenterNumber;
-                    }
-                    // Persist identity fields only — do not enable the AI assistant
-                    // as a side effect of create/complete onboarding.
-                    $school->save();
-
-                    if ($this->selectedPlanId && ! CurrentPlan::where('school_id', $schoolId)->exists()) {
-                        $this->persistSelectedPlan((int) $schoolId, (int) $this->selectedPlanId);
-                    }
-                }
-
-                $academicYear = \App\Models\AcademicYear::where('school_id', $schoolId)->first();
-                if (!$academicYear) {
-                    $academicYear = AcademicYear::create([
-                        'school_id' => $schoolId, 'name' => $this->academicYearLabel ?: date('Y'),
-                        'start_date' => now()->startOfYear(), 'end_date' => now()->endOfYear(),
-                        'type' => 'Current Academic Year',
-                        'description' => 'Current Academic Year',
-                    ]);
-                } elseif ($this->academicYearLabel && (string) $academicYear->name !== (string) $this->academicYearLabel) {
-                    $academicYear->name = $this->academicYearLabel;
-                    $academicYear->save();
-                }
-
-                // ── Content steps: delegate to OnboardingEngine ──
-                // Fixes: (1) per-class tier mapping instead of single $phase Standard;
-                // (2) SchoolCategorySeeder runs when school_category is set;
-                // (3) idempotent via firstOrCreate throughout.
-                if (!empty($this->standards)) {
-                    app(OnboardingEngine::class)->saveStandards($school, $academicYear, $this->standards);
-                }
-                if (!empty($this->subjects)) {
-                    app(OnboardingEngine::class)->saveSubjects($school, $academicYear, $this->subjects);
-                }
-
-                // ── Teachers: delegate to OnboardingEngine ──
-                // Fixes: random password per teacher, is_reset=1, Userprofile.alternate_no for phone.
-                if (!empty($this->teacherList)) {
-                    $teacherDrafts = array_map(function ($name) {
-                        return [
-                            'name'  => trim((string) $name),
-                            'email' => Str::slug($name) . '@school.edu',
-                            'phone' => $this->teacherPhones[$name] ?? '',
-                        ];
-                    }, $this->teacherList);
-                    $teacherResult = app(OnboardingEngine::class)->saveTeachers($school, $academicYear, $teacherDrafts);
-                    $teacherOver = \App\Services\ToshiActionService::enforcePlanLimit($school->id, 'teachers');
-                    $teacherSkipped = count($teacherResult['skipped'] ?? []);
-                    if ($teacherSkipped > 0) {
-                        $reason = $teacherResult['skipped'][0]['reason'] ?? $teacherOver['message'];
-                        $this->botSay("⚠️ {$reason} Created ".count($teacherResult['created'] ?? [])." teacher(s); {$teacherSkipped} not imported.");
-                    } elseif (! $teacherOver['success']) {
-                        $this->botSay("⚠️ {$teacherOver['message']}");
-                    }
-                }
-
-                // Form path (teacherClasses × teacherSubjects) + file-upload path → Teacherlink
-                $this->persistTeacherLinksFromCollectedData($school, $academicYear);
-
-                // ── Terms: delegate to OnboardingEngine (idempotent) ──
-                if (!empty($this->terms)) {
-                    app(OnboardingEngine::class)->saveTerms($school, $academicYear, $this->terms);
-                }
-
-                // ── Students: delegate to OnboardingEngine ──
-                // Fixes: random password per student, is_reset=1, Userprofile.alternate_no for phone,
-                // proper StandardLink resolution, klassapp_student_id via nextForStudent.
-                // Gender + school_student_id + board_registration_number pass through to the engine.
-                if (!empty($this->studentList) || !empty($this->actionData['students'])) {
-                    $studentRecords = !empty($this->actionData['students'])
-                        ? $this->actionData['students']
-                        : array_map(fn($n) => ['name' => $n, 'class' => ''], $this->studentList);
-                    $studentDrafts = $this->mapStudentRecordsForEngine($studentRecords);
-                    $studentResult = app(OnboardingEngine::class)->saveStudents($school, $academicYear, $studentDrafts);
-
-                    $overLimit = \App\Services\ToshiActionService::enforcePlanLimit($school->id, 'students');
-                    $studentSkipped = count($studentResult['skipped'] ?? []);
-                    if ($studentSkipped > 0) {
-                        $reason = $studentResult['skipped'][0]['reason'] ?? $overLimit['message'];
-                        $this->botSay("⚠️ {$reason} Created ".count($studentResult['created'] ?? [])." student(s); {$studentSkipped} not imported.");
-                    } elseif (! $overLimit['success']) {
-                        $this->botSay("⚠️ {$overLimit['message']}");
-                    }
-                }
-
-                // ── Fees: delegate to OnboardingEngine (whole-school spread, idempotent) ──
-                if ($this->hasFeesToCommit()) {
-                    app(OnboardingEngine::class)->saveFees($school, $this->feesForEngine());
-                }
-
-                // ── Exams: actually persist (Review previously claimed save with no write path) ──
-                if ($this->hasExamsToCommit()) {
-                    $examDrafts = $this->examsForEngine();
-                    if ($examDrafts === []) {
-                        throw \Illuminate\Validation\ValidationException::withMessages([
-                            'exams' => 'Exams need a class (and usually subject/term) before they can be created. Go back to Exams and fill those fields.',
-                        ]);
-                    }
-                    app(OnboardingEngine::class)->saveExams(
-                        $school,
-                        $academicYear,
-                        $examDrafts,
-                        $user->id
-                    );
-                }
-
-                // Same rule as create mode: only the server-side code grant.
-                $this->saveVerifiedWhatsAppFromGrant($school, $user->id);
-
-                // Promote selected teacher to co-admin (usergroup_id: 5 → 3)
-                if ($this->coAdminUserId) {
-                    $coAdminUser = \App\Models\User::find($this->coAdminUserId);
-                    if ($coAdminUser && $coAdminUser->school_id === $schoolId) {
-                        $coAdminUser->update(['usergroup_id' => 3]);
-                        \App\Models\Userprofile::updateOrCreate(
-                            ['user_id' => $coAdminUser->id],
-                            ['usergroup_id' => 3, 'school_id' => $schoolId, 'status' => 'active']
-                        );
-
-                        try {
-                            $schoolName = optional(\App\Models\School::find($schoolId))->name ?? 'your school';
-                            Mail::to($coAdminUser->email)->queue(new CoAdminInviteMail(
-                                $coAdminUser->name, $coAdminUser->email,
-                                $schoolName, true
-                            ));
-                        } catch (\Exception $e) {
-                            \Log::warning('Co-admin promotion email failed: ' . $e->getMessage());
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    // ════════════════════════════════════════════════
-    //  Curriculum Defaults (NCDC Uganda)
-    //  Only UNEB is shipped. When adding Cambridge, Edexcel, IB, KCPE/KCSE,
-    //  Rwanda, Tanzania, or South Sudan curricula:
-    //    1. Add the value to schools.curriculum enum (migration)
-    //    2. Branch this method by $this->curriculum
-    //    3. Define class names + subject lists per curriculum
-    //    4. Update the setCurriculum() message in handleSchoolInfo
-    // ════════════════════════════════════════════════
-    // FLAGGED(product-decision): class and subject lists are Uganda nursery, P1–P7, and S1–S6 constants. see docs/onboarding-engine-plan.md
-    private function curriculumDefaults(): array
-    {
-        return match ($this->schoolType) {
-            'nursery' => [
-                'classes' => [
-                    ['name' => 'Baby Class'], ['name' => 'Middle Class'], ['name' => 'Top Class'],
-                ],
-                'subjects' => [
-                    'Baby Class'   => ['English Rhymes & Stories', 'Numbers & Counting', 'Colour & Shapes', 'Creative Play'],
-                    'Middle Class' => ['English Language Basics', 'Numeracy', 'Environmental Awareness', 'Art & Craft'],
-                    'Top Class'    => ['Pre-Literacy (English)', 'Pre-Numeracy', 'Social Habits', 'Creative Arts', 'Religious Education'],
-                ],
-            ],
-            'primary' => [
-                'classes' => $this->hasNursery
-                    ? [['name' => 'Baby Class'], ['name' => 'Middle Class'], ['name' => 'Top Class'],
-                       ['name' => 'Primary 1'], ['name' => 'Primary 2'], ['name' => 'Primary 3'],
-                       ['name' => 'Primary 4'], ['name' => 'Primary 5'], ['name' => 'Primary 6'], ['name' => 'Primary 7']]
-                    : [['name' => 'Primary 1'], ['name' => 'Primary 2'], ['name' => 'Primary 3'],
-                       ['name' => 'Primary 4'], ['name' => 'Primary 5'], ['name' => 'Primary 6'], ['name' => 'Primary 7']],
-                'subjects' => $this->hasNursery
-                    ? [
-                        'Baby Class'   => ['English Rhymes & Stories', 'Numbers & Counting', 'Colour & Shapes', 'Creative Play'],
-                        'Middle Class' => ['English Language Basics', 'Numeracy', 'Environmental Awareness', 'Art & Craft'],
-                        'Top Class'    => ['Pre-Literacy (English)', 'Pre-Numeracy', 'Social Habits', 'Creative Arts', 'Religious Education'],
-                        'Primary 1' => ['English Language', 'Mathematics', 'Literacy I', 'Numeracy I', 'Religious Education'],
-                    ]
-                    : [
-                        'Primary 1' => ['English Language', 'Mathematics', 'Literacy I', 'Numeracy I', 'Religious Education'],
-                        'Primary 2' => ['English Language', 'Mathematics', 'Literacy II', 'Numeracy II', 'Religious Education'],
-                    'Primary 3' => ['English Language', 'Mathematics', 'Integrated Science', 'Social Studies', 'Religious Education'],
-                    'Primary 4' => ['English Language', 'Mathematics', 'Integrated Science', 'Social Studies', 'Religious Education', 'Local Language'],
-                    'Primary 5' => ['English Language', 'Mathematics', 'Integrated Science', 'Social Studies', 'Religious Education', 'Local Language'],
-                    'Primary 6' => ['English Language', 'Mathematics', 'Integrated Science', 'Social Studies', 'Religious Education', 'Local Language'],
-                    'Primary 7' => ['English Language', 'Mathematics', 'Integrated Science', 'Social Studies', 'Religious Education', 'Local Language'],
-                ],
-            ],
-            'secondary', 'o-level' => [
-                'classes' => [
-                    ['name' => 'Senior 1'], ['name' => 'Senior 2'], ['name' => 'Senior 3'], ['name' => 'Senior 4'],
-                ],
-                'subjects' => [
-                    'Senior 1' => ['English Language', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Geography', 'History', 'Religious Education', 'Physical Education', 'ICT', 'Entrepreneurship'],
-                    'Senior 2' => ['English Language', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Geography', 'History', 'Religious Education', 'Physical Education', 'ICT', 'Entrepreneurship'],
-                    'Senior 3' => ['English Language', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Geography', 'History', 'Religious Education'],
-                    'Senior 4' => ['English Language', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Geography', 'History', 'Religious Education'],
-                ],
-            ],
-            'a-level' => [
-                'classes' => [
-                    ['name' => 'Senior 5'], ['name' => 'Senior 6'],
-                ],
-                'subjects' => [
-                    'Senior 5' => ['General Paper', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'Geography', 'History', 'Economics', 'Divinity', 'Literature in English', 'Computer Science', 'Entrepreneurship', 'Fine Art', 'Music', 'Physical Education', 'French', 'Kiswahili', 'Luganda'],
-                    'Senior 6' => ['General Paper', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'Geography', 'History', 'Economics', 'Divinity', 'Literature in English', 'Computer Science', 'Entrepreneurship', 'Fine Art', 'Music', 'Physical Education', 'French', 'Kiswahili', 'Luganda'],
-                ],
-            ],
-            'mixed' => [
-                'classes' => [
-                    ['name' => 'Baby Class'], ['name' => 'Middle Class'], ['name' => 'Top Class'],
-                    ['name' => 'Primary 1'], ['name' => 'Primary 2'], ['name' => 'Primary 3'],
-                    ['name' => 'Primary 4'], ['name' => 'Primary 5'], ['name' => 'Primary 6'], ['name' => 'Primary 7'],
-                    ['name' => 'Senior 1'], ['name' => 'Senior 2'], ['name' => 'Senior 3'], ['name' => 'Senior 4'],
-                ],
-                'subjects' => [
-                    'Baby Class'   => ['English Rhymes & Stories', 'Numbers & Counting', 'Creative Play'],
-                    'Middle Class' => ['English Language Basics', 'Numeracy', 'Art & Craft'],
-                    'Top Class'    => ['Pre-Literacy', 'Pre-Numeracy', 'Social Habits', 'Creative Arts'],
-                    'Primary 1' => ['English Language', 'Mathematics', 'Literacy I', 'Numeracy I', 'Religious Education'],
-                    'Primary 2' => ['English Language', 'Mathematics', 'Literacy II', 'Numeracy II', 'Religious Education'],
-                    'Primary 3' => ['English Language', 'Mathematics', 'Integrated Science', 'Social Studies', 'Religious Education'],
-                    'Primary 4' => ['English Language', 'Mathematics', 'Integrated Science', 'Social Studies', 'Religious Education', 'Local Language'],
-                    'Primary 5' => ['English Language', 'Mathematics', 'Integrated Science', 'Social Studies', 'Religious Education', 'Local Language'],
-                    'Primary 6' => ['English Language', 'Mathematics', 'Integrated Science', 'Social Studies', 'Religious Education', 'Local Language'],
-                    'Primary 7' => ['English Language', 'Mathematics', 'Integrated Science', 'Social Studies', 'Religious Education', 'Local Language'],
-                    'Senior 1' => ['English Language', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Geography', 'History', 'Religious Education', 'Physical Education', 'ICT', 'Entrepreneurship'],
-                    'Senior 2' => ['English Language', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Geography', 'History', 'Religious Education', 'Physical Education', 'ICT', 'Entrepreneurship'],
-                    'Senior 3' => ['English Language', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Geography', 'History', 'Religious Education'],
-                    'Senior 4' => ['English Language', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Geography', 'History', 'Religious Education'],
-                ],
-            ],
-            default => [
-                'classes' => [['name' => 'Primary 1']],
-                'subjects' => ['Primary 1' => ['English Language', 'Mathematics']],
-            ],
-        };
-    }
 }

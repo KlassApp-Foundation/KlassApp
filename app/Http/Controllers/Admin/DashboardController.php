@@ -51,13 +51,12 @@ class DashboardController extends Controller
             return redirect(\App\Helpers\AuthRedirectHelper::dashboardPathForUsergroup(1));
         }
 
-        $toshiPaths = app(\App\Services\Toshi\ToshiOnboardingPath::class);
+        // Every unfinished school sets up in the wizard; there is no chat path.
         $requestSchool = Auth::user()->school;
         if ($requestSchool
             && $request->boolean('toshi_onboarding')
-            && ! $toshiPaths->openFor($requestSchool)
             && \App\Services\OnboardingEngine::setupDestination($requestSchool, Auth::id()) !== null) {
-            return $toshiPaths->sendToWizard($requestSchool);
+            return redirect()->to(\App\Services\OnboardingEngine::setupDestination($requestSchool, Auth::id()));
         }
 
         $admin_id  =   Auth::id();
