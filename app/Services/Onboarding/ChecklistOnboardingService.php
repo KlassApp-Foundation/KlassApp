@@ -142,15 +142,22 @@ final class ChecklistOnboardingService
         }
 
         $preview = $this->previewStep($plan->school, $payload, $key);
+        $index = array_search($key, self::WALK, true);
 
         return [
             'kind' => 'preview',
             'step_key' => $key,
             'title' => self::TITLES[$key],
+            'step_number' => is_int($index) ? $index + 1 : 1,
+            'step_total' => count(self::WALK),
             'create' => $preview['create'],
             'exists' => $preview['exists'],
             'conflict' => $preview['conflict'],
-            'examples' => array_slice($preview['examples'], 0, 3),
+            'proposal' => $this->proposalFor($key),
+            'approve_label' => $this->approveLabel($key, $preview['create']),
+            'question' => $this->questionFor($payload, $key, $preview),
+            'examples' => array_slice($preview['examples'], 0, 8),
+            'example_total' => $preview['create'] + $preview['exists'] + $preview['conflict'],
             'conflicts' => array_slice($preview['conflicts'], 0, 3),
         ];
     }
@@ -462,7 +469,12 @@ final class ChecklistOnboardingService
             'kind' => 'summary',
             'school_name' => (string) ($payload['school']['name'] ?? ''),
             'steps' => $steps,
-            'flags' => $payload['flags'],
+            'stats' => $this->statTiles($payload),
+            'flags' => array_map(function (array $flag): array {
+                $flag['fix'] = $this->plainFix($flag);
+
+                return $flag;
+            }, $payload['flags']),
             'notes' => $payload['notes'],
             'class_teachers_listed' => (int) $payload['class_teachers_listed'],
             'needs_flag_choice' => $payload['flags'] !== [] && ! $payload['flags_skipped'],
@@ -508,7 +520,7 @@ final class ChecklistOnboardingService
                 $conflict++;
                 $conflicts[] = ['label' => $label, 'message' => $message ?: 'Conflicts with a row already stored.'];
             }
-            if (count($examples) < 3) {
+            if (count($examples) < 8) {
                 $examples[] = ['label' => $label, 'bucket' => $bucket];
             }
         };
@@ -824,6 +836,7 @@ final class ChecklistOnboardingService
             'title' => self::TITLES[$key],
             'created' => $preview['create'],
             'existed' => $preview['exists'],
+            'line' => $this->doneLine($key, $preview['create']),
             'href' => $link['href'],
             'href_label' => $link['label'],
             'completion' => $next === null ? $this->completionCard($school, $payload) : null,
@@ -876,6 +889,7 @@ final class ChecklistOnboardingService
 
         return [
             'kind' => 'done',
+            'stats' => $this->statTiles($payload),
             'checks' => $checks,
             'checks_ok' => $ok,
             'kls_present' => $academics->count() > 0 && $missingKls === 0,
@@ -884,6 +898,214 @@ final class ChecklistOnboardingService
             'phones_bad' => $badPhones,
             'invites_ready' => (int) ($payload['invites_ready'] ?? 0),
             'class_teachers_listed' => (int) ($payload['class_teachers_listed'] ?? 0),
+        ];
+    }
+
+    private function proposalFor(string $key): string
+    {
+        return match ($key) {
+            'terms' => 'Use the term names and dates as written. Those dates define the year.',
+            'standards' => 'Use the stream names as written, in the class order on the sheet.',
+            'subjects' => 'Attach each subject to the classes named on its row.',
+            'teachers' => 'Add the teachers and the teaching assignments as written.',
+            'students' => 'Add the learners and their parents. Flagged rows stay out.',
+            default => 'Use the rows as written on the sheet.',
+        };
+    }
+
+    private function approveLabel(string $key, int $create): string
+    {
+        if ($create === 0) {
+            return 'Approve, nothing new to create';
+        }
+
+        $noun = match ($key) {
+            'terms' => $create === 1 ? 'term' : 'terms',
+            'standards' => $create === 1 ? 'class' : 'classes and streams',
+            'subjects' => $create === 1 ? 'subject' : 'subjects',
+            'teachers' => $create === 1 ? 'teacher' : 'teachers',
+            'students' => $create === 1 ? 'learner' : 'learners',
+            default => $create === 1 ? 'row' : 'rows',
+        };
+
+        return 'Create '.$create.' '.$noun;
+    }
+
+    private function doneLine(string $key, int $created): string
+    {
+        if ($created === 0) {
+            return 'Nothing new was created.';
+        }
+
+        return match ($key) {
+            'terms' => 'Created '.$created.' '.($created === 1 ? 'term' : 'terms').'.',
+            'standards' => 'Created '.$created.' '.($created === 1 ? 'class' : 'classes and streams').'.',
+            'subjects' => 'Created '.$created.' '.($created === 1 ? 'subject' : 'subjects').'.',
+            'teachers' => 'Created '.$created.' '.($created === 1 ? 'teacher' : 'teachers').'.',
+            'students' => 'Created '.$created.' '.($created === 1 ? 'learner' : 'learners').'.',
+            default => 'Created '.$created.'.',
+        };
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @param  array{create: int, exists: int, conflict: int, conflicts: list<array{label: string, message: string}>}  $preview
+     * @return array{prompt: string, blocks_write: bool, answers: list<array{id: string, label: string}>}|null
+     */
+    private function questionFor(array $payload, string $key, array $preview): ?array
+    {
+        if ($preview['conflict'] > 0) {
+            $first = $preview['conflicts'][0] ?? ['label' => self::TITLES[$key], 'message' => 'This step conflicts with a row already stored.'];
+            $prompt = $first['label'].'. '.$first['message'];
+            if ($preview['conflict'] > 1) {
+                $prompt .= ' '.$preview['conflict'].' conflicts. This is the first.';
+            }
+
+            return [
+                'prompt' => $prompt,
+                'blocks_write' => true,
+                'answers' => [
+                    ['id' => 'skip', 'label' => 'Skip this step'],
+                ],
+            ];
+        }
+
+        $streams = $this->ambiguousStreams($payload, $key);
+        if ($streams !== null) {
+            return $streams;
+        }
+
+        return $this->classWithoutTeacher($payload, $key);
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array{prompt: string, blocks_write: bool, answers: list<array{id: string, label: string}>}|null
+     */
+    private function ambiguousStreams(array $payload, string $key): ?array
+    {
+        if ($key !== 'standards') {
+            return null;
+        }
+
+        $byClass = [];
+        foreach ($payload['steps']['standards']['rows'] as $row) {
+            $stream = trim((string) ($row['stream'] ?? ''));
+            if ($stream !== '') {
+                $byClass[$row['name']][$stream] = $stream;
+            }
+        }
+
+        foreach ($byClass as $class => $streams) {
+            $names = array_values($streams);
+            foreach ($names as $short) {
+                foreach ($names as $long) {
+                    if ($short === $long || strlen($short) > 2) {
+                        continue;
+                    }
+                    if (str_starts_with(mb_strtolower($long), mb_strtolower($short))) {
+                        return [
+                            'prompt' => $class.' lists '.$short.' and '.$long.'. Both names are on the sheet.',
+                            'blocks_write' => false,
+                            'answers' => [
+                                ['id' => 'leave', 'label' => 'Keep both as written'],
+                            ],
+                        ];
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array{prompt: string, blocks_write: bool, answers: list<array{id: string, label: string}>}|null
+     */
+    private function classWithoutTeacher(array $payload, string $key): ?array
+    {
+        if ($key !== 'teachers') {
+            return null;
+        }
+
+        $covered = [];
+        foreach ($payload['steps']['teachers']['rows'] as $teacher) {
+            foreach ($teacher['links'] as $link) {
+                $covered[$this->key($link['class'].'|'.$link['stream'])] = true;
+            }
+        }
+
+        foreach ($payload['steps']['standards']['rows'] as $class) {
+            if (isset($covered[$this->key($class['name'].'|'.$class['stream'])])) {
+                continue;
+            }
+            $label = trim($class['name'].' '.$class['stream']);
+
+            return [
+                'prompt' => $label.' has no teacher on the teaching assignments. Leave it without one for now?',
+                'blocks_write' => false,
+                'answers' => [
+                    ['id' => 'leave', 'label' => 'Leave it without one for now'],
+                ],
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array{field?: string}  $flag
+     */
+    private function plainFix(array $flag): string
+    {
+        $field = strtolower((string) ($flag['field'] ?? ''));
+        if (str_contains($field, 'phone')) {
+            return 'Correct the phone on that row, or skip the row.';
+        }
+        if (str_contains($field, 'class')) {
+            return 'Use a class name KlassApp already knows, or skip the row.';
+        }
+
+        return 'Correct that cell, or skip the row.';
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return list<array{label: string, value: string, detail: string}>
+     */
+    private function statTiles(array $payload): array
+    {
+        $students = $payload['steps']['students']['rows'];
+        $classes = $payload['steps']['standards']['rows'];
+        $classNames = [];
+        $streams = 0;
+        foreach ($classes as $row) {
+            $classNames[$row['name']] = true;
+            if (trim((string) ($row['stream'] ?? '')) !== '') {
+                $streams++;
+            }
+        }
+        $parents = 0;
+        foreach ($students as $row) {
+            if (trim((string) ($row['parent_name'] ?? '')) !== '') {
+                $parents++;
+            }
+        }
+        $terms = $payload['steps']['terms']['rows'];
+        $termDetail = [];
+        foreach ($terms as $term) {
+            $termDetail[] = $term['name'].' '.$term['start'].' to '.$term['end'];
+        }
+
+        return [
+            ['label' => 'Learners', 'value' => (string) count($students), 'detail' => ''],
+            ['label' => 'Classes', 'value' => (string) count($classNames), 'detail' => ''],
+            ['label' => 'Streams', 'value' => (string) $streams, 'detail' => ''],
+            ['label' => 'Teachers', 'value' => (string) count($payload['steps']['teachers']['rows']), 'detail' => ''],
+            ['label' => 'Parents', 'value' => (string) $parents, 'detail' => ''],
+            ['label' => 'Subjects', 'value' => (string) count($payload['steps']['subjects']['rows']), 'detail' => ''],
+            ['label' => 'Terms', 'value' => (string) count($terms), 'detail' => implode(' · ', $termDetail)],
         ];
     }
 

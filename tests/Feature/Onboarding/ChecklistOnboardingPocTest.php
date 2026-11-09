@@ -311,19 +311,91 @@ class ChecklistOnboardingPocTest extends TestCase
         $upload = new UploadedFile($path, 'upload.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true);
 
         $this->actingAs($admin);
-        Livewire::test(ChecklistOnboarding::class)
+        $component = Livewire::test(ChecklistOnboarding::class)
             ->call('start')
+            ->assertSee('I agree, continue')
+            ->assertSee('Privacy')
+            ->assertSee('Terms')
+            ->set('workbook', $upload)
+            ->call('ingest')
+            ->assertDontSee('Northwind Harbour School');
+        $this->assertSame(0, OnboardingPlan::query()->where('school_id', $school->id)->count());
+        $component
+            ->call('confirmAgreement')
             ->set('workbook', $upload)
             ->call('ingest')
             ->assertSee('Northwind Harbour School')
+            ->assertSee('Learners')
             ->assertSee('Skip these rows')
             ->assertSee("Stop, I'll fix the workbook", false)
             ->assertSee('12345')
             ->assertSee('Primary Eight')
+            ->assertSee('Correct the phone on that row, or skip the row.')
             ->call('skipFlags')
-            ->assertSee('Confirm step')
+            ->assertSee('Create 1 term')
+            ->assertSee('Use the term names and dates as written')
+            ->assertSee('Change')
             ->assertSee('Skip step')
-            ->assertSee('Create 1');
+            ->assertDontSee('Confirm step');
+    }
+
+    public function test_a_google_sheet_link_asks_for_an_xlsx_download(): void
+    {
+        [, $admin] = $this->demoAdmin();
+        $this->actingAs($admin);
+
+        Livewire::test(ChecklistOnboarding::class)
+            ->call('confirmAgreement')
+            ->call('pasteSheetLink', 'https://docs.google.com/spreadsheets/d/abc/edit')
+            ->assertSee('download the sheet as .xlsx', false)
+            ->assertSee('File, then Download', false)
+            ->assertDontSee('anyone with the link');
+    }
+
+    public function test_a_class_without_a_teacher_asks_before_anything_is_written(): void
+    {
+        [$school, $admin] = $this->demoAdmin();
+        $path = (new DemoChecklistWorkbook)->write($this->dir.'/noteacher.xlsx', false, false, 'Yes');
+        $service = app(ChecklistOnboardingService::class);
+        $plan = OnboardingPlan::query()->findOrFail($service->ingest($school, $admin, $path, 'noteacher.xlsx')['plan_id']);
+        $payload = $plan->payload;
+        $payload['walk_index'] = 3;
+        $payload['steps']['teachers']['rows'][0]['links'] = [];
+        $plan->payload = $payload;
+        $plan->save();
+
+        $card = $service->previewCard($plan->fresh(), $admin);
+
+        $this->assertSame('teachers', $card['step_key']);
+        $this->assertFalse($card['question']['blocks_write']);
+        $this->assertSame('Leave it without one for now', $card['question']['answers'][0]['label']);
+        $this->assertStringContainsString('has no teacher', $card['question']['prompt']);
+    }
+
+    public function test_two_stream_names_are_one_question_and_stay_on_the_sheet(): void
+    {
+        [$school, $admin] = $this->demoAdmin();
+        $path = (new DemoChecklistWorkbook)->write($this->dir.'/streams.xlsx', false, false, 'Yes');
+        $service = app(ChecklistOnboardingService::class);
+        $plan = OnboardingPlan::query()->findOrFail($service->ingest($school, $admin, $path, 'streams.xlsx')['plan_id']);
+        $service->apply($plan, $admin);
+        $plan = $plan->fresh();
+        $payload = $plan->payload;
+        $payload['walk_index'] = 1;
+        $payload['steps']['standards']['rows'] = [
+            ['source' => ['tab' => 'Classes & Streams', 'row' => 3], 'name' => 'Baby Class', 'stream' => 'E'],
+            ['source' => ['tab' => 'Classes & Streams', 'row' => 4], 'name' => 'Baby Class', 'stream' => 'East'],
+        ];
+        $plan->payload = $payload;
+        $plan->save();
+
+        $card = $service->previewCard($plan->fresh(), $admin);
+
+        $this->assertSame('standards', $card['step_key']);
+        $this->assertFalse($card['question']['blocks_write']);
+        $this->assertSame('Keep both as written', $card['question']['answers'][0]['label']);
+        $this->assertStringContainsString('E', $card['question']['prompt']);
+        $this->assertStringContainsString('East', $card['question']['prompt']);
     }
 
     /**

@@ -4250,6 +4250,13 @@ class AgentToshi extends Component
     public function send()
     {
         $text = trim((string) $this->input);
+        if ($this->checklistOnboarding && $text !== '' && preg_match('#https?://docs\.google\.com/spreadsheets/#i', $text) === 1) {
+            $this->input = '';
+            $this->dispatch('checklist-sheet-link', url: $text);
+
+            return;
+        }
+
         if ($this->checklistOnboarding && $text !== '' && $this->messageRequestsChecklist($text)) {
             $this->input = '';
             $this->dispatch('checklist-onboarding-open');

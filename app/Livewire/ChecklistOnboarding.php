@@ -31,6 +31,24 @@ class ChecklistOnboarding extends Component
 
     public $workbook = null;
 
+    public bool $agreed = false;
+
+    public bool $showAll = false;
+
+    public bool $showChange = false;
+
+    public bool $showOther = false;
+
+    public bool $questionCleared = false;
+
+    public string $otherText = '';
+
+    public string $otherNote = '';
+
+    public string $sheetUrl = '';
+
+    public string $sheetNote = '';
+
     public function mount(ChecklistOnboardingGate $gate): void
     {
         $school = $this->school();
@@ -44,10 +62,44 @@ class ChecklistOnboarding extends Component
             return;
         }
 
-        $this->phase = 'upload';
+        $this->resetCardUi();
+        $this->agreed = false;
         $this->planId = null;
         $this->follow = null;
+        $this->sheetUrl = '';
+        $this->sheetNote = '';
+        $this->phase = 'agreement';
+        $this->card = ['kind' => 'agreement'];
+    }
+
+    public function confirmAgreement(): void
+    {
+        if (! $this->guard()) {
+            return;
+        }
+
+        $this->agreed = true;
+        $this->phase = 'upload';
         $this->card = ['kind' => 'upload'];
+    }
+
+    #[On('checklist-sheet-link')]
+    public function pasteSheetLink(string $url = ''): void
+    {
+        if (! $this->guard()) {
+            return;
+        }
+
+        if ($this->phase === 'idle') {
+            $this->start();
+        }
+
+        $this->sheetNote = $this->sheetFallback($url);
+    }
+
+    public function submitSheetLink(): void
+    {
+        $this->pasteSheetLink($this->sheetUrl);
     }
 
     #[On('checklist-onboarding-hint')]
@@ -66,6 +118,13 @@ class ChecklistOnboarding extends Component
     public function ingest(ChecklistOnboardingService $service): void
     {
         if (! $this->guard()) {
+            return;
+        }
+
+        if ($this->phase !== 'upload' || ! $this->agreed) {
+            $this->phase = 'agreement';
+            $this->card = ['kind' => 'agreement'];
+
             return;
         }
 
@@ -97,6 +156,61 @@ class ChecklistOnboarding extends Component
     public function skipStep(ChecklistOnboardingService $service): void
     {
         $this->withPlan($service, fn ($plan, $actor) => $service->skipStep($plan, $actor));
+    }
+
+    public function answerQuestion(string $choice, ChecklistOnboardingService $service): void
+    {
+        if (! $this->guard()) {
+            return;
+        }
+
+        if ($choice === 'skip') {
+            $this->skipStep($service);
+
+            return;
+        }
+
+        if ($choice === 'leave' || $choice === 'keep') {
+            $this->questionCleared = true;
+            $this->showChange = false;
+            $this->showOther = false;
+
+            return;
+        }
+
+        $this->showOther = true;
+    }
+
+    public function openChange(): void
+    {
+        if (! $this->guard()) {
+            return;
+        }
+
+        $this->showChange = true;
+    }
+
+    public function keepSheet(): void
+    {
+        $this->showChange = false;
+        $this->showOther = false;
+    }
+
+    public function saveNote(): void
+    {
+        if (! $this->guard()) {
+            return;
+        }
+
+        $this->validate(['otherText' => 'required|string|max:200']);
+        $this->otherNote = trim($this->otherText);
+        $this->showOther = false;
+        $this->otherText = '';
+    }
+
+    public function toggleShown(): void
+    {
+        $this->showAll = ! $this->showAll;
     }
 
     public function render()
@@ -175,6 +289,7 @@ class ChecklistOnboarding extends Component
             $this->planId = (int) $result['plan_id'];
         }
 
+        $this->resetCardUi();
         $this->card = $result['card'];
         $this->phase = (string) ($result['card']['kind'] ?? 'failed');
         $this->follow = null;
@@ -192,5 +307,26 @@ class ChecklistOnboarding extends Component
                 $this->follow = $service->previewCard($plan, auth()->user());
             }
         }
+    }
+
+    private function resetCardUi(): void
+    {
+        $this->showAll = false;
+        $this->showChange = false;
+        $this->showOther = false;
+        $this->questionCleared = false;
+        $this->otherText = '';
+        $this->otherNote = '';
+    }
+
+    private function sheetFallback(string $url): string
+    {
+        $url = trim($url);
+        $isSheet = preg_match('#^https://docs\.google\.com/spreadsheets/#i', $url) === 1;
+        if (! $isSheet) {
+            return 'That is not a Google Sheets link. Upload the checklist as an .xlsx file.';
+        }
+
+        return 'This demo cannot read a Google Sheet directly. In the sheet, choose File, then Download, then Microsoft Excel (.xlsx), and upload that file here. Share the sheet only with the people who should see the children\'s data.';
     }
 }

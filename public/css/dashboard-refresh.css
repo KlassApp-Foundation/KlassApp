@@ -1348,6 +1348,7 @@ body.sidebar-collapsed #admin-sidebar .account-card__menu.user-dtl {
     gap: 12px;
     min-height: 0;
     flex: 1;
+    overflow-x: hidden;
     overflow-y: auto;
 }
 
@@ -1802,7 +1803,7 @@ body.sidebar-collapsed #admin-sidebar .account-card__menu.user-dtl {
 
 [data-toshi-root] .toshi-composer {
     flex-shrink: 0;
-    padding: 0 16px 12px;
+    padding: 0 16px max(12px, env(safe-area-inset-bottom));
     background: var(--d-white);
 }
 
@@ -3806,6 +3807,9 @@ body.sidebar-collapsed #admin-sidebar .dashboard-sidebar-footer .dashboard-sideb
 
 /* TOSHI HANDLE — same collapsed tab as toshi-ui.css, so the dashboard sheet
    cannot put the orange clay tab back. Visible at every width. */
+    body.toshi-collapsed #toshi-toggle.toshi-toggle[data-checklist-on="1"] {
+        width: 44px !important;
+    }
     body.toshi-collapsed #toshi-toggle.toshi-toggle {
         width: 36px !important;
         height: 188px !important;

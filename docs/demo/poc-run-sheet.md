@@ -20,9 +20,9 @@ Sign in. You land on the school dashboard. If you land on "Setting up without To
 
 ## 0:00 — Open Toshi
 
-On a laptop-width window, click **Meet Toshi** at the bottom right.
+On a laptop-width window, click **Toshi** at the bottom right. For this demo school the pill says Toshi.
 
-On a phone-width window the Meet Toshi pill is not shown. Click the white **K** tab on the right edge.
+On a phone-width window the pill is not shown. Click the white **K** tab on the right edge. Its label is Toshi.
 
 Say: "The admin never leaves the chat. The checklist is the only file they bring."
 
@@ -36,13 +36,17 @@ Or type this and press Enter:
 
 Say: "Same request, either as a button or in a sentence."
 
-Toshi shows **Upload the checklist**. Choose `poc-checklist-workbook.xlsx`. Click **Read this checklist**.
+Toshi shows **Data agreement** first, with short summaries and links to the privacy and terms pages this app already serves. Click **I agree, continue**. Toshi does not read the file before that.
+
+Toshi then shows **Upload the checklist**. Choose `poc-checklist-workbook.xlsx`. Click **Read this checklist**.
+
+If you paste a Google Sheets link instead, Toshi says to download the sheet as .xlsx and upload that file. This demo has no Google account that can read a shared sheet. Do not make the sheet public.
 
 ## 0:50 — Summary card
 
-The card title is **Northwind Harbour School**. Say: "Every number on this card was counted from the file. The model does not invent them."
+The card title is **Northwind Harbour School**. The numbers sit in tiles: learners, classes, streams, teachers, parents, subjects, and terms with their dates. Say: "Every number on this card was counted from the file. The model does not invent them."
 
-Read the table:
+The same counts, as a short list:
 
 | Step | Read | Accepted | Flagged |
 | --- | --- | --- | --- |
@@ -52,12 +56,12 @@ Read the table:
 | Teachers and teaching assignments | 8 | 8 | 0 |
 | Learners and parents | 122 | 121 | 2 |
 
-Then the line under the table: class teachers listed 8, and this demo does not write class teachers.
+Then the line under the list: class teachers listed 8, and this demo does not write class teachers.
 
-Say: "Two rows are wrong, and Toshi names the tab and the row."
+Say: "Two rows are wrong. Toshi names the tab and the row, and says how to fix each one."
 
-- Learners, row 123: parent phone `12345`.
-- Learners, row 124: class name Primary Eight.
+- Learners, row 123: parent phone `12345`. Correct the phone, or skip the row.
+- Learners, row 124: class name Primary Eight. Use a class name KlassApp already knows, or skip the row.
 
 Say: "We can skip those two rows, or stop and fix the file. Nothing is saved until we confirm a step."
 
@@ -67,22 +71,22 @@ If instead you click **Stop, I'll fix the workbook**, the card says nothing was 
 
 ## 1:30 — Confirm each step
 
-Each preview has **Confirm step** and **Skip step**. Click **Confirm step** every time. After each one, a result card shows the counts and a link. The next preview is already underneath.
+Each preview is one line saying why the sheet's own values are enough, then a primary button that names the outcome. **Change** keeps the sheet as written, or lets you type a note. A note does not write anything. **Skip step** leaves that step unwritten. Click the primary button every time. After each one, one line says what was created and links to the page. The next preview follows.
 
-1. **Academic terms.** Create 3. Already exists 0. Conflict 0. Term 1, Term 2, Term 3. Confirm. Result: Created 3. Link: **Open academic terms**.
-2. **Classes and streams.** Create 8. Examples include Baby Class, Middle Class, Primary One East. Confirm. Result: Created 8. Link: **Open classes**.
-3. **Subjects.** Create 5. Examples include Mathematics, English, Science. Confirm. Result: Created 5. Link: **Open subjects**.
-4. **Teachers and teaching assignments.** Create 8. Examples include Amina Example, Ben Example, Chidi Example. Confirm. Result: Created 8. Link: **Open teachers**.
+1. **Academic terms.** "Use the term names and dates as written." Button: **Create 3 terms**. Result: Created 3 terms. Link: **Open academic terms**.
+2. **Classes and streams.** "Use the stream names as written, in the class order on the sheet." Button: **Create 8 classes and streams**. Result: Created 8 classes and streams. Link: **Open classes**.
+3. **Subjects.** Button: **Create 5 subjects**. Result: Created 5 subjects. Link: **Open subjects**.
+4. **Teachers and teaching assignments.** Button: **Create 8 teachers**. Result: Created 8 teachers. Link: **Open teachers**.
 
 Say, while those four confirm: "Each step is one transaction. If it fails, that step writes nothing. The steps already confirmed stay."
 
-5. **Learners and parents.** Create 120. Already exists 0. Conflict 0. Confirm.
+5. **Learners and parents.** Button: **Create 120 learners**.
 
 Say, while it saves: "One hundred and twenty learners and their parents, in one step. The two bad rows stayed out."
 
-This confirm takes about half a minute. Wait for the result card. Do not click again.
+This approval takes about half a minute. Wait for the result line. Do not click again.
 
-Result: Created 120. Link: **Open the students list**.
+Result: Created 120 learners. Link: **Open the students list**.
 
 ## 4:00 — Completion card
 
