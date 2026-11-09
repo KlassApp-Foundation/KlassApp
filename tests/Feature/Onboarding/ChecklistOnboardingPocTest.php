@@ -20,6 +20,8 @@ use App\Services\Onboarding\DemoChecklistWorkbook;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -352,6 +354,86 @@ class ChecklistOnboardingPocTest extends TestCase
             ->assertSee('download the sheet as .xlsx', false)
             ->assertSee('File, then Download', false)
             ->assertDontSee('anyone with the link');
+    }
+
+    public function test_a_picked_google_sheet_is_read_like_an_upload_and_the_token_is_not_logged(): void
+    {
+        [$school, $admin] = $this->demoAdmin();
+        $this->actingAs($admin);
+        config([
+            'services.google.client_id' => 'test-client.apps.googleusercontent.com',
+            'services.google.picker_key' => 'test-picker-key',
+            'services.google.project_number' => '123456',
+        ]);
+        $path = (new DemoChecklistWorkbook)->write($this->dir.'/picked.xlsx', true, false, 'Yes');
+        $token = 'ya29.test-token-not-real';
+        $loggedToken = false;
+        Log::listen(function ($event) use (&$loggedToken, $token): void {
+            $encoded = $event->message.json_encode($event->context);
+            if (is_string($encoded) && str_contains($encoded, $token)) {
+                $loggedToken = true;
+            }
+        });
+        Http::preventStrayRequests();
+        Http::fake([
+            'https://www.googleapis.com/drive/v3/files/*/export*' => Http::response(
+                file_get_contents($path),
+                200,
+                ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+            ),
+        ]);
+
+        $card = Livewire::test(ChecklistOnboarding::class)
+            ->call('confirmAgreement')
+            ->assertSee('Connect Google Sheet')
+            ->assertSee('https://www.googleapis.com/auth/drive.file')
+            ->assertDontSee('https://www.googleapis.com/auth/drive.readonly')
+            ->call('rememberSheetAccess', $token)
+            ->call('importPickedSheet', '1aBcDeFgHiJkLmNoPqRs');
+
+        $card->assertSee('Northwind Harbour School')
+            ->assertDontSee($token);
+        Http::assertSentCount(1);
+        Http::assertSent(function (\Illuminate\Http\Client\Request $request) use ($token): bool {
+            $this->assertStringNotContainsString($token, $request->url());
+            $this->assertSame('Bearer '.$token, $request->header('Authorization')[0] ?? null);
+            $this->assertStringContainsString('spreadsheetml.sheet', $request->url());
+
+            return true;
+        });
+        $this->assertFalse($loggedToken);
+        $this->assertNull(session('checklist_google_token'));
+        $this->assertSame(0, User::query()->where('school_id', $school->id)->where('usergroup_id', 6)->count());
+        $this->assertSame(0, AcademicTerm::query()->where('school_id', $school->id)->count());
+
+        Http::fake();
+        Livewire::test(ChecklistOnboarding::class)
+            ->call('confirmAgreement')
+            ->call('importPickedSheet', '1aBcDeFgHiJkLmNoPqRs')
+            ->assertSee('upload the .xlsx file');
+        Http::assertNothingSent();
+    }
+
+    public function test_a_refused_google_sheet_does_not_write_and_is_not_retried(): void
+    {
+        [$school, $admin] = $this->demoAdmin();
+        $this->actingAs($admin);
+        $token = 'ya29.test-token-not-real';
+        Http::preventStrayRequests();
+        Http::fake([
+            'https://www.googleapis.com/drive/v3/files/*/export*' => Http::response(['error' => 'no'], 403),
+        ]);
+
+        Livewire::test(ChecklistOnboarding::class)
+            ->call('confirmAgreement')
+            ->call('rememberSheetAccess', $token)
+            ->call('importPickedSheet', '1aBcDeFgHiJkLmNoPqRs')
+            ->assertSee('could not be read')
+            ->assertDontSee($token);
+
+        Http::assertSentCount(1);
+        $this->assertSame(0, OnboardingPlan::query()->where('school_id', $school->id)->count());
+        $this->assertSame(0, User::query()->where('school_id', $school->id)->where('usergroup_id', 6)->count());
     }
 
     public function test_a_class_without_a_teacher_asks_before_anything_is_written(): void

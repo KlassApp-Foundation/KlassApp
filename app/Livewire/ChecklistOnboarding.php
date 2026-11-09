@@ -6,11 +6,13 @@ use App\Models\OnboardingPlan;
 use App\Models\School;
 use App\Services\Onboarding\ChecklistOnboardingGate;
 use App\Services\Onboarding\ChecklistOnboardingService;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Throwable;
 
 class ChecklistOnboarding extends Component
 {
@@ -100,6 +102,81 @@ class ChecklistOnboarding extends Component
     public function submitSheetLink(): void
     {
         $this->pasteSheetLink($this->sheetUrl);
+    }
+
+    /**
+     * Keep the picker token in the session only. It is never a public property.
+     */
+    public function rememberSheetAccess(string $token): void
+    {
+        if (! $this->guard() || $this->phase !== 'upload' || ! $this->agreed) {
+            return;
+        }
+
+        $token = trim($token);
+        if ($token === '' || strlen($token) > 2048 || preg_match('/\s/', $token) === 1) {
+            return;
+        }
+
+        session()->put('checklist_google_token', $token);
+    }
+
+    public function noteSheet(string $code): void
+    {
+        if (! $this->guard()) {
+            return;
+        }
+
+        $this->sheetNote = match ($code) {
+            'picker-key' => 'The Google Picker key is not set on this demo. Upload the .xlsx file.',
+            'picker-failed' => 'Google did not open the file picker. Upload the .xlsx file.',
+            default => 'Upload the .xlsx file.',
+        };
+    }
+
+    public function importPickedSheet(string $fileId, ChecklistOnboardingService $service): void
+    {
+        if (! $this->guard()) {
+            return;
+        }
+
+        if ($this->phase !== 'upload' || ! $this->agreed) {
+            $this->phase = 'agreement';
+            $this->card = ['kind' => 'agreement'];
+
+            return;
+        }
+
+        $token = (string) session()->pull('checklist_google_token', '');
+        if ($token === '' || preg_match('/^[A-Za-z0-9_-]{10,128}$/', $fileId) !== 1) {
+            $this->sheetNote = 'Choose a Google Sheet from the picker, or upload the .xlsx file.';
+
+            return;
+        }
+
+        $path = $this->exportSheet($fileId, $token);
+        if ($path === null) {
+            $this->sheetNote = 'That sheet could not be read. Upload the .xlsx file.';
+
+            return;
+        }
+
+        try {
+            $result = $service->ingest($this->school(), auth()->user(), $path, 'google-sheet.xlsx');
+            $this->applyResult($result, $service, $this->school());
+        } catch (ValidationException $e) {
+            $this->phase = 'failed';
+            $this->card = [
+                'kind' => 'failed',
+                'message' => collect($e->errors())->flatten()->first() ?: 'That sheet was not read.',
+            ];
+        } catch (Throwable) {
+            $this->sheetNote = 'That sheet could not be read. Upload the .xlsx file.';
+        } finally {
+            if (is_file($path)) {
+                unlink($path);
+            }
+        }
     }
 
     #[On('checklist-onboarding-hint')]
@@ -317,6 +394,39 @@ class ChecklistOnboarding extends Component
         $this->questionCleared = false;
         $this->otherText = '';
         $this->otherNote = '';
+    }
+
+    /**
+     * Download the picked Google Sheet as xlsx. One attempt. The token is not logged.
+     */
+    private function exportSheet(string $fileId, string $token): ?string
+    {
+        try {
+            $response = Http::withToken($token)
+                ->withOptions(['allow_redirects' => false])
+                ->timeout(15)
+                ->get('https://www.googleapis.com/drive/v3/files/'.rawurlencode($fileId).'/export', [
+                    'mimeType' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                ]);
+        } catch (Throwable) {
+            return null;
+        }
+
+        $body = $response->body();
+        if (! $response->successful() || strlen($body) > 10 * 1024 * 1024 || ! str_starts_with($body, "PK\x03\x04")) {
+            return null;
+        }
+
+        $path = tempnam(sys_get_temp_dir(), 'sheet');
+        if ($path === false) {
+            return null;
+        }
+
+        $xlsx = $path.'.xlsx';
+        rename($path, $xlsx);
+        file_put_contents($xlsx, $body);
+
+        return $xlsx;
     }
 
     private function sheetFallback(string $url): string

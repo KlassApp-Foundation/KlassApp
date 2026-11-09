@@ -143,6 +143,8 @@ With no key, or if the call fails or takes longer than 5 seconds, Toshi answers 
 
 Buttons, a typed "yes", and "set up my school" do not call the model. A full click-through that only uses the buttons makes no model request. Each extra question makes one.
 
+On the upload card, Connect Google Sheet opens Google's file picker for one spreadsheet. The request is only the drive.file scope, so Google grants that one file. The sheet is exported as .xlsx and read on the same path as an upload. The access token stays in the session and is not logged. Upload stays available. Until the picker key, the JavaScript origin, and a test user are set on the existing Google client, the button says to upload the .xlsx file.
+
 ## If the free model limit appears
 
 The sentence is: "The free model limit was hit. Wait before trying again. Nothing was written, and this was not retried."

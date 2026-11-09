@@ -60,6 +60,18 @@
                 <h3>Upload the checklist</h3>
                 <p>Choose the school's checklist workbook (.xlsx). Nothing is saved until you approve each step.</p>
                 <input class="checklist-file" type="file" wire:model="workbook" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" data-testid="checklist-upload">
+                @if(filled(config('services.google.client_id')))
+                    <button
+                        type="button"
+                        class="checklist-btn secondary"
+                        data-testid="connect-google-sheet"
+                        data-client-id="{{ config('services.google.client_id') }}"
+                        data-app-id="{{ config('services.google.project_number') }}"
+                        data-picker-key="{{ config('services.google.picker_key') }}"
+                        data-scope="https://www.googleapis.com/auth/drive.file"
+                        onclick="window.klassConnectSheet(this)"
+                    >Connect Google Sheet</button>
+                @endif
                 <p class="checklist-note">Or paste a Google Sheets link. This demo has no Google account that can read a shared sheet, so download the sheet as .xlsx and upload that file. Keep the sheet shared only with people who should see it.</p>
                 <input class="checklist-text" type="url" wire:model="sheetUrl" placeholder="https://docs.google.com/spreadsheets/..." data-testid="checklist-sheet-url" autocomplete="off">
                 <div class="checklist-actions">
@@ -244,5 +256,74 @@
                 <button type="button" class="checklist-btn" wire:click="start" data-testid="onboard-from-checklist-again">Onboard from checklist</button>
             </div>
         @endif
+        <script>
+            if (!window.klassConnectSheet) {
+                window.klassConnectSheet = function (button) {
+                    var root = button.closest('[wire\\:id]');
+                    var component = root && window.Livewire ? window.Livewire.find(root.getAttribute('wire:id')) : null;
+                    if (!component) {
+                        return;
+                    }
+                    var clientId = button.getAttribute('data-client-id') || '';
+                    var appId = button.getAttribute('data-app-id') || '';
+                    var pickerKey = button.getAttribute('data-picker-key') || '';
+                    var scope = button.getAttribute('data-scope') || '';
+                    if (!clientId || !appId || !pickerKey || scope !== 'https://www.googleapis.com/auth/drive.file') {
+                        component.call('noteSheet', 'picker-key');
+                        return;
+                    }
+                    var start = function () {
+                        var tokenClient = google.accounts.oauth2.initTokenClient({
+                            client_id: clientId,
+                            scope: scope,
+                            include_granted_scopes: false,
+                            callback: function (response) {
+                                if (!response || response.error || !response.access_token) {
+                                    component.call('noteSheet', 'picker-failed');
+                                    return;
+                                }
+                                component.call('rememberSheetAccess', response.access_token);
+                                gapi.load('picker', { callback: function () {
+                                    var picker = new google.picker.PickerBuilder()
+                                        .addView(google.picker.ViewId.SPREADSHEETS)
+                                        .setOAuthToken(response.access_token)
+                                        .setDeveloperKey(pickerKey)
+                                        .setAppId(appId)
+                                        .setCallback(function (data) {
+                                            if (data.action === google.picker.Action.PICKED && data.docs && data.docs[0]) {
+                                                component.call('importPickedSheet', data.docs[0].id);
+                                            }
+                                        })
+                                        .build();
+                                    picker.setVisible(true);
+                                } });
+                            },
+                        });
+                        tokenClient.requestAccessToken({ prompt: 'consent' });
+                    };
+                    var pending = 0;
+                    var ready = function () {
+                        pending += 1;
+                        if (pending === 2) {
+                            start();
+                        }
+                    };
+                    var load = function (src) {
+                        var existing = document.querySelector('script[src="' + src + '"]');
+                        if (existing) {
+                            ready();
+                            return;
+                        }
+                        var script = document.createElement('script');
+                        script.src = src;
+                        script.onload = ready;
+                        script.onerror = function () { component.call('noteSheet', 'picker-failed'); };
+                        document.head.appendChild(script);
+                    };
+                    load('https://accounts.google.com/gsi/client');
+                    load('https://apis.google.com/js/api.js');
+                };
+            }
+        </script>
     @endif
 </div>
