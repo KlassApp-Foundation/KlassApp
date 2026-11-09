@@ -26,9 +26,9 @@
                 <a class="parent-family-menu__item"
                    href="{{ route('parent.dashboard', ['child' => $child['student_id']]) }}"
                    onclick="this.closest('details').removeAttribute('open')">
-                    <span class="parent-family-menu__name">{{ ucwords(strtolower($child['name'])) }}</span>
+                    <span class="parent-family-menu__name">{{ $child['school_name'] }}</span>
                     <span class="parent-family-menu__school">
-                        {{ $child['school_name'] }}@if(!empty($child['class']) && $child['class'] !== 'N/A') &middot; {{ $child['class'] }}@endif
+                        @if(!empty($child['class']) && $child['class'] !== 'N/A'){{ $child['class'] }}@else Class not set @endif
                     </span>
                 </a>
             @endforeach

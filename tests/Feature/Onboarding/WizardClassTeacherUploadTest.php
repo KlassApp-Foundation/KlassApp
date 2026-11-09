@@ -11,6 +11,7 @@ use App\Models\Plan;
 use App\Models\School;
 use App\Models\Section;
 use App\Models\StandardLink;
+use App\Mail\TeacherInviteLinkMail;
 use App\Models\TeacherInvite;
 use App\Models\Teacherlink;
 use App\Models\User;
@@ -209,9 +210,10 @@ class WizardClassTeacherUploadTest extends TestCase
         $this->assertSame((int) $john->id, (int) $baseLink->class_teacher_id);
         $this->assertSame(0, Teacherlink::where('school_id', $this->school->id)->whereIn('teacher_id', [$grace->id, $john->id])->count());
 
-        Mail::assertNothingSent();
-        Mail::assertNothingQueued();
-        $this->assertSame(0, TeacherInvite::count());
+        $this->assertNull($grace->password);
+        $this->assertNull($john->password);
+        Mail::assertQueued(TeacherInviteLinkMail::class, 2);
+        $this->assertSame(2, TeacherInvite::query()->whereNull('revoked_at')->whereNull('claimed_at')->count());
     }
 
     public function test_unknown_class_is_skipped_with_a_reason(): void
@@ -253,9 +255,9 @@ class WizardClassTeacherUploadTest extends TestCase
         $this->assertNull(User::where('email', 'missing-ct@upload.sch.ug')->first());
         $this->assertNull(User::where('email', 'not-an-email')->first());
 
-        Mail::assertNothingSent();
-        Mail::assertNothingQueued();
-        $this->assertSame(0, TeacherInvite::count());
+        $this->assertNull($kept->password);
+        Mail::assertQueued(TeacherInviteLinkMail::class, 1);
+        $this->assertSame(1, TeacherInvite::query()->whereNull('revoked_at')->whereNull('claimed_at')->count());
     }
 
     public function test_p1_and_primary_1_both_resolve(): void
@@ -352,8 +354,8 @@ class WizardClassTeacherUploadTest extends TestCase
             );
         }
 
-        Mail::assertNothingSent();
-        Mail::assertNothingQueued();
-        $this->assertSame(0, TeacherInvite::count());
+        $this->assertNull($teacher->password);
+        Mail::assertQueued(TeacherInviteLinkMail::class, 3);
+        $this->assertSame(1, TeacherInvite::query()->whereNull('revoked_at')->whereNull('claimed_at')->count());
     }
 }

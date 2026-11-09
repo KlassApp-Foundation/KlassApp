@@ -100,9 +100,9 @@ class SetupUiReviewSecondaryDemoSchoolTest extends TestCase
             ->where('school_id', $school->id)
             ->where('name', 'Tuition')
             ->get();
-        $this->assertCount(2, $tuition);
-        $labels = $tuition->map->labeledName()->sort()->values()->all();
-        $this->assertSame(["Tuition (A'Level)", "Tuition (O'Level)"], $labels);
+        $this->assertCount(1, $tuition);
+        $this->assertTrue($tuition->first()->applies_school_wide);
+        $this->assertSame('Tuition (All classes)', $tuition->first()->labeledName());
 
         $this->assertTrue(
             User::where('email', 'classteacher@uireview-secondary.klassapp.demo')->where('usergroup_id', 5)->exists()

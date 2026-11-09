@@ -276,14 +276,17 @@ class ParentController extends Controller
      */
     public function edit($name)
     {
-        //
-        $ref_name = Request('ref_name')?Request('ref_name'):'';
-        $schoolId = Auth::user()->school_id;
-        $user = User::where('name',$name)->where('school_id', $schoolId)->firstOrFail();
-        $userprofile = Userprofile::where('user_id',$user->id)->first();
-        $parentprofile = $user->getParentDetails();
-        
-        return view('/admin/parent/edit',[ 'ref_name' => $ref_name , 'user' => $user , 'userprofile' => $userprofile , 'parentprofile' => $parentprofile ]);
+        $form = app(\App\Services\People\SimpleRosterForm::class);
+        $schoolId = (int) Auth::user()->school_id;
+        $user = User::where('name', $name)->where('school_id', $schoolId)->where('usergroup_id', 7)->first();
+        if ($user === null) {
+            abort(404);
+        }
+
+        return view('/admin/parent/edit', [
+            'user' => $user,
+            'fields' => $form->parentForm($user),
+        ]);
     }
 
     public function editValidationUser(ParentUpdateRequest $request,$name)
@@ -298,34 +301,28 @@ class ParentController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(ParentUpdateRequest $request, $name)
+    public function update(Request $request, $name)
     {
-        //
-        $school_id = Auth::user()->school_id;
-        $user = User::where('name',$name)->where('school_id', $school_id)->firstOrFail();
-
-        try
-        { 
-            $userprofile = $this->UpdateParent($student_id = '' , $request , $school_id , $user->id);
-
-            $ip= $this->getRequestIP();
-            $this->doActivityLog(
-                $userprofile,
-                Auth::user(),
-                ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
-                LOGNAME_EDIT_PARENT,
-                trans('messages.update_success_msg',['module'=>'Parent'])
-            );
-
-            \Session::put('successmessage',trans('messages.update_success_msg',['module'=>'Parent']));
-            return redirect()->back(); 
+        $form = app(\App\Services\People\SimpleRosterForm::class);
+        $schoolId = (int) Auth::user()->school_id;
+        $user = User::where('name', $name)->where('school_id', $schoolId)->where('usergroup_id', 7)->first();
+        if ($user === null) {
+            abort(404);
         }
-        catch(Exception $e)
-        {
-            Log::error('ParentController@update failed: ' . $e->getMessage());
-            \Session::put('errormessage', trans('messages.update_error_msg',['module'=>'Parent']));
-            return redirect()->back();
-        }
+
+        $form->updateParent($user, $request->all());
+
+        $message = trans('messages.update_success_msg', ['module' => 'Parent']);
+        $this->doActivityLog(
+            $user->fresh(),
+            Auth::user(),
+            ['ip' => $this->getRequestIP(), 'details' => $_SERVER['HTTP_USER_AGENT'] ?? ''],
+            LOGNAME_EDIT_PARENT,
+            $message
+        );
+        \Session::put('successmessage', $message);
+
+        return redirect('/admin/parent/show/'.$user->fresh()->name);
     }
 
     public function destroy($name)

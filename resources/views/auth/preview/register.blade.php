@@ -56,7 +56,7 @@
 
             <div class="ap-field">
               <label class="ap-label" for="phone">Phone (WhatsApp)</label>
-              <input id="phone" type="tel" class="ap-input{{ $errors->has('phone') ? ' is-invalid' : '' }}" name="phone" value="{{ old('phone') }}" placeholder="0701234567 or +256701234567" required autocomplete="tel">
+              <input id="phone" type="tel" class="ap-input{{ $errors->has('phone') ? ' is-invalid' : '' }}" name="phone" value="{{ old('phone', '+256') }}" placeholder="+256 or another country code" required autocomplete="tel">
               @if ($errors->has('phone'))
                 <span class="ap-error" role="alert">{{ $errors->first('phone') }}</span>
               @endif
@@ -79,6 +79,29 @@
                 <input id="password-confirm" type="password" class="ap-input" name="password_confirmation" autocomplete="new-password">
                 @include('auth.preview._password-toggle', ['target' => 'password-confirm'])
               </div>
+            </div>
+
+            <div class="ap-field">
+              <label class="ap-label" for="country">Country</label>
+              @php
+                $signupCountries = \App\Models\Country::query()->orderBy('name')->pluck('name');
+                $signupDefault = \App\Services\OnboardingStepsService::DEFAULT_COUNTRY;
+                if ($signupCountries->isEmpty()) {
+                    $signupCountries = collect([$signupDefault]);
+                } elseif (! $signupCountries->contains(fn ($name) => strcasecmp((string) $name, $signupDefault) === 0)) {
+                    $signupCountries = collect([$signupDefault])->merge($signupCountries)->values();
+                }
+                $signupCountry = old('country', \App\Services\OnboardingStepsService::DEFAULT_COUNTRY);
+              @endphp
+              <select id="country" name="country" class="ap-input" data-testid="register-country" required>
+                @foreach($signupCountries as $signupCountryName)
+                  <option value="{{ $signupCountryName }}" @selected(strcasecmp((string) $signupCountry, (string) $signupCountryName) === 0)>{{ $signupCountryName }}</option>
+                @endforeach
+              </select>
+              <p class="ap-meta">Uganda is selected for now. Choose another country if the school is elsewhere.</p>
+              @if ($errors->has('country'))
+                <span class="ap-error" role="alert" data-testid="register-country-error">{{ $errors->first('country') }}</span>
+              @endif
             </div>
 
             <div class="ap-field ap-checkbox-row">

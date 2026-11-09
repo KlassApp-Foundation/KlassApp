@@ -4,7 +4,7 @@
             <div>
                 <a href="{{ auth()->user()->usergroup_id === 3 ? route('admin.classes.index') : route('teacher.classes.index') }}" class="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700 hover:text-emerald-900">← All classes</a>
                 <h1 class="mt-3 text-3xl font-bold tracking-tight text-slate-950">{{ $section->name }} roster</h1>
-                <p class="mt-2 text-sm text-slate-500">Streams, effective class teachers, and the current read-only student roster.</p>
+                <p class="mt-2 text-sm text-slate-500">Streams, class teachers, and the current student roster.</p>
             </div>
             <label class="block min-w-52">
                 <span class="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400">Academic year</span>
@@ -21,6 +21,11 @@
                 <div>
                     <p class="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700">Class-level assignment</p>
                 <p class="mt-1 text-sm text-slate-600">Fallback teacher: <span class="font-semibold text-slate-900">{{ $sectionTeacher?->name ?: 'Not assigned' }}</span></p>
+                @if(auth()->user()->can('full-school-admin'))
+                    <a href="{{ route('admin.class-teacher-invite.create', $section) }}" class="mt-3 inline-flex text-xs font-bold uppercase tracking-wider text-emerald-700 hover:text-emerald-900" data-testid="assign-class-teacher-{{ $section->id }}">
+                        {{ $sectionTeacher ? 'Replace class teacher' : 'Assign class teacher' }}
+                    </a>
+                @endif
                 </div>
                 @if($streams->isEmpty())
                     <span class="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700">No streams configured</span>
@@ -31,13 +36,18 @@
                 <div class="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                     @foreach($streams as $row)
                         @php($stream = $row['stream'])
-                        <button wire:click="selectStream({{ $stream->id }})" type="button" class="text-left rounded-2xl border p-4 transition {{ $selectedStream?->id === $stream->id ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'border-slate-200 bg-slate-50 hover:border-emerald-300' }}">
-                            <div class="flex items-center justify-between gap-3">
-                                <span class="text-lg font-bold text-slate-950">{{ $stream->stream ?: 'Main stream' }}</span>
-                                <span class="rounded-full bg-white px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">{{ $stream->standard?->name ?: 'Level pending' }}</span>
-                            </div>
-                            <p class="mt-3 text-xs font-bold uppercase tracking-wider text-slate-400">Effective teacher</p>
-                            <p class="mt-1 truncate text-sm font-semibold text-slate-800">{{ $row['effectiveTeacher']?->name ?: 'Not assigned' }}</p>
+                        <div class="rounded-2xl border p-4 transition {{ $selectedStream?->id === $stream->id ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'border-slate-200 bg-slate-50' }}">
+                            <button wire:click="selectStream({{ $stream->id }})" type="button" class="w-full text-left">
+                                <div class="flex items-center justify-between gap-3">
+                                    <span class="text-lg font-bold text-slate-950">{{ $row['label'] }}@if($row['count'] !== null) <span class="text-sm font-semibold text-slate-500" data-testid="stream-count-{{ $stream->id }}">({{ $row['count'] }})</span>@endif</span>
+                                    <span class="rounded-full bg-white px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">{{ $stream->standard?->name ?: 'Level pending' }}</span>
+                                </div>
+                                <p class="mt-3 text-xs font-bold uppercase tracking-wider text-slate-400">Effective teacher</p>
+                                <p class="mt-1 truncate text-sm font-semibold text-slate-800">{{ $row['effectiveTeacher']?->name ?: 'Not assigned' }}</p>
+                            </button>
+                            @if(auth()->user()->can('full-school-admin'))
+                                <a href="{{ route('admin.standardLink.edit', $stream->id) }}" class="mt-3 inline-flex text-[11px] font-bold uppercase tracking-wider text-emerald-700 hover:text-emerald-900" data-testid="edit-stream-{{ $stream->id }}">Edit stream</a>
+                            @endif
                             <div class="mt-3 flex flex-wrap gap-1.5">
                                 @forelse($row['teacherLinks'] as $teacherLink)
                                     <span class="rounded-full bg-white px-2 py-1 text-[10px] font-semibold text-slate-600">{{ $teacherLink->subject?->name ?: 'Subject pending' }}</span>
@@ -45,7 +55,7 @@
                                     <span class="text-xs text-slate-400">No subject assignments visible</span>
                                 @endforelse
                             </div>
-                        </button>
+                        </div>
                     @endforeach
                 </div>
             @endif
@@ -55,7 +65,7 @@
             <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                 <div class="flex flex-col justify-between gap-4 border-b border-slate-100 pb-5 md:flex-row md:items-end">
                     <div>
-                        <p class="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700">{{ $selectedStream->stream ?: 'Main stream' }} · student roster</p>
+                        <p class="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700">{{ $selectedLabel }} · student roster</p>
                         <h2 class="mt-1 text-xl font-bold text-slate-950">{{ $students->total() }} {{ \Illuminate\Support\Str::plural('student', $students->total()) }}</h2>
                         @if(!$fullStudentDetail)
                             <p class="mt-2 text-xs text-amber-700">Subject view: student details are limited to your assigned subject context.</p>
@@ -80,7 +90,13 @@
                             <tbody class="divide-y divide-slate-50">
                                 @foreach($students as $studentAcademic)
                                     <tr wire:key="student-{{ $studentAcademic->id }}" class="text-slate-700">
-                                        <td class="px-3 py-3 font-semibold text-slate-900">{{ $studentAcademic->user?->name ?: 'Unnamed student' }}</td>
+                                        <td class="px-3 py-3 font-semibold text-slate-900">
+                                            @if($studentAcademic->user && $studentAcademic->user->status === 'active')
+                                                <a href="{{ $this->isAdmin() ? url('/admin/students/'.$studentAcademic->user->id) : url('/teacher/student/show/'.rawurlencode((string) $studentAcademic->user->name)) }}" data-testid="roster-student-link">{{ $studentAcademic->user->name ?: 'Unnamed student' }}</a>
+                                            @else
+                                                {{ $studentAcademic->user?->name ?: 'Unnamed student' }}
+                                            @endif
+                                        </td>
                                         <td class="px-3 py-3 font-mono text-xs text-slate-600">{{ $studentAcademic->klassapp_student_id ?: '—' }}</td>
                                         <td class="px-3 py-3"><span class="rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">{{ ucfirst($studentAcademic->user?->status ?: 'unknown') }}</span></td>
                                         @if($fullStudentDetail)

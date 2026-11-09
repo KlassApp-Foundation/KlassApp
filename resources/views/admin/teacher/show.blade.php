@@ -25,6 +25,21 @@
         back-label="Teachers"
     >
         <x-slot:actions>
+            @if(!empty($page['can_resend']))
+                <button type="button" style="{{ $btn }}" data-testid="resend-setup-link" data-open-resend>Resend setup link</button>
+                <dialog id="resend-setup" data-testid="resend-setup-dialog" style="margin:auto;border:1px solid #E2E8F0;border-radius:12px;padding:16px;color:#0F172A;max-width:420px;" @if(request()->boolean('resend')) open @endif>
+                    <form method="POST" action="{{ url('/admin/teacher/show/'.$editKey.'/resend-setup') }}">
+                        @csrf
+                        <h2 style="margin:0 0 8px;font-size:16px;">Resend setup link</h2>
+                        <p style="margin:0 0 8px;color:#475569;font-size:14px;">Send a new setup link to <strong data-testid="resend-destination">{{ $teacher->email }}</strong>. The previous link stops working.</p>
+                        <p style="margin:0 0 16px;color:#475569;font-size:14px;">WhatsApp is not sent for staff setup links.</p>
+                        <div style="display:flex;gap:8px;justify-content:flex-end;">
+                            <button type="button" data-close-resend style="{{ $btn }}">Cancel</button>
+                            <button type="submit" style="{{ $btn }}border:0;background:#15803D;color:#fff;" data-testid="confirm-resend">Confirm resend</button>
+                        </div>
+                    </form>
+                </dialog>
+            @endif
             <a href="{{ $editUrl }}" style="{{ $btn }}">Edit</a>
             <div style="position:relative;">
                 <button type="button" id="teacher-more" aria-haspopup="menu" aria-expanded="false" aria-controls="teacher-more-menu" style="{{ $btn }}">More</button>
@@ -124,6 +139,10 @@
                     <dl style="margin:0;display:grid;grid-template-columns:140px 1fr;gap:8px 12px;font-size:14px;">
                         <dt style="color:#475569;">Phone</dt><dd style="margin:0;">{{ $page['phone'] }}</dd>
                         <dt style="color:#475569;">Email</dt><dd style="margin:0;">{{ $page['email'] }}</dd>
+                        @if(!empty($page['needs_email']))
+                            <dt style="color:#475569;">Setup</dt>
+                            <dd style="margin:0;" data-testid="teacher-needs-email">This teacher has no email yet. Add one before they can be invited.</dd>
+                        @endif
                         <dt style="color:#475569;">Last login</dt><dd style="margin:0;">{{ $page['last_login'] }}</dd>
                     </dl>
                 </section>
@@ -171,6 +190,15 @@
             dialog.close();
             button.focus();
         });
+        var resend = document.getElementById('resend-setup');
+        var openResend = document.querySelector('[data-open-resend]');
+        var closeResend = document.querySelector('[data-close-resend]');
+        if (resend && openResend) {
+            openResend.addEventListener('click', function () { resend.showModal(); });
+        }
+        if (resend && closeResend) {
+            closeResend.addEventListener('click', function () { resend.close(); });
+        }
     }
     if (document.readyState === 'complete') {
         bindTeacherMore();

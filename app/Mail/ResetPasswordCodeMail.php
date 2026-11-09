@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\User;
+use App\Support\MailSender;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
@@ -22,7 +23,9 @@ class ResetPasswordCodeMail extends Mailable
 
     public function build()
     {
-        return $this->from(config('mail.from.address'), config('mail.from.name'))
+        [$address, $name] = MailSender::resolve();
+
+        return $this->from($address, $name)
             ->subject('Your KlassApp reset code: '.$this->code)
             ->markdown('emails.reset_password_code')
             ->with([

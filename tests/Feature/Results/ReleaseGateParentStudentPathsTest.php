@@ -247,7 +247,11 @@ class ReleaseGateParentStudentPathsTest extends TestCase
         $page()->assertOk()->assertDontSee('GATEMARK');
 
         $this->release();
-        $page()->assertOk()->assertSee('GATEMARK')->assertSee('parent-grades-panel');
+        $page()->assertOk()->assertSee('91')->assertDontSee('GATEMARK');
+        $this->actingAs($this->parent)
+            ->get(route('parent.children.grades', $this->student))
+            ->assertOk()
+            ->assertSee('GATEMARK');
     }
 
     public function test_L3_whatsapp_parent_grades_and_marks_hide_unreleased_marks(): void

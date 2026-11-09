@@ -16,4 +16,5 @@
     'showToggle'       => true,
     'showAcademicYear' => false,
     'notifyMode'       => 'superadmin',
+    'chromeInSidebar'  => true,
 ])

@@ -43,7 +43,8 @@ class UserProfileAddRequest extends FormRequest
 
         Validator::extend('check_mobile_no',function($attribute,$value,$parameters,$validator)
         {
-             $user=User::where('mobile_no','=',request('mobile_no'))->exists();
+             $schoolId = Auth::user()?->school_id;
+             $user=User::matchingPhone((string) request('mobile_no'), \App\Support\PhoneCountry::countryFromAuth(), $schoolId ? (int) $schoolId : null)->exists();
              if($user)
              {
                 return false;
@@ -110,7 +111,8 @@ class UserProfileAddRequest extends FormRequest
 
         Validator::extend('check_unique_mobile',function($attribute,$value,$parameters,$validator)
         {
-            $user=User::where('mobile_no','=',request('driver_contact_number'))->exists();
+            $schoolId = Auth::user()?->school_id;
+            $user=User::matchingPhone((string) request('driver_contact_number'), \App\Support\PhoneCountry::countryFromAuth(), $schoolId ? (int) $schoolId : null)->exists();
             if($user)
             {
                 return false;
@@ -134,7 +136,7 @@ class UserProfileAddRequest extends FormRequest
             'firstname'                 => 'required|check_firstname|max:15',
             'lastname'                  => 'nullable|check_lastname|max:15',
             'email'                     => 'nullable|email|checkunique_email',
-            'mobile_no'                 => 'nullable|numeric|digits:10|check_mobile_no',
+            'mobile_no'                 => 'nullable|string|max:20|international_phone|check_mobile_no',
             'date_of_birth'             => 'nullable|date|check_date_of_birth',
             'gender'                    => 'required|in:male,female',
             'city_id'                   => 'required',
@@ -165,7 +167,7 @@ class UserProfileAddRequest extends FormRequest
         if( (request('mode_of_transport') == 'auto') || (request('mode_of_transport') == 'rickshaw') || (request('mode_of_transport') == 'taxi') )
         {
             $rules['driver_name']           = 'nullable|check_driver_name';
-            $rules['driver_contact_number'] = 'nullable|numeric|digits:10|check_unique_mobile';
+            $rules['driver_contact_number'] = 'nullable|string|max:20|international_phone|check_unique_mobile';
         }
 
         for($i=0 ; $i<Request('count') ; $i++)

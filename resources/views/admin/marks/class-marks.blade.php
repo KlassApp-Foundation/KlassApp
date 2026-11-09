@@ -42,7 +42,7 @@
     @endif
 
     @if($students->isEmpty())
-        <div class="cm-empty" data-testid="class-marks-empty">No marks entered for this class yet.</div>
+        <div class="cm-empty" data-testid="class-marks-empty">No marks yet</div>
     @else
         <ul class="cm-grid" data-testid="class-marks-grid">
             @foreach($students as $student)

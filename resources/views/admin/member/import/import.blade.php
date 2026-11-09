@@ -20,6 +20,13 @@
                 <form style="padding: 10px;margin-bottom: unset;" action="{{ url('admin/importUsers') }}" class="form-horizontal" method="post" enctype="multipart/form-data">
                     @csrf
                     @include('partials.message')
+                    @if(session('import_row_failures'))
+                        <ul data-testid="import-row-failures" class="text-red-700 text-sm" style="margin: 10px;">
+                            @foreach(session('import_row_failures') as $failure)
+                                <li>{{ $failure }}</li>
+                            @endforeach
+                        </ul>
+                    @endif
                     @if(session('overlimit'))
                         <div class="alert alert-warning" role="status" style="margin: 10px 0;">
                             {{ session('overlimit') }}

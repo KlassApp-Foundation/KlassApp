@@ -198,4 +198,28 @@
             }
         }
     });
+    // The class picker is a <details>: close it on a click outside it, and on Escape.
+    function closePickers(except) {
+        root.querySelectorAll('details.people-picker[open]').forEach(function (picker) {
+            if (picker !== except) {
+                picker.removeAttribute('open');
+            }
+        });
+    }
+    document.addEventListener('click', function (event) {
+        closePickers(event.target.closest ? event.target.closest('details.people-picker') : null);
+    });
+    document.addEventListener('keydown', function (event) {
+        if (event.key !== 'Escape') {
+            return;
+        }
+        var open = root.querySelector('details.people-picker[open]');
+        if (open) {
+            open.removeAttribute('open');
+            var summary = open.querySelector('summary');
+            if (summary) {
+                summary.focus();
+            }
+        }
+    });
 })();

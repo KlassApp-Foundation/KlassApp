@@ -20,8 +20,8 @@ composer run-script post-autoload-dump --no-interaction 2>/dev/null || true
 echo "Running migrations (safe)..."
 php artisan migrate --force --no-interaction || true
 
-echo "Running essential seeders (idempotent)..."
-php artisan db:seed --class=ProductionSeeder --force --no-interaction || true
+# Seeders are not part of container start. Deploys migrate only.
+# Reference and demo data are applied by an explicit db:seed.
 
 # clear caches on startup (helps after permission fixes)
 php artisan config:clear || true

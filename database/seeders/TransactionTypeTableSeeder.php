@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Database\ReferenceUpsert;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class TransactionTypeTableSeeder extends Seeder
 {
@@ -12,8 +12,6 @@ class TransactionTypeTableSeeder extends Seeder
      */
     public function run(): void
     {
-        $now = now();
-
         // Realistic transaction types for Ugandan school payroll / payments
         $transactionTypes = [
             'Salary Payment',
@@ -29,13 +27,7 @@ class TransactionTypeTableSeeder extends Seeder
         $count = 0;
 
         foreach ($transactionTypes as $name) {
-            DB::table('transaction_types')->updateOrInsert(
-                ['name' => $name],
-                [
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]
-            );
+            ReferenceUpsert::sync('transaction_types', ['name' => $name]);
 
             $count++;
         }

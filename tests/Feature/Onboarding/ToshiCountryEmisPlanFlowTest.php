@@ -193,9 +193,9 @@ class ToshiCountryEmisPlanFlowTest extends TestCase
     }
 
     #[Test]
-    public function create_mode_commit_does_not_truncate_students_below_plan_limit(): void
+    public function create_mode_commit_stops_at_the_plan_limit_and_reports_it(): void
     {
-        // A tiny plan that historically would have truncated the student list.
+        // A one-student, one-teacher plan: commit fills the limit, not beyond.
         $plan = Plan::create([
             'name' => 'freemium', 'display_name' => 'Freemium', 'amount' => 0,
             'no_of_students' => 1, 'no_of_users' => 1, 'cycle' => 365, 'is_active' => 1, 'order' => 1,
@@ -241,9 +241,8 @@ class ToshiCountryEmisPlanFlowTest extends TestCase
         $schoolId = $component->get('schoolId');
         $this->assertNotNull($schoolId, 'Create-mode commit must create a school');
 
-        // All 3 students created despite plan.no_of_students = 1 (no truncation).
-        $this->assertSame(3, User::where('school_id', $schoolId)->where('usergroup_id', 6)->count());
-        // All 3 teachers created despite plan.no_of_users = 1 (no truncation).
-        $this->assertSame(3, User::where('school_id', $schoolId)->where('usergroup_id', 5)->count());
+        // The plan allows one student and one teacher: the rest are not created.
+        $this->assertSame(1, User::where('school_id', $schoolId)->where('usergroup_id', 6)->count());
+        $this->assertSame(1, User::where('school_id', $schoolId)->where('usergroup_id', 5)->count());
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 use App\Helpers\SiteHelper;
+use App\Support\FailureLog;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\ToCollection;
@@ -19,6 +20,7 @@ use App\Models\Country;
 use App\Traits\Common;
 use App\Models\City;
 use App\Models\User;
+use App\Services\PlanLimitService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Session;
@@ -27,15 +29,26 @@ class UsersImport implements ToCollection, WithHeadingRow
 {
     use RegisterUser, Common;
 
+    public int $skippedByPlan = 0;
+
+    public ?string $planMessage = null;
+
+    public function __construct(private ?int $maxNewStudents = null) {}
+
     public function collection(Collection $rows)
     {
+        $insertedcount = 0;
+        $failures = [];
+        $rowNumber = 1;
+
         try {
             $school_id     = Auth::user()->school_id;
             $academic_year = SiteHelper::getAcademicYear($school_id);
-
-            $insertedcount = 0;
+            $country = \App\Models\School::query()->whereKey($school_id)->value('registration_country');
+            $country = is_string($country) ? $country : null;
 
             foreach ($rows as $row) {
+                $rowNumber++;
                 $row = collect($row)->filter(fn($value, $key) => is_string($key))->map(fn($v) => is_string($v) ? trim($v) : $v);
                 // $row = collect($row)->filter(function ($value, $key) {
                 //     return is_string($key); // removes numeric keys like 11 => 11
@@ -43,7 +56,11 @@ class UsersImport implements ToCollection, WithHeadingRow
             // dd(array_keys($row->toArray()));
                 // ✅ Minimal required fields
                 if (empty($row['firstname']) || empty($row['class'])) {
-                    Log::warning('Skipping invalid row', $row->toArray());
+                    Log::warning('Skipping invalid student import row', [
+                        'row' => $rowNumber,
+                        'school_id' => $school_id,
+                    ]);
+                    $failures[] = "Row {$rowNumber}: first name and class are required.";
                     continue;
                 }
 
@@ -58,8 +75,7 @@ class UsersImport implements ToCollection, WithHeadingRow
                 */
                 $student->firstname     = $row['firstname'] ?? null;
                 $student->lastname      = $row['lastname'] ?? null;
-                $student->mobile_no = !empty($row['mobile_no']) ? 
-                preg_replace('/[^0-9]/', '', $row['mobile_no']) : null;
+                $student->mobile_no = \App\Support\PhoneCountry::normalise((string) ($row['mobile_no'] ?? ''), $country);
                 $student->email        = !empty($row['email']) ? strtolower($row['email']) : null;
                 $student->gender       = !empty($row['gender']) ? strtolower($row['gender']) : null;
 
@@ -155,21 +171,18 @@ class UsersImport implements ToCollection, WithHeadingRow
                 | PARENT (SAFE + OPTIONAL)
                 |--------------------------------------------------------------------------
                 */
-                $parent_status = !empty($row['parent_mobile_no'])
-                    ? User::where([
-                        ['school_id', $school_id],
-                        ['mobile_no', $row['parent_mobile_no']],
-                        ['usergroup_id', 7]
-                    ])->first()
+                $parentPhone = \App\Support\PhoneCountry::normalise((string) ($row['parent_mobile_no'] ?? ''), $country);
+                $parent_status = $parentPhone !== null
+                    ? User::matchingPhone($parentPhone, $country, (int) $school_id)->where('usergroup_id', 7)->first()
                     : null;
 
-                if (!$parent_status && !empty($row['parent_mobile_no'])) {
+                if (!$parent_status && $parentPhone !== null) {
 
                     $parent->parent        = 'add';
                     $parent->firstname     = $row['parent_firstname'] ?? null;
                     $parent->lastname      = $row['parent_lastname'] ?? null;
-                    $parent->mobile_no     = $row['parent_mobile_no'];
-                    $parent->alternate_no  = $row['parent_alternate_no'] ?? null;
+                    $parent->mobile_no     = $parentPhone;
+                    $parent->alternate_no  = \App\Support\PhoneCountry::normalise((string) ($row['parent_alternate_no'] ?? ''), $country);
                     $parent->email         = $row['parent_email'] ?? null;
                     $parent->profession    = $row['parent_occupation'] ?? null;
                     $parent->designation   = $row['parent_designation'] ?? null;
@@ -188,7 +201,13 @@ class UsersImport implements ToCollection, WithHeadingRow
                 */
                 $avatar = '';
 
-                $student = $this->CreateUser(
+                if ($this->maxNewStudents !== null && $insertedcount >= $this->maxNewStudents) {
+                    $this->skippedByPlan++;
+                    $this->planMessage ??= app(PlanLimitService::class)->message((int) $school_id, 'students');
+                    continue;
+                }
+
+                $studentUser = $this->CreateUser(
                     $student,
                     $school_id,
                     $academic_year->id ?? null,
@@ -196,18 +215,58 @@ class UsersImport implements ToCollection, WithHeadingRow
                     6
                 );
 
+                if ($studentUser === null) {
+                    $this->recordRowFailure($failures, $rowNumber, (int) $school_id, $this->createUserException);
+                    $this->createUserException = null;
+                    $this->createUserFailure = null;
+                    continue;
+                }
+
                 if (!empty($row['parent_mobile_no'])) {
-                    $this->CreateParent($student->id, $parent, $school_id, 7);
+                    $parentPlain = "Row {$rowNumber} could not be imported. The student was saved. Check the parent's details and try again.";
+                    try {
+                        $parentUser = $this->CreateParent($studentUser->id, $parent, $school_id, 7);
+                        if ($parentUser === null) {
+                            $thrown = $this->createParentException;
+                            $this->createParentException = null;
+                            $this->recordRowFailure($failures, $rowNumber, (int) $school_id, $thrown, $parentPlain, 'Student import parent row failed');
+                        }
+                    } catch (\Throwable $e) {
+                        $this->recordRowFailure($failures, $rowNumber, (int) $school_id, $e, $parentPlain, 'Student import parent row failed');
+                    }
                 }
 
                 $insertedcount++;
             }
 
             Session::put('insertedcount', $insertedcount);
+            Session::put('import_row_failures', $failures);
+            Session::put('plan_skipped', $this->skippedByPlan);
+            Session::put('plan_message', $this->planMessage);
 
-        } catch (Exception $e) {
-            Log::error('Import Error: ' . $e->getMessage());
-            dd($e->getMessage());
+        } catch (\Throwable $e) {
+            $schoolId = (int) (Auth::user()->school_id ?? 0);
+            FailureLog::write('Student import stopped', $e, $schoolId, $rowNumber);
+            $failures[] = "Row {$rowNumber} could not be imported. Check the student's details and try again.";
+            Session::put('insertedcount', $insertedcount ?? 0);
+            Session::put('import_row_failures', $failures);
         }
+    }
+
+    /**
+     * @param  array<int, string>  $failures
+     */
+    private function recordRowFailure(array &$failures, int $rowNumber, int $schoolId, ?\Throwable $e, ?string $plain = null, string $logMessage = 'Student import row failed'): void
+    {
+        if ($e instanceof \Throwable) {
+            FailureLog::write($logMessage, $e, $schoolId, $rowNumber);
+        } else {
+            Log::warning('Student import row was not saved', [
+                'row' => $rowNumber,
+                'school_id' => $schoolId,
+            ]);
+        }
+
+        $failures[] = $plain ?? "Row {$rowNumber} could not be imported. Check the student's details and try again.";
     }
 }

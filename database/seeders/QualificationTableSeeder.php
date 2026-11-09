@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Database\ReferenceUpsert;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class QualificationTableSeeder extends Seeder
 {
@@ -12,8 +12,6 @@ class QualificationTableSeeder extends Seeder
      */
     public function run(): void
     {
-        $now = now();
-
         $qualifications = [
             // Others / Catch-all
             [
@@ -139,16 +137,9 @@ class QualificationTableSeeder extends Seeder
         ];
 
         foreach ($qualifications as $qual) {
-            DB::table('qualifications')->updateOrInsert(
-                ['id' => $qual['id']],
-                [
-                    'display_name' => $qual['display_name'],
-                    'type'         => $qual['type'],
-                    'status'       => $qual['status'],
-                    'created_at'   => $now,
-                    'updated_at'   => $now,
-                ]
-            );
+            $id = $qual['id'];
+            unset($qual['id']);
+            ReferenceUpsert::sync('qualifications', ['id' => $id], $qual);
         }
     }
 }

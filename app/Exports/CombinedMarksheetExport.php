@@ -113,6 +113,9 @@ class CombinedMarksheetExport implements WithMultipleSheets
 
     private function cellValue(?ResultCell $cell): float|string
     {
+        if ($cell !== null && $cell->status === ResultCell::ABSENT) {
+            return 'AB';
+        }
         if ($cell === null || $cell->status !== ResultCell::MARKED || $cell->mark === null) {
             return '';
         }

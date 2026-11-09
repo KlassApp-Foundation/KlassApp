@@ -108,7 +108,14 @@ class UserController extends Controller
     {
         try
         {
-    $user = User::where([['mobile_no',$request->mobile_no],['usergroup_id', $request->usergroup]])->first();
+            $user = User::findBySubmittedPhone((string) $request->mobile_no, 'Uganda', (int) $request->usergroup);
+
+            if ($user && \App\Support\PendingPassword::isUnset($user)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This account has not finished setup. Use the link in your email to set a password.',
+                ], 422);
+            }
 
             $user->tokens()->delete();
 
@@ -143,7 +150,7 @@ class UserController extends Controller
         try
         {
             //$user = User::where('mobile_no',request('mobile_no'))->first();
-$user = User::where([['mobile_no',$request->mobile_no],['usergroup_id', $request->usergroup]])->first();
+$user = User::findBySubmittedPhone((string) $request->mobile_no, 'Uganda', (int) $request->usergroup);
             $authentication = Authentication::where([
                 ['user_id',$user->id],
                 ['status',0],
@@ -158,7 +165,7 @@ $user = User::where([['mobile_no',$request->mobile_no],['usergroup_id', $request
 
                 $authentication_update->save();
 
-                $user_update = User::where('mobile_no',$request->mobile_no)->first();
+                $user_update = User::findBySubmittedPhone((string) $request->mobile_no, 'Uganda', (int) $request->usergroup);
 
                 $user_update->is_reset  = 1;
                 //$user_update->password  = bcrypt($request->password);
@@ -192,7 +199,7 @@ $user = User::where([['mobile_no',$request->mobile_no],['usergroup_id', $request
         try
         {
             //$user = User::where('mobile_no',$request->mobile_no)->first();
-      $user = User::where([['mobile_no',$request->mobile_no],['usergroup_id', $request->usergroup]])->first();  
+      $user = User::findBySubmittedPhone((string) $request->mobile_no, 'Uganda', (int) $request->usergroup);  
             return response()->json([
                 'success'   =>  true,
                 'is_reset'  =>  $user->is_reset
@@ -209,7 +216,7 @@ $user = User::where([['mobile_no',$request->mobile_no],['usergroup_id', $request
     {
         try
         {
-  $user = User::where([['mobile_no',$request->mobile_no],['usergroup_id', $request->usergroup]])->first();          
+  $user = User::findBySubmittedPhone((string) $request->mobile_no, 'Uganda', (int) $request->usergroup);
            // $user = User::where('mobile_no',$request->mobile_no)->first();
 
             $authentication = Authentication::where([
@@ -219,6 +226,13 @@ $user = User::where([['mobile_no',$request->mobile_no],['usergroup_id', $request
             ])->orderBy('id','DESC')->get();
 
             $admin = User::where([['school_id',$user->school_id],['usergroup_id',3]])->first();
+
+            if (\App\Support\PendingPassword::isUnset($user)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This account has not finished setup. Use the link in your email to set a password.',
+                ], 422);
+            }
 
             if($authentication[0]['token'] == $request->oldpassword)
             {

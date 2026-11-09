@@ -143,8 +143,8 @@ class MenuHiddenSettingsAuthorizationTest extends TestCase
 
     public function test_school_admin_and_site_admin_can_open_classes_and_streams(): void
     {
-        $this->actingAs($this->admin)->get('/admin/sections')->assertOk();
-        $this->actingAs($this->siteAdmin)->get('/admin/sections')->assertOk();
+        $this->actingAs($this->admin)->get('/admin/sections')->assertRedirect(route('admin.classes.index'));
+        $this->actingAs($this->siteAdmin)->get('/admin/sections')->assertRedirect(route('admin.classes.index'));
 
         $this->actingAs($this->admin)->get('/admin/classes/add')->assertOk();
         $this->actingAs($this->siteAdmin)->get('/admin/classes/add')->assertOk();
@@ -201,13 +201,13 @@ class MenuHiddenSettingsAuthorizationTest extends TestCase
     public function test_head_teacher_report_cards_do_not_link_to_school_details(): void
     {
         $this->actingAs($this->head)
-            ->get('/admin/reports/cards')
+            ->get('/admin/reports/cards/history')
             ->assertOk()
             ->assertDontSee('/admin/schooldetails', false)
             ->assertSee('A school admin manages the school logo', false);
 
         $this->actingAs($this->admin)
-            ->get('/admin/reports/cards')
+            ->get('/admin/reports/cards/history')
             ->assertOk()
             ->assertSee('/admin/schooldetails/editdetail/'.$this->school->id, false)
             ->assertDontSee('A school admin manages the school logo', false);

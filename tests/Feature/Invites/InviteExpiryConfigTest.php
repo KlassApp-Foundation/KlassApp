@@ -63,7 +63,7 @@ class InviteExpiryConfigTest extends TestCase
 
     public function test_teacher_whatsapp_text_states_configured_hours(): void
     {
-        config(['invites.expiry_hours' => 48]);
+        config(['invites.expiry_hours' => 48, 'invites.staff_whatsapp_enabled' => true]);
 
         ['invite' => $invite] = TeacherInviteLinkService::issue(
             $this->school,

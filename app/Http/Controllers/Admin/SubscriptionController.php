@@ -68,7 +68,11 @@ class SubscriptionController extends Controller
     public function create()
 {
     $user = Auth::user();
-    $plans = Plan::all();
+    $plans = Plan::query()
+        ->where('is_active', 1)
+        ->where('is_platform_only', 0)
+        ->orderBy('order')
+        ->get();
     $subscriptions = Subscription::with(['user', 'school', 'plan'])
                          ->where("school_id", $user->school_id)
                          ->latest()
@@ -92,7 +96,11 @@ public function edit(Subscription $subscription)
     }
     // $users = User::all();
     // $schools = School::all();
-    $plans = Plan::all();
+    $plans = Plan::query()
+        ->where('is_active', 1)
+        ->where('is_platform_only', 0)
+        ->orderBy('order')
+        ->get();
 
     return view("admin.subscription.create", compact('subscription', 'plans'));
 }

@@ -17,6 +17,7 @@ use App\Models\Teacherlink;
 use App\Models\NoticeBoard;
 use App\Models\Userprofile;
 use App\Models\ActivityLog;
+use App\Contracts\Results\ReleaseGate;
 use App\Helpers\SiteHelper;
 use App\Helpers\DashboardCache;
 use App\Services\DashboardV2DataService;
@@ -323,9 +324,18 @@ trait Dashboard
         $array = [];
 
         $academic_year      =   SiteHelper::getAcademicYear($school_id);
-        $total              =   Attendance::where('user_id',$user_id->id)->count();
-        $present            =   Attendance::where([['user_id',$user_id->id],['status',1]])->count();
-        $absent             =   Attendance::where([['user_id',$user_id->id],['status',0]])->count();
+        $attendanceRows     =   Attendance::query()
+            ->where('school_id', $school_id)
+            ->where('user_id', $user_id->id)
+            ->get(['date', 'status']);
+        $total              =   $attendanceRows->count();
+        $present            =   $attendanceRows->where('status', 1)->count();
+        $absent             =   $attendanceRows->where('status', 0)->count();
+        $presentDays        =   \App\Support\AttendanceDays::present($attendanceRows);
+        $absentDays         =   $attendanceRows->where('status', 0)
+            ->map(fn ($row) => Carbon::parse($row->date)->toDateString())
+            ->unique()
+            ->count();
 
         $date=date('Y-m-d H:i:s');
 
@@ -367,20 +377,55 @@ trait Dashboard
         {
             $array['absentPercentage']  = number_format((float)( $absent / $total )*100);
         }
-        // Attendance has AM+PM entries per day — divide by 2 for calendar day count
-        $array['presentDay']        = $present/2;
-        $array['absentDay']         = $absent/2;
+        // Morning and afternoon are separate rows. Both present is one day.
+        // One present session out of the two is a half day.
+        $array['presentDay']        = \App\Support\AttendanceDays::phrase($presentDays);
+        $array['absentDay']         = $absentDays;
         $array['noticeboard']       = NoticeBoard::where([['school_id',$school_id],['academic_year_id',$academic_year->id],['type','!=','teacher']])->orWhere('standardLink_id',$standardLink_id)->orderBy('created_at','DESC')->take(5)->get();
         $array['upcomingeventCount']  = Events::where([['school_id',$school_id],['standard_id',$standardLink_id],['end_date','>',$date],['category','!=','holidays']])->count();
         $array['upcomingholidayCount']  = Events::where([['school_id',$school_id],['end_date','>=',$date],['category','=','holidays']])->count();
 
-        if(class_exists('Gegok12\Exam\Models\Mark'))
-        {
-            $array['marks']             = $marks->take(5)->get();
-        }
-
+        // Same release gate as the parent portal: only sittings the school has
+        // released. Unreleased marks stay off this page.
+        $array['marks'] = $this->releasedMarksForStudent($school_id, $user_id, $academic_year);
 
         return $array;
+    }
+
+    /**
+     * Released subject marks for this student, the same source the parent
+     * portal counts. School-scoped. An unreleased sitting is excluded.
+     *
+     * @return \Illuminate\Support\Collection<int, \App\Models\Academics\Marks>
+     */
+    private function releasedMarksForStudent(int $schoolId, User $student, $academicYear)
+    {
+        $examQuery = \App\Models\Academics\Exam::query()
+            ->where('school_id', $schoolId)
+            ->whereHas('marks', fn ($q) => $q->where('school_id', $schoolId)->where('student_id', $student->id))
+            ->with([
+                'marks' => fn ($q) => $q->where('school_id', $schoolId)->where('student_id', $student->id)->with('subject'),
+                'examType',
+                'subject',
+            ])
+            ->latest('id');
+
+        if ($academicYear) {
+            $examQuery->where('academic_year_id', $academicYear->id);
+        }
+
+        app(ReleaseGate::class)->applyToExams($examQuery, $student);
+        $exams = $examQuery->take(15)->get();
+
+        $marks = collect();
+        foreach ($exams as $exam) {
+            foreach ($exam->marks as $mark) {
+                $mark->setRelation('exam', $exam);
+                $marks->push($mark);
+            }
+        }
+
+        return $marks;
     }
 
     public function teacherDashboard($school_id,$teacher_id)
@@ -395,10 +440,10 @@ trait Dashboard
         $teachersubjects = [];
         foreach ($teacherlinks as $teacherlink)
         {
-            $teachersubjects[$teacherlink->id]['subject']   = $teacherlink->subject->name;
+            $teachersubjects[$teacherlink->id]['subject']   = $teacherlink->subject->name ?? '';
             $teachersubjects[$teacherlink->id]['class']     = $teacherlink->standardLink->StandardSection;
         }
-        $standardLinks = $teacherlinks->pluck('standardLink_id')->toArray();
+        $standardLinks = $teacher->currentYearStandardLinkIds();
 
         $array['activitylog']   = $teacher->activitylog()->orderBy('id','DESC')->take(5)->get();
 
@@ -438,7 +483,24 @@ trait Dashboard
         {
             $query->where('academic_year_id',$academic_year->id);
         })->where('start_time','>=',date('Y-m-d H:i:s'))->orderBy('start_time','DESC')->take(10)->get()->groupBy('start_time');
-    }
+    } else {
+            $sectionIds = $standardLinks === []
+                ? []
+                : \App\Models\StandardLink::query()->whereIn('id', $standardLinks)->pluck('section_id')->map(fn ($id) => (int) $id)->unique()->values()->all();
+            $array['upcomingExam'] = \App\Models\Academics\Exam::query()
+                ->where('school_id', $school_id)
+                ->where('academic_year_id', $academic_year->id)
+                ->where(function ($examQuery) use ($teacher_id, $sectionIds) {
+                    $examQuery->where('teacher_id', $teacher_id);
+                    if ($sectionIds !== []) {
+                        $examQuery->orWhereIn('section_id', $sectionIds);
+                    }
+                })
+                ->where(function ($when) {
+                    $when->whereNull('scheduled_at')->orWhere('scheduled_at', '>=', now());
+                })
+                ->get();
+        }
 
         // WhatsApp stats for this school
         $array['whatsapp'] = [
@@ -451,10 +513,13 @@ trait Dashboard
         ];
 
         // Students under this teacher's classes
-        $array['myStudents'] = User::BySchool($school_id)->ByRole(6)
-            ->whereHas('studentAcademic', function ($q) use ($standardLinks) {
-                $q->whereIn('standardLink_id', $standardLinks);
-            })->count();
+        $array['myStudents'] = $standardLinks === []
+            ? 0
+            : User::BySchool($school_id)->ByRole(6)->where('status', 'active')
+                ->whereHas('studentAcademic', function ($q) use ($standardLinks, $academic_year) {
+                    $q->where('academic_year_id', $academic_year->id)
+                        ->whereIn('standardLink_id', $standardLinks);
+                })->count();
         $array['myClasses'] = count($standardLinks);
 
         // Marks this teacher still needs to act on:

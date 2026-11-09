@@ -94,7 +94,7 @@ class ToshiMarksUseSharedSaveTest extends TestCase
         $this->assertSame(85, (int) Marks::where('student_id', $ctx['student']->id)->value('marks'));
     }
 
-    public function test_a_submitted_exam_needs_a_correction_reason_and_does_not_notify_parents(): void
+    public function test_a_submitted_exam_stays_closed_until_it_is_returned_and_does_not_notify_parents(): void
     {
         $ctx = $this->school('Submitted Save');
         $ctx['exam']->update(['status' => 'submitted']);
@@ -107,21 +107,32 @@ class ToshiMarksUseSharedSaveTest extends TestCase
             'student_id' => $ctx['student']->id,
             'exam_id' => $ctx['exam']->id,
             'marks' => 90,
+            'correction_reason' => 'The script total was misread.',
         ]);
         $this->assertFalse($blocked['success']);
         $this->assertSame(0, Marks::count());
+
+        ExamMarksSubmission::create([
+            'school_id' => $ctx['school']->id,
+            'exam_id' => $ctx['exam']->id,
+            'class_id' => $ctx['section']->id,
+            'subject_id' => $ctx['subject']->id,
+            'teacher_id' => $ctx['teacher']->id,
+            'status' => 'reopened',
+            'approval_status' => 'rejected',
+            'rejection_reason' => 'Please recheck the arithmetic.',
+        ]);
 
         $saved = ToshiActionService::enterMark($ctx['admin'], [
             'student_id' => $ctx['student']->id,
             'exam_id' => $ctx['exam']->id,
             'marks' => 90,
-            'correction_reason' => 'The script total was misread.',
         ]);
         $this->assertTrue($saved['success']);
         $this->assertSame('A', Marks::where('student_id', $ctx['student']->id)->value('grade'));
     }
 
-    public function test_a_submitted_row_needs_a_correction_reason_when_the_exam_status_is_not_submitted(): void
+    public function test_a_submitted_row_stays_closed_until_a_school_admin_returns_it(): void
     {
         $ctx = $this->school('Row Submitted');
         $this->assertNotSame('submitted', $ctx['exam']->status);
@@ -132,12 +143,14 @@ class ToshiMarksUseSharedSaveTest extends TestCase
             'subject_id' => $ctx['subject']->id,
             'teacher_id' => $ctx['teacher']->id,
             'status' => 'submitted',
+            'approval_status' => 'pending',
         ]);
 
         $blocked = ToshiActionService::enterMark($ctx['admin'], [
             'student_id' => $ctx['student']->id,
             'exam_id' => $ctx['exam']->id,
             'marks' => 70,
+            'correction_reason' => 'The submitted total was copied from the wrong script.',
         ]);
         $this->assertFalse($blocked['success']);
         $this->assertSame(0, Marks::count());
@@ -147,15 +160,23 @@ class ToshiMarksUseSharedSaveTest extends TestCase
             ->from('/teacher/exam/marks')
             ->post(route('teacher.exam.marks.save', $ctx['exam']), [
                 'marks' => [$ctx['student']->id => 70],
+                'correction_reason' => 'The submitted total was copied from the wrong script.',
             ])
-            ->assertSessionHasErrors('correction_reason');
+            ->assertSessionHasErrors('marks_locked');
         $this->assertSame(0, Marks::count());
+
+        app(\App\Services\Marks\MarksSubmissionService::class)->returnToTeacher(
+            $ctx['admin'],
+            $ctx['exam'],
+            $ctx['section']->id,
+            $ctx['subject']->id,
+            'Please recheck the arithmetic.',
+        );
 
         $saved = ToshiActionService::enterMark($ctx['admin'], [
             'student_id' => $ctx['student']->id,
             'exam_id' => $ctx['exam']->id,
             'marks' => 70,
-            'correction_reason' => 'The submitted total was copied from the wrong script.',
         ]);
         $this->assertTrue($saved['success']);
         $this->assertSame(70, (int) Marks::where('student_id', $ctx['student']->id)->value('marks'));

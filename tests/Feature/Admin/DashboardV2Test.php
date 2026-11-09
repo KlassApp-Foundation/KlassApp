@@ -293,7 +293,9 @@ class DashboardV2Test extends TestCase
             ->assertSee('data-testid="dashboard-v2-empty-students"', false)
             ->assertSee('Add your students to get started', false)
             ->assertSee('/admin/student/add', false)
-            ->assertSee('/admin/student/import', false);
+            ->assertSee('data-testid="dashboard-v2-import-students"', false)
+            ->assertSee('/admin/students/import', false)
+            ->assertDontSee('/admin/student/import', false);
     }
 
     public function test_toshi_states_onboarding_preview_assistant(): void
@@ -353,26 +355,26 @@ class DashboardV2Test extends TestCase
             ->assertDontSee('UNEB centre number', false);
     }
 
-    public function test_currency_without_a_setting_shows_no_symbol_and_a_quiet_hint(): void
+    public function test_currency_defaults_to_the_school_country_and_can_switch_to_usd(): void
     {
         $school = $this->makeSchool(['name' => 'Currency School']);
         $admin = $this->makeAdmin($school);
         $this->completeAllSteps($school, $admin);
 
-        // No currency set: amounts carry no symbol and the hint appears.
+        // Uganda: UGX applies without anyone setting it, so there is no hint.
         $this->render(User::findOrFail($admin->id))->assertOk()
-            ->assertSee('data-testid="dashboard-v2-currency-hint"', false)
-            ->assertSee('Set your currency', false);
+            ->assertDontSee('Set your currency', false)
+            ->assertSee('UGX', false);
 
-        // Setting the school currency: symbols appear, the hint goes away.
+        // Switching to USD is an explicit setting and still silences the hint.
         \Illuminate\Support\Facades\DB::table('school_details')->insert([
-            'school_id' => $school->id, 'meta_key' => 'currency', 'meta_value' => 'UGX',
+            'school_id' => $school->id, 'meta_key' => 'currency', 'meta_value' => 'USD',
             'created_at' => now(), 'updated_at' => now(),
         ]);
 
-        $response = $this->render(User::findOrFail($admin->id))->assertOk();
-        $response->assertDontSee('data-testid="dashboard-v2-currency-hint"', false);
-        $this->assertMatchesRegularExpression('/UGX\s[0-9]/', $response->getContent());
+        $this->render(User::findOrFail($admin->id))->assertOk()
+            ->assertSee('USD', false)
+            ->assertDontSee('Set your currency', false);
     }
 
     public function test_first_screen_has_no_carousel_connected_tools_or_toshi_promo(): void
@@ -414,6 +416,39 @@ class DashboardV2Test extends TestCase
                 "KPI card {$i} must not nest another action link inside the whole-card link",
             );
         }
+    }
+
+    public function test_the_attendance_tile_opens_the_attendance_page_not_the_json_feed_for_an_empty_school(): void
+    {
+        $school = $this->makeSchool(['name' => 'Attendance Link Empty School']);
+        $admin = $this->makeAdmin($school);
+
+        $html = $this->render($admin)->assertOk()->getContent();
+        $this->assertAttendanceTileLinksToThePage($html);
+    }
+
+    public function test_the_attendance_tile_opens_the_attendance_page_not_the_json_feed_for_a_school_with_students(): void
+    {
+        $school = $this->makeSchool(['name' => 'Attendance Link Live School']);
+        $admin = $this->makeAdmin($school);
+        $student = User::factory()->create(['school_id' => $school->id, 'usergroup_id' => 6, 'status' => 'active']);
+        Userprofile::create([
+            'user_id' => $student->id, 'school_id' => $school->id, 'usergroup_id' => 6,
+            'firstname' => 'Amina', 'lastname' => 'Pupil', 'gender' => 'female',
+        ]);
+
+        $html = $this->render($admin)->assertOk()->getContent();
+        $this->assertStringContainsString('data-testid="dashboard-v2-kpi-attendance"', $html);
+        $this->assertAttendanceTileLinksToThePage($html);
+    }
+
+    private function assertAttendanceTileLinksToThePage(string $html): void
+    {
+        $page = route('admin.attendance.index');
+        $this->assertSame('/admin/attendance', parse_url($page, PHP_URL_PATH));
+        preg_match('/<a class="dv2-kpi-link" href="([^"]*)" aria-label="Attendance, open the registers"/', $html, $m);
+        $this->assertSame($page, $m[1] ?? null, 'The Attendance tile must link to the attendance page.');
+        $this->assertStringNotContainsString('/admin/attendance/list', $html, 'The dashboard must never link to the JSON data feed.');
     }
 
     public function test_kpis_match_the_database_for_a_school_with_data(): void

@@ -6,6 +6,7 @@ use App\Contracts\Results\ReleasedSitting;
 use App\Contracts\Results\ReleaseGate;
 use App\Models\Academics\Exam;
 use App\Models\MarksRelease;
+use App\Models\Section;
 use App\Models\StandardLink;
 use App\Models\StudentAcademic;
 use App\Models\User;
@@ -132,7 +133,7 @@ final class EloquentReleaseGate implements ReleaseGate
             return collect();
         }
 
-        $linkIds = $this->enrollmentLinkIds($person, $schoolId);
+        $linkIds = $this->coveringLinkIds($person, $schoolId);
 
         return MarksRelease::query()
             ->where('school_id', $schoolId)
@@ -159,6 +160,66 @@ final class EloquentReleaseGate implements ReleaseGate
      *
      * @return list<int>
      */
+    /**
+     * Every class this person has been enrolled in at this school, plus the
+     * links of those classes' base sections. An exam set creates one exam per
+     * class on the base section ("Primary Seven"), and the students sit in its
+     * streams ("Primary Seven E" / "W"), so a release on the class must reach
+     * them.
+     *
+     * @return list<int>
+     */
+    private function coveringLinkIds(User $person, int $schoolId): array
+    {
+        $linkIds = $this->enrollmentLinkIds($person, $schoolId);
+        if ($linkIds === []) {
+            return $linkIds;
+        }
+
+        $sectionIds = StandardLink::query()
+            ->where('school_id', $schoolId)
+            ->whereIn('id', $linkIds)
+            ->pluck('section_id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($sectionIds === []) {
+            return $linkIds;
+        }
+
+        $sections = Section::query()->where('school_id', $schoolId)->get(['id', 'name']);
+        $baseIds = [];
+
+        foreach ($sections->whereIn('id', $sectionIds) as $section) {
+            $name = trim((string) $section->name);
+            $base = $sections
+                ->filter(fn ($candidate) => $name !== ''
+                    && $candidate->name !== $name
+                    && str_starts_with($name, trim((string) $candidate->name).' '))
+                ->sortBy(fn ($candidate) => strlen((string) $candidate->name))
+                ->first();
+
+            if ($base !== null) {
+                $baseIds[] = (int) $base->id;
+            }
+        }
+
+        if ($baseIds === []) {
+            return $linkIds;
+        }
+
+        $baseLinks = StandardLink::query()
+            ->where('school_id', $schoolId)
+            ->whereIn('section_id', array_values(array_unique($baseIds)))
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        return array_values(array_unique(array_merge($linkIds, $baseLinks)));
+    }
+
     private function enrollmentLinkIds(User $person, int $schoolId): array
     {
         return StudentAcademic::query()

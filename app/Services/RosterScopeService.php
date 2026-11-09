@@ -8,6 +8,7 @@ use App\Models\Section;
 use App\Models\StandardLink;
 use App\Models\StudentAcademic;
 use App\Models\User;
+use App\Support\ClassListOrder;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -42,9 +43,19 @@ class RosterScopeService
                     if (! $this->isAdmin($actor)) {
                         $this->applyTeacherStreamVisibility($streamQuery->getQuery(), $actor, $schoolId, $academicYearId);
                     }
+
+                    $streamQuery
+                        ->orderBy(
+                            \App\Models\Standard::query()
+                                ->select('standards.order')
+                                ->whereColumn('standards.id', 'standards_link.standard_id')
+                                ->limit(1)
+                        )
+                        ->orderBy('standards_link.stream')
+                        ->orderBy('standards_link.id');
                 },
-            ])
-            ->orderBy('sections.name');
+            ]);
+        ClassListOrder::orderSections($query);
 
         if ($this->isAdmin($actor)) {
             return $query;
@@ -81,8 +92,8 @@ class RosterScopeService
             ->where('standards_link.school_id', $schoolId)
             ->where('standards_link.section_id', $section->id)
             ->where('standards_link.academic_year_id', $academicYearId)
-            ->where('standards_link.status', 1)
-            ->orderBy('standards_link.stream');
+            ->where('standards_link.status', 1);
+        ClassListOrder::orderLinks($query);
         $this->withScopedStreamRelations($query, $schoolId, $academicYearId);
 
         if (! $this->isAdmin($actor)) {
@@ -146,6 +157,85 @@ class RosterScopeService
             ->exists();
     }
 
+    /**
+     * The class page for a base class that has streams (name-encoded sections such as
+     * "Primary Four E" under "Primary Four", each with its own standards_link row).
+     * Returns null when the requested section has no streams, so the caller keeps the
+     * ordinary one-section behaviour.
+     *
+     * Admins see every stream. A class head (ClassStructureService::headedBaseIds) sees
+     * every stream of the class they head. Any other teacher sees only the streams they
+     * teach (applyTeacherStreamVisibility). Anyone with nothing visible gets a 404.
+     * Everything is scoped by school_id and the chosen academic year.
+     *
+     * @return array{section: Section, streams: Collection<int, StandardLink>, head: bool, labels: array<int, string>}|null
+     */
+    public function classPage(User $actor, int $sectionId, int $academicYearId): ?array
+    {
+        $schoolId = (int) $actor->school_id;
+        $this->assertActorCanAccessSchool($actor, $schoolId);
+        $this->assertAcademicYearBelongsToSchool($academicYearId, $schoolId);
+
+        $requested = Section::query()
+            ->where('school_id', $schoolId)
+            ->where('status', 1)
+            ->find($sectionId);
+        if ($requested === null) {
+            return null;
+        }
+
+        $structure = app(ClassStructureService::class);
+        $base = $structure->resolveBaseSection($requested);
+        $sectionIds = $structure->classSectionIds($base);
+        if (count($sectionIds) < 2) {
+            return null;
+        }
+
+        $head = $this->isAdmin($actor)
+            || in_array((int) $base->id, $structure->headedBaseIds($schoolId, (int) $actor->id), true);
+
+        $query = StandardLink::query()
+            ->where('standards_link.school_id', $schoolId)
+            ->whereIn('standards_link.section_id', $sectionIds)
+            ->where('standards_link.academic_year_id', $academicYearId)
+            ->where('standards_link.status', 1);
+        ClassListOrder::orderLinks($query);
+        $this->withScopedStreamRelations($query, $schoolId, $academicYearId);
+        $query->with('section');
+        if (! $head) {
+            $this->applyTeacherStreamVisibility($query, $actor, $schoolId, $academicYearId);
+        }
+        $links = $query->get();
+
+        // The undivided base link normally carries nobody on a streamed class; hide it then.
+        $baseLink = $links->first(fn (StandardLink $l) => (int) $l->section_id === (int) $base->id);
+        if ($baseLink !== null && $links->count() > 1) {
+            $enrolled = StudentAcademic::query()
+                ->where('school_id', $schoolId)
+                ->where('academic_year_id', $academicYearId)
+                ->where('standardLink_id', $baseLink->id)
+                ->exists();
+            if (! $enrolled) {
+                $links = $links->reject(fn (StandardLink $l) => (int) $l->id === (int) $baseLink->id)->values();
+            }
+        }
+
+        if ($links->isEmpty()) {
+            throw new NotFoundHttpException('Class not found.');
+        }
+
+        $labels = [];
+        $prefix = trim((string) $base->name).' ';
+        foreach ($links as $link) {
+            $name = trim((string) ($link->section?->name ?? ''));
+            $labels[(int) $link->id] = (int) $link->section_id !== (int) $base->id && str_starts_with($name, $prefix)
+                ? trim(substr($name, strlen($prefix)))
+                : ((string) ($link->stream ?: 'Main stream'));
+        }
+
+        return ['section' => $base, 'streams' => $links, 'head' => $head, 'labels' => $labels];
+    }
+
     public function effectiveClassTeacher(Section $section, ?StandardLink $stream): ?User
     {
         if ($stream !== null) {
@@ -179,7 +269,7 @@ class RosterScopeService
     /**
      * @return Builder<StudentAcademic>
      */
-    public function studentsForStream(StandardLink $stream, int $schoolId, ?User $actor = null): Builder
+    public function studentsForStream(StandardLink $stream, int $schoolId, ?User $actor = null, bool $classScoped = false): Builder
     {
         if ((int) $stream->school_id !== $schoolId || (int) $stream->status !== 1) {
             throw new NotFoundHttpException('Stream not found.');
@@ -192,7 +282,9 @@ class RosterScopeService
         if ($actor !== null) {
             $this->assertActorCanAccessSchool($actor, $schoolId);
 
-            if (! $this->isAdmin($actor) && ! $this->visibleStreams($actor, $section, (int) $stream->academic_year_id)->contains('id', $stream->id)) {
+            // $classScoped: the caller already limited the streams with classPage() (a class head
+            // opening a stream of their own class), so the per-stream teacher check does not apply.
+            if (! $classScoped && ! $this->isAdmin($actor) && ! $this->visibleStreams($actor, $section, (int) $stream->academic_year_id)->contains('id', $stream->id)) {
                 throw new HttpException(403, 'You are not authorized to view this stream.');
             }
         }
@@ -207,7 +299,7 @@ class RosterScopeService
                     ->where('users.usergroup_id', 6);
             });
 
-        if ($actor !== null && $this->isSubjectTeacherOnly($actor, $stream, $section)) {
+        if ($actor !== null && ! $classScoped && $this->isSubjectTeacherOnly($actor, $stream, $section)) {
             $query
                 ->select([
                     'student_academics.id',
@@ -236,6 +328,32 @@ class RosterScopeService
         }
 
         return $query->orderBy('student_academics.id');
+    }
+
+    /**
+     * Streams this teacher may treat as theirs this year: class-teacher
+     * assignment on the stream, a subject allocation, or the section's
+     * class teacher when the stream has none. Same rule as
+     * {@see applyTeacherStreamVisibility()}.
+     *
+     * @return list<int>
+     */
+    public function assignedStreamIds(User $actor, int $schoolId, int $academicYearId): array
+    {
+        $query = StandardLink::query()
+            ->where('standards_link.school_id', $schoolId)
+            ->where('standards_link.academic_year_id', $academicYearId)
+            ->where(function ($status): void {
+                $status->where('standards_link.status', 1)
+                    ->orWhere('standards_link.status', '1');
+            });
+        $this->applyTeacherStreamVisibility($query, $actor, $schoolId, $academicYearId);
+
+        return $query->pluck('standards_link.id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
     }
 
     private function applyTeacherStreamVisibility(

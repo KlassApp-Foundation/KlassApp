@@ -14,6 +14,8 @@ Route::put('/timetable/{slot}', [\App\Http\Controllers\Admin\TimetableSlotContro
 Route::delete('/timetable/{slot}', [\App\Http\Controllers\Admin\TimetableSlotController::class, 'teacherDestroy'])->name('teacher.timetable.destroy');
 Route::get( '/attendance', 'AttendanceController@index' )->name('teacher.attendance.index');
 Route::get( '/attendance/add', 'AttendanceController@create' )->name('teacher.attendance.create');
+Route::get( '/attendance/register', 'AttendanceController@register' )->name('teacher.attendance.register');
+Route::post( '/attendance/register', 'AttendanceController@saveRegister' )->name('teacher.attendance.register.save');
 
 Route::get('/classes', function () {
     return view('class-roster.index');
@@ -392,6 +394,14 @@ Route::get('report-cards/{stdLink}/student/{learner}/download', function (string
 Route::prefix('reports/cards')->name('teacher.reports.cards.')->group(function () {
     Route::get('/', 'ReportCardsController@index')->name('index');
     Route::get('/{stdLink}', 'ReportCardsController@show')->name('show');
+    // Whole-class PDF. Each page is the single-student card above.
+    // StudentReportCardService::CLASS_PDF_DIRECT_MAX (12) students download
+    // in this request. A larger class is queued; the class page shows status
+    // and the finished file.
+    Route::get('/{stdLink}/pdf', 'ReportCardsController@downloadClassPdf')->name('class.pdf');
+    Route::get('/generations/{generation}/download', 'ReportCardsController@downloadGeneration')
+        ->whereNumber('generation')
+        ->name('generation.download');
     Route::get('/{stdLink}/student/{learner}/preview', 'ReportCardsController@previewStudent')->name('student.preview');
     Route::get('/{stdLink}/student/{learner}/download', 'ReportCardsController@downloadStudent')->name('student.download');
 });
@@ -411,6 +421,8 @@ Route::get('/marks/releases/new', [\App\Http\Controllers\MarksReleaseController:
 Route::post('/marks/releases/preview', [\App\Http\Controllers\MarksReleaseController::class, 'preview'])->name('teacher.marks.releases.preview');
 Route::post('/marks/releases', [\App\Http\Controllers\MarksReleaseController::class, 'store'])->name('teacher.marks.releases.store');
 Route::get('/marks/releases/{release}', [\App\Http\Controllers\MarksReleaseController::class, 'show'])->whereNumber('release')->name('teacher.marks.releases.show');
+Route::get('/marks/sheet', 'MarksController@combinedSheet')->name('teacher.marks.sheet');
+Route::get('/marks/sheet/download', 'MarksController@downloadCombinedSheet')->name('teacher.marks.sheet.download');
 
 // ========== ADD MARKS FOR UGANDAN SCHOOLS =========
 
@@ -425,6 +437,12 @@ Route::prefix('exam')->group(function () {
     Route::get('/marks', 'MarksController@teacherExamMarksList')->name('teacher.exam.marks');
 
     // Class-teacher exam create/edit (PR-B) — register before /{exam}/... wildcards
+    // Exam set: a class teacher creates a whole term for the classes they head.
+    Route::get('/sets', [\App\Http\Controllers\Admin\ExamSetController::class, 'index'])->name('teacher.exam-sets.index');
+    Route::get('/sets/create', [\App\Http\Controllers\Admin\ExamSetController::class, 'create'])->name('teacher.exam-sets.create');
+    Route::post('/sets', [\App\Http\Controllers\Admin\ExamSetController::class, 'store'])->name('teacher.exam-sets.store');
+    Route::get('/sets/{batch}', [\App\Http\Controllers\Admin\ExamSetController::class, 'show'])->whereNumber('batch')->name('teacher.exam-sets.show');
+
     Route::get('/create', 'ExamController@create')->name('teacher.exams.create');
     Route::post('/', 'ExamController@store')->name('teacher.exams.store');
     Route::get('/{exam}/edit', 'ExamController@edit')->name('teacher.exams.edit');

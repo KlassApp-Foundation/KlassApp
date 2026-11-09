@@ -196,7 +196,7 @@ class DemoRichDataTest extends TestCase
         $this->assertNotContains('whatsapp_number', $parentCols);
         $parent = User::where('school_id', $school->id)->where('email', 'parent1@junior.demo.klassapp.test')->firstOrFail();
         $this->assertNotNull($parent->mobile_no, 'parent has a fictional mobile_no');
-        $this->assertStringStartsWith('070', (string) $parent->mobile_no);
+        $this->assertMatchesRegularExpression('/^\+25670\d{7}$/', (string) $parent->mobile_no);
 
         // Previous term fully locked and approved; current term includes an open exam.
         $this->assertGreaterThan(0, DB::table('exam_marks_submissions')->where('school_id', $school->id)->whereNotNull('locked_at')->count(), 'locked submissions');

@@ -2,29 +2,33 @@
 
 namespace Database\Seeders;
 
+use App\Database\ReferenceUpsert;
 use App\Models\School;
-use App\Models\Standard;
+use App\Reference\ClassCatalog;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
+/**
+ * Depends on schools. One standard (grading band) per school.
+ */
 class StandardsTableSeeder extends Seeder
 {
     public function run(): void
     {
-        $schools = School::where("status", 1)->get();
-        $standards = [
-            // Phases
-            ['name' => 'nursery',       'order' => 1,  'status' => '1'],
-            ['name' => 'primary',       'order' => 2,  'status' => '1'],
-            ['name' => 'o-level',     'order' => 3,  'status' => '1'],
-            ['name' => 'a-level',     'order' => 4,  'status' => '1'],
-        ];
+        $schools = School::where('status', 1)->get();
 
-     foreach ($schools as $school) {
-    foreach ($standards as $data) {
-        Standard::create( [...$data, "school_id" => $school->id] );
-    }
-}
-        $this->command->info('Seeded ' . count($standards) . ' national standards.');
+        foreach ($schools as $school) {
+            foreach (ClassCatalog::standards() as $standard) {
+                ReferenceUpsert::sync('standards', [
+                    'school_id' => $school->id,
+                    'name' => $standard['name'],
+                ], [
+                    'order' => $standard['order'],
+                    'status' => 1,
+                    'deleted_at' => null,
+                ]);
+            }
+        }
+
+        $this->command?->info('Seeded '.count(ClassCatalog::standards()).' standards per active school.');
     }
 }

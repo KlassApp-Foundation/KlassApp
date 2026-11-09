@@ -9,7 +9,7 @@
          </div>
          <div class="relative flex items-center w-1/4 lg:justify-end">
             <div class="flex items-center">
-               <a href="{{ route('admin.classes') }}" class="ds-btn ds-btn-ghost ds-btn-sm">
+               <a href="{{ route('admin.classes.index') }}" class="ds-btn ds-btn-ghost ds-btn-sm">
                   ← Back to Classes
                </a>
             </div>
@@ -67,11 +67,21 @@
                       placeholder="0777000000">
             </div>
 
+            <div class="mb-6">
+               <label class="flex items-start gap-2 text-sm">
+                  <input type="checkbox" name="confirmed" value="1" class="mt-1" required data-testid="confirm-class-teacher">
+                  <span>I confirm this class teacher for {{ $section->name }}. A mistake can be raised with the school admin who made the change.</span>
+               </label>
+               @error('confirmed')
+                  <p class="text-red-600 text-xs mt-1">{{ $message }}</p>
+               @enderror
+            </div>
+
             <div class="flex items-center gap-3">
                <button type="submit" class="ds-btn ds-btn-primary">
-                  Send Invite
+                  {{ $section->class_teacher_id ? 'Replace class teacher' : 'Send Invite' }}
                </button>
-               <a href="{{ route('admin.classes') }}" class="ds-btn ds-btn-ghost">
+               <a href="{{ route('admin.classes.index') }}" class="ds-btn ds-btn-ghost">
                   Cancel
                </a>
             </div>

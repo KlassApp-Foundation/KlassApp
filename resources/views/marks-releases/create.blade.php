@@ -13,52 +13,101 @@
     $selectedClass = (string) ($old['class'] ?? '');
     $selectedStream = (string) ($old['stream'] ?? '');
 @endphp
+@include('partials.ka-screen')
 <div class="mr" data-testid="marks-release-create">
-    <h1>Release marks</h1>
+    @if(($area ?? '') === 'admin')
+        <h1 class="ka-h1">Marks</h1>
+        @include('partials.ka-marks-nav', ['marksNav' => 'release'])
+        @include('partials.ka-lifecycle', ['current' => 'approved'])
+    @endif
+    <h1>Marks Release</h1>
     <p class="mr-sub">Choose the exam and who receives it. The sheet shows the marks that will be sent.</p>
+    @if(!empty($exams) && $exams->isNotEmpty())
+        <ol class="ka-life" data-testid="release-steps" aria-label="Release steps">
+            <li class="{{ ($subjectsApproved ?? false) ? 'is-done' : 'is-now' }}"><span>1</span><span><strong>All subjects approved</strong><br><span style="font-size:.75rem;color:#475569">{{ collect($approvals ?? [])->where('state', 'approved')->count() }} of {{ count($approvals ?? []) }} approved</span></span></li>
+            <li class="{{ ($confirming ?? false) ? 'is-now' : '' }}"><span>2</span><span><strong>Preview</strong><br><span style="font-size:.75rem;color:#475569">Check the sheet and the message</span></span></li>
+            <li><span>3</span><span><strong>Release</strong><br><span style="font-size:.75rem;color:#475569">Families are told only from this step</span></span></li>
+        </ol>
+    @endif
 
     @if($exams->isEmpty())
         <div class="mr-card"><p style="margin:0">No exam has marks in your classes yet.</p></div>
     @else
-    <div class="mr-head">
-        <div class="mr-bar" data-testid="marks-release-controls">
-            <form class="mr-scope" method="GET" action="{{ route($area.'.marks.releases.create') }}">
-                <label class="mr-control">
-                    <span>Exam</span>
-                    <select name="exam_id" onchange="this.form.submit()">
-                        @foreach($exams as $e)
-                            <option value="{{ $e['id'] }}" @selected($examId === $e['id'])>{{ $e['label'] }}</option>
-                        @endforeach
-                    </select>
-                </label>
-                <label class="mr-control">
-                    <span>Class</span>
-                    <select name="class" data-testid="release-class" onchange="this.form.submit()">
-                        @if($isAdmin)<option value="">All classes</option>@endif
-                        @foreach($classOptions as $className)
-                            <option value="{{ $className }}" @selected($selectedClass === $className)>{{ $className }}</option>
-                        @endforeach
-                    </select>
-                </label>
-                <label class="mr-control">
-                    <span>Stream</span>
-                    <select name="stream" data-testid="release-stream" onchange="this.form.submit()">
-                        <option value="">All streams</option>
-                        @foreach($streamOptions as $streamName)
-                            <option value="{{ $streamName }}" @selected($selectedStream === $streamName)>{{ $streamName }}</option>
-                        @endforeach
-                    </select>
-                </label>
-                <input type="hidden" name="when" id="mr-when-keep" value="{{ $when }}">
-                <input type="hidden" name="scheduled_for" id="mr-when-at" value="{{ $old['scheduled_for'] ?? '' }}">
-            </form>
+    <div class="mr-page">
+        <div class="mr-filters">
+            <div class="mr-bar" data-testid="marks-release-controls" id="release-filters" data-ka-filters>
+                <button type="button" class="ka-filter-launch ds-btn ds-btn-outline" data-ka-open-filters="release-filters" data-testid="marks-filters-open">Filters</button>
+                <div class="ka-filter-backdrop" data-ka-close-filters></div>
+                <form class="mr-scope ka-filter-panel" method="GET" action="{{ route($area.'.marks.releases.create') }}">
+                    <h2 class="ka-h2 ka-filter-launch">Filters</h2>
+                    <label class="mr-control">
+                        <span>Exam</span>
+                        <select name="exam_id" onchange="this.form.submit()">
+                            @foreach($exams as $e)
+                                <option value="{{ $e['id'] }}" @selected($examId === $e['id'])>{{ $e['label'] }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                    <label class="mr-control">
+                        <span>Class</span>
+                        <select name="class" data-testid="release-class" onchange="this.form.submit()">
+                            @if($isAdmin)<option value="">All classes</option>@endif
+                            @foreach($classOptions as $className)
+                                <option value="{{ $className }}" @selected($selectedClass === $className)>{{ $className }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                    <label class="mr-control">
+                        <span>Stream</span>
+                        <select name="stream" data-testid="release-stream" onchange="this.form.submit()">
+                            <option value="">All streams</option>
+                            @foreach($streamOptions as $streamName)
+                                <option value="{{ $streamName }}" @selected($selectedStream === $streamName)>{{ $streamName }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                    <input type="hidden" name="when" id="mr-when-keep" value="{{ $when }}">
+                    <input type="hidden" name="scheduled_for" id="mr-when-at" value="{{ $old['scheduled_for'] ?? '' }}">
+                </form>
+            </div>
+        </div>
 
-            <form class="mr-go" method="POST" action="{{ route($area.'.marks.releases.store') }}">
-                @csrf
+        <form class="mr-go" method="POST" action="{{ route($area.'.marks.releases.store') }}" style="display:contents">
+            @csrf
+            <div class="mr-reason">
                 <input type="hidden" name="exam_id" value="{{ $examId }}">
                 <input type="hidden" name="class" value="{{ $selectedClass }}">
                 <input type="hidden" name="stream" value="{{ $selectedStream }}">
+                @if(!empty($old['standard_link_id']))
+                    <input type="hidden" name="standard_link_id" value="{{ (int) $old['standard_link_id'] }}">
+                @endif
                 <input type="hidden" name="timezone" class="mr-timezone" value="{{ $old['timezone'] ?? 'Africa/Kampala' }}">
+                @if(($needsReason ?? false) || $errors->has('release_reason'))
+                    <label class="mr-reason-box" data-testid="release-reason">
+                        <span>{{ $releaseReasonPrompt ?? 'Why release this sitting again?' }}</span>
+                        <textarea name="release_reason" maxlength="500" required>{{ old('release_reason') }}</textarea>
+                    </label>
+                    <p class="mr-sub" style="margin:8px 0 0">Required. Families get a short note that results were updated. Your reason is kept in the release history, not sent to families.</p>
+                @endif
+                @error('release_reason')<p class="mr-error" data-testid="release-reason-error">{{ $message }}</p>@enderror
+            </div>
+
+            <aside class="mr-aside" data-testid="release-aside">
+                <h2 class="ka-h2">Who will be told</h2>
+                <p class="mr-sub" style="margin:0" data-testid="release-audience">Nothing is sent until you release, and KlassApp does not message a parent first.</p>
+                @forelse(($audience['classes'] ?? []) as $classRow)
+                    <div data-testid="release-audience-class">{{ $classRow['name'] }} · {{ $classRow['parents'] }} {{ \Illuminate\Support\Str::plural('parent', $classRow['parents']) }}</div>
+                @empty
+                    <div>No students in this selection yet.</div>
+                @endforelse
+                <div><strong>{{ $audience['parents'] ?? 0 }}</strong> parents · <strong>{{ $audience['whatsapp'] ?? 0 }}</strong> on WhatsApp</div>
+                <details class="mr-wa" data-testid="what-parents-receive">
+                    <summary>What parents receive</summary>
+                    @if($confirming)
+                        <p class="mr-when-label">Send these marks?</p>
+                    @endif
+                    <div class="mr-wa-body" data-testid="release-marks-message">{!! \App\Support\WhatsAppMessagePreview::html($previewMessage) !!}</div>
+                </details>
                 <div class="mr-seg" role="radiogroup" aria-label="When">
                     <label><input type="radio" name="when" value="now" @checked($when !== 'schedule')> Release now</label>
                     <label><input type="radio" name="when" value="schedule" @checked($when === 'schedule')> Schedule</label>
@@ -70,32 +119,26 @@
                 @if($confirming)
                     <p class="mr-when-label" data-testid="release-when">{{ $whenLabel }}</p>
                 @endif
-                <button type="submit" class="mr-btn" data-testid="release-marks-confirm" data-release-to="{{ $releaseTo }}">{{ $confirming ? ($when === 'schedule' ? 'Confirm schedule' : 'Confirm and release') : $buttonLabel }}</button>
-                @if($isAdmin && collect($approvals ?? [])->contains(fn ($row) => $row['state'] !== 'approved'))
-                    <label class="mr-control">
-                        <span>Reason to release before approval</span>
-                        <textarea name="override_reason" maxlength="500" data-testid="release-override-reason">{{ old('override_reason') }}</textarea>
+                @if($pastSitting ?? false)
+                    <label class="mr-confirm-past" data-testid="release-confirm-past">
+                        <span><input type="checkbox" name="confirm_past" value="1" @checked(old('confirm_past'))> This sitting is from an earlier term or year. Release it anyway.</span>
                     </label>
                 @endif
+                <label class="mr-wa-send" data-testid="release-whatsapp-send">
+                    <span><input type="checkbox" name="whatsapp_send" value="1" @checked(old('whatsapp_send', $old['whatsapp_send'] ?? false))> Send these results on WhatsApp</span>
+                </label>
+                <p class="mr-sub" style="margin:0">Off by default. With it off, the release still happens and opens the portal, Toshi and the report cards, and nothing is sent. A send also waits until <code>results_released</code> is approved by Meta.</p>
+                <button type="submit" class="mr-btn" data-testid="release-marks-confirm" data-release-to="{{ $releaseTo }}">{{ $confirming ? ($when === 'schedule' ? 'Confirm schedule' : 'Confirm and release') : $buttonLabel }}</button>
                 @error('scheduled_for')<p class="mr-error">{{ $message }}</p>@enderror
                 @error('exam_id')<p class="mr-error">{{ $message }}</p>@enderror
                 @error('standard_link_id')<p class="mr-error">{{ $message }}</p>@enderror
                 @error('approval')<p class="mr-error" data-testid="release-approval-error">{{ $message }}</p>@enderror
-                @error('override_reason')<p class="mr-error">{{ $message }}</p>@enderror
-            </form>
-        </div>
-
-        <details class="mr-wa" data-testid="what-parents-receive">
-            <summary>What parents receive</summary>
-            @if($confirming)
-                <p class="mr-when-label">Send these marks?</p>
-            @endif
-            <div class="mr-wa-body" data-testid="release-marks-message">{!! \App\Support\WhatsAppMessagePreview::html($previewMessage) !!}</div>
-        </details>
-    </div>
+                @error('confirm_past')<p class="mr-error" data-testid="release-confirm-past-error">{{ $message }}</p>@enderror
+            </aside>
+        </form>
 
     @if(!empty($approvals))
-        <x-fold-list tag="ul" class="mr-card" data-testid="release-subject-approvals">
+        <x-fold-list tag="ul" class="mr-card mr-approvals" data-testid="release-subject-approvals">
             @foreach($approvals as $row)
                 <li data-testid="release-subject-approval" data-state="{{ $row['state'] }}">{{ $row['name'] }}@if($row['class_name'] !== '') · {{ $row['class_name'] }}@endif — {{ $row['label'] }}</li>
             @endforeach
@@ -148,6 +191,7 @@
                 @endforelse
             </tbody>
         </table>
+    </div>
     </div>
     @endif
 </div>

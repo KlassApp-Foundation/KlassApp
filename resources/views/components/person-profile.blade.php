@@ -56,9 +56,15 @@
             </div>
         </div>
         @isset($actions)
-            <div style="display:flex;gap:8px;align-items:center;">{{ $actions }}</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">{{ $actions }}</div>
         @endisset
     </header>
+
+    @if(session('successmessage') || session('errormessage'))
+        <div role="status" data-testid="profile-flash" style="margin-top:12px;border:1px solid {{ session('errormessage') ? '#FECACA' : '#BBF7D0' }};background:{{ session('errormessage') ? '#FEF2F2' : '#F0FDF4' }};color:{{ session('errormessage') ? '#991B1B' : '#166534' }};border-radius:8px;padding:10px 12px;font-size:14px;">
+            {{ session('successmessage') ?: session('errormessage') }}
+        </div>
+    @endif
 
     @isset($tiles)
         <section aria-label="This term" data-testid="person-profile-tiles" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:16px;">

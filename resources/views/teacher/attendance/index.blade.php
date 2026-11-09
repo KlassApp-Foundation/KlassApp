@@ -10,10 +10,13 @@
 
     <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
         <p class="text-sm" style="color: var(--d-muted);">{{ $records->count() }} record(s) on {{ \Carbon\Carbon::parse($selectedDate)->format('d M Y') }}</p>
-        <a href="{{ url('/teacher/attendance/add') }}" class="ds-btn ds-btn-primary ds-btn-md inline-flex items-center gap-2">
-            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-            Record attendance
-        </a>
+        <div class="flex flex-wrap items-center gap-2">
+            <a href="{{ $registerUrl ?? route('teacher.attendance.register') }}" class="ds-btn ds-btn-primary ds-btn-md inline-flex items-center gap-2" data-testid="take-attendance">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                Take attendance
+            </a>
+            <a href="{{ url('/teacher/attendance/add') }}" class="ds-btn ds-btn-ghost ds-btn-md">Record with reasons</a>
+        </div>
     </div>
 
     <form method="GET" action="{{ route('teacher.attendance.index') }}" class="ds-card ds-card-padding-default mt-6 grid gap-4 md:grid-cols-4">

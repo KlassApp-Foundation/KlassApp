@@ -383,10 +383,10 @@ class ToshiOnboardingTest extends TestCase
                 "Term '{$term->name}' status '{$term->status}' must be valid");
         }
 
-        // 5. All 4 students kept — onboarding commits are not truncated by plan
-        //    limits since #177; the limit gates later adds instead.
+        // 5. Growth allows 2 students: the commit fills the limit and the rest
+        //    stay out, instead of silently creating all 4.
         $students = User::where('school_id', $schoolId)->where('usergroup_id', 6)->orderBy('id')->get();
-        $this->assertCount(4, $students);
+        $this->assertCount(2, $students);
 
         // 6. Admin user exists
         $adminUser = \App\Models\User::where('school_id', $schoolId)->where('usergroup_id', 3)->first();
@@ -400,8 +400,9 @@ class ToshiOnboardingTest extends TestCase
         $this->assertStringNotContainsString('<', $notice['message']);
 
         $added = \App\Services\ToshiActionService::addStudent($adminUser, ['name' => 'Fifth Over Limit']);
-        $this->assertTrue($added['success'], 'plan over-limit must never block Toshi student create');
-        $this->assertStringContainsString('upgrade', strtolower($added['message']));
+        $this->assertFalse($added['success'], 'Toshi student create must stop at the plan limit');
+        $this->assertStringContainsString('Talk to sales', $added['message']);
+        $this->assertSame(2, User::where('school_id', $schoolId)->where('usergroup_id', 6)->count());
     }
 
     #[Test]

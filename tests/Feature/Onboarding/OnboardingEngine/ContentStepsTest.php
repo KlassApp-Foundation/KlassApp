@@ -664,9 +664,11 @@ class ContentStepsTest extends TestCase
         $this->assertNotNull($fee);
         $this->assertEquals('Tuition', $fee->name);
         $this->assertEquals('0.00', number_format($fee->amount, 2, '.', ''));
-        $this->assertNotNull($fee->standard_id);
+        $this->assertTrue($fee->applies_school_wide);
+        $this->assertNull($fee->standard_id);
         $this->assertNull($fee->section_id);
         $this->assertNull($fee->academic_term_id);
+        $this->assertSame('termly', $fee->duration);
     }
 
     public function test_save_fees_persists_amount(): void
@@ -809,13 +811,13 @@ class ContentStepsTest extends TestCase
         ]);
 
         $fees = FeesCategories::with('standard')->where('school_id', $school->id)->get();
-        $this->assertNotEmpty($fees);
-        foreach ($fees as $fee) {
-            $this->assertNotNull($fee->standard_id);
-            $this->assertNull($fee->section_id);
-            $this->assertSame('Tuition (Primary)', $fee->labeledName());
-            $this->assertSame('primary', $fee->standard->name);
-        }
+        $this->assertCount(1, $fees);
+        $fee = $fees->first();
+        $this->assertTrue($fee->applies_school_wide);
+        $this->assertNull($fee->standard_id);
+        $this->assertNull($fee->section_id);
+        $this->assertSame('Tuition (All classes)', $fee->labeledName());
+        $this->assertSame('termly', $fee->duration);
     }
 
     public function test_save_fees_additive_adds_new_fee_to_existing(): void
@@ -954,9 +956,8 @@ class ContentStepsTest extends TestCase
         $standardCount = Standard::where('school_id', $school->id)->count();
         $this->assertEquals(2, $standardCount, 'Precondition: two Standards exist.');
 
-        // Without a class, the fee must be school-wide — one row per Standard,
-        // each with section_id = NULL (matches StudentReportHelperService::fees()
-        // which reads school-wide fees as whereNull("section_id")).
+        // Without a class, the fee is one row covering every class, not a copy
+        // on the first Standard and not one row per Standard.
         app(OnboardingEngine::class)->saveFees($school, [
             ['name' => 'General Fund', 'amount' => 200000],
         ]);
@@ -965,22 +966,12 @@ class ContentStepsTest extends TestCase
             ->where('name', 'General Fund')
             ->get();
 
-        $this->assertEquals($standardCount, $fees->count(), 'One row per Standard.');
-        $this->assertEquals(2, $fees->count());
-
-        foreach ($fees as $fee) {
-            $this->assertNull($fee->section_id, 'School-wide fee must have section_id NULL.');
-            $this->assertNotNull($fee->standard_id, 'standard_id is NOT NULL by schema.');
-            $this->assertEquals(200000, (float) $fee->amount);
-        }
-
-        $scopedStandardIds = $fees->pluck('standard_id')->unique()->values();
-        $allStandardIds = Standard::where('school_id', $school->id)->pluck('id')->sort()->values();
-        $this->assertEquals(
-            $allStandardIds->all(),
-            $scopedStandardIds->sort()->values()->all(),
-            'Fee covers every Standard, not just the first one.'
-        );
+        $this->assertCount(1, $fees);
+        $this->assertTrue($fees[0]->applies_school_wide);
+        $this->assertNull($fees[0]->section_id);
+        $this->assertNull($fees[0]->standard_id);
+        $this->assertEquals(200000, (float) $fees[0]->amount);
+        $this->assertSame('termly', $fees[0]->duration);
     }
 
     public function test_save_fees_same_name_different_class_creates_distinct_rows(): void

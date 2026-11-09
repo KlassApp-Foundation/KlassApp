@@ -154,9 +154,15 @@ class PeopleListTest extends TestCase
         $this->assertStringContainsString('Primary 5', $html);
         $this->assertStringContainsString('Grace Parent', $html);
         $this->assertStringContainsString('/admin/students/'.$student->id, $html);
-        $this->assertStringContainsString('View profile', $html);
-        $this->assertStringContainsString('Move to class', $html);
+        $this->assertStringContainsString('Open profile', $html);
+        $this->assertStringContainsString('/admin/students/'.$student->id.'?action=marks', $html);
+        $this->assertStringContainsString('Record marks', $html);
+        $this->assertStringContainsString('/admin/attendance/register?standardLink_id='.$stream->id, $html);
+        $this->assertStringContainsString('Record attendance', $html);
+        $this->assertStringContainsString('/admin/students/'.$student->id.'?action=pay', $html);
+        $this->assertStringContainsString('Record a payment', $html);
         $this->assertStringContainsString('Message parent', $html);
+        $this->assertStringNotContainsString('Move to class', $html);
         $this->assertStringNotContainsString('>Delete<', $html);
     }
 
@@ -197,7 +203,7 @@ class PeopleListTest extends TestCase
         $this->assertStringContainsString('Primary 5', $html);
         $this->assertStringContainsString('Invited', $html);
         $this->assertStringContainsString('/admin/teacher/show/'.$teacher->name, $html);
-        $this->assertStringContainsString('Send invite', $html);
+        $this->assertStringContainsString('Resend setup link', $html);
         $this->assertStringContainsString('Assign classes', $html);
     }
 

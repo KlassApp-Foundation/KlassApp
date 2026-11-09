@@ -85,21 +85,57 @@ class User extends Authenticatable implements HasMedia
 
     /**
      * Validate registration_number (dual store of KLS ID) format on save.
-     * Must match /^KLS\d{7}$/i or be null/empty. This mirrors the guard
-     * on StudentAcademic.klassapp_student_id since both fields hold the
-     * same value.
+     * Must match StudentIdGeneratorService::PATTERN or be null/empty. This
+     * mirrors the guard on StudentAcademic.klassapp_student_id since both
+     * fields hold the same value. IDs of 7 or 11 digits stay valid.
      */
     protected static function booted(): void
     {
         static::saving(function (self $model) {
             if ($model->registration_number !== null
                 && $model->registration_number !== ''
-                && !preg_match('/^KLS\d{7}$/i', $model->registration_number)) {
+                && ! \App\Services\StudentIdGeneratorService::isValid($model->registration_number)) {
                 throw new \InvalidArgumentException(
-                    "registration_number must match format KLS####### (e.g. KLS0010427), got: {$model->registration_number}"
+                    "registration_number must match format KLS plus 7 or 11 digits (e.g. KLS0010005 or KLS00100010001), got: {$model->registration_number}"
                 );
             }
+
+            if ($model->isDirty('mobile_no') && is_string($model->mobile_no) && trim($model->mobile_no) !== '') {
+                $country = 'Uganda';
+                if ($model->school_id) {
+                    $stored = \App\Models\School::query()->whereKey($model->school_id)->value('registration_country');
+                    if (is_string($stored) && trim($stored) !== '') {
+                        $country = trim($stored);
+                    }
+                }
+                $e164 = \App\Support\PhoneCountry::normalise($model->mobile_no, $country);
+                if ($e164 !== null) {
+                    $model->mobile_no = $e164;
+                }
+            }
         });
+    }
+
+    /**
+     * Match a phone against its full international number. Older local forms
+     * match only when the user's school is in that same country. $schoolId
+     * limits the lookup to one school when the caller already has one.
+     */
+    public function scopeMatchingPhone($query, ?string $raw, ?string $countryName = 'Uganda', ?int $schoolId = null)
+    {
+        \App\Support\PhoneCountry::applyLookup($query, 'mobile_no', $raw, $countryName, $schoolId);
+
+        return $query;
+    }
+
+    public static function findBySubmittedPhone(?string $raw, ?string $countryName = 'Uganda', ?int $usergroupId = null, ?int $schoolId = null): ?self
+    {
+        $query = static::query()->matchingPhone($raw, $countryName, $schoolId)->orderBy('id');
+        if ($usergroupId !== null) {
+            $query->where('usergroup_id', $usergroupId);
+        }
+
+        return $query->first();
     }
 
     public function school()
@@ -978,6 +1014,25 @@ public function scopeStudents($query)
     {
         $academic_year = SiteHelper::getAcademicYear($this->school_id);
         return $this->hasMany('\App\Models\Teacherlink','teacher_id','id')->where('academic_year_id',$academic_year->id);
+    }
+
+    /**
+     * Streams this teacher is responsible for this year. Subject allocations
+     * alone missed a class teacher who has no subject row. The ids follow
+     * RosterScopeService (stream class teacher, subject allocation, or the
+     * section's class teacher when the stream has none).
+     *
+     * @return list<int>
+     */
+    public function currentYearStandardLinkIds(): array
+    {
+        $year = SiteHelper::getAcademicYear($this->school_id);
+        if (! $year || ! $this->school_id) {
+            return [];
+        }
+
+        return app(\App\Services\RosterScopeService::class)
+            ->assignedStreamIds($this, (int) $this->school_id, (int) $year->id);
     }
 
     public function attendanceUser()

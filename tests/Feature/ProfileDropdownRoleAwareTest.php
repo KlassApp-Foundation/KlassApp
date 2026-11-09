@@ -23,13 +23,14 @@ class ProfileDropdownRoleAwareTest extends TestCase
     }
 
     #[Test]
-    public function student_dropdown_links_to_student_password_only(): void
+    public function student_dropdown_has_the_shared_profile_and_password_pages_and_no_admin_links(): void
     {
         $this->actingAsPortalUser(6, 6001, 'Student Nav', 'student-nav@example.test');
 
         $html = view('layouts.partials.profile-dropdown')->render();
 
-        $this->assertStringContainsString('/student/changepassword', $html);
+        $this->assertStringContainsString('/account/profile', $html);
+        $this->assertStringContainsString('/account/password', $html);
         $this->assertStringContainsString('dusk="password-link"', $html);
         $this->assertStringNotContainsString('/admin/changepassword', $html);
         $this->assertStringNotContainsString('/admin/editprofile', $html);
@@ -42,26 +43,28 @@ class ProfileDropdownRoleAwareTest extends TestCase
     }
 
     #[Test]
-    public function parent_dropdown_hides_account_mutator_links(): void
+    public function parent_dropdown_has_profile_and_password_and_no_admin_links(): void
     {
         $this->actingAsPortalUser(7, 7001, 'Parent Nav', 'parent-nav@example.test');
 
         $html = view('layouts.partials.profile-dropdown')->render();
 
-        $this->assertStringNotContainsString('Change password', $html);
+        $this->assertStringContainsString('/account/profile', $html);
+        $this->assertStringContainsString('Change password', $html);
         $this->assertStringNotContainsString('Edit profile', $html);
         $this->assertStringNotContainsString('/admin/', $html);
         $this->assertStringContainsString('Log out', $html);
     }
 
     #[Test]
-    public function teacher_dropdown_uses_teacher_password_and_avatar(): void
+    public function teacher_dropdown_uses_the_shared_pages_and_the_teacher_avatar(): void
     {
         $this->actingAsPortalUser(5, 5001, 'Teacher Nav', 'teacher-nav@example.test');
 
         $html = view('layouts.partials.profile-dropdown')->render();
 
-        $this->assertStringContainsString('/teacher/changepassword', $html);
+        $this->assertStringContainsString('/account/profile', $html);
+        $this->assertStringContainsString('/account/password', $html);
         $this->assertStringContainsString('/teacher/changeavatar', $html);
         $this->assertStringNotContainsString('/admin/changepassword', $html);
         $this->assertStringNotContainsString('Edit profile', $html);
@@ -69,28 +72,29 @@ class ProfileDropdownRoleAwareTest extends TestCase
     }
 
     #[Test]
-    public function school_admin_dropdown_keeps_admin_account_links(): void
+    public function school_admin_dropdown_keeps_the_admin_extras(): void
     {
         $this->actingAsPortalUser(3, 3001, 'Admin Nav', 'admin-nav@example.test');
 
         $html = view('layouts.partials.profile-dropdown')->render();
 
-        $this->assertStringContainsString('/admin/changepassword', $html);
-        $this->assertStringContainsString('/admin/editprofile', $html);
+        $this->assertStringContainsString('/account/profile', $html);
+        $this->assertStringContainsString('/account/password', $html);
         $this->assertStringContainsString('/admin/settings', $html);
         $this->assertStringContainsString('/admin/changeavatar', $html);
     }
 
     #[Test]
-    public function parent_layout_nav_has_logout_only_no_admin_account_links(): void
+    public function parent_layout_uses_the_shared_shell_with_chrome_in_the_sidebar(): void
     {
-        // The per-role nav partials were consolidated into the shared, parameterised
-        // header (cce2060e); the parent chrome is layouts/parent/layout.blade.php plus
-        // its role menu include. No admin account links anywhere in the parent chrome.
+        // Every role shell passes chromeInSidebar, so the bell and the account menu live in the
+        // sidebar footer (phones: the avatar in the top bar), exactly like the school admin's.
+        // The parent no longer has a separate Logout button: Log out is in the account menu.
         $layout = file_get_contents(resource_path('views/layouts/parent/layout.blade.php'));
         $this->assertNotFalse($layout);
         $this->assertStringContainsString('layouts.partials.navigation', $layout);
-        $this->assertStringContainsString("'showLogout' => true", $layout);
+        $this->assertStringContainsString("'chromeInSidebar' => true", $layout);
+        $this->assertStringNotContainsString("'showLogout' => true", $layout);
         $this->assertStringContainsString("'brandRoute' => 'parent.dashboard'", $layout);
         $this->assertStringNotContainsString('/admin/changepassword', $layout);
         $this->assertStringNotContainsString('/admin/editprofile', $layout);
@@ -98,6 +102,7 @@ class ProfileDropdownRoleAwareTest extends TestCase
         $sidebar = file_get_contents(resource_path('views/layouts/parent/sidebar.blade.php'));
         $this->assertNotFalse($sidebar);
         $this->assertStringContainsString("'role' => 'parent'", $sidebar);
+        $this->assertStringContainsString('layouts.partials.role-sidebar', $sidebar);
         $this->assertStringNotContainsString('/admin/changepassword', $sidebar);
         $this->assertStringNotContainsString('/admin/editprofile', $sidebar);
     }

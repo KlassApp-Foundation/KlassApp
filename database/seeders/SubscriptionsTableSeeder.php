@@ -22,7 +22,10 @@ class SubscriptionsTableSeeder extends Seeder
         foreach ($schools as $school) 
         {
             $admin = User::where([['school_id',$school->id],['usergroup_id',3]])->first();
-            //dd($admin);
+            if ($admin === null) {
+                $this->command?->warn("No school admin for school {$school->id}. Skipping subscription.");
+                continue;
+            }
             DB::table('subscriptions')->updateOrInsert(
                 ['school_id' =>  $school->id,'user_id' =>  $admin->id],
                 [

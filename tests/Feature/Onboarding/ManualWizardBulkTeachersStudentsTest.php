@@ -191,7 +191,7 @@ class ManualWizardBulkTeachersStudentsTest extends TestCase
         $this->assertCount(3, $students);
         foreach ($students as $student) {
             $this->assertNotNull($student->registration_number);
-            $this->assertMatchesRegularExpression('/^KLS\d{7}$/', $student->registration_number);
+            $this->assertTrue(\App\Services\StudentIdGeneratorService::isValid((string) $student->registration_number));
             $academic = StudentAcademic::where('user_id', $student->id)->first();
             $this->assertNotNull($academic);
             $this->assertSame($student->registration_number, $academic->klassapp_student_id);

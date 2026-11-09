@@ -159,7 +159,7 @@ class SidebarPolishCountsTest extends TestCase
         $html = view('layouts.partials.sidebar-menu', ['role' => 'admin'])->render();
         $this->assertSame(4, substr_count($html, 'sidebar-v3-count'));
         $this->assertMatchesRegularExpression('/data-sidebar-count="whatsapp"[^>]*>1</', $html);
-        $this->assertStringContainsString('>Release marks</span>', $html);
+        $this->assertStringContainsString('>Marks Release</span>', $html);
         $this->assertStringContainsString('>Admissions</span>', $html);
         $this->assertStringContainsString('>Unmatched payments</span>', $html);
         $this->assertStringContainsString('>Approvals</span>', $html);
@@ -228,8 +228,8 @@ class SidebarPolishCountsTest extends TestCase
             ->flatMap(fn (array $section) => $section['rows'] ?? [])
             ->firstWhere('label', 'Exams and reports');
 
-        $release = collect($exams['children'])->firstWhere('label', 'Release marks');
-        $this->assertNotNull($release, 'Exams and reports must offer Release marks');
+        $release = collect($exams['children'])->firstWhere('label', 'Marks Release');
+        $this->assertNotNull($release, 'Exams and reports must offer Marks Release');
         $this->assertSame('admin/marks/releases/new', $release['url']);
         $this->assertContains('admin/marks/releases*', $release['paths']);
     }

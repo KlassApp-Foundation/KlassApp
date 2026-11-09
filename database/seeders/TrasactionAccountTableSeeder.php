@@ -2,29 +2,44 @@
 
 namespace Database\Seeders;
 
-use DB;
+use App\Database\ReferenceUpsert;
+use App\Models\School;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 
+/**
+ * Depends on a school and that school's admin. Does not assume
+ * user id 1 or school id 1 exist.
+ */
 class TrasactionAccountTableSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
-    public function run()
+    public function run(): void
     {
-        //
-        DB::table('transaction_accounts')->updateOrInsert(
-            ['school_id' =>  '1', 'user_id' =>  '1'],
-            [
-            'account_number'=>'348738747833',
-            'ifsc_code'     =>'CASH123',
-            'name'          => 'Cash Account',
-            'key'           => 'CA',
-            'created_at'    => date("Y-m-d H:i:s"),
-            'updated_at'    => date("Y-m-d H:i:s"), 
-        ]);
+        $school = School::query()->where('status', 1)->orderBy('id')->first();
+        if ($school === null) {
+            $this->command?->warn('No school. Skipping the cash account.');
 
+            return;
+        }
+
+        $adminId = User::query()
+            ->where('school_id', $school->id)
+            ->where('usergroup_id', 3)
+            ->value('id');
+        if ($adminId === null) {
+            $this->command?->warn("No admin for school {$school->id}. Skipping the cash account.");
+
+            return;
+        }
+
+        ReferenceUpsert::sync('transaction_accounts', [
+            'school_id' => $school->id,
+            'key' => 'CA',
+        ], [
+            'user_id' => $adminId,
+            'account_number' => '348738747833',
+            'ifsc_code' => 'CASH123',
+            'name' => 'Cash Account',
+        ]);
     }
 }

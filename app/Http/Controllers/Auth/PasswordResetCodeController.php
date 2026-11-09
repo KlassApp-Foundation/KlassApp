@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Authentication;
 use App\Models\User;
+use App\Services\Auth\PasswordResetCodeIssuer;
+use App\Services\Auth\PasswordResetDeliveryException;
+use App\Services\TeacherAccountInviteService;
+use App\Support\PendingPassword;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 
 class PasswordResetCodeController extends Controller
@@ -43,6 +45,14 @@ class PasswordResetCodeController extends Controller
         ]);
 
         $user = User::where('email', $request->email)->first();
+
+        if ($user && PendingPassword::isUnset($user)) {
+            if ((int) $user->usergroup_id === 5) {
+                app(TeacherAccountInviteService::class)->inviteIfNeeded($user, null);
+            }
+
+            return back()->withErrors(['code' => 'Invalid or expired code. Please request a new one.']);
+        }
 
         $auth = $user
             ? Authentication::where('user_id', $user->id)
@@ -85,34 +95,19 @@ class PasswordResetCodeController extends Controller
         }
 
         $user = User::where('email', $email)->first();
+        if ($user && PendingPassword::isUnset($user)) {
+            if ((int) $user->usergroup_id === 5) {
+                app(TeacherAccountInviteService::class)->inviteIfNeeded($user, null);
+            }
+
+            return redirect()->route('password.reset.code', ['email' => $email])
+                ->with('status', 'A new code has been sent to your email.');
+        }
         if ($user) {
-            // Invalidate old codes
-            Authentication::where('user_id', $user->id)
-                ->where('type', 'password_reset')
-                ->where('status', 0)
-                ->update(['status' => 2]); // cancelled
-
-            // Generate new code
-            $code = random_int(100000, 999999);
-            $expiry = Carbon::now()->addMinutes(5);
-
-            Authentication::create([
-                'user_id'    => $user->id,
-                'type'       => 'password_reset',
-                'token'      => $code,
-                'ip_address' => $request->ip(),
-                'expires_on' => $expiry,
-                'status'     => 0,
-            ]);
-
             try {
-                \Mail::to($user->email)->send(new \App\Mail\ResetPasswordCodeMail($user, $code));
-            } catch (\Throwable $e) {
-                Log::warning('Password reset code email failed', [
-                    'email' => $user->email,
-                    'error' => $e->getMessage(),
-                ]);
-                return back()->withErrors(['email' => 'Could not send the code. Please try again.']);
+                app(PasswordResetCodeIssuer::class)->issue($user, $request->ip());
+            } catch (PasswordResetDeliveryException $e) {
+                return back()->withErrors(['email' => $e->userMessage()]);
             }
         }
 

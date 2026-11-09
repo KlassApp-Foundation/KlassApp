@@ -56,7 +56,7 @@ class Contact extends Resource
 
             Text::make('Email','email')->rules('required', 'email'),
 
-            Text::make('Contact_no','phone')->rules('required', 'numeric', 'digits:10'),
+            Text::make('Contact_no','phone')->rules('required', 'string', 'max:20'),
 
             Text::make('School / Organization Name','school_name')->sortable()->rules('required', 'max:30'),
 

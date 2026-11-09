@@ -2,19 +2,19 @@
 
 namespace Tests\Feature\Toshi;
 
-use App\Mail\TeacherInviteMail;
+use App\Mail\TeacherInviteLinkMail;
 use App\Models\AcademicYear;
 use App\Models\CurrentPlan;
 use App\Models\School;
 use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
+use App\Models\TeacherInvite;
 use App\Models\User;
 use App\Services\ToshiActionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Password;
 use Tests\TestCase;
 
 class AddTeacherInviteEmailTest extends TestCase
@@ -114,57 +114,59 @@ class AddTeacherInviteEmailTest extends TestCase
     {
         $result = ToshiActionService::addTeacher($this->admin, [
             'name' => 'Jane Teacher',
-            'email' => 'jane.teacher@test.sch.ug',
+            'email' => 'jane.teacher@example.test',
         ]);
 
         $this->assertTrue($result['success'], $result['message'] ?? '');
-        $this->assertStringContainsString('invite email', strtolower($result['message']));
-        $this->assertStringNotContainsString('password: `', $result['message']);
+        $this->assertArrayNotHasKey('password', $result);
+        $this->assertStringNotContainsString('password:', strtolower((string) json_encode($result)));
+        $this->assertDatabaseMissing('users', ['email' => 'jane.teacher@example.test']);
 
-        $teacher = User::where('email', 'jane.teacher@test.sch.ug')->first();
-        $this->assertNotNull($teacher);
-        $this->assertSame(5, (int) $teacher->usergroup_id);
-        $this->assertSame(1, (int) $teacher->is_reset);
+        $invite = TeacherInvite::query()
+            ->where('school_id', $this->schoolId)
+            ->where('email', 'jane.teacher@example.test')
+            ->first();
+        $this->assertNotNull($invite);
+        $this->assertNull($invite->user_id);
+        $this->assertSame(64, strlen((string) $invite->token_hash));
+        $this->assertStringNotContainsString($invite->token_hash, (string) json_encode($result));
 
-        Mail::assertQueued(TeacherInviteMail::class, function (TeacherInviteMail $mail) use ($teacher) {
-            return $mail->email === 'jane.teacher@test.sch.ug'
+        Mail::assertQueued(TeacherInviteLinkMail::class, function (TeacherInviteLinkMail $mail) {
+            return str_contains($mail->inviteUrl, '/invite/teacher/')
                 && $mail->className === null
-                && ! property_exists($mail, 'password')
-                && $mail->existingAccount === false
-                && str_contains($mail->inviteUrl, '/password/reset/');
+                && ! property_exists($mail, 'password');
         });
 
-        // Rendered email carries a signed set-password link, never a credential.
-        $mail = Mail::queued(TeacherInviteMail::class)->first();
+        $mail = Mail::queued(TeacherInviteLinkMail::class)->first();
         $html = $mail->render();
+        $token = basename((string) parse_url($mail->inviteUrl, PHP_URL_PATH));
         $this->assertStringContainsString('Set your password', $html);
         $this->assertStringContainsString($mail->inviteUrl, $html);
         $this->assertStringNotContainsString('Password:', $html);
-        $this->assertStringContainsString((string) $mail->expiresInMinutes, $html);
-
-        $token = basename((string) parse_url($mail->inviteUrl, PHP_URL_PATH));
-        $this->assertTrue(Password::broker()->tokenExists($teacher, $token));
+        $this->assertStringNotContainsString($token, (string) json_encode($result));
+        $this->assertSame(hash('sha256', $token), $invite->token_hash);
     }
 
-    public function test_add_teacher_with_class_assigns_class_teacher_and_names_class_in_mail(): void
+    public function test_add_teacher_with_class_invites_for_that_class_without_storing_a_password(): void
     {
         $result = ToshiActionService::addTeacher($this->admin, [
             'name' => 'CT Teacher',
-            'email' => 'ct.teacher@test.sch.ug',
+            'email' => 'ct.teacher@example.test',
             'class' => 'P.3',
         ]);
 
         $this->assertTrue($result['success'], $result['message'] ?? '');
-        $this->assertStringContainsString('class teacher', strtolower($result['message']));
+        $this->assertArrayNotHasKey('password', $result);
+        $this->assertStringContainsString('invite', strtolower($result['message']));
+        $this->assertDatabaseMissing('users', ['email' => 'ct.teacher@example.test']);
+        $this->assertNull($this->link->fresh()->class_teacher_id);
 
-        $teacher = User::where('email', 'ct.teacher@test.sch.ug')->firstOrFail();
-        $this->link->refresh();
-        $this->assertSame($teacher->id, (int) $this->link->class_teacher_id);
-        $this->assertSame($teacher->id, (int) $this->link->section->fresh()->class_teacher_id);
+        $invite = TeacherInvite::query()->where('email', 'ct.teacher@example.test')->firstOrFail();
+        $this->assertSame($this->schoolId, (int) $invite->school_id);
+        $this->assertSame($this->link->id, (int) $invite->standard_link_id);
 
-        Mail::assertQueued(TeacherInviteMail::class, function (TeacherInviteMail $mail) {
-            return $mail->email === 'ct.teacher@test.sch.ug'
-                && $mail->className === 'P.3'
+        Mail::assertQueued(TeacherInviteLinkMail::class, function (TeacherInviteLinkMail $mail) {
+            return $mail->className === 'P.3'
                 && $mail->schoolName === 'Teacher Invite School';
         });
     }
@@ -174,17 +176,119 @@ class AddTeacherInviteEmailTest extends TestCase
         User::factory()->create([
             'school_id' => $this->schoolId,
             'usergroup_id' => 5,
-            'email' => 'dup@test.sch.ug',
+            'email' => 'dup@example.test',
             'status' => 'active',
         ]);
 
         $result = ToshiActionService::addTeacher($this->admin, [
             'name' => 'Dup Teacher',
-            'email' => 'dup@test.sch.ug',
+            'email' => 'dup@example.test',
         ]);
 
         $this->assertFalse($result['success']);
+        $this->assertArrayNotHasKey('password', $result);
         $this->assertStringContainsString('already exists', $result['message']);
         Mail::assertNothingQueued();
+    }
+
+    public function test_add_teacher_matches_class_name_variants_and_not_another_school(): void
+    {
+        $yearId = AcademicYear::query()->where('school_id', $this->schoolId)->value('id');
+        $standardId = Standard::query()->where('school_id', $this->schoolId)->value('id');
+        $section = Section::create([
+            'school_id' => $this->schoolId,
+            'name' => 'P.7',
+            'status' => 1,
+        ]);
+        $link = StandardLink::create([
+            'school_id' => $this->schoolId,
+            'academic_year_id' => $yearId,
+            'standard_id' => $standardId,
+            'section_id' => $section->id,
+            'status' => 1,
+        ]);
+
+        $otherId = DB::table('schools')->insertGetId([
+            'name' => 'Other Class School',
+            'slug' => 'other-class-school',
+            'email' => 'other-class@example.test',
+            'phone' => '+254700000099',
+            'status' => 1,
+            'registration_country' => 'Kenya',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $otherYear = AcademicYear::create([
+            'school_id' => $otherId,
+            'name' => '2026',
+            'description' => 'Current Academic Year',
+            'start_date' => '2026-01-01 00:00:00',
+            'end_date' => '2026-12-31 23:59:59',
+            'status' => 1,
+        ]);
+        $otherStandard = Standard::create([
+            'school_id' => $otherId,
+            'name' => 'primary',
+            'order' => 1,
+            'status' => 1,
+        ]);
+        $otherSection = Section::create([
+            'school_id' => $otherId,
+            'name' => 'S.4',
+            'status' => 1,
+        ]);
+        $otherLink = StandardLink::create([
+            'school_id' => $otherId,
+            'academic_year_id' => $otherYear->id,
+            'standard_id' => $otherStandard->id,
+            'section_id' => $otherSection->id,
+            'status' => 1,
+        ]);
+
+        foreach (['p7', 'P7', 'P 7', 'P.7'] as $index => $typed) {
+            $email = "variant-{$index}@example.test";
+            $result = ToshiActionService::addTeacher($this->admin, [
+                'name' => 'Variant Teacher',
+                'email' => $email,
+                'class' => $typed,
+            ]);
+
+            $this->assertTrue($result['success'], $typed.': '.($result['message'] ?? ''));
+            $this->assertSame($link->id, (int) $result['standardLink_id']);
+            $invite = TeacherInvite::query()->where('email', $email)->first();
+            $this->assertNotNull($invite);
+            $this->assertSame($this->schoolId, (int) $invite->school_id);
+            $this->assertSame($link->id, (int) $invite->standard_link_id);
+            $this->assertNotSame($otherLink->id, (int) $invite->standard_link_id);
+        }
+
+        $missing = ToshiActionService::addTeacher($this->admin, [
+            'name' => 'Missing Teacher',
+            'email' => 'missing-class@example.test',
+            'class' => 'Grade 9',
+        ]);
+        $this->assertFalse($missing['success']);
+        $this->assertStringContainsString('Grade 9', $missing['message']);
+        $this->assertDatabaseMissing('teacher_invites', ['email' => 'missing-class@example.test']);
+
+        $partial = ToshiActionService::addTeacher($this->admin, [
+            'name' => 'Partial Teacher',
+            'email' => 'partial-class@example.test',
+            'class' => '7',
+        ]);
+        $this->assertFalse($partial['success']);
+        $this->assertDatabaseMissing('teacher_invites', ['email' => 'partial-class@example.test']);
+
+        $cross = ToshiActionService::addTeacher($this->admin, [
+            'name' => 'Cross Teacher',
+            'email' => 'cross-class@example.test',
+            'class' => 'S 4',
+        ]);
+        $this->assertFalse($cross['success']);
+        $encoded = (string) json_encode($cross);
+        $this->assertStringNotContainsString('Other Class School', $encoded);
+        $this->assertStringNotContainsString((string) $otherLink->id, $encoded);
+        $this->assertSame(0, TeacherInvite::query()->where('standard_link_id', $otherLink->id)->count());
+        $this->assertDatabaseMissing('teacher_invites', ['email' => 'cross-class@example.test']);
     }
 }

@@ -150,6 +150,8 @@ class ClassRosterLivewireTest extends TestCase
                 'academicYearId' => $year->id,
             ])
             ->assertSee('Full Roster Student')
+            ->assertSee('/admin/students/'.$student->id, false)
+            ->assertSee('data-testid="roster-student-link"', false)
             ->assertSee('Academic status');
     }
 

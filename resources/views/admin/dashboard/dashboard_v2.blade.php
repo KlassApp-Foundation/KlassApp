@@ -110,11 +110,12 @@
                     </button>
                     @endif
                 @endif
-                @if(($setup['summary'] ?? []) !== [])
+                @php $setupLines = array_values($setup['labels'] ?? []); @endphp
+                @if($setupLines !== [])
                     <details class="dv2-setup-summary" data-testid="dashboard-v2-setup-summary">
                         <summary>What's set up</summary>
                         <ul>
-                            @foreach($setup['summary'] as $line)
+                            @foreach($setupLines as $line)
                                 <li>{{ $line }}</li>
                             @endforeach
                         </ul>
@@ -151,7 +152,7 @@
                 @include('admin.dashboard._whatsapp_stat')
                 <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ url('/admin/students') }}" aria-label="Students, open the students list"><span class="dv2-kpi-label" data-icon="graduation-cap"><x-ka-icon name="graduation-cap" :size="16" tone="muted" />Students</span><span class="dv2-kpi-value" data-testid="dashboard-v2-kpi-students">0</span><p class="dv2-kpi-sub">None added yet</p></a></div>
                 <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ url('/admin/teachers') }}" aria-label="Staff, open teachers and staff"><span class="dv2-kpi-label"><x-ka-icon name="presentation" :size="16" tone="muted" />Staff</span><span class="dv2-kpi-value">{{ ($kpis['staff']['value'] ?? 1) }}</span><p class="dv2-kpi-sub">{{ $kpis['staff']['detail'] ?? 'Just you' }}</p></a></div>
-                <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ url('/admin/attendance/list') }}" aria-label="Attendance, open the registers"><span class="dv2-kpi-label"><x-ka-icon name="calendar-check" :size="16" tone="muted" />Attendance this week</span><span class="dv2-kpi-value">–</span><p class="dv2-kpi-sub">Starts after students are added</p></a></div>
+                <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ route('admin.attendance.index') }}" aria-label="Attendance, open the registers"><span class="dv2-kpi-label"><x-ka-icon name="calendar-check" :size="16" tone="muted" />Attendance this week</span><span class="dv2-kpi-value">–</span><p class="dv2-kpi-sub">Starts after students are added</p></a></div>
                 <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ url('/admin/fees/payments') }}" aria-label="Fees collected, open fees"><span class="dv2-kpi-label"><x-ka-icon name="wallet" :size="16" tone="muted" />Fees collected</span><span class="dv2-kpi-value">–</span><p class="dv2-kpi-sub warn">No fee structure yet</p></a></div>
                 <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ url('/admin/reports/cards') }}" aria-label="Report cards ready, open report cards"><span class="dv2-kpi-label"><x-ka-icon name="file-text" :size="16" tone="muted" />Report cards ready</span><span class="dv2-kpi-value">–</span><p class="dv2-kpi-sub">After the first exam</p></a></div>
             </div>
@@ -161,7 +162,7 @@
                 <p>Your dashboard fills in as you add students, take attendance and enter marks. You can add them one by one or import a spreadsheet.</p>
                 <span style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
                     <a class="dv2-btn" href="{{ url('/admin/student/add') }}">Add student</a>
-                    <a class="dv2-btn dv2-btn--soft" href="{{ url('/admin/student/import') }}">Import a list</a>
+                    <a class="dv2-btn dv2-btn--soft" href="{{ url('/admin/students/import') }}" data-testid="dashboard-v2-import-students">Import a list</a>
                 </span>
             </div>
         @else
@@ -183,7 +184,7 @@
                     </a>
                 </div>
                 <div class="dv2-kpi">
-                    <a class="dv2-kpi-link" href="{{ url('/admin/attendance/list') }}" aria-label="Attendance, open the registers">
+                    <a class="dv2-kpi-link" href="{{ route('admin.attendance.index') }}" aria-label="Attendance, open the registers">
                         <span class="dv2-kpi-label"><x-ka-icon name="calendar-check" :size="16" tone="muted" />{{ ($kpis['attendance']['detail'] ?? '') === 'Last week' ? 'Last week' : 'Attendance this week' }}</span>
                         <span class="dv2-kpi-value" data-testid="dashboard-v2-kpi-attendance">{{ $kpis['attendance']['value'] ?? '–' }}</span>
                         <p class="dv2-kpi-sub {{ ($kpis['attendance']['direction'] ?? null) === 'up' ? 'up' : (($kpis['attendance']['direction'] ?? null) === 'down' ? 'down' : '') }}">{{ $kpis['attendance']['detail'] ?? '—' }}</p>
@@ -228,13 +229,24 @@
                     @if(count($charts['per_class'] ?? []) > 0)
                         @php
                             $pc = $charts['per_class'];
-                            $pcAria = implode(', ', array_map(fn ($r) => $r['label'].' '.$r['value'].'%', $pc));
+                            $pcAria = implode(', ', array_map(fn ($r) => $r['label'].' '.($r['value'] === null ? 'no marks yet' : $r['value'].'%'), $pc));
+                            $pcMissing = collect($pc)->contains(fn ($r) => $r['value'] === null);
                         @endphp
                         <div class="hbars" role="img" aria-label="Performance by class: {{ $pcAria }}">
                             @foreach($pc as $row)
-                                <div class="hb"><span>{{ $row['label'] }}</span><span class="t"><i style="width:{{ min(100, (float) $row['value']) }}%"></i></span><b>{{ $row['value'] }}%</b></div>
+                                <div class="hb" data-testid="dashboard-performance-class">
+                                    <span>{{ $row['label'] }}</span>
+                                    @if($row['value'] === null)
+                                        <span class="t"></span><b data-testid="dashboard-performance-empty">–</b>
+                                    @else
+                                        <span class="t"><i style="width:{{ min(100, (float) $row['value']) }}%"></i></span><b>{{ $row['value'] }}%</b>
+                                    @endif
+                                </div>
                             @endforeach
                         </div>
+                        @if($pcMissing)
+                            <p class="dv2-kpi-sub" data-testid="dashboard-performance-caption">– no marks yet</p>
+                        @endif
                         <a class="dv2-btn dv2-btn--soft" style="margin-top:12px" href="{{ route('admin.marks.classes') }}" data-testid="dashboard-v2-view-class-marks">View marks by class</a>
                         @include('marks-releases._button', ['area' => 'admin', 'class' => 'dv2-btn dv2-btn--soft', 'style' => 'margin-top:12px'])
                     @else

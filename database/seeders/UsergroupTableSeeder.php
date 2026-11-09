@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Database\ReferenceUpsert;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class UsergroupTableSeeder extends Seeder
 {
@@ -24,14 +24,9 @@ class UsergroupTableSeeder extends Seeder
         ];
 
         foreach ($groups as $group) {
-            DB::table('usergroups')->updateOrInsert(
-                ['id' => $group['id']], // match condition
-                [
-                    'name'       => $group['name'],
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]
-            );
+            ReferenceUpsert::sync('usergroups', ['id' => $group['id']], [
+                'name' => $group['name'],
+            ]);
         }
     }
 }

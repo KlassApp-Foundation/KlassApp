@@ -8,16 +8,22 @@ use App\Models\Academics\Exam;
 use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\Marks;
 use App\Models\User;
+use App\Services\Academics\BaseClassExamRoster;
 use App\Services\GradingSystemService;
 use Illuminate\Validation\ValidationException;
 
 /**
- * One numeric mark write for the teacher form and for Toshi.
- * Parents are not notified here, and the exam status is left unchanged.
+ * The only numeric mark write. The teacher form, the single-mark edit, the
+ * spreadsheet import, and Toshi (a subject teacher, a class teacher, or a
+ * school admin) all call save(). Parents are not notified here, and the exam
+ * status is left unchanged. Nursery ratings are not marks and do not come here.
  */
 class ExamMarkWriter
 {
-    public function __construct(private GradingSystemService $grading) {}
+    public function __construct(
+        private GradingSystemService $grading,
+        private BaseClassExamRoster $roster,
+    ) {}
 
     public function save(User $actor, Exam $exam, int $studentId, mixed $mark, ?string $correctionReason = null): Marks
     {
@@ -35,8 +41,28 @@ class ExamMarkWriter
             abort(403, 'Submitted student is not authorized for this school.');
         }
 
-        $this->assertNotLocked($exam);
+        $this->roster->assertStudentAllowed($actor, $exam, (int) $student->id);
+
+        $this->assertWritable($exam);
         $this->assertCorrectionReason($exam, $correctionReason);
+
+        if ($this->isAbsent($mark)) {
+            return Marks::updateOrCreate(
+                [
+                    'student_id' => $student->id,
+                    'exam_id' => $exam->id,
+                    'school_id' => $exam->school_id,
+                    'subject_id' => $exam->subject_id,
+                ],
+                [
+                    'teacher_id' => $exam->teacher_id ?: $actor->id,
+                    'marks' => null,
+                    'grade' => 'AB',
+                    'absent' => true,
+                    'section_id' => $exam->section_id,
+                ]
+            );
+        }
 
         return Marks::updateOrCreate(
             [
@@ -49,40 +75,87 @@ class ExamMarkWriter
                 'teacher_id' => $exam->teacher_id ?: $actor->id,
                 'marks' => $mark,
                 'grade' => $this->letter($exam, $mark),
+                'absent' => false,
                 'section_id' => $exam->section_id,
             ]
         );
     }
 
-    private function assertNotLocked(Exam $exam): void
+    /**
+     * Submitted, approved, and locked marks stay closed. A return or a reopen
+     * is what opens them again. exams.status is not the workflow once a
+     * submission row exists; a legacy submitted exam with no open row is closed too.
+     */
+    public function writesAreRefused(Exam $exam): bool
     {
-        $submission = ExamMarksSubmission::query()
-            ->where('exam_id', $exam->id)
-            ->where('class_id', $exam->section_id)
-            ->where('subject_id', $exam->subject_id)
-            ->first();
+        $submission = $this->submission($exam);
 
+        if ($submission) {
+            if ($submission->isApproved() || $submission->isLocked() || $submission->status === 'submitted') {
+                return true;
+            }
+
+            if ($submission->status === 'reopened' || $submission->status === 'draft') {
+                return $submission->status === 'draft' && $exam->status === 'submitted';
+            }
+        }
+
+        return $exam->status === 'submitted';
+    }
+
+    public function assertWritable(Exam $exam): void
+    {
+        if (! $this->writesAreRefused($exam)) {
+            return;
+        }
+
+        $submission = $this->submission($exam);
         if ($submission && $submission->isLocked()) {
             $deadline = $submission->deadline
                 ? $submission->deadline->format('j M Y H:i')
                 : null;
             throw new MarksLockedException($deadline);
         }
+
+        throw new MarksLockedException(null, 'These marks are submitted or approved. A school admin has to return or reopen them before they can change.');
     }
 
-    public function requiresCorrection(Exam $exam): bool
+    private function submission(Exam $exam): ?ExamMarksSubmission
     {
-        if ($exam->status === 'submitted') {
-            return true;
-        }
-
         return ExamMarksSubmission::query()
             ->where('school_id', $exam->school_id)
             ->where('exam_id', $exam->id)
             ->where('class_id', $exam->section_id)
             ->where('subject_id', $exam->subject_id)
-            ->where('status', 'submitted')
-            ->exists();
+            ->first();
+    }
+
+    public function maximum(Exam $exam): float
+    {
+        return 100.0;
+    }
+
+    public function isAbsent(mixed $mark): bool
+    {
+        return strcasecmp(trim((string) $mark), 'AB') === 0;
+    }
+
+    public function exceedsMaximum(Exam $exam, mixed $mark): bool
+    {
+        if ($mark === null || $this->isAbsent($mark) || trim((string) $mark) === '' || ! is_numeric($mark)) {
+            return false;
+        }
+
+        return (float) $mark > $this->maximum($exam);
+    }
+
+    /**
+     * The same closed-mark test the writer enforces, for readers: the profile's
+     * mark list and the correction-reason check both ask this question.
+     */
+    public function requiresCorrection(Exam $exam): bool
+    {
+        return $this->writesAreRefused($exam);
     }
 
     private function letter(Exam $exam, mixed $mark): string

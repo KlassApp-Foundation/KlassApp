@@ -100,11 +100,16 @@ class TeacherImportExportController extends Controller
 
         try
         {
-            Excel::import(new TeachersImport,$request->file('import_file'));
+            // Import up to the plan's remaining teacher slots; report the rest.
+            $plan = app(\App\Services\PlanLimitService::class)->status((int) $school_id, 'teachers');
+            $import = new TeachersImport($plan['remaining']);
+            Excel::import($import, $request->file('import_file'));
 
-            // Do not hard-fail on Session::get('count') — TeachersImport no longer sets it,
-            // and a polluted session would falsely reject a successful import.
-            $insertedcount = Session::get('insertedcount');
+            $insertedcount = (int) Session::get('insertedcount');
+            $planSkipped = (int) ($import->skippedByPlan ?? Session::get('plan_skipped', 0));
+            $planNotice = app(\App\Services\PlanLimitService::class)
+                ->importNotice((int) $school_id, 'teachers', $insertedcount, $planSkipped);
+
             if($insertedcount > 0)
             {
                 $message=trans('messages.import_success_msg',['module' => 'Teacher']);
@@ -119,17 +124,18 @@ class TeacherImportExportController extends Controller
                 );
                 $redirect = back()->with('successmessage',$insertedcount.' '.trans('messages.insert_success_msg'));
             }
+            elseif ($planNotice !== null)
+            {
+                $redirect = back();
+            }
             else
             {
                 $redirect = back()->with('failmessage',trans('messages.insert_failure_msg'));
             }
 
-            // Over plan limit is a NOTICE, never a block (same rule as student import).
-            $overLimit = ToshiActionService::enforcePlanLimit($school_id, 'teachers');
-
-            return $overLimit['success']
-                ? $redirect
-                : $redirect->with('overlimit', $overLimit['message']);
+            return $planNotice !== null
+                ? $redirect->with('overlimit', $planNotice)
+                : $redirect;
         }
         catch(Exception $e)
         {

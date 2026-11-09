@@ -164,7 +164,7 @@ Route::middleware('can:full-school-admin')->group(function () {
 	Route::get( '/standardLink/show/conference/{id}', 'StandardsLinkDetailsController@showConference' );
 	//edit
 	Route::get( '/standardLink/editlist/{id}', 'StandardsLinkController@editList' );
-	Route::get( '/standardLink/edit/{id}', 'StandardsLinkController@edit' );
+	Route::get( '/standardLink/edit/{id}', 'StandardsLinkController@edit' )->name('admin.standardLink.edit');
 	Route::post( '/standardLink/edit/{id}', 'StandardsLinkController@update' );
 	Route::post( '/standardLink/updateStatus/{id}', 'StandardsLinkController@updateStatus' );
 	//delete
@@ -190,7 +190,9 @@ Route::middleware('can:full-school-admin')->group(function () {
 	Route::middleware('can:full-school-admin')->group(function () {
 	Route::post('/classes/add-class', 'SectionController@save' )->name("admin.class.add");
 	// Keep the legacy section-management URL available while /classes becomes the read-only roster portal.
-	Route::get("/sections", "SectionController@index")->name("admin.classes");
+	Route::get("/sections", function () {
+	    return redirect()->route('admin.classes.index');
+	})->name("admin.classes");
 	Route::get('/classes', function () {
 	    return view('class-roster.index');
 	})->name('admin.classes.index');
@@ -203,6 +205,9 @@ Route::middleware('can:full-school-admin')->group(function () {
 	Route::get("/class-stream/{section}/create", "ClassStreamController@create")->name("admin.class-stream.create");
 	Route::post("/class-stream/{section}/store", "ClassStreamController@store")->name("admin.class-stream.store");
 	Route::get('/students/upload-template', 'StudentUploadTemplateController@download')->name('admin.students.upload-template');
+	Route::get('/students/import', function () {
+	    return view('admin.students.import');
+	})->name('admin.students.import');
 	Route::get('/class-teachers/upload-template', 'ClassTeacherUploadTemplateController@download')->name('admin.class-teachers.upload-template');
 	Route::get('/classes/{section}', function ($section) {
 	    return view('class-roster.show', [
@@ -267,6 +272,14 @@ Route::get('/toshi-activity', 'ToshiActivityController@index')->name('admin.tosh
 	Route::get( '/students', 'StudentController@index' );
 	Route::get( '/students/{student}', 'StudentProfileController@show' )->whereNumber('student')->name('admin.students.profile');
 	Route::post( '/students/{student}/deactivate', 'StudentProfileController@deactivate' )->whereNumber('student')->name('admin.students.deactivate');
+	Route::post( '/students/{student}/resend-setup', 'StudentProfileController@resendSetup' )->whereNumber('student')->name('admin.students.resend-setup');
+	Route::post( '/students/{student}/payments', 'StudentProfileController@recordPayment' )->whereNumber('student')->name('admin.students.payments.store');
+	Route::post( '/students/{student}/payments/full', 'StudentProfileController@markPaid' )->whereNumber('student')->name('admin.students.payments.full');
+	Route::post( '/students/{student}/photo', 'StudentProfileController@uploadPhoto' )->whereNumber('student')->name('admin.students.photo.store');
+	Route::delete( '/students/{student}/photo', 'StudentProfileController@removePhoto' )->whereNumber('student')->name('admin.students.photo.destroy');
+	Route::post( '/students/{student}/marks', 'StudentProfileController@addMarks' )->whereNumber('student')->name('admin.students.marks.store');
+	Route::post( '/students/{student}/attendance', 'StudentProfileController@recordAttendance' )->whereNumber('student')->name('admin.students.attendance.store');
+	Route::get( '/students/{student}/progress-report', 'StudentProfileController@progressReport' )->whereNumber('student')->name('admin.students.progress-report');
 	Route::get( '/students/blockedstudents', 'StudentController@blockedstudents' );
 	//add
 	Route::get( '/student/add', 'StudentController@create' );
@@ -329,6 +342,7 @@ Route::get('/toshi-activity', 'ToshiActivityController@index')->name('admin.tosh
 	Route::get( '/parent/show/{name}', 'ParentController@show' );
 	Route::post( '/parent/show/{name}/deactivate', 'ParentProfileController@deactivate' );
 	Route::post( '/parent/show/{name}/reset-password', 'ParentProfileController@resetPassword' );
+	Route::post( '/parent/show/{name}/resend-setup', 'ParentProfileController@resendSetup' );
 	Route::get( '/parent/show/children/{name}', 'ParentController@showChildren' );
 	Route::get( '/parent/show/activity/{name}', 'ParentController@showActivityLog' );
 	Route::get( '/parent/show/feedback/{name}', 'ParentController@showFeedbacks' );
@@ -375,6 +389,7 @@ Route::get('/teacher/my-timetable', 'TimetableSlotController@teacherWeekly')->na
 	Route::get( '/teacher/show/activity/{name}', 'TeacherShowController@showActivity' );
 	Route::get( '/teacher/show/logactivity/{name}', 'TeacherShowController@showActivityLog' );
 	Route::post( '/teacher/show/{name}/deactivate', 'TeacherProfileController@deactivate' );
+	Route::post( '/teacher/show/{name}/resend-setup', 'TeacherProfileController@resendSetup' )->name('admin.teacher.resend-setup');
 	Route::get( '/teacher/show/{name}', 'TeacherProfileController@show' );
 	//edit
 	Route::get( '/teacher/editTeacher/{name}', 'TeacherEditController@editTeacher' );
@@ -561,8 +576,11 @@ Route::get( '/downloadformat', 'ImportMemberController@downloadFormat' );
     Route::post( '/studenthomework/edit/{id}', 'StudentHomeworkController@update' );
 
 //attendance
+	// One-click register (#1277), for a school admin, any class in this school.
+	Route::get('/attendance/register', [\App\Http\Controllers\Teacher\AttendanceController::class, 'register'])->name('admin.attendance.register');
+	Route::post('/attendance/register', [\App\Http\Controllers\Teacher\AttendanceController::class, 'saveRegister'])->name('admin.attendance.register.save');
 	//add
-	Route::get('/attendance', 'AttendanceController@index');
+	Route::get('/attendance', 'AttendanceController@index')->name('admin.attendance.index');
 	Route::get( '/attendance/list', 'AttendanceController@list' );
 	Route::get( '/attendance/add', 'AttendanceController@create' );
 	Route::post( '/attendance/add', 'AttendanceController@store' );
@@ -648,6 +666,7 @@ Route::get( '/magazine/download/{id}', 'BulletinsController@downloadattachments'
 // Report Cards (per-class batch PDF generation + download)
 Route::prefix('reports/cards')->name('admin.reports.cards.')->group(function () {
     Route::get('/', 'ReportCardsController@index')->name('index');
+    Route::get('/history', 'ReportCardsController@history')->name('history');
     Route::post('/template', 'ReportCardsController@updateTemplate')->name('template');
     Route::get('/preview/{template}', 'ReportCardsController@previewTemplate')->name('preview');
     Route::get('/download/{stdLink}', 'ReportCardsController@downloadClass')->name('download');
@@ -904,8 +923,15 @@ Route::post('/exams/store', 'ExamController@store')->name('admin.exams.store');
 Route::delete('/exams/{examId}/archive', 'ExamController@archive')->name('admin.exams.archive');
 
 
-Route::get('/marks', 'FilterMarksForm@filterForm')->name('admin.marks');
-Route::get('/marks/filter', "MarksController@classExamOverview")->name('admin.marks.filter');
+// Exam sets — one action creates a term's exams for every class and subject.
+Route::get('/exams/sets', [\App\Http\Controllers\Admin\ExamSetController::class, 'index'])->name('admin.exam-sets.index');
+Route::get('/exams/sets/create', [\App\Http\Controllers\Admin\ExamSetController::class, 'create'])->name('admin.exam-sets.create');
+Route::post('/exams/sets', [\App\Http\Controllers\Admin\ExamSetController::class, 'store'])->name('admin.exam-sets.store');
+Route::get('/exams/sets/{batch}', [\App\Http\Controllers\Admin\ExamSetController::class, 'show'])->whereNumber('batch')->name('admin.exam-sets.show');
+Route::delete('/exams/sets/{batch}/exams/{exam}', [\App\Http\Controllers\Admin\ExamSetController::class, 'destroyExam'])->whereNumber('batch')->whereNumber('exam')->name('admin.exam-sets.exams.destroy');
+
+Route::get('/marks', 'MarksController@classExamOverview')->name('admin.marks');
+Route::get('/marks/filter', 'MarksController@classExamOverview')->name('admin.marks.filter');
 Route::get('/marks/classes/{section?}', 'ClassMarksController@show')->whereNumber('section')->name('admin.marks.classes');
 // Task 9 Tier 2: release marks to parents (demo-bound numbers only for now).
 Route::get('/marks/releases', [\App\Http\Controllers\MarksReleaseController::class, 'index'])->name('admin.marks.releases.index');
@@ -923,6 +949,7 @@ Route::get('/marks/submissions', 'ExamMarksSubmissionController@index')->name('a
 Route::get('/marks/submissions/{exam}', 'ExamMarksSubmissionController@show')->name('admin.marks.submissions.show');
 Route::post('/marks/submissions/{exam}/lock', 'ExamMarksSubmissionController@lock')->name('admin.marks.submissions.lock');
 Route::post('/marks/submissions/{exam}/reopen', 'ExamMarksSubmissionController@reopen')->name('admin.marks.submissions.reopen');
+Route::post('/marks/submissions/approve-selected', [\App\Http\Controllers\Admin\ExamMarksSubmissionController::class, 'approveSelected'])->name('admin.marks.submissions.approve-selected');
 Route::post('/marks/submissions/{exam}/approve', 'ExamMarksSubmissionController@approve')->name('admin.marks.submissions.approve');
 Route::post('/marks/submissions/{exam}/reject', 'ExamMarksSubmissionController@reject')->name('admin.marks.submissions.reject');
 
@@ -956,6 +983,7 @@ Route::patch("/fees-categories/{fee}/update", "Academics\FeesCategoryController@
 // Fee payment records
 Route::get("/fees/payments", "FeePaymentController@index")->name("admin.fee-payments");
 Route::post("/fees/payments/reminders", "FeePaymentController@sendReminders")->name("admin.fee-payments.reminders");
+Route::get("/fees/payments/students", "FeePaymentController@searchStudents")->name("admin.fee-payments.students");
 Route::get("/fees/payments/create", "FeePaymentController@create")->name("admin.fee-payments.create");
 Route::post("/fees/payments/store", "FeePaymentController@store")->name("admin.fee-payments.store");
 

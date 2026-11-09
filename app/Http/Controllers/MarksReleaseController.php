@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Academics\Exam;
 use App\Models\MarksRelease;
 use App\Models\User;
+use App\Support\ClassLevelOrder;
 use App\Services\MarksRelease\MarksReleaseService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -67,6 +69,8 @@ class MarksReleaseController extends Controller
             'when' => $data['when'],
             'scheduled_for' => $data['scheduled_for'] ?? '',
             'timezone' => $timezone,
+            'confirm_past' => $data['confirm_past'],
+            'whatsapp_send' => $data['whatsapp_send'],
         ], true));
     }
 
@@ -74,19 +78,27 @@ class MarksReleaseController extends Controller
     {
         $user = $this->user();
         $data = $this->validated($request);
+        // The same class list the screen used, whether it came from the
+        // class/stream picker, a standard_link_id on the URL, or both.
         $targets = $this->releaseTargets($user, $data);
+        if ($this->needsReason($user, $data['exam_id'], $targets) && $data['release_reason'] === '') {
+            throw ValidationException::withMessages([
+                'release_reason' => 'This sitting has already been released. Say why it is being released again.',
+            ]);
+        }
         $localWhen = $data['when'] === 'schedule' ? $data['scheduled_for'] : null;
         $created = [];
         if ($targets === null) {
-            $created[] = $this->releases->create($user, $data['exam_id'], null, $localWhen, $data['timezone'], $data['override_reason']);
+            $created[] = $this->releases->create($user, $data['exam_id'], null, $localWhen, $data['timezone'], $data['confirm_past'], $data['whatsapp_send'], $data['release_reason']);
         } else {
             // Every class is checked before any release row is written.
             foreach ($targets as $linkId) {
                 [$anchor, $link] = $this->releases->authorise($user, $data['exam_id'], $linkId);
-                $this->releases->requireApproval($user, $anchor, $link, $data['override_reason']);
+                $this->releases->requireApproval($user, $anchor, $link);
+                $this->releases->requirePastConfirmation($anchor, $data['confirm_past']);
             }
             foreach ($targets as $linkId) {
-                $created[] = $this->releases->create($user, $data['exam_id'], $linkId, $localWhen, $data['timezone'], $data['override_reason']);
+                $created[] = $this->releases->create($user, $data['exam_id'], $linkId, $localWhen, $data['timezone'], $data['confirm_past'], $data['whatsapp_send'], $data['release_reason']);
             }
         }
         if ($data['when'] !== 'schedule') {
@@ -125,7 +137,7 @@ class MarksReleaseController extends Controller
         return view('marks-releases.show', $this->shared($request) + ['release' => $row]);
     }
 
-    /** @return array{exam_id:int, standard_link_id:int|null, class:string, stream:string, when:string, scheduled_for:string|null, timezone:string|null} */
+    /** @return array{exam_id:int, standard_link_id:int|null, class:string, stream:string, when:string, scheduled_for:string|null, timezone:string|null, confirm_past:bool, whatsapp_send:bool} */
     private function validated(Request $request): array
     {
         $data = $request->validate([
@@ -136,7 +148,9 @@ class MarksReleaseController extends Controller
             'when' => ['required', 'in:now,schedule'],
             'scheduled_for' => ['nullable', 'required_if:when,schedule', 'date_format:Y-m-d\TH:i'],
             'timezone' => ['nullable', 'string', 'max:64'],
-            'override_reason' => ['nullable', 'string', 'max:500'],
+            'confirm_past' => ['nullable', 'boolean'],
+            'whatsapp_send' => ['nullable', 'boolean'],
+            'release_reason' => ['nullable', 'string', 'max:500'],
         ]);
 
         return [
@@ -147,7 +161,9 @@ class MarksReleaseController extends Controller
             'when' => $data['when'],
             'scheduled_for' => $data['scheduled_for'] ?? null,
             'timezone' => $data['timezone'] ?? null,
-            'override_reason' => trim((string) ($data['override_reason'] ?? '')),
+            'confirm_past' => filter_var($data['confirm_past'] ?? false, FILTER_VALIDATE_BOOLEAN),
+            'whatsapp_send' => filter_var($data['whatsapp_send'] ?? false, FILTER_VALIDATE_BOOLEAN),
+            'release_reason' => trim((string) ($data['release_reason'] ?? '')),
         ];
     }
 
@@ -197,6 +213,7 @@ class MarksReleaseController extends Controller
         $approvals = ($examId && $known)
             ? $this->approvalsFor($user, $examId, $targets)
             : [];
+        $pastSitting = $examId && $known && $this->releases->sittingIsPast((int) $user->school_id, $examId);
         $previewId = $targets === null ? null : ($targets[0] ?? null);
         $previewMessage = ($examId && $known && $targets !== [])
             ? $this->releases->preview($user, $examId, $previewId)
@@ -219,7 +236,14 @@ class MarksReleaseController extends Controller
             'whenLabel' => 'Now',
             'sheet' => $sheet,
             'approvals' => $approvals,
+            'pastSitting' => $pastSitting,
+            'needsReason' => $examId > 0 && $known && $this->needsReason($user, $examId, $targets),
+            'releaseReasonPrompt' => $this->releaseReasonPrompt($this->releasedClassNames($user, $examId, $known ? $targets : [])),
             'previewMessage' => $previewMessage,
+            'audience' => ($examId && $known)
+                ? $this->releases->audienceSummary($user, $examId, $targets)
+                : ['classes' => [], 'parents' => 0, 'whatsapp' => 0],
+            'subjectsApproved' => $approvals !== [] && collect($approvals)->every(fn (array $row) => $row['state'] === 'approved'),
             'wide' => count($sheet['subjects']) > 6,
             'buttonLabel' => $verb . ' ' . $who . ' (' . $count . ' ' . $noun . ')',
             'releaseTo' => $who . ' (' . $count . ' ' . $noun . ')',
@@ -233,10 +257,13 @@ class MarksReleaseController extends Controller
      */
     private function oldInput(Request $request, $exams, $links, bool $isAdmin): array
     {
-        $examId = (int) ($request->input('exam_id') ?: ($exams->first()['id'] ?? 0));
-        $class = trim((string) $request->input('class', ''));
-        $stream = trim((string) $request->input('stream', ''));
-        $linkId = $request->filled('standard_link_id') ? (int) $request->input('standard_link_id') : null;
+        // A failed save redirects back with the posted class. Prefer that over
+        // the URL so the reason box matches the class that was refused.
+        $examId = (int) (old('exam_id') ?: $request->input('exam_id') ?: ($exams->first()['id'] ?? 0));
+        $class = trim((string) old('class', $request->input('class', '')));
+        $stream = trim((string) old('stream', $request->input('stream', '')));
+        $postedLink = old('standard_link_id', $request->input('standard_link_id'));
+        $linkId = ($postedLink !== null && $postedLink !== '') ? (int) $postedLink : null;
         if (! $isAdmin && $class === '' && $stream === '' && ! $linkId) {
             $first = $links->first();
             if ($first) {
@@ -254,6 +281,7 @@ class MarksReleaseController extends Controller
             'when' => $request->input('when', 'now') === 'schedule' ? 'schedule' : 'now',
             'scheduled_for' => (string) $request->input('scheduled_for', ''),
             'timezone' => (string) $request->input('timezone', 'Africa/Kampala'),
+            'whatsapp_send' => $request->boolean('whatsapp_send'),
         ];
     }
 
@@ -358,6 +386,116 @@ class MarksReleaseController extends Controller
         }
 
         return ['subjects' => array_values($subjects), 'groups' => $groups];
+    }
+
+    /**
+     * Has this sitting already been released for what is being released now?
+     *
+     * $standardLinkIds null is a whole-school release: any earlier release of
+     * this sitting, of any class, asks for a reason. A list is the streams the
+     * screen resolved (picker, URL, or a change that reloaded the page). A
+     * stream asks for a reason when that stream was already released, or when
+     * the whole school was. Another stream of the same class does not. An
+     * empty list is not a class. A release that failed is not a release.
+     *
+     * @param  array<int, int>|null  $standardLinkIds
+     */
+    private function needsReason(User $user, int $examId, ?array $standardLinkIds = null): bool
+    {
+        if ($standardLinkIds === []) {
+            return false;
+        }
+
+        $anchor = Exam::query()->where('school_id', $user->school_id)->find($examId);
+        if ($anchor === null) {
+            return false;
+        }
+
+        $released = MarksRelease::query()
+            ->where('school_id', $user->school_id)
+            ->where('status', MarksRelease::STATUS_RELEASED)
+            ->whereHas('exam', fn ($q) => $q
+                ->where('school_id', $user->school_id)
+                ->where('exam_type_id', $anchor->exam_type_id)
+                ->where('academic_term_id', $anchor->academic_term_id));
+
+        if ($standardLinkIds === null) {
+            return $released->exists();
+        }
+
+        return $released->where(function ($q) use ($standardLinkIds): void {
+            $q->where('scope', 'school')
+                ->orWhereIn('standard_link_id', $standardLinkIds);
+        })->exists();
+    }
+
+    /**
+     * Class names in this selection that already have a released sitting.
+     * A whole-school release is named as such. An empty selection names nothing.
+     *
+     * @param  array<int, int>|null  $standardLinkIds
+     * @return list<string>
+     */
+    private function releasedClassNames(User $user, int $examId, ?array $standardLinkIds): array
+    {
+        if ($examId <= 0 || $standardLinkIds === []) {
+            return [];
+        }
+
+        $anchor = Exam::query()->where('school_id', $user->school_id)->find($examId);
+        if ($anchor === null) {
+            return [];
+        }
+
+        $rows = MarksRelease::query()
+            ->with('standardLink.section')
+            ->where('school_id', $user->school_id)
+            ->where('status', MarksRelease::STATUS_RELEASED)
+            ->whereHas('exam', fn ($q) => $q
+                ->where('school_id', $user->school_id)
+                ->where('exam_type_id', $anchor->exam_type_id)
+                ->where('academic_term_id', $anchor->academic_term_id))
+            ->get();
+
+        $names = [];
+        foreach ($rows as $row) {
+            if ($row->scope === 'school') {
+                $names[] = 'The whole school';
+
+                continue;
+            }
+            if ($standardLinkIds !== null && ! in_array((int) $row->standard_link_id, $standardLinkIds, true)) {
+                continue;
+            }
+            $section = trim((string) ($row->standardLink?->section?->name ?? ''));
+            $stream = trim((string) ($row->standardLink?->stream ?? ''));
+            $label = trim($section.' '.$stream);
+            if ($label !== '') {
+                $names[] = $label;
+            }
+        }
+
+        $names = array_values(array_unique($names));
+        $whole = in_array('The whole school', $names, true);
+        $classes = array_values(array_filter($names, fn (string $name) => $name !== 'The whole school'));
+        $classes = ClassLevelOrder::sort(collect($classes), fn (string $name) => $name)->all();
+
+        return $whole ? array_merge(['The whole school'], $classes) : $classes;
+    }
+
+    /** @param  list<string>  $names */
+    private function releaseReasonPrompt(array $names): string
+    {
+        if ($names === []) {
+            return 'Why release this sitting again?';
+        }
+
+        $list = count($names) === 1
+            ? $names[0]
+            : implode(', ', array_slice($names, 0, -1)).' and '.$names[array_key_last($names)];
+        $verb = count($names) === 1 ? 'was' : 'were';
+
+        return $list.' '.$verb.' already released. Why release this sitting again?';
     }
 
     /** @return array{area:string, layout:string} */

@@ -73,6 +73,8 @@ Route::get( '/activity', 'ActivityLogController@index' );
 // Own marks and attendance. No student id parameter exists on either route by design.
 Route::get( '/marks', 'RecordsController@marks' )->name('student.marks');
 Route::get( '/attendance', 'RecordsController@attendance' )->name('student.attendance');
+Route::get( '/fees', 'RecordsController@fees' )->name('student.fees');
+Route::get( '/report', 'RecordsController@report' )->name('student.report');
 //library activity
 Route::get( '/libraryactivity', 'LibraryActivityController@index' );
 Route::get( '/libraryactivity/show', 'LibraryActivityController@show' );

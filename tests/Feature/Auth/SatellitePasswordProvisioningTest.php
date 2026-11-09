@@ -29,7 +29,8 @@ class SatellitePasswordProvisioningTest extends TestCase
     {
         $source = File::get(base_path('app/Http/Controllers/Admin/TeacherLinkImportController.php'));
 
-        $this->assertStringContainsString('UserProvisioning::randomPasswordAttributes()', $source);
+        $this->assertStringContainsString('TeacherAccountInviteService', $source);
+        $this->assertStringNotContainsString('UserProvisioning::randomPasswordAttributes()', $source);
         $this->assertStringNotContainsString("bcrypt('password')", $source);
     }
 

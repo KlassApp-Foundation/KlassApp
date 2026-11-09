@@ -8,6 +8,8 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\SchoolSignupBootstrapService;
+use App\Support\PendingPassword;
+use Illuminate\Http\RedirectResponse;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -39,7 +41,7 @@ class GoogleAuthController extends Controller
                     ->withInput();
             }
 
-            if (User::where('mobile_no', $phone)->exists()) {
+            if (User::matchingPhone($phone)->exists()) {
                 return redirect()->route('register')
                     ->withErrors(['phone' => 'This phone number is already registered.'])
                     ->withInput();
@@ -93,6 +95,9 @@ class GoogleAuthController extends Controller
 
         $existingByGoogleId = User::where('google_id', $googleId)->first();
         if ($existingByGoogleId) {
+            if ($redirect = $this->refuseUntilSetup($existingByGoogleId)) {
+                return $redirect;
+            }
             $this->updateGoogleData($existingByGoogleId, $googleUser);
             Auth::login($existingByGoogleId, true);
             session()->forget('saas_signup');
@@ -102,6 +107,9 @@ class GoogleAuthController extends Controller
 
         $existingByEmail = User::where('email', $googleEmail)->first();
         if ($existingByEmail) {
+            if ($redirect = $this->refuseUntilSetup($existingByEmail)) {
+                return $redirect;
+            }
             $this->updateGoogleData($existingByEmail, $googleUser);
             Auth::login($existingByEmail, true);
             session()->forget('saas_signup');
@@ -176,6 +184,17 @@ class GoogleAuthController extends Controller
     public function storeOnboarding(Request $request)
     {
         return $this->showOnboarding($request);
+    }
+
+    private function refuseUntilSetup(User $user): ?RedirectResponse
+    {
+        if (! PendingPassword::isUnset($user)) {
+            return null;
+        }
+
+        session()->forget('saas_signup');
+
+        return redirect('/login')->with('failmessage', 'This account has not finished setup. Use the link in your email to set a password.');
     }
 
     private function postAuthRedirect(User $user)

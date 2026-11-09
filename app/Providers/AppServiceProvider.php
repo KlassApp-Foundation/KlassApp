@@ -39,7 +39,9 @@ use App\Models\Setting;
 use App\Models\Events;
 use App\Models\School;
 
+use App\Models\TeacherInvite;
 use App\Models\User;
+use App\Services\ClassTeacherAssignmentService;
 use App\Models\Task;
 use Schema;
 use Config;
@@ -70,6 +72,22 @@ class AppServiceProvider extends ServiceProvider {
     */
 
     public function boot() {
+        \Illuminate\Support\Facades\Validator::extend('international_phone', function ($attribute, $value) {
+            if ($value === null || $value === '') {
+                return true;
+            }
+
+            $raw = trim((string) $value);
+            if (strlen($raw) > \App\Support\PhoneCountry::MAX_INPUT_LENGTH) {
+                return false;
+            }
+
+            return \App\Support\PhoneCountry::normalise($raw, \App\Support\PhoneCountry::countryFromAuth()) !== null;
+        });
+        \Illuminate\Support\Facades\Validator::replacer('international_phone', function () {
+            return 'Enter a valid phone number. The school country only fills in the dialling code.';
+        });
+
         // Laravel 13 no longer falls back to route('login') when the auth
         // middleware has no guest redirect. This app uses the classic HTTP
         // kernel, which does not register that default, so keep the same
@@ -78,6 +96,10 @@ class AppServiceProvider extends ServiceProvider {
         \Illuminate\Auth\Middleware\Authenticate::redirectUsing($guestLogin);
         \Illuminate\Session\Middleware\AuthenticateSession::redirectUsing($guestLogin);
         \Illuminate\Auth\AuthenticationException::redirectUsing($guestLogin);
+
+        // A blank MAIL_FROM_ADDRESS is replaced with the default sender.
+        // Say so once per process instead of failing the first email.
+        \App\Support\MailSender::warnIfConfiguredAddressWasReplaced();
 
         // Public demo admin (users.is_public_demo): no email and no notification
         // leaves the app for anything that account starts, including queued
@@ -145,6 +167,54 @@ class AppServiceProvider extends ServiceProvider {
             ];
         });
 
+        // A real invite is counted for that invite and for its school. The
+        // per-invite cap is the smaller one. A token that matches no row is
+        // counted for the IP only, never a shared school:0 bucket.
+        $inviteLimited = function ($request, array $headers) {
+            return response()
+                ->view('auth.invite-invalid', ['reason' => 'limited'])
+                ->setStatusCode(429)
+                ->withHeaders($headers);
+        };
+        RateLimiter::for('teacher-invite-accept', function (Request $request) use ($inviteLimited) {
+            $token = (string) $request->route('token');
+            $invite = TeacherInvite::query()
+                ->where('token_hash', hash('sha256', $token))
+                ->first();
+            $decay = max(1, (int) config('invites.rate_decay_seconds', 3600));
+
+            if (! $invite) {
+                return (new Limit('', ClassTeacherAssignmentService::limiterCap('accept_invalid_attempts'), $decay))
+                    ->by(ClassTeacherAssignmentService::INVALID_ACCEPT_KEY_PREFIX.$request->ip())
+                    ->response($inviteLimited);
+            }
+
+            $schoolId = (int) $invite->school_id;
+            $inviteKey = (string) $invite->id;
+
+            return [
+                (new Limit('', ClassTeacherAssignmentService::limiterCap('accept_attempts'), $decay))
+                    ->by('school:'.$schoolId.'|invite:'.$inviteKey)
+                    ->response($inviteLimited),
+                (new Limit('', ClassTeacherAssignmentService::limiterCap('accept_school_attempts'), $decay))
+                    ->by('school:'.$schoolId)
+                    ->response($inviteLimited),
+            ];
+        });
+        RateLimiter::for('teacher-invite-issue', function (Request $request) {
+            $actor = $request->user();
+            $schoolId = $actor instanceof User ? (int) $actor->school_id : 0;
+            $inviteKey = (string) $request->input('invite_key');
+            $decay = max(1, (int) config('invites.rate_decay_seconds', 3600));
+
+            return [
+                (new Limit('', ClassTeacherAssignmentService::limiterCap('create_per_invite_attempts'), $decay))
+                    ->by('school:'.$schoolId.'|invite:'.$inviteKey),
+                (new Limit('', ClassTeacherAssignmentService::limiterCap('create_attempts'), $decay))
+                    ->by('school:'.$schoolId),
+            ];
+        });
+
         // Suppress PHP deprecation warnings in debug mode (PHP 8.4 compatibility)
         if (config('app.debug')) {
             error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
@@ -154,7 +224,7 @@ class AppServiceProvider extends ServiceProvider {
         {
             $inputs = $validator->getData();
             $email = $inputs['email'];
-            $user = User::where('mobile_no', $email)->where('usergroup_id',7)->first();
+            $user = User::findBySubmittedPhone((string) $email, 'Uganda', 7);
             
             if ($user!=null) 
             {
@@ -171,7 +241,7 @@ class AppServiceProvider extends ServiceProvider {
         {
             $inputs = $validator->getData();
             $email = $inputs['email'];
-            $user = User::where('mobile_no', $email)->where('usergroup_id',5)->first();
+            $user = User::findBySubmittedPhone((string) $email, 'Uganda', 5);
             
             if ($user!=null) 
             {

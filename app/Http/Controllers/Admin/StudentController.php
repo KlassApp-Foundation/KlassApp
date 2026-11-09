@@ -19,6 +19,7 @@ use App\Models\StandardLink;
 use Illuminate\Http\Request;
 use App\Helpers\SiteHelper;
 use App\Services\People\PeopleListQuery;
+use App\Services\People\SimpleRosterForm;
 use App\Traits\LogActivity;
 use App\Models\ActivityLog;
 use App\Models\Userprofile;
@@ -169,6 +170,11 @@ class StudentController extends Controller
 
         $academic_year = SiteHelper::getAcademicYear($school_id);
 
+        $plan = app(\App\Services\PlanLimitService::class)->status((int) $school_id, 'students');
+        if ($plan['blocked']) {
+            return redirect()->back()->with('overlimit', $plan['message']);
+        }
+
         $file = $request->file('avatar');
         if($file)
         {
@@ -288,18 +294,17 @@ class StudentController extends Controller
      */
     public function edit($name)
     {
-      //
+      $form = app(SimpleRosterForm::class);
       $user = User::findByExactNameInSchool($name, (int) Auth::user()->school_id, 6);
       if ($user === null) { abort(404); }
-      $userprofile = Userprofile::where('user_id',$user->id)->first();
-      if(Gate::allows('member',$user))
-      {
-        return view('/admin/member/edit',['user' => $user , 'userprofile' => $userprofile ]);
-      }
-      else
-      {
+      if (! Gate::allows('member', $user)) {
         abort(403);
       }
+
+      return view('admin.students.simple-edit', [
+        'user' => $user,
+        'fields' => $form->studentForm($user),
+      ]);
     }
 
     /**
@@ -320,49 +325,31 @@ class StudentController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request,$name)
+    public function update(Request $request, $name)
     {
-      $school_id = Auth::user()->school_id;
-      $user = User::where('name', $name)->where('school_id', $school_id)->firstOrFail();
-
-      try
-      {
-        $userprofile = Userprofile::where('user_id',$user->id)->first();
-
-        $academic_year = SiteHelper::getAcademicYear($school_id);
-
-        if($request->hasFile('avatar'))
-        {
-          $file = $request->file('avatar');
-          $folder=Auth::user()->school->slug.'/member/avatar';
-          $path = $this->uploadFile($folder,$file);
-        }
-        else
-        {
-          $path= $userprofile->avatar;
-        }
-
-        $userprofile = $this->UpdateUser($request , $school_id , $academic_year->id ,$user->id , $path);
-
-        $message=trans('messages.update_success_msg',['module' => 'Student']);
-
-        $ip= $this->getRequestIP();
-        $this->doActivityLog(
-          $userprofile,
-          Auth::user(),
-          ['ip' => $ip, 'details' => $_SERVER['HTTP_USER_AGENT'] ],
-          LOGNAME_EDIT_STUDENT,
-          $message
-        );
-        \Session::put('successmessage',$message);
-        return redirect()->back();
+      $form = app(SimpleRosterForm::class);
+      $school_id = (int) Auth::user()->school_id;
+      $user = User::findByExactNameInSchool($name, $school_id, 6);
+      if ($user === null) {
+        abort(404);
       }
-      catch(Exception $e)
-      {
-        Log::error('StudentController@update failed: ' . $e->getMessage());
-        \Session::put('errormessage', trans('messages.update_error_msg', ['module' => 'Student']));
-        return redirect()->back();
+      if (! Gate::allows('member', $user)) {
+        abort(403);
       }
+
+      $form->updateStudent($user, $request->all());
+
+      $message = trans('messages.update_success_msg', ['module' => 'Student']);
+      $this->doActivityLog(
+        $user->fresh(),
+        Auth::user(),
+        ['ip' => $this->getRequestIP(), 'details' => $_SERVER['HTTP_USER_AGENT'] ?? ''],
+        LOGNAME_EDIT_STUDENT,
+        $message
+      );
+      \Session::put('successmessage', $message);
+
+      return redirect('/admin/students/'.$user->id);
     }
 
     public function destroy($name)

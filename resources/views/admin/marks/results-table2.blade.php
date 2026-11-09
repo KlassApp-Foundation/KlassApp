@@ -1,16 +1,19 @@
-<div class="ds-table-wrap">
+<div class="ds-table-wrap ka-sheet-table">
     <table class="ds-grid-marks" data-testid="ds-grid-marks">
         <thead>
             <tr>
                 <th>#</th>
                 <th>Student</th>
+                <th>Stream</th>
                 @foreach ($subjects as $subject)
                     <th>
-                        {{ str($subject->name)->limit(4, '') }}
+                        {{ str($subject['name'])->limit(4, '') }}
                         <span class="gm-subject-code">/100</span>
+                        <span class="gm-subject-code" data-testid="marks-subject-state">{{ $subject['submission'] ?? 'Not started' }}</span>
                     </th>
                 @endforeach
                 <th>Total</th>
+                <th>Average</th>
                 <th>Agg</th>
                 <th>Pos</th>
                 <th>Actions</th>
@@ -18,30 +21,32 @@
         </thead>
         <tbody>
             @foreach ($students as $student)
-                <tr>
+                <tr data-testid="marks-sheet-row">
                     <td>{{ ($students->currentPage() - 1) * $students->perPage() + $loop->iteration }}</td>
-                    <td>
-                        @php
-                            $display = trim(($student->userprofile?->firstname ?? '').' '.($student->userprofile?->lastname ?? ''));
-                            if ($display === '') {
-                                $display = $student->displayName ?: ($student->name ?: 'Student '.$student->id);
-                            }
-                        @endphp
-                        {{ ucwords(strtolower($display)) }}
-                    </td>
+                    <td>{{ $student->name }}</td>
+                    <td data-testid="marks-stream">{{ $student->stream !== '' ? $student->stream : '—' }}</td>
                     @foreach ($subjects as $subject)
-                        @php
-                            $markRow = $student->marks->firstWhere('subject_id', $subject->id);
-                            $mark = $markRow?->marks;
-                        @endphp
-                        <td>{{ $mark !== null ? ceil($mark) : '—' }}</td>
+                        @php $cell = $student->cell((int) $subject['id']); @endphp
+                        <td data-testid="marks-cell">
+                            @if($cell && $cell->status === \App\Services\Results\ResultCell::ABSENT)
+                                <span data-testid="marks-cell-absent">AB</span>
+                            @elseif($cell && $cell->status === \App\Services\Results\ResultCell::MARKED && $cell->mark !== null)
+                                {{ rtrim(rtrim(number_format($cell->mark, 2, '.', ''), '0'), '.') }}
+                                @if($cell->grade)
+                                    <span data-testid="marks-cell-grade">{{ $cell->grade }}</span>
+                                @endif
+                            @else
+                                —
+                            @endif
+                        </td>
                     @endforeach
-                    <td class="gm-total">{{ $student->total ?? $student->marks->sum('marks') }}</td>
-                    <td class="gm-agg">{{ $student->avg ?? '—' }}</td>
-                    <td class="gm-pos">{{ $student->position ?? '—' }}</td>
+                    <td class="gm-total" data-testid="marks-total">{{ $student->displayTotal ?? '—' }}</td>
+                    <td data-testid="marks-average">{{ $student->displayAverage ?? '—' }}</td>
+                    <td class="gm-agg">{{ $student->aggregate ?? '—' }}</td>
+                    <td class="gm-pos" data-testid="marks-position">{{ $student->placeLabel($streamFiltered) }}</td>
                     <td>
-                        @if($exam && $class)
-                            <a href="{{ route('admin.marks.student.class', [$student, $class->id, $exam->id]) }}" class="dt-name-link text-xs" target="_blank" rel="noopener">Report</a>
+                        @if($showReportLink && $exam && $class)
+                            <a href="{{ route('admin.marks.student.class', ['user' => $student->studentId, 'class' => $class->id, 'exam' => $exam->id]) }}" class="dt-name-link text-xs" target="_blank" rel="noopener">Report</a>
                         @else
                             —
                         @endif
@@ -50,4 +55,14 @@
             @endforeach
         </tbody>
     </table>
+</div>
+<div class="ka-phone-cards" data-testid="marks-phone-cards">
+    @foreach ($students as $student)
+        <article class="ka-card ka-card-pad" data-testid="marks-phone-card" style="display:flex;flex-direction:column;gap:4px">
+            <strong>{{ $student->name }}</strong>
+            <span>{{ $student->stream !== '' ? $student->stream : '—' }}</span>
+            <span>Total {{ $student->displayTotal ?? '—' }}</span>
+            <span data-testid="marks-phone-position">{{ $student->placeLabel($streamFiltered) }}</span>
+        </article>
+    @endforeach
 </div>

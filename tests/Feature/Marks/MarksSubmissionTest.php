@@ -6,6 +6,7 @@ use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\Academics\Exam;
 use App\Models\Academics\ExamMarksSubmission;
+use App\Models\Academics\Marks;
 use App\Models\School;
 use App\Models\Section;
 use App\Models\Standard;
@@ -117,6 +118,8 @@ class MarksSubmissionTest extends TestCase
 
     public function test_owner_submit_writes_a_row_and_leaves_exam_status(): void
     {
+        $this->savedMark();
+
         $response = $this->actingAs($this->teacherA)
             ->post(route('teacher.exam.marks.submit', $this->examA));
 
@@ -141,7 +144,7 @@ class MarksSubmissionTest extends TestCase
     {
         $this->actingAs($this->teacherA)
             ->post(route('teacher.exam.marks.save', $this->examA), ['marks' => []])
-            ->assertRedirect(route('teacher.exam.marks'));
+            ->assertRedirect(route('teacher.exam.marks.enter', $this->examA));
 
         $this->assertDatabaseHas('exams', [
             'id' => $this->examA->id,
@@ -177,6 +180,7 @@ class MarksSubmissionTest extends TestCase
 
     public function test_admin_queue_lists_the_submission_and_hides_another_school(): void
     {
+        $this->savedMark();
         $this->actingAs($this->teacherA)
             ->post(route('teacher.exam.marks.submit', $this->examA))
             ->assertRedirect();
@@ -241,6 +245,15 @@ class MarksSubmissionTest extends TestCase
 
     public function test_enter_marks_page_has_a_separate_submit_control(): void
     {
+        $empty = $this->actingAs($this->teacherA)
+            ->get(route('teacher.exam.marks.enter', $this->examA))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringNotContainsString('data-testid="marks-submit-button"', $empty);
+
+        $this->savedMark();
+
         $html = $this->actingAs($this->teacherA)
             ->get(route('teacher.exam.marks.enter', $this->examA))
             ->assertOk()
@@ -252,5 +265,28 @@ class MarksSubmissionTest extends TestCase
             '/<form[^>]*marks\/save[\s\S]*marks-submit-button/',
             $html
         );
+    }
+
+    public function test_submit_with_nothing_saved_does_not_write_a_row(): void
+    {
+        $this->actingAs($this->teacherA)
+            ->post(route('teacher.exam.marks.submit', $this->examA))
+            ->assertRedirect(route('teacher.exam.marks.enter', $this->examA));
+
+        $this->assertDatabaseCount('exam_marks_submissions', 0);
+    }
+
+    private function savedMark(): void
+    {
+        Marks::create([
+            'student_id' => $this->teacherA->id,
+            'subject_id' => $this->subjectA->id,
+            'section_id' => $this->sectionA->id,
+            'exam_id' => $this->examA->id,
+            'teacher_id' => $this->teacherA->id,
+            'school_id' => $this->schoolA->id,
+            'marks' => 70,
+            'grade' => 'C',
+        ]);
     }
 }

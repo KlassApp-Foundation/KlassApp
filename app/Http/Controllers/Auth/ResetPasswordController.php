@@ -7,6 +7,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Services\EmailVerificationGate;
+use App\Services\TeacherAccountInviteService;
+use App\Support\PendingPassword;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Foundation\Auth\ResetsPasswords;
 use Illuminate\Http\JsonResponse;
@@ -31,10 +33,12 @@ class ResetPasswordController extends Controller
 
     /**
      * Where to redirect users after resetting their password.
-     *
-     * @var string
+     * /home is not a registered route; send each role to its own dashboard.
      */
-    protected $redirectTo = '/home';
+    public function redirectTo(): string
+    {
+        return \App\Helpers\AuthRedirectHelper::dashboardPathForUser($this->guard()->user());
+    }
 
     /**
      * Set by resetPassword() when the user's email is not verified, so the
@@ -42,6 +46,8 @@ class ResetPasswordController extends Controller
      * autologin.
      */
     private bool $pendingVerificationAfterReset = false;
+
+    private bool $refusedUnsetPassword = false;
 
     /**
      * Create a new controller instance.
@@ -77,9 +83,20 @@ class ResetPasswordController extends Controller
      */
     protected function resetPassword($user, $password)
     {
+        if (PendingPassword::isUnset($user)) {
+            $this->refusedUnsetPassword = true;
+            if ((int) $user->usergroup_id === 5) {
+                app(TeacherAccountInviteService::class)->inviteIfNeeded($user, null);
+            }
+
+            return;
+        }
+
         $this->setUserPassword($user, $password);
 
         $user->setRememberToken(Str::random(60));
+        // The reset is the password change imported accounts were waiting for.
+        $user->is_reset = 0;
 
         $user->save();
 
@@ -99,7 +116,18 @@ class ResetPasswordController extends Controller
     protected function sendResetResponse(Request $request, $response)
     {
         if ($request->wantsJson()) {
+            if ($this->refusedUnsetPassword) {
+                return new JsonResponse([
+                    'message' => 'This account has not finished setup. Use the link in your email to set a password.',
+                ], 422);
+            }
+
             return new JsonResponse(['message' => trans($response)], 200);
+        }
+
+        if ($this->refusedUnsetPassword) {
+            return redirect()->route('password.email')
+                ->withErrors(['email' => 'This account has not finished setup. Use the link in your email to set a password.']);
         }
 
         if ($this->pendingVerificationAfterReset) {

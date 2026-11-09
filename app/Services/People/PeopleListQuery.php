@@ -7,9 +7,12 @@ use App\Models\ActivityLog;
 use App\Models\StandardLink;
 use App\Models\StudentParentLink;
 use App\Models\TeacherInvite;
+use App\Services\ClassStructureService;
+use App\Services\TeacherAccountInviteService;
 use App\Models\Teacherlink;
 use App\Models\User;
 use App\Models\WhatsAppUser;
+use App\Support\ClassListOrder;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -69,22 +72,29 @@ class PeopleListQuery
                     ['text' => $student->status === 'active' ? 'Active' : 'Inactive', 'badge' => $student->status === 'active' ? 'ok' : 'off'],
                 ],
                 'menu' => [
-                    ['label' => 'View profile', 'href' => url('/admin/student/show/'.$student->name)],
-                    ['label' => 'Edit', 'href' => url('/admin/student/edit/'.$student->name)],
-                    ['label' => 'Move to class', 'href' => url('/admin/student/edit/'.$student->name)],
+                    ['label' => 'Open profile', 'href' => url('/admin/students/'.$student->id)],
+                    ['label' => 'Record marks', 'href' => url('/admin/students/'.$student->id).'?action=marks'],
+                    ['label' => 'Record attendance', 'href' => (int) ($student->class_link_id ?? 0) > 0
+                        ? route('admin.attendance.register', ['standardLink_id' => (int) $student->class_link_id])
+                        : url('/admin/students/'.$student->id).'?action=attendance'],
+                    ['label' => 'Record a payment', 'href' => url('/admin/students/'.$student->id).'?action=pay'],
                     ['label' => 'Message parent', 'href' => $parent ? url('/admin/parent/show/'.$parent['slug']) : url('/admin/parents')],
                 ],
             ];
         }
 
         $counts = $this->studentCounts($schoolId);
-        $selectedClass = $standardId ? $this->classOptionLabel($schoolId, $standardId) : null;
+        $selected = $standardId
+            ? StandardLink::query()->with('section')->where('school_id', $schoolId)->find($standardId)
+            : null;
+        $selectedClass = $selected ? $this->baseClassLabel($selected) : null;
+        $streamPicker = $selected ? $this->streamPicker($selected, $search, $request) : null;
 
         return $this->envelope('students', 'Students', $admin, $search, $chip, $paginator, $rows, $counts['all'], [
             'placeholder' => 'Search name or KLS number',
             'add_label' => 'Add student',
             'add_url' => url('/admin/student/add'),
-            'import_url' => url('/admin/import'),
+            'import_url' => url('/admin/students/import'),
             'empty_copy' => 'Add students one by one, or import a spreadsheet with names and classes.',
             'columns' => ['KLS number', 'Class', 'Parent or guardian', 'Status'],
             'bulk' => [
@@ -99,6 +109,8 @@ class PeopleListQuery
                 $this->chip('noparent', 'No parent', $counts['noparent'], $chip, $request, '/admin/students'),
             ],
             'standard' => $standardId,
+            'stream' => $streamPicker['current'] ?? null,
+            'stream_picker' => $streamPicker,
         ]);
     }
 
@@ -142,7 +154,8 @@ class PeopleListQuery
         $rows = [];
         foreach ($paginator as $teacher) {
             $email = strtolower((string) $teacher->email);
-            $invite = $this->inviteLabel($teacher, isset($pendingEmails[$email]));
+            $accountInvites = app(TeacherAccountInviteService::class);
+            $invite = $this->inviteLabel($teacher, isset($pendingEmails[$email]), $accountInvites);
             $teaches = $subjects[$teacher->id] ?? [];
             $classes = $classOf[$teacher->id] ?? [];
             $role = $this->teacherRole($teacher);
@@ -162,12 +175,14 @@ class PeopleListQuery
                     ['text' => $invite, 'badge' => $invite === 'Joined' ? 'ok' : ($invite === 'Invited' ? 'info' : 'warn')],
                     ['text' => $teacher->status === 'active' ? 'Active' : 'Inactive', 'badge' => $teacher->status === 'active' ? 'ok' : 'off'],
                 ],
-                'menu' => [
+                'menu' => array_values(array_filter([
                     ['label' => 'View profile', 'href' => url('/admin/teacher/show/'.$teacher->name)],
                     ['label' => 'Edit', 'href' => url('/admin/teacher/edit/'.$teacher->name)],
-                    ['label' => 'Send invite', 'href' => url('/admin/teacher/edit/'.$teacher->name)],
+                    $accountInvites->canResend($teacher)
+                        ? ['label' => 'Resend setup link', 'href' => url('/admin/teacher/show/'.$teacher->name).'?resend=1']
+                        : null,
                     ['label' => 'Assign classes', 'href' => url('/admin/teacher/show/classes/'.$teacher->name)],
-                ],
+                ])),
             ];
         }
 
@@ -266,7 +281,7 @@ class PeopleListQuery
             'placeholder' => 'Search name or phone',
             'add_label' => 'Add parent',
             'add_url' => url('/admin/parent/add'),
-            'import_url' => url('/admin/import'),
+            'import_url' => url('/admin/import/parents'),
             'empty_copy' => 'Parents are added with their children, or you can add them here and link them.',
             'columns' => ['Children', 'Phone', 'WhatsApp', 'Last login'],
             'bulk' => [
@@ -365,7 +380,7 @@ class PeopleListQuery
     private function studentExportHref(Request $request): string
     {
         $params = ['list' => '1'];
-        foreach (['search', 'chip', 'standard', 'status'] as $key) {
+        foreach (['search', 'chip', 'standard', 'stream', 'status'] as $key) {
             $value = trim((string) $request->input($key, ''));
             if ($value !== '') {
                 $params[$key] = $value;
@@ -375,14 +390,100 @@ class PeopleListQuery
         return url('/admin/student/export').'?'.http_build_query($params);
     }
 
-    private function applyClassAndStream(Builder $query, StandardLink $link): void
+    /**
+     * The class is every standards_link whose section resolves to the same
+     * base, using ClassStructureService::resolveBaseSection. A stream query,
+     * or a link that is itself one stream, keeps that stream only.
+     */
+    private function applyClassAndStream(Builder $query, StandardLink $link, Request $request): void
     {
-        $query->where('standards_link.standard_id', $link->standard_id)
-            ->where('standards_link.section_id', $link->section_id);
-        $stream = trim((string) $link->stream);
-        if ($stream !== '') {
-            $query->where('standards_link.stream', $stream);
+        $query->whereIn('latest_sa.standardLink_id', $this->classFilterLinkIds($link, $request));
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function classFilterLinkIds(StandardLink $link, ?Request $request = null): array
+    {
+        $link->loadMissing('section');
+        $classLinks = $this->linksForBase($link);
+        $ids = $classLinks->pluck('id')->map(fn ($id) => (int) $id)->all();
+        if ($ids === []) {
+            return [(int) $link->id];
         }
+
+        $streamId = $request ? $this->sameSchoolStandardId((int) $link->school_id, $request->input('stream')) : null;
+        if ($streamId && in_array($streamId, $ids, true)) {
+            return [$streamId];
+        }
+
+        $base = $this->baseSection($link);
+        if ($base && (int) $link->section_id !== (int) $base->id) {
+            return [(int) $link->id];
+        }
+
+        return $ids;
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection<int, StandardLink>
+     */
+    private function linksForBase(StandardLink $link)
+    {
+        $base = $this->baseSection($link);
+        if (! $base) {
+            return collect([$link]);
+        }
+
+        $structure = app(ClassStructureService::class);
+
+        return StandardLink::query()
+            ->with('section')
+            ->where('school_id', $link->school_id)
+            ->where('academic_year_id', $link->academic_year_id)
+            ->where(function ($status): void {
+                $status->where('status', 1)->orWhere('status', '1');
+            })
+            ->get()
+            ->filter(function (StandardLink $candidate) use ($structure, $base) {
+                if (! $candidate->section || (int) $candidate->section->school_id !== (int) $base->school_id) {
+                    return false;
+                }
+                $resolved = $structure->resolveBaseSection($candidate->section);
+
+                return (int) $resolved->id === (int) $base->id
+                    && (int) $resolved->school_id === (int) $base->school_id;
+            })
+            ->values();
+    }
+
+    private function baseSection(StandardLink $link): ?\App\Models\Section
+    {
+        $link->loadMissing('section');
+        $section = $link->section;
+        if (! $section || (int) $section->school_id !== (int) $link->school_id) {
+            return null;
+        }
+        $base = app(ClassStructureService::class)->resolveBaseSection($section);
+
+        return (int) $base->school_id === (int) $section->school_id ? $base : $section;
+    }
+
+    private function streamChoiceLabel(StandardLink $link): string
+    {
+        $stored = trim((string) ($link->stream ?? ''));
+        if ($stored !== '') {
+            return $stored;
+        }
+        $base = $this->baseSection($link);
+        $name = trim((string) ($link->section?->name ?? ''));
+        $baseName = trim((string) ($base?->name ?? ''));
+        $prefix = $baseName.' ';
+        if ($base && $name !== '' && $baseName !== '' && str_starts_with($name, $prefix)) {
+            return trim(substr($name, strlen($prefix)));
+        }
+
+        return '';
     }
 
     private function studentQuery(int $schoolId): Builder
@@ -506,14 +607,14 @@ class PeopleListQuery
         if ($chip === 'noclass' || $request->input('standard') === 'none') {
             $query->whereNull('latest_sa.standardLink_id');
         } elseif ($chip === 'class' && $standardId) {
-            $link = StandardLink::query()->where('school_id', $schoolId)->find($standardId);
+            $link = StandardLink::query()->with('section')->where('school_id', $schoolId)->find($standardId);
             if ($link) {
-                $this->applyClassAndStream($query, $link);
+                $this->applyClassAndStream($query, $link, $request);
             }
         } elseif ($standardId && $request->filled('standard') && $request->input('standard') !== 'none') {
-            $link = StandardLink::query()->where('school_id', $schoolId)->find($standardId);
+            $link = StandardLink::query()->with('section')->where('school_id', $schoolId)->find($standardId);
             if ($link) {
-                $this->applyClassAndStream($query, $link);
+                $this->applyClassAndStream($query, $link, $request);
             }
         }
 
@@ -670,6 +771,7 @@ class PeopleListQuery
     {
         return TeacherInvite::query()
             ->where('school_id', $schoolId)
+            ->whereIn('role', ['class_teacher', 'teacher'])
             ->whereNull('claimed_at')
             ->where('expires_at', '>', now())
             ->selectRaw('lower(email)');
@@ -744,6 +846,7 @@ class PeopleListQuery
 
         return TeacherInvite::query()
             ->where('school_id', $schoolId)
+            ->whereIn('role', ['class_teacher', 'teacher'])
             ->whereNull('claimed_at')
             ->where('expires_at', '>', now())
             ->get()
@@ -752,9 +855,12 @@ class PeopleListQuery
             ->all();
     }
 
-    private function inviteLabel(User $teacher, bool $pending): string
+    private function inviteLabel(User $teacher, bool $pending, TeacherAccountInviteService $invites): string
     {
-        if ((int) $teacher->email_verified === 1) {
+        if (! $invites->emailIsUsable($teacher->email)) {
+            return 'No email yet';
+        }
+        if ($invites->hasSignedIn($teacher)) {
             return 'Joined';
         }
         if ($pending) {
@@ -900,17 +1006,85 @@ class PeopleListQuery
             return [];
         }
 
-        return StandardLink::query()
-            ->with(['section', 'standard'])
-            ->where('school_id', $schoolId)
-            ->where('academic_year_id', $yearId)
-            ->orderBy('id')
-            ->get()
-            ->map(fn (StandardLink $link) => [
-                'id' => $link->id,
-                'label' => $this->classLabel($link->section->name ?? null, $link->stream) ?? 'Class',
-            ])
-            ->all();
+        $links = ClassListOrder::orderLinks(
+            StandardLink::query()
+                ->with(['section', 'standard'])
+                ->where('standards_link.school_id', $schoolId)
+                ->where('standards_link.academic_year_id', $yearId)
+                ->where(function ($status): void {
+                    $status->where('standards_link.status', 1)
+                        ->orWhere('standards_link.status', '1');
+                })
+        )->get();
+
+        $options = [];
+        $seen = [];
+        foreach ($links as $link) {
+            $base = $this->baseSection($link);
+            if (! $base || isset($seen[$base->id])) {
+                continue;
+            }
+            $seen[$base->id] = true;
+            $representative = $links->first(
+                fn (StandardLink $candidate) => (int) $candidate->section_id === (int) $base->id
+            ) ?? $link;
+            $options[] = [
+                'id' => (int) $representative->id,
+                'label' => $this->titleLabel((string) $base->name),
+            ];
+        }
+
+        return $options;
+    }
+
+    /**
+     * @return array{current: ?int, options: list<array{label: string, href: string, pressed: bool}>}|null
+     */
+    private function streamPicker(StandardLink $link, string $search, Request $request): ?array
+    {
+        $streams = $this->linksForBase($link)
+            ->filter(fn (StandardLink $candidate) => $this->streamChoiceLabel($candidate) !== '')
+            ->sortBy(fn (StandardLink $candidate) => $this->streamChoiceLabel($candidate))
+            ->values();
+        if ($streams->count() < 2) {
+            return null;
+        }
+
+        $ids = $this->classFilterLinkIds($link, $request);
+        $current = count($ids) === 1 && $streams->contains(fn (StandardLink $candidate) => (int) $candidate->id === $ids[0])
+            ? $ids[0]
+            : null;
+        $base = $this->baseSection($link);
+        $baseLink = $this->linksForBase($link)->first(
+            fn (StandardLink $candidate) => $base && (int) $candidate->section_id === (int) $base->id
+        ) ?? $link;
+        $baseParams = ['chip' => 'class', 'standard' => $baseLink->id];
+        if ($search !== '') {
+            $baseParams['search'] = $search;
+        }
+        $options = [[
+            'label' => 'Whole class',
+            'href' => url('/admin/students').'?'.http_build_query($baseParams),
+            'pressed' => $current === null,
+        ]];
+        foreach ($streams as $candidate) {
+            $params = $baseParams;
+            $params['stream'] = $candidate->id;
+            $options[] = [
+                'label' => $this->streamChoiceLabel($candidate),
+                'href' => url('/admin/students').'?'.http_build_query($params),
+                'pressed' => $current === (int) $candidate->id,
+            ];
+        }
+
+        return ['current' => $current, 'options' => $options];
+    }
+
+    private function baseClassLabel(StandardLink $link): ?string
+    {
+        $base = $this->baseSection($link);
+
+        return $base ? $this->titleLabel((string) $base->name) : $this->classLabel($link->section->name ?? null, $link->stream);
     }
 
     private function classOptionLabel(int $schoolId, int $standardId): ?string

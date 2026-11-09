@@ -7,6 +7,7 @@ use App\Contracts\Results\GradingScale;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\Academics\Exam;
+use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\Marks;
 use App\Models\Academics\SchoolGradingSystem;
 use App\Models\School;
@@ -427,6 +428,150 @@ class ResultsServiceTest extends TestCase
             fn ($sitting) => $sitting->contributesToReport
         ));
         $this->assertSame(['MID'], array_map(fn ($sitting) => $sitting->code, $contributing));
+    }
+
+    public function test_a_promoted_learner_stays_on_the_sitting_they_sat(): void
+    {
+        $ctx = $this->school();
+        $west = $this->stream($ctx, 'West');
+        $term = $this->term($ctx);
+        $this->bands($ctx, [
+            ['grade' => 'C3', 'points' => 3, 'min' => 0, 'max' => 100],
+        ]);
+        $english = $this->exam($ctx, $term, $ctx['english'], '2026-04-01');
+        $ada = $this->student($ctx, 'Ada East');
+        $bea = $this->student($ctx, 'Bea East');
+        $this->mark($ctx, $english, $ctx['english'], $ada, 80, 'stored');
+        $this->mark($ctx, $english, $ctx['english'], $bea, 70, 'stored');
+
+        $nextYear = AcademicYear::create([
+            'school_id' => $ctx['school']->id,
+            'name' => '2027',
+            'description' => 'Next year',
+            'start_date' => '2027-01-01',
+            'end_date' => '2027-12-31',
+            'status' => 0,
+        ]);
+        $nextSection = Section::create([
+            'school_id' => $ctx['school']->id,
+            'name' => 'P.5',
+            'status' => 1,
+        ]);
+        $nextLink = StandardLink::create([
+            'school_id' => $ctx['school']->id,
+            'academic_year_id' => $nextYear->id,
+            'standard_id' => $ctx['standard']->id,
+            'section_id' => $nextSection->id,
+            'class_teacher_id' => $ctx['teacher']->id,
+            'stream' => 'North',
+            'status' => 1,
+        ]);
+        StudentAcademic::query()->where('user_id', $ada->id)->update([
+            'standardLink_id' => $nextLink->id,
+            'academic_year_id' => $nextYear->id,
+        ]);
+
+        $other = $this->school('Outside School');
+        $outsider = $this->student($other, 'Outsider Learner');
+        Marks::create([
+            'student_id' => $outsider->id,
+            'exam_id' => $english->id,
+            'school_id' => $ctx['school']->id,
+            'subject_id' => $ctx['english']->id,
+            'teacher_id' => $ctx['teacher']->id,
+            'section_id' => $ctx['section']->id,
+            'marks' => 99,
+            'grade' => 'stored',
+        ]);
+
+        $sheet = $this->sheet($ctx, $term, examTypeId: 2);
+        $row = $sheet->student($ada->id);
+        $this->assertNotNull($row);
+        $this->assertSame(80.0, $row->total);
+        $this->assertSame('', $row->stream);
+        $this->assertSame(0, $row->standardLinkId);
+        $this->assertSame('C3', $row->cell($ctx['english']->id)->grade);
+        $this->assertNotNull($sheet->student($bea->id));
+        $this->assertSame('East', $sheet->student($bea->id)->stream);
+        $this->assertNull($sheet->student($outsider->id));
+        $this->assertSame(1, $row->classPosition);
+        $this->assertSame(2, $row->classOutOf);
+
+        $westOnly = $this->sheet($ctx, $term, linkId: $west->id, examTypeId: 2);
+        $this->assertNull($westOnly->student($ada->id));
+
+        $solo = $this->school('Solo Stream School');
+        $soloTerm = $this->term($solo);
+        $this->bands($solo, [
+            ['grade' => 'C3', 'points' => 3, 'min' => 0, 'max' => 100],
+        ]);
+        $soloExam = $this->exam($solo, $soloTerm, $solo['english'], '2026-04-01');
+        $moved = $this->student($solo, 'Moved Learner');
+        $this->mark($solo, $soloExam, $solo['english'], $moved, 60, 'stored');
+        $later = AcademicYear::create([
+            'school_id' => $solo['school']->id,
+            'name' => '2027',
+            'description' => 'Later year',
+            'start_date' => '2027-01-01',
+            'end_date' => '2027-12-31',
+            'status' => 0,
+        ]);
+        $laterSection = Section::create([
+            'school_id' => $solo['school']->id,
+            'name' => 'P.6',
+            'status' => 1,
+        ]);
+        $laterLink = StandardLink::create([
+            'school_id' => $solo['school']->id,
+            'academic_year_id' => $later->id,
+            'standard_id' => $solo['standard']->id,
+            'section_id' => $laterSection->id,
+            'stream' => 'South',
+            'status' => 1,
+        ]);
+        StudentAcademic::query()->where('user_id', $moved->id)->update([
+            'standardLink_id' => $laterLink->id,
+            'academic_year_id' => $later->id,
+        ]);
+
+        $soloSheet = $this->sheet($solo, $soloTerm, examTypeId: 2);
+        $soloRow = $soloSheet->student($moved->id);
+        $this->assertNotNull($soloRow);
+        $this->assertSame('East', $soloRow->stream);
+        $this->assertSame($solo['link']->id, $soloRow->standardLinkId);
+        $this->assertSame('1 of 1', $soloRow->placeLabel(false));
+    }
+
+    public function test_subject_rows_carry_the_submission_label(): void
+    {
+        $ctx = $this->school();
+        $term = $this->term($ctx);
+        $this->bands($ctx, [
+            ['grade' => 'C3', 'points' => 3, 'min' => 0, 'max' => 100],
+        ]);
+        $english = $this->exam($ctx, $term, $ctx['english'], '2026-04-01');
+        $maths = $this->exam($ctx, $term, $ctx['maths'], '2026-04-02');
+        $ada = $this->student($ctx, 'Ada Label');
+        $this->mark($ctx, $english, $ctx['english'], $ada, 80, 'stored');
+        ExamMarksSubmission::create([
+            'school_id' => $ctx['school']->id,
+            'exam_id' => $english->id,
+            'class_id' => $ctx['section']->id,
+            'subject_id' => $ctx['english']->id,
+            'teacher_id' => $ctx['teacher']->id,
+            'status' => 'submitted',
+            'approval_status' => 'pending',
+        ]);
+
+        $sheet = $this->sheet($ctx, $term, examTypeId: 2);
+        $byId = [];
+        foreach ($sheet->subjects as $subject) {
+            $byId[$subject['id']] = $subject['submission'];
+        }
+
+        $this->assertSame('Submitted', $byId[$ctx['english']->id]);
+        $this->assertSame('Not started', $byId[$ctx['maths']->id]);
+        $this->assertSame('East', $sheet->student($ada->id)->stream);
     }
 
     /**

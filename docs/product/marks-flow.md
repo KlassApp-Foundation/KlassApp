@@ -112,6 +112,10 @@ Approved by the product owner on 2026-10-25. These replace the open questions.
 10. **Division and rank.** Division thresholds and ranking stay as they are until a grading package exists.
 11. **Entry form.** The entry form shows marks already saved.
 12. **Return reason.** A returned subject shows the reason on the teacher's entry page. That reason is visible only to that teacher and to school admins.
+13. **Report composition.** Each exam type has a "show on report cards" switch and an optional weight on the exam-type settings page. A type switched off does not appear as a column on a report card and does not appear as a sitting on a whole-term sheet, but the totals still follow the contributes-to-total flags. When two or more contributing types carry weights, the term mark for a subject is the weighted mean of the marks the learner has; otherwise the latest mark wins. Weights only merge on a whole-term view, never inside one sitting.
+14. **Curriculum profile.** Each school picks a curriculum profile on the exam-type settings page. The profile decides which grading bands the school's own scale is seeded with: the current UNEB bands, or the legacy O-level scale kept for schools that still use it. Applying a profile re-seeds the school's scale. The current UNEB bands and the A-level bands live in one config file so a later grading package can take them over.
+
+    **The legacy O-level scale belongs to the school.** UNEB never published its pre-NLSC cut-offs as one fixed national table, so there is nothing to copy faithfully: the school owns the boundaries and edits them on the exam-type settings page. The D1–F9 letters and their 1–9 points are fixed; only the marks move. The table in `config/grading_uganda.php` (`o-level-legacy`) is a labelled example shown until the school saves its own, not a national standard and not a claim about what UNEB used.
 
 ## Phased build
 
@@ -119,7 +123,7 @@ Each phase is one pull request. It starts after the UI audit, and after a separa
 
 | Phase | What lands | Depends on |
 |---|---|---|
-| 1 | Class teacher assignment on the admin dashboard: pick an existing teacher, invite a new one, or replace the current one. Confirmation and a log entry on each. One assignment service for the dashboard, the wizard, Toshi, and the invite form. The control is on `/admin/classes`, including replacing a teacher who is already set. The dead Edit link, the hidden invite, and the Primary One dropdown go away, or they call that same service. Class setup is not a second unlisted door. | UI audit, then approval of this phase |
+| 1 | Class teacher assignment on the admin dashboard: pick an existing teacher, invite a new one, or replace the current one. Confirmation and a log entry on each. One assignment service for the dashboard, the wizard, Toshi, and the invite form. The control is on `/admin/classes`, including replacing a teacher who is already set. `/admin/sections` and `/admin/class-setup` redirect there. The class page links the invite and the stream form. Class names come from the school's own sections. The invite link is hashed, single-use, and expires in 72 hours. The flow is in [`class-teacher-flow.md`](class-teacher-flow.md). | UI audit, then approval of this phase |
 | 2 | The entry form shows saved marks and stays on the page after save. Submit for review is absent until there is something to submit. Upcoming exams either counts those exams or is renamed. File import and Toshi entry, including a class teacher, write through `ExamMarkWriter`. Nursery ratings stay on the ratings form. | 1 |
 | 3 | `MarksSubmissionService` takes approve, return with a reason, lock, and reopen. Lock, Return, and Approve each post their own form. The word on the return is Return, and that reason is on the teacher's entry page. The view does not say Unmarked work after a submit. The queue and the exam list use the submission row, and the queue stops reading `exams.status`. The heading names the class, not the level band. | 2 |
 | 4 | The admin marks page is one sitting for the whole class, with a stream column and a stream filter, from `ResultsService`. Exams and marks opens that sheet. A streamed class (P.7 A/B, S.1 East/West) uses that column and filter. The teacher's Combined Marksheet opens the same sheet. Remove the filter action that renders without its variables, the PDF that uses the old year lookup, and the second total in the view. | 3 |
@@ -128,7 +132,180 @@ Each phase is one pull request. It starts after the UI audit, and after a separa
 
 Later, and not a phase here: a whole-term sheet, Google Sheets through the connectors work, and a grading package for division thresholds and ranking.
 
+### Phase 1 flow
+
+The build notes, the confirmation rule, and the invite rules are in [`class-teacher-flow.md`](class-teacher-flow.md).
+
+```mermaid
+flowchart TD
+  page["Admin opens /admin/classes"]
+  choice{"Pick, invite, or replace"}
+  confirm["Confirms the change"]
+  service["ClassTeacherAssignmentService"]
+  existing["Existing teacher: both class-teacher columns, email notice, log"]
+  invite["New teacher: hashed 72-hour link by email"]
+  revoke["Pending invite for that class is revoked"]
+  claim["Teacher sets a password once"]
+
+  page --> choice
+  choice --> confirm
+  confirm --> service
+  service -->|existing teacher| existing
+  service -->|new email| revoke
+  revoke --> invite
+  invite --> claim
+  service -->|replace| revoke
+  existing --> revoke
+```
+
+### Phase 2 flow
+
+The entry form loads marks already saved for this exam, this subject, and this school, and puts each one in that learner's box. A validation error keeps what the person just typed. Save stays on this page. Submit for review is absent until a numeric mark is saved, or until a nursery rating is saved. Nursery ratings stay on the ratings form and do not go through `ExamMarkWriter`.
+
+Every numeric entry path writes one row through `ExamMarkWriter`: the entry form, the single-mark edit, the teacher spreadsheet import, the admin spreadsheet import (the same service), and Toshi for a subject teacher, a class teacher, or a school admin. The writer checks the school, the learner, and whether this subject is open. A submitted, approved, or locked subject stays closed until a school admin returns or reopens it. It stores the letter. It does not change the exam status and it does not message parents. The import still parses and previews the file, then calls the writer, and it still moves an undone exam to done. A class teacher may enter a mark in Toshi when `ExamAuthorization` already allows that person on the form.
+
+The Upcoming Exams tile counts the open exams this person can mark (`undone` or `done` for their exams or their class). It still links to the marks list. There is no second writer for a teacher who marks more than one class: each exam on that list uses the same form and the same writer.
+
+```mermaid
+flowchart TD
+  open["Open the entry form"]
+  load["Load saved marks for this exam, subject, and school"]
+  boxes["Show each saved mark in the learner's box"]
+  save["Save"]
+  writer["ExamMarkWriter"]
+  stay["Stay on the form with the saved marks"]
+  submit{"Anything saved?"}
+  review["Submit for review"]
+  import["Spreadsheet import, teacher or admin"]
+  toshi["Toshi: subject teacher, class teacher, or admin"]
+  nursery["Nursery ratings form"]
+
+  open --> load --> boxes
+  boxes --> save --> writer --> stay
+  stay --> submit
+  submit -->|yes| review
+  import --> writer
+  toshi --> writer
+  nursery --> stay
+```
+
+### Phase 3 flow
+
+`MarksSubmissionService` owns one class, one subject, and one sitting. `exams.status` is not this workflow. Submit, approve, return, lock, and reopen all go through the service. Each one checks the school, checks that a school admin is reviewing (or that `ExamAuthorization` already allowed the teacher to submit), and writes a log with the actor and the time.
+
+Submit refuses an empty subject. It is allowed when there is no row, and again after a return or a reopen. It sets the row to submitted and the approval to pending. It does not change `exams.status`. School admins get an in-app notice.
+
+Approve is a school admin action on a submitted or locked row that is still pending. It does not wait for a lock. The approved state is what a later release reads. The release screen still has an admin override until phase 6.
+
+Return is a school admin action on a submitted, locked, or approved row. The reason is required, from 10 to 500 characters. The stored values are `reopened` and `rejected`, because those are the existing status values. The screen says Returned. The reason is on the entry page for the exam's teacher and for a school admin of that school.
+
+Lock is a school admin action on a draft, submitted, or reopened row that is not already approved. An approved row is not locked again. A passed deadline uses the same lock.
+
+Reopen is a school admin action on a locked or approved row. It records who and why, sets the row to reopened, and sets approval back to pending. The marks can be edited, and a release waits for a new approval.
+
+`ExamMarkWriter` refuses a save while the row is submitted, approved, or locked, including a legacy exam whose `exams.status` is submitted and whose submission row is not open. A return or a reopen is what opens the marks. A correction reason does not.
+
+Notices use the in-app bell. They do not send WhatsApp.
+
+On the review page, Lock, Return, and Approve each post their own form. Approve is on a submitted row. An approved row does not offer Lock. The heading names the class (the section), not the level band. The queue lists submitted or locked rows that are still pending. Both exam lists show the same label: Not started, Submitted, Returned, Approved, Locked, or Reopened.
+
+```mermaid
+stateDiagram-v2
+  [*] --> NotStarted
+  NotStarted --> Submitted: submit, refuses empty
+  Submitted --> Approved: approve
+  Submitted --> Returned: return with reason
+  Submitted --> Locked: lock
+  Locked --> Approved: approve
+  Locked --> Returned: return with reason
+  Locked --> Reopened: reopen, school admin, who and why
+  Approved --> Returned: return with reason
+  Approved --> Reopened: reopen, school admin, who and why
+  Returned --> Submitted: submit
+  Reopened --> Submitted: submit
+  Reopened --> Locked: lock
+```
+
+The writer allows Not started, Returned, and Reopened. The writer refuses Submitted, Approved, and Locked.
+
+### Phase 4 flow
+
+Exams and marks opens one combined sheet. The person chooses a class, a term, and one sitting (one exam type). A whole-term sheet is later. The sheet is the whole class. A class with streams has a stream column and a stream filter. Whole class is the default. A chosen stream narrows the rows.
+
+`ResultsService` is the only place that works out the total, the average, the aggregate, the position, and the "of" count. The page and the download print those fields. A stream filter uses that stream's position and its "of" count. The whole class uses the class position and the class "of" count. The same pool is what a later release reads.
+
+Each subject column shows the Phase 3 submission state for that subject: Not started, Submitted, Returned, Approved, Locked, or Reopened.
+
+The learners are the ones enrolled in that class for the term, plus anyone who has a mark on that sitting. An in-place promotion moves the academic row, so the old class is no longer their current section. The sitting still lists them from the marks. When the class had one stream, that stream stays on the row. When it had more than one, the old stream was not stored, so the stream cell is blank and a stream filter does not include them. They stay on the whole-class sheet.
+
+The teacher's Combined Marksheet opens this same sheet for a class they hold or a class where they have an exam. The download of this sheet is the same `ResultSheet`. The older term workbook download is unchanged.
+
+The old filter action that rendered the page without its variables is no longer the address. The PDF that looked up the year by the description "Current Academic Year" is no longer the download. The grid does not add the marks up a second time.
+
+```mermaid
+flowchart TD
+  menu["Exams and marks"]
+  pick["Choose class, term, and one sitting"]
+  stream{"Stream filter"}
+  service["ResultsService sheet"]
+  roster["Current class plus learners who sat this sitting"]
+  grid["One sheet: stream column, subject state, total, average, position of N"]
+  teacher["Class teacher opens the same sheet"]
+  export["Download uses the same sheet"]
+
+  menu --> pick --> service
+  stream --> service
+  service --> roster --> grid
+  teacher --> service
+  grid --> export
+```
+
 Before a phone can be used for any phase, the menu button and the search button each take their own tap ([#1159](https://github.com/KlassApp-Foundation/KlassApp/pull/1159)).
+
+### Phase 5 flow
+
+The school admin sets the report composition and the curriculum profile on the exam-type settings page. The composition decides which exam types a report card shows and how a whole-term view merges the marks of several sittings. The profile decides which grading bands the school's own scale is seeded with. Report cards and the combined sheet read both settings through the same results service, so a type the school hides disappears everywhere, and the grade letters stay the school's own.
+
+The old (pre-NLSC) O-level scale is edited by the school on the same page. There is no national legacy table to ship: the example is a starting point, the letters and points are fixed, and the school's saved boundaries are what its reports use. A school that never saves its own table keeps working on the example, labelled as one.
+
+```mermaid
+flowchart TD
+  settings["Exam-type settings page"]
+  comp["Show on report cards and weight per exam type"]
+  profile["Curriculum profile: current UNEB bands or legacy O-level bands"]
+  apply["Apply profile: re-seed the school's grading bands"]
+  term["Whole-term sheet"]
+  card["Report card"]
+  merge{"Two or more weighted contributing types?"}
+  weighted["Term mark is the weighted mean"]
+  latest["Term mark is the latest mark"]
+  scale["Grade letters from the school's scale"]
+
+  settings --> comp
+  settings --> profile
+  profile --> apply
+  term --> merge
+  merge -->|yes| weighted
+  merge -->|no| latest
+  weighted --> scale
+  latest --> scale
+  card --> scale
+```
+
+## Phase 6 as built
+
+Decision 3 and the Phase 6 row above are what the code now does. Where the code lives:
+
+- **Who may release.** `SiteHelper::teachersMayReleaseMarks()` reads `school_details.teachers_may_release_marks`. A missing row is on. A stored value is on only when it is `'1'`. The Maintenance checkbox shows that effective value, so saving the page without turning the switch off keeps it on. `MarksReleaseService::links()` is the single list both the screens and the service read: a school admin gets every class in the current year, and a class teacher gets their own class unless the school has saved an off. A class head is `sections.class_teacher_id` and can release every stream of that class. A teacher named only on a stream (`standards_link.class_teacher_id`) can release that stream. The switch is on the Maintenance settings page.
+- **Approval.** `MarksReleaseService::requireApproval($user, $anchor, $link)` takes no reason and returns nothing. `create()` no longer accepts one, the controller does not validate one, and the release screen does not render the box. A posted `override_reason` is ignored.
+- **Past sittings.** `sittingIsPast()` compares the sitting's academic year and term with the school's current year and term (never the other way round), and `requirePastConfirmation()` throws a `confirm_past` validation error. The controller checks every class before writing any release row, and `create()` refuses on its own too. The screen shows the checkbox only for a past sitting. A whole-school release of an older sitting snapshots the students who have marks for that sitting, using that year's classes. It does not use this year's class lists.
+- **Releasing again.** A whole-school release asks for a reason when any class of that sitting was already released. A stream or a class asks only when that stream was already released, or the whole school was. Another stream of the same class does not. A release that failed before it saved or sent anything can be run again with no reason.
+- **The WhatsApp switch.** `marks_releases.whatsapp_send`, false by default. The release screen shows it unticked with the sentence that with it off the release still happens and nothing is sent; the release page shows On or Off.
+- **The template gate.** `App\Services\WhatsApp\TemplateGate` answers from `config/whatsapp.php`, which reads `WHATSAPP_APPROVED_TEMPLATES` and defaults to empty. The app never calls Meta: the list is the record of what Meta approved. `results_released` is not in the default list.
+- **Recipients.** For a real school: an approved `student_parent_links` row and the parent's opted-in `whatsapp_users` number. The current sitting messages students enrolled in the released class. An older sitting messages the students who have marks for that exam, not whoever is in the class now. A link that is not approved, or a parent who opted out, is listed on the release page with its reason instead of being messaged. A pupil in another class never enters the list.
+- **Both delivery paths.** `deliver()` (the queue pass) and `deliverOne()` (the job) check the switch and the template through `realSendBlocker()`, so an approval withdrawn between queueing and sending still sends nothing. A real-school send calls `sendTemplate` with `results_released` (parent, school, student, sitting). It does not send the mark lines as free text.
+- **The demo path is unchanged.** A demo follow-along send is still `sendText`, not a template. For a real school, the per-release switch and the approved `results_released` template are reported first. `WHATSAPP_DEMO_ONLY_RECIPIENTS` is the outer gate after those: while it is on, a real school sends nothing.
+- **The empty MARKS reply.** `WhatsAppController::sendGrades` sends one reply with one line per child. The `results_released` quick reply "See results" is handled the same way as GRADES. Tested in `tests/Feature/Marks/MarksPhase6MarksReplyTest.php`.
 
 ## WhatsApp results templates
 
@@ -136,7 +313,7 @@ Checked in the repo on 2026-10-25. That check found no results-released template
 
 A message the school starts, such as results on release, can leave the 24-hour window only as an approved template. Free-form text is for a reply inside that window. `WhatsAppBusinessService::sendText` says so (`app/Services/WhatsAppBusinessService.php:109`). `sendTemplate` is the call that can leave the window (`WhatsAppBusinessService.php:177`). `isWithinServiceWindow` is true only when `last_inbound_at` is inside the last 24 hours (`WhatsAppBusinessService.php:272`).
 
-The release job does not use a template. `MarksReleaseService::deliverOne` calls `sendText` (`app/Services/MarksRelease/MarksReleaseService.php:636`) and skips every school that is not a demo (`MarksReleaseService.php:609`). That free-form body cannot carry a real-school release once the window is closed.
+A real-school release sends `results_released` through `MarksReleaseService::deliverOne` (`sendTemplate`). `realSendBlocker()` still refuses the send until the per-release switch is on and `results_released` is in the approved-template list, which is empty by default. The demo path still calls `sendText`. The mark lines are not in the template. They stay a reply after the parent taps See results or replies GRADES, which `ReleaseGate` already guards.
 
 The templates defined for submission live in `scripts/submit-whatsapp-message-templates.php`. Language is `services.whatsapp.template_language`, default `en`.
 

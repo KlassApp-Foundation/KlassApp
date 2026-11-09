@@ -2,7 +2,7 @@
 @extends('layouts.app')
 
 @section('base-navigation')
-    @include('layouts.partials.navigation', ['variant' => 'plain', 'notifyMode' => 'alumni', 'showToggle' => false, 'showAcademicYear' => false, 'extraPricing' => true])
+    @include('layouts.partials.navigation', ['notifyMode' => 'alumni', 'showAcademicYear' => false, 'chromeInSidebar' => true])
 @endsection
 
 @section('base-sidebar')

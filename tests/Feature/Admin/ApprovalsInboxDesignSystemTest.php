@@ -50,7 +50,9 @@ class ApprovalsInboxDesignSystemTest extends TestCase
         $response->assertOk();
         $response->assertSee('class="ds-empty-state"', false);
         $response->assertSee('No approval requests yet', false);
-        $response->assertSee('Staff leave, parent-link and marks requests you need to review will appear here.', false);
+        $response->assertSee('Staff leave and parent-link requests you need to review will appear here.', false);
+        $response->assertSee(route('admin.marks.submissions'), false);
+        $response->assertDontSee('marks requests you need to review will appear here', false);
         $response->assertDontSee('No approval requests yet.', false);
     }
 

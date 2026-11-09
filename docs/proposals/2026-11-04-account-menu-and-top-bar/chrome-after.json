@@ -1,0 +1,384 @@
+[
+ {
+  "role": "admin",
+  "w": 1280,
+  "landed": "/admin/dashboard",
+  "sidebarFooter": 1,
+  "topbarAvatar": 0,
+  "topbarCard": 0,
+  "bell": 0,
+  "trigger": [
+   50,
+   756,
+   190,
+   56
+  ],
+  "menu": [
+   "Profile",
+   "Change password",
+   "Settings",
+   "Help",
+   "Log out"
+  ],
+  "menuBox": {
+   "y": 442,
+   "h": 306,
+   "scroll": false
+  },
+  "sw": 1280,
+  "iw": 1280
+ },
+ {
+  "role": "admin",
+  "w": 375,
+  "landed": "/admin/dashboard",
+  "sidebarFooter": 0,
+  "topbarAvatar": 1,
+  "topbarCard": 0,
+  "bell": 0,
+  "trigger": [
+   325,
+   10,
+   44,
+   44
+  ],
+  "menu": [
+   "Profile",
+   "Change password",
+   "Settings",
+   "Help",
+   "Log out"
+  ],
+  "menuBox": {
+   "y": 62,
+   "h": 302,
+   "scroll": false
+  },
+  "sw": 375,
+  "iw": 375
+ },
+ {
+  "role": "teacher",
+  "w": 1280,
+  "landed": "/teacher/dashboard",
+  "sidebarFooter": 1,
+  "topbarAvatar": 0,
+  "topbarCard": 0,
+  "bell": 0,
+  "trigger": [
+   50,
+   756,
+   190,
+   56
+  ],
+  "menu": [
+   "Profile",
+   "Change password",
+   "Log out"
+  ],
+  "menuBox": {
+   "y": 530,
+   "h": 218,
+   "scroll": false
+  },
+  "sw": 1280,
+  "iw": 1280
+ },
+ {
+  "role": "teacher",
+  "w": 375,
+  "landed": "/teacher/dashboard",
+  "sidebarFooter": 0,
+  "topbarAvatar": 1,
+  "topbarCard": 0,
+  "bell": 0,
+  "trigger": [
+   325,
+   10,
+   44,
+   44
+  ],
+  "menu": [
+   "Profile",
+   "Change password",
+   "Log out"
+  ],
+  "menuBox": {
+   "y": 62,
+   "h": 214,
+   "scroll": false
+  },
+  "sw": 375,
+  "iw": 375
+ },
+ {
+  "role": "student",
+  "w": 1280,
+  "landed": "/student/dashboard",
+  "sidebarFooter": 1,
+  "topbarAvatar": 0,
+  "topbarCard": 0,
+  "bell": 0,
+  "trigger": [
+   50,
+   756,
+   190,
+   56
+  ],
+  "menu": [
+   "Profile",
+   "Change password",
+   "Log out"
+  ],
+  "menuBox": {
+   "y": 530,
+   "h": 218,
+   "scroll": false
+  },
+  "sw": 1280,
+  "iw": 1280
+ },
+ {
+  "role": "student",
+  "w": 375,
+  "landed": "/student/dashboard",
+  "sidebarFooter": 0,
+  "topbarAvatar": 1,
+  "topbarCard": 0,
+  "bell": 0,
+  "trigger": [
+   325,
+   10,
+   44,
+   44
+  ],
+  "menu": [
+   "Profile",
+   "Change password",
+   "Log out"
+  ],
+  "menuBox": {
+   "y": 62,
+   "h": 214,
+   "scroll": false
+  },
+  "sw": 375,
+  "iw": 375
+ },
+ {
+  "role": "parent",
+  "w": 1280,
+  "landed": "/parent/dashboard",
+  "sidebarFooter": 1,
+  "topbarAvatar": 0,
+  "topbarCard": 0,
+  "bell": 0,
+  "trigger": [
+   50,
+   756,
+   190,
+   56
+  ],
+  "menu": [
+   "Profile",
+   "Change password",
+   "Log out"
+  ],
+  "menuBox": {
+   "y": 530,
+   "h": 218,
+   "scroll": false
+  },
+  "sw": 1280,
+  "iw": 1280
+ },
+ {
+  "role": "parent",
+  "w": 375,
+  "landed": "/parent/dashboard",
+  "sidebarFooter": 0,
+  "topbarAvatar": 1,
+  "topbarCard": 0,
+  "bell": 0,
+  "trigger": [
+   325,
+   10,
+   44,
+   44
+  ],
+  "menu": [
+   "Profile",
+   "Change password",
+   "Log out"
+  ],
+  "menuBox": {
+   "y": 62,
+   "h": 214,
+   "scroll": false
+  },
+  "sw": 375,
+  "iw": 375
+ },
+ {
+  "role": "library",
+  "w": 1280,
+  "landed": "/library/dashboard",
+  "sidebarFooter": 1,
+  "topbarAvatar": 0,
+  "topbarCard": 0,
+  "bell": 0,
+  "trigger": [
+   50,
+   756,
+   190,
+   56
+  ],
+  "menu": [
+   "Profile",
+   "Change password",
+   "Log out"
+  ],
+  "menuBox": {
+   "y": 530,
+   "h": 218,
+   "scroll": false
+  },
+  "sw": 1280,
+  "iw": 1280
+ },
+ {
+  "role": "library",
+  "w": 375,
+  "landed": "/library/dashboard",
+  "sidebarFooter": 0,
+  "topbarAvatar": 1,
+  "topbarCard": 0,
+  "bell": 0,
+  "trigger": [
+   325,
+   10,
+   44,
+   44
+  ],
+  "menu": [
+   "Profile",
+   "Change password",
+   "Log out"
+  ],
+  "menuBox": {
+   "y": 62,
+   "h": 214,
+   "scroll": false
+  },
+  "sw": 375,
+  "iw": 375
+ },
+ {
+  "role": "reception",
+  "w": 1280,
+  "landed": "/receptionist/dashboard",
+  "sidebarFooter": 1,
+  "topbarAvatar": 0,
+  "topbarCard": 0,
+  "bell": 0,
+  "trigger": [
+   50,
+   756,
+   190,
+   56
+  ],
+  "menu": [
+   "Profile",
+   "Change password",
+   "Log out"
+  ],
+  "menuBox": {
+   "y": 530,
+   "h": 218,
+   "scroll": false
+  },
+  "sw": 1280,
+  "iw": 1280
+ },
+ {
+  "role": "reception",
+  "w": 375,
+  "landed": "/receptionist/dashboard",
+  "sidebarFooter": 0,
+  "topbarAvatar": 1,
+  "topbarCard": 0,
+  "bell": 0,
+  "trigger": [
+   325,
+   10,
+   44,
+   44
+  ],
+  "menu": [
+   "Profile",
+   "Change password",
+   "Log out"
+  ],
+  "menuBox": {
+   "y": 62,
+   "h": 214,
+   "scroll": false
+  },
+  "sw": 375,
+  "iw": 375
+ },
+ {
+  "role": "bursar",
+  "w": 1280,
+  "landed": "/accountant/dashboard",
+  "sidebarFooter": 1,
+  "topbarAvatar": 0,
+  "topbarCard": 0,
+  "bell": 0,
+  "trigger": [
+   50,
+   756,
+   190,
+   56
+  ],
+  "menu": [
+   "Profile",
+   "Change password",
+   "Log out"
+  ],
+  "menuBox": {
+   "y": 530,
+   "h": 218,
+   "scroll": false
+  },
+  "sw": 1280,
+  "iw": 1280
+ },
+ {
+  "role": "bursar",
+  "w": 375,
+  "landed": "/accountant/dashboard",
+  "sidebarFooter": 0,
+  "topbarAvatar": 1,
+  "topbarCard": 0,
+  "bell": 0,
+  "trigger": [
+   325,
+   10,
+   44,
+   44
+  ],
+  "menu": [
+   "Profile",
+   "Change password",
+   "Log out"
+  ],
+  "menuBox": {
+   "y": 62,
+   "h": 214,
+   "scroll": false
+  },
+  "sw": 375,
+  "iw": 375
+ }
+]

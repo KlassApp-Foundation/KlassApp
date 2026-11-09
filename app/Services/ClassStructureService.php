@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Helpers\SiteHelper;
 use App\Models\AcademicYear;
 use App\Models\School;
 use App\Models\Section;
@@ -49,9 +50,98 @@ class ClassStructureService
         return $candidates->sortBy(fn (Section $s) => strlen((string) $s->name))->first();
     }
 
+    /**
+     * Base classes this person heads: the undivided section, not a name-encoded stream.
+     * A head is the class teacher of the base section or of a base standards_link
+     * (no stream label) in the current academic year. One implementation shared by
+     * the attendance register and the class roster page.
+     *
+     * @return list<int>
+     */
+    public function headedBaseIds(int $schoolId, int $userId): array
+    {
+        $structure = $this;
+        $ids = Section::query()
+            ->where('school_id', $schoolId)
+            ->where('class_teacher_id', $userId)
+            ->where(function ($query) {
+                $query->where('status', 1)->orWhere('status', '1');
+            })
+            ->get()
+            ->filter(fn (Section $section) => $structure->isBaseSection($section))
+            ->map(fn (Section $section) => (int) $section->id)
+            ->all();
+
+        $year = SiteHelper::getAcademicYear($schoolId);
+        if ($year) {
+            $fromLinks = StandardLink::query()
+                ->with('section')
+                ->where('school_id', $schoolId)
+                ->where('academic_year_id', $year->id)
+                ->where('class_teacher_id', $userId)
+                ->where(function ($query) {
+                    $query->where('status', 1)->orWhere('status', '1');
+                })
+                ->get();
+            foreach ($fromLinks as $link) {
+                // A stream label on this same section is a stream teacher, not the
+                // head of the class. The reported head link has a null stream and
+                // points at the undivided base section.
+                if ($link->section
+                    && trim((string) ($link->stream ?? '')) === ''
+                    && $structure->isBaseSection($link->section)) {
+                    $ids[] = (int) $link->section_id;
+                }
+            }
+        }
+
+        $ids = array_values(array_unique($ids));
+        sort($ids);
+
+        return $ids;
+    }
+
     public function isBaseSection(Section $section): bool
     {
         return (int) $this->resolveBaseSection($section)->id === (int) $section->id;
+    }
+
+    /**
+     * The base section and every stream section under it, scoped to the school.
+     * A stream is a section whose name is "{base} {label}".
+     *
+     * @return list<int>
+     */
+    public function classSectionIds(Section $section): array
+    {
+        $base = $this->resolveBaseSection($section);
+        if ((int) $base->school_id !== (int) $section->school_id) {
+            return [(int) $section->id];
+        }
+
+        $prefix = trim((string) $base->name).' ';
+        $ids = [(int) $base->id];
+        if ($prefix === ' ') {
+            return $ids;
+        }
+
+        $rows = Section::query()
+            ->where('school_id', $base->school_id)
+            ->where(function ($q) {
+                $q->where('status', 1)->orWhere('status', '1');
+            })
+            ->get(['id', 'name']);
+
+        foreach ($rows as $row) {
+            if ((int) $row->id === (int) $base->id) {
+                continue;
+            }
+            if (str_starts_with((string) $row->name, $prefix)) {
+                $ids[] = (int) $row->id;
+            }
+        }
+
+        return array_values(array_unique($ids));
     }
 
     /**
@@ -137,6 +227,7 @@ class ClassStructureService
             $rows[] = [
                 'section_id' => (int) $entry['base']->id,
                 'standard_link_id' => (int) $baseLink->id,
+                'level_order' => (int) ($baseLink->standard?->order ?? 999999),
                 'name' => trim((string) $entry['base']->name),
                 'class_teacher_id' => $baseLink->class_teacher_id ? (int) $baseLink->class_teacher_id : null,
                 'class_teacher_name' => $teacher?->name,
@@ -145,7 +236,14 @@ class ClassStructureService
             ];
         }
 
-        usort($rows, fn ($a, $b) => strcasecmp($a['name'], $b['name']));
+        usort($rows, function ($a, $b) {
+            $byLevel = ($a['level_order'] ?? 999999) <=> ($b['level_order'] ?? 999999);
+            if ($byLevel !== 0) {
+                return $byLevel;
+            }
+
+            return strcasecmp($a['name'], $b['name']);
+        });
 
         return array_values($rows);
     }
@@ -304,11 +402,11 @@ class ClassStructureService
             ->where('school_id', $school->id)
             ->whereRaw('LOWER(name) = ?', [strtolower($newName)])
             ->where('id', '!=', $section->id)
-            ->exists();
+            ->first();
 
         if ($duplicate) {
             throw ValidationException::withMessages([
-                'name' => "A class named \"{$newName}\" already exists.",
+                'name' => $this->duplicateNameMessage($school, $section, $duplicate, $newName),
             ]);
         }
 
@@ -376,16 +474,13 @@ class ClassStructureService
                 $seen[$key] = true;
             }
             foreach ($this->streamRenames($class) as $from => $to) {
-                if ($this->activeStreamSection($school, $className, $from) === null) {
+                $source = $this->activeStreamSection($school, $className, $from);
+                if ($source === null) {
                     return [$this->streamIssue($className, $from, "doesn't exist.", $row)];
                 }
                 $target = OnboardingEngine::composeClassAndStream($className, $to);
-                $taken = Section::query()
-                    ->where('school_id', $school->id)
-                    ->whereRaw('LOWER(name) = ?', [strtolower($target)])
-                    ->exists();
-                if ($taken) {
-                    return [$this->streamIssue($className, $to, 'is listed more than once.', $row)];
+                if ($this->streamNameTakenInClass($school, $className, $target, (int) $source->id)) {
+                    return [$this->streamAlreadyExistsIssue($className, $to, $row)];
                 }
             }
             foreach ($this->namedStreams($class, 'remove_streams') as $label) {
@@ -637,86 +732,156 @@ class ClassStructureService
 
         $streamIssues = $this->issues($school, $classes);
         if ($streamIssues !== []) {
-            throw ValidationException::withMessages(['classes' => $streamIssues[0]->cause]);
+            $issue = $streamIssues[0];
+            $field = $issue->field === 'stream' ? 'stream' : 'classes';
+            throw ValidationException::withMessages([$field => $issue->cause]);
         }
 
-        if ($school->school_category) {
-            SchoolCategorySeeder::seed($school);
-        }
-
-        $engine = app(OnboardingEngine::class);
-        foreach ($classes as $class) {
-            $className = trim((string) ($class['name'] ?? ''));
-            $subGroup = $class['sub_group'] ?? null;
-            $standardName = $engine->standardNameForClass($className);
-            $standard = Standard::firstOrCreate(
-                ['school_id' => $school->id, 'name' => $standardName],
-                [
-                    'order' => match ($standardName) {
-                        'nursery' => 1,
-                        'primary' => 2,
-                        'o-level' => 3,
-                        'a-level' => 4,
-                        default => 5,
-                    },
-                    'status' => '1',
-                ]
-            );
-            $baseSection = Section::firstOrCreate(
-                ['school_id' => $school->id, 'name' => $className],
-                ['status' => '1']
-            );
-
-            StandardLink::firstOrCreate(array_filter([
-                'school_id' => $school->id,
-                'academic_year_id' => $year->id,
-                'standard_id' => $standard->id,
-                'section_id' => $baseSection->id,
-                'status' => '1',
-                'sub_group' => $subGroup,
-            ]));
-
-            foreach ($this->namedStreams($class, 'remove_streams') as $label) {
-                $section = $this->activeStreamSection($school, $className, $label);
-                if ($section === null) {
-                    continue;
-                }
-                $section->status = '0';
-                $section->save();
-                StandardLink::query()
-                    ->where('school_id', $school->id)
-                    ->where('section_id', $section->id)
-                    ->update(['status' => '0']);
+        DB::transaction(function () use ($school, $year, $classes): void {
+            if ($school->school_category) {
+                SchoolCategorySeeder::seed($school);
             }
 
-            foreach ($this->streamRenames($class) as $from => $to) {
-                $section = $this->activeStreamSection($school, $className, $from);
-                if ($section === null) {
-                    continue;
-                }
-                $this->renameStream(
-                    $school,
-                    $section,
-                    OnboardingEngine::composeClassAndStream($className, $to)
+            $engine = app(OnboardingEngine::class);
+            foreach ($classes as $class) {
+                $className = trim((string) ($class['name'] ?? ''));
+                $subGroup = $class['sub_group'] ?? null;
+                $standardName = $engine->standardNameForClass($className);
+                $standard = Standard::firstOrCreate(
+                    ['school_id' => $school->id, 'name' => $standardName],
+                    [
+                        'order' => match ($standardName) {
+                            'nursery' => 1,
+                            'primary' => 2,
+                            'o-level' => 3,
+                            'a-level' => 4,
+                            default => 5,
+                        },
+                        'status' => '1',
+                    ]
                 );
-            }
+                $baseSection = Section::firstOrCreate(
+                    ['school_id' => $school->id, 'name' => $className],
+                    ['status' => '1']
+                );
 
-            foreach ($this->streamLabels($class) as $label) {
-                $result = $this->addStream($school, $year, $baseSection, $label);
-                if ($subGroup !== null && $subGroup !== '') {
-                    $link = $result['standard_link'];
-                    if ($link->sub_group !== $subGroup) {
-                        $link->sub_group = $subGroup;
-                        $link->save();
+                StandardLink::firstOrCreate(array_filter([
+                    'school_id' => $school->id,
+                    'academic_year_id' => $year->id,
+                    'standard_id' => $standard->id,
+                    'section_id' => $baseSection->id,
+                    'status' => '1',
+                    'sub_group' => $subGroup,
+                ]));
+
+                foreach ($this->namedStreams($class, 'remove_streams') as $label) {
+                    $section = $this->activeStreamSection($school, $className, $label);
+                    if ($section === null) {
+                        continue;
+                    }
+                    $section->status = '0';
+                    $section->save();
+                    StandardLink::query()
+                        ->where('school_id', $school->id)
+                        ->where('section_id', $section->id)
+                        ->update(['status' => '0']);
+                }
+
+                foreach ($this->streamRenames($class) as $from => $to) {
+                    $section = $this->activeStreamSection($school, $className, $from);
+                    if ($section === null) {
+                        continue;
+                    }
+                    $this->renameStream(
+                        $school,
+                        $section,
+                        OnboardingEngine::composeClassAndStream($className, $to)
+                    );
+                }
+
+                foreach ($this->streamLabels($class) as $label) {
+                    $result = $this->addStream($school, $year, $baseSection, $label);
+                    if ($subGroup !== null && $subGroup !== '') {
+                        $link = $result['standard_link'];
+                        if ($link->sub_group !== $subGroup) {
+                            $link->sub_group = $subGroup;
+                            $link->save();
+                        }
                     }
                 }
-            }
 
-            $rename = trim((string) ($class['rename'] ?? ''));
-            if ($rename !== '' && strcasecmp($rename, $className) !== 0) {
-                $this->renameStream($school, $baseSection, $rename);
+                $rename = trim((string) ($class['rename'] ?? ''));
+                if ($rename !== '' && strcasecmp($rename, $className) !== 0) {
+                    $this->renameStream($school, $baseSection, $rename);
+                }
             }
+        });
+    }
+
+    private function streamAlreadyExistsIssue(string $className, string $label, ?int $row): StepIssue
+    {
+        return StepIssueCatalog::fromMessage(
+            'standards',
+            $className.', stream '.$label.': a stream with that name already exists.',
+            $row,
+        );
+    }
+
+    /**
+     * Another stream of this class already uses the name in a year this stream belongs to.
+     */
+    private function streamNameTakenInClass(School $school, string $className, string $targetName, int $exceptSectionId): bool
+    {
+        if ($targetName === '' || strcasecmp($targetName, $className) === 0) {
+            return false;
         }
+
+        $prefix = strtolower($className).' ';
+        if (! str_starts_with(strtolower($targetName), $prefix)) {
+            return false;
+        }
+
+        $section = Section::query()
+            ->where('school_id', $school->id)
+            ->whereRaw('LOWER(name) = ?', [strtolower($targetName)])
+            ->where('id', '!=', $exceptSectionId)
+            ->first();
+
+        if ($section === null) {
+            return false;
+        }
+
+        $yearIds = StandardLink::query()
+            ->where('school_id', $school->id)
+            ->where('section_id', $exceptSectionId)
+            ->where(function ($query) {
+                $query->where('status', 1)->orWhere('status', '1');
+            })
+            ->pluck('academic_year_id');
+
+        if ($yearIds->isEmpty()) {
+            return true;
+        }
+
+        return StandardLink::query()
+            ->where('school_id', $school->id)
+            ->where('section_id', $section->id)
+            ->whereIn('academic_year_id', $yearIds)
+            ->where(function ($query) {
+                $query->where('status', 1)->orWhere('status', '1');
+            })
+            ->exists();
+    }
+
+    private function duplicateNameMessage(School $school, Section $section, Section $duplicate, string $newName): string
+    {
+        $base = $this->resolveBaseSection($section);
+        if (! $this->isBaseSection($section)
+            && $this->streamNameTakenInClass($school, trim((string) $base->name), $newName, (int) $section->id)) {
+            return 'A stream with that name already exists.';
+        }
+
+        return "A class named \"{$newName}\" already exists.";
     }
 
     private function streamIssue(string $className, string $label, string $problem, ?int $row): StepIssue

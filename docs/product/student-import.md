@@ -2,6 +2,16 @@
 
 Proposal only. The measurement below was run on a synthetic school. No production data was read.
 
+## Student ID format
+
+A KlassApp student ID is `KLS` plus 7 digits, or `KLS` plus 11 digits. `StudentIdGeneratorService::PATTERN` is `/^KLS(?:\d{7}|\d{11})$/i`. There is no hyphen.
+
+- School id at most 999 and sequence at most 9999: `KLS` plus the school padded to 3 digits plus the sequence padded to 4. School 1, sequence 5 is `KLS0010005`.
+- Otherwise: `KLS` plus the school padded to 5 digits plus the sequence padded to 6. School 100, sequence 10001 is `KLS00100010001`. School 1001, sequence 1 is `KLS01001000001`.
+- A school id above 99999 or a sequence above 999999 is refused.
+
+Existing 7-digit IDs stay as stored. The import does not ask the admin to type this ID. `CreateUser` assigns it. A failed row is shown as plain text, for example `Row 12 could not be imported. Check the student's details and try again.` The exception, the SQL, and the stack trace are written to the log with the row number and the school id. They are not shown on the page, in the session, or in a download.
+
 ## What the school can do
 
 An admin, or a class teacher for their own class or stream, imports students in one of three scopes:
@@ -22,12 +32,12 @@ There are two writers, and neither previews.
 
 **Admin spreadsheet.** `GET /admin/import` is `ImportMemberController` (the general student import). `POST /admin/importUsers` runs `app/Imports/UsersImport.php`. `UsersImport` implements `ToCollection` (`collection()` at line 31), so the whole file is loaded before the first student is saved. Each row:
 
-- is skipped, with a log line and no message in the page, when `firstname` or `class` is empty (lines 45–47)
+- is skipped, with a plain message on the import page, when `firstname` or `class` is empty. The log records the row number and school id, not the row's values
 - looks up the country with `LIKE` (line 76)
 - maps the class text onto a standard by prefix (`p` → primary, nursery prefixes, `s.1`–`s.6` maps at lines 96–125) and then a section by name (line 125)
 - calls `CreateUser` (lines 191–197)
 
-There is no stream column. There is no row-level error returned to the admin. A database error is not turned into a preview. Matching for a second run is not “student ID, then update”. The teacher import is a different route (`GET /admin/import/teacher`) and is not this flow.
+There is no stream column. A failed row is listed on the import page as plain text (see Student ID format). A database error is not turned into a preview, and the SQL is not shown to the admin. Matching for a second run is not “student ID, then update”. The teacher import is a different route (`GET /admin/import/teacher`) and is not this flow.
 
 **Onboarding.** The wizard and `OnboardingEngine::saveStudents` accept a pasted list or an upload of their own. That path does not call `UsersImport`. A class teacher has no student-import route. `routes/teacher.php` has marks import, not students.
 
@@ -49,13 +59,13 @@ Run on 2026-10-26 against the real `UsersImport` (`Excel::import`) inside PHPUni
 
 The import returned normally. The database kept 9,999 student users. The other 10,001 rows were rolled back inside `CreateUser` and never shown as errors.
 
-`StudentIdGeneratorService::next` (`app/Services/StudentIdGeneratorService.php` line 54) builds `KLS` plus a 3-digit school id plus a 4-digit sequence (`sprintf('KLS%03d%04d', …)`). For school id 1, sequence 9,999 is `KLS0019999`. Sequence 10,000 is `KLS00110000`. `User::saving` (`app/Models/User.php` lines 92–102) only allows `KLS` plus 7 digits (`/^KLS\d{7}$/i`). The log line for the first rejected row is `registration_number must match format KLS####### (e.g. KLS0010427), got: KLS00110000`. `users.registration_number` is a nullable string in `database/migrations/2020_02_18_000000_create_users_table.php` (line 28). The stop is that format check, not a short column.
+This measurement is the code before T-060. On that build, `StudentIdGeneratorService::next` built `KLS` plus a 3-digit school id plus a 4-digit sequence. For school id 1, sequence 9,999 is `KLS0019999`. Sequence 10,000 became the rejected string `KLS00110000`, which is not an ID. `User::saving` on that build only allowed `KLS` plus 7 digits. The log line for the first rejected row quoted `got: KLS00110000` (the same rejected string, not an ID) beside the example `KLS0010427`. `users.registration_number` is a nullable string. The stop was that format check, not a short column. The current format is in Student ID format above.
 
-`CreateUser` (`app/Traits/RegisterUser.php` lines 206–211) catches `Exception`, rolls the row back, logs the message, and returns null. `UsersImport` (`app/Imports/UsersImport.php` lines 191–203) then increments its inserted counter, including when `CreateUser` returned null. Its `dd()` (lines 208–210) runs only if an exception leaves `CreateUser`. That did not happen, so the probe’s error field stayed null. The session counter itself was not read.
+On that same build, `CreateUser` caught `Exception`, rolled the row back, logged the message, and returned null. `UsersImport` then incremented its inserted counter, including when `CreateUser` returned null. A `dd()` ran only if an exception left `CreateUser`. That did not happen, so the probe’s error field stayed null. The session counter itself was not read. The import now counts a row only when `CreateUser` returns a user.
 
 ## Approved additions
 
-Widening the student ID format is a prerequisite (T-060). The generator and the save-time check have to accept a school past 9,999 students before this import can finish a file of that size. Existing IDs stay as they are.
+The student ID format now accepts `KLS` plus 7 digits or `KLS` plus 11 digits (see Student ID format). The measurement below was taken before that change, so it stopped at 9,999 students. Existing 7-digit IDs stay as they are.
 
 A row with no student ID is not saved as a second student in silence. The preview warns that it is a likely duplicate when the same name, date of birth, and class are already in the school. The admin decides whether that row is a new student.
 
@@ -94,4 +104,4 @@ Run on 2026-10-27 against the same `UsersImport` path, same synthetic school, sa
 | Parent users saved | 9,999 |
 | Exception from `Excel::import` | `TypeError` in `User::findByExactNameInSchool()` |
 
-The first 9,999 students saved, each with a parent. Row 10,000 is sequence 10,000. `CreateUser` built `KLS00110000`, `User::saving` rejected it, the row rolled back, and `CreateUser` returned null. `UsersImport` still called `CreateParent` with that null student. `RegisterUser` then called `findByExactNameInSchool(null, …)` (`app/Traits/RegisterUser.php` line 466) and the import aborted. The counter still treated failed rows as inserted up to that point, and the admin was not shown the failed rows. Widening the ID format, counting a row only when `CreateUser` returns a user, and reporting failed rows are the prerequisite in T-060. The background target stays 20,000 students in under 10 minutes. This synchronous run was 222.65 seconds and stopped at 9,999.
+The first 9,999 students saved, each with a parent. Row 10,000 is sequence 10,000. `CreateUser` built the rejected string `KLS00110000`, which is not an ID. `User::saving` rejected it, the row rolled back, and `CreateUser` returned null. On that build, `UsersImport` still called `CreateParent` with that null student. `RegisterUser` then called `findByExactNameInSchool(null, …)` and the import aborted. The counter still treated failed rows as inserted up to that point, and the admin was not shown the failed rows. That was the code before T-060. The import now counts a row only when `CreateUser` returns a user, and a failed row is shown as plain text. The background target stays 20,000 students in under 10 minutes. This synchronous run was 222.65 seconds and stopped at 9,999.
