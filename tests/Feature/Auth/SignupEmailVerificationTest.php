@@ -12,6 +12,7 @@ use Illuminate\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Tests\TestCase;
 
 class SignupEmailVerificationTest extends TestCase
@@ -21,6 +22,12 @@ class SignupEmailVerificationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // phpunit.xml pins CACHE_STORE=file, so guest throttle:N,M counters
+        // (sha1 of "{route domain}|{ip}") outlive a test. A long run can
+        // arrive here with 127.0.0.1 already at the limit and 429
+        // POST /register/verify/resend (throttle:3,1).
+        RateLimiter::clear(sha1('|127.0.0.1'));
 
         DB::table('usergroups')->insert([
             ['id' => 1, 'name' => 'superadmin', 'created_at' => now(), 'updated_at' => now()],
