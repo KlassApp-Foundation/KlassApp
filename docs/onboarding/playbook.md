@@ -1,8 +1,10 @@
 # Onboarding playbook
 
-This is the setup script for a school admin and for the person supporting them. It covers every step in the setup wizard, in the order the wizard asks them. Toshi follows this same script. The summary line on each step is the running summary, so the wizard, Toshi and the dashboard say the same thing.
+This is the setup script for a school admin and for the person supporting them. It covers every step in the setup wizard, in the order the wizard asks them. **The wizard is the only setup surface.** Toshi's scripted onboarding is retired; the later step driver (behind its flag) follows this same script. The summary line on each step is the running summary, so the wizard and the dashboard say the same thing.
 
-Exams and SchoolPay are not part of onboarding.
+These rules come from `docs/onboarding/decisions-2026-11.md` (T-116).
+
+Exams and SchoolPay are not part of onboarding — not in the wizard, not in Toshi, and not in the workbook. They remain features a school sets up afterwards from their own pages.
 
 Each step says what to have ready, what the school does, what the engine does, the choices, the starting values, the confirmation text recorded for that step, the summary line the running summary is built from, and every error code with its cause and the fix. The confirmation text is the wording for a confirm card. That card is not in the setup driver yet.
 
@@ -551,4 +553,4 @@ The school can then invite parents and enter the first marks. Connecting Google 
 
 WhatsApp can still be waiting. Parent messages stay off until the school's WhatsApp number is verified.
 
-Exams and SchoolPay stay out of setup.
+Exams and SchoolPay stay out of setup: they are not wizard steps, not Toshi steps and not workbook tabs. A school sets them up afterwards from their own pages.

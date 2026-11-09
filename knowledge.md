@@ -2,6 +2,15 @@
 
 > **Canonical location**: `/Users/mac/projects/KlassApp/knowledge.md` (workspace root). Worktrees (e.g. `KlassApp-main-checkout`) should sync to that path when copies diverge — keep one body of truth; do not maintain parallel divergent session logs.
 
+## Session: 2026-11-09 — T-116 onboarding decisions (docs)
+
+- **Work:** Recorded Rasta's onboarding decisions in `docs/onboarding/decisions-2026-11.md`, and aligned `docs/onboarding/playbook.md` with them. No code changed.
+- **Decisions:** (D1) #1285 merges after the pending attendance check T-114; onboarding branches are cut from `origin/integration/monday-2026-11-09` and their draft PRs carry "merge after #1285". (D2) The wizard is the only setup surface; Toshi's scripted onboarding (v1) is retired everywhere, including test schools; the v2 step driver stays behind `toshi.onboarding_v2` as the later agent surface. (D3) Exams and SchoolPay are out of onboarding everywhere — wizard, Toshi and workbook — but remain features set up afterwards from their own pages. (D4) Uganda defaults are soft-launch, not schema. (D5) Audit questions 2, 4-7, 9 and 10 go to the team bootcamp and stay undecided.
+- **Supersedes:** the open questions at the end of the audit (#1297) where they conflict. Q1, Q3 and Q8 are answered by D1, D2 and D3; the rest are deferred.
+- **Tracker:** T-117 retires v1 and migrates `toshi_mode = onboarding` schools; T-118 moves the legacy imports onto the engine; T-119 adds the architecture test; T-120 unifies phone normalisation; T-121 is the merge follow-through report; T-122 catalogues the 56 Uganda assumptions; T-125 is the wizard walkthrough; T-123a/T-123b are the plan-layer design and intake.
+- **Not changed:** Toshi as an assistant, its tools, its confirm gate; exam, marks, report-card, fee-payment and SchoolPay features.
+- **Status:** docs-only draft PR, "merge after #1285". Production untouched.
+
 ## Session note — 2026-11-05 — parent and student portals (page 9, draft)
 
 Stacked on `cursor/parent-student-portal-0657` (#1266, not merged). Branch `cursor/parent-student-portals-page9-6ada`. Dashboard cards open Marks, Attendance and Fees. Both portals read `ParentPortalService` released results only. Attendance is one row per session: both sessions present is one day, one present session is a half day, shown as `4½ days present`, `4 days present`, `½ day present`, or `1 day present`. The same wording is on the student dashboard in #1281 (`cursor/base-class-fixes-1cb2`) and on the teacher week chart in #1283 (a half-present student counts as ½). Fees pages do not show attendance days. No new WhatsApp or Toshi messages. Drafts only; not merged, not deployed, and not rebased onto #1265.
