@@ -247,7 +247,7 @@ Decide and write down: the wizard is the setup surface; Toshi v1 onboarding is d
 
 ### Phase 1 — Land the groundwork (1–2 days)
 
-Merge, in this order: **#1285** (or consciously defer it and rebase everything on main), then **#1286**, **#1287**, **#1291** (after #1286), **#1296**, **#1293** as docs. Close the eight Bariyo123 PRs that #1285 already contains. Rebase **#1295** after #1285.
+Merge, in this order: **#1285** (or consciously defer it and rebase everything on main), then **#1286**, **#1287**, **#1291** (after #1286), **#1296**, **#1293** as docs. If #1285 merges, close the eight Bariyo123 PRs it already contains. Rebase **#1295** after #1285.
 
 **Reuse:** everything already written. **Retire:** the duplicate PRs, stale branches. **Size:** review and merge only. **Risk:** #1285 is 663 files; if it lands mid-build, every onboarding file moves. Decide before Phase 2.
 
@@ -259,7 +259,7 @@ Put the converter behind an application surface: `POST /admin/onboarding/checkli
 
 ### Phase 3 — Plan, preview, apply with confirmation (6–8 days, ~1,200 lines)
 
-A `OnboardingPlanApplier` that, per step, in runbook order: dry-runs against current DB state (what exists, what would be created, what conflicts), shows a diff card ("14 classes, 3 streams, 42 subjects, 18 teachers, 240 learners, 61 parents"), and writes only on Confirm. One transaction per step, and a work log of what was written. Reuse `OnboardingEngine` for every write and `StepRegistry` for step order and validation.
+An `OnboardingPlanApplier` that, per step, in runbook order: dry-runs against current DB state (what exists, what would be created, what conflicts), shows a diff card ("14 classes, 3 streams, 42 subjects, 18 teachers, 240 learners, 61 parents"), and writes only on Confirm. One transaction per step, and a work log of what was written. Reuse `OnboardingEngine` for every write and `StepRegistry` for step order and validation.
 
 **Reuse:** `OnboardingEngine`, `StepRegistry`, `StepIssueCatalog` codes, `ConfirmsBeforeWrite` payload shape. **Exit test:** applying the same plan twice creates nothing the second time (idempotency), and a rejected confirm writes nothing.
 
