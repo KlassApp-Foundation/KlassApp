@@ -456,6 +456,124 @@ class ChecklistOnboardingPocTest extends TestCase
         $this->assertStringContainsString($brief['step']['approve_label'], $why['say']);
     }
 
+    public function test_a_question_uses_one_chat_call_and_typed_text_writes_nothing(): void
+    {
+        \Illuminate\Support\Facades\Http::preventStrayRequests();
+        [$school, $admin] = $this->demoAdmin();
+        $this->actingAs($admin);
+        config([
+            'ai.providers.openai-compatible.url' => 'https://llm.test',
+            'ai.providers.openai-compatible.key' => 'test-key-not-real',
+            'toshi.model' => 'gemini-3.5-flash',
+            'ai.providers.openai-compatible.models.text.default' => 'gemini-3.5-flash',
+        ]);
+
+        $path = (new DemoChecklistWorkbook)->write($this->dir.'/narrate.xlsx', true, true, 'Yes');
+        $plan = OnboardingPlan::query()->findOrFail(
+            app(ChecklistOnboardingService::class)->ingest($school, $admin, $path, 'narrate.xlsx')['plan_id']
+        );
+        $brief = app(ChecklistOnboardingService::class)->conversationBrief($plan);
+        $learners = (int) collect($brief['stats'])->firstWhere('label', 'Learners')['value'];
+
+        $calls = 0;
+        \Illuminate\Support\Facades\Http::fake(function () use (&$calls, $learners) {
+            $calls++;
+            if ($calls === 1) {
+                return \Illuminate\Support\Facades\Http::response([
+                    'id' => 'narr-1',
+                    'model' => 'gemini-3.5-flash',
+                    'choices' => [[
+                        'index' => 0,
+                        'message' => ['role' => 'assistant', 'content' => 'The checklist has '.$learners.' learners.'],
+                        'finish_reason' => 'stop',
+                    ]],
+                ]);
+            }
+            if ($calls === 2) {
+                return \Illuminate\Support\Facades\Http::response([
+                    'id' => 'narr-2',
+                    'model' => 'gemini-3.5-flash',
+                    'choices' => [[
+                        'index' => 0,
+                        'message' => ['role' => 'assistant', 'content' => 'There are 999 learners.'],
+                        'finish_reason' => 'stop',
+                    ]],
+                ]);
+            }
+            if ($calls === 3) {
+                return \Illuminate\Support\Facades\Http::response([
+                    'error' => ['message' => 'rate limit'],
+                ], 429);
+            }
+
+            throw new \Illuminate\Http\Client\ConnectionException('cURL error 28');
+        });
+
+        $answered = Livewire::test(\App\Livewire\AgentToshi::class)
+            ->set('input', 'is it 999 learners?')
+            ->call('send');
+        $bots = $this->botText($answered);
+        $this->assertStringContainsString((string) $learners, $bots);
+        $this->assertStringNotContainsString('999', $bots);
+        $this->assertSame(0, User::query()->where('school_id', $school->id)->where('usergroup_id', 6)->count());
+        $this->assertSame(0, AcademicTerm::query()->where('school_id', $school->id)->count());
+
+        \Illuminate\Support\Facades\Http::assertSentCount(1);
+        \Illuminate\Support\Facades\Http::assertSent(function (\Illuminate\Http\Client\Request $request) use ($learners): bool {
+            $data = $request->data();
+            $this->assertArrayNotHasKey('tools', $data);
+            $this->assertSame('minimal', $data['reasoning_effort'] ?? null);
+            $encoded = json_encode($data);
+            $this->assertIsString($encoded);
+            $this->assertStringContainsString((string) $learners, $encoded);
+            $this->assertStringNotContainsString('12345', $encoded);
+            $this->assertStringNotContainsString('Example Parent', $encoded);
+            $this->assertStringNotContainsString('0712000000', $encoded);
+            $system = collect($data['messages'] ?? [])->firstWhere('role', 'system')['content'] ?? '';
+            $this->assertStringNotContainsString('999', $system);
+
+            return str_ends_with($request->url(), '/chat/completions');
+        });
+
+        $rejected = Livewire::test(\App\Livewire\AgentToshi::class)
+            ->set('input', 'how many learners?')
+            ->call('send');
+        $rejectedBots = $this->botText($rejected);
+        $this->assertStringContainsString('Learners: '.$learners, $rejectedBots);
+        $this->assertStringNotContainsString('999', $rejectedBots);
+
+        $limited = Livewire::test(\App\Livewire\AgentToshi::class)
+            ->set('input', 'how many learners?')
+            ->call('send');
+        $this->assertStringContainsString('not retried', $this->botText($limited));
+        \Illuminate\Support\Facades\Http::assertSentCount(3);
+        $this->assertSame(0, User::query()->where('school_id', $school->id)->where('usergroup_id', 6)->count());
+
+        $timedOut = Livewire::test(\App\Livewire\AgentToshi::class)
+            ->set('input', 'how many learners?')
+            ->call('send');
+        $this->assertStringContainsString('Learners: '.$learners, $this->botText($timedOut));
+        $this->assertStringNotContainsString('cURL', $this->botText($timedOut));
+
+        config([
+            'ai.providers.openai-compatible.key' => '',
+            'toshi.api_key' => '',
+        ]);
+        \Illuminate\Support\Facades\Http::fake();
+        $quiet = Livewire::test(\App\Livewire\AgentToshi::class)
+            ->set('input', 'how many learners?')
+            ->call('send');
+        $this->assertStringContainsString('Learners: '.$learners, $this->botText($quiet));
+        \Illuminate\Support\Facades\Http::assertNothingSent();
+
+        $yes = Livewire::test(\App\Livewire\AgentToshi::class)
+            ->set('input', 'yes')
+            ->call('send');
+        $this->assertStringContainsString('button', $this->botText($yes));
+        \Illuminate\Support\Facades\Http::assertNothingSent();
+        $this->assertSame(0, AcademicTerm::query()->where('school_id', $school->id)->count());
+    }
+
     public function test_the_checklist_panel_skips_the_old_setup_and_does_not_call_a_model(): void
     {
         \Illuminate\Support\Facades\Http::fake();
@@ -532,6 +650,14 @@ class ChecklistOnboardingPocTest extends TestCase
             'email' => $school->slug.'-admin@example.test',
             'status' => 'active',
         ]);
+    }
+
+    private function botText(\Livewire\Features\SupportTesting\Testable $component): string
+    {
+        return collect($component->get('messages'))
+            ->where('role', 'bot')
+            ->pluck('text')
+            ->implode("\n");
     }
 
     private function withPassword(): void

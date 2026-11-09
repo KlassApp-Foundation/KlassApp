@@ -137,7 +137,11 @@ These sentences open the data agreement, the same as the button:
 
 While a step is on screen, Toshi explains that step in one line and names the button. A typed "yes", "ok", or "skip" does not write anything. Use the button.
 
-Questions are answered from the saved plan only. Every number and every name is one Toshi already showed on a card. If you ask something the plan does not contain, Toshi says it does not know that from this checklist.
+A free-text question, once a checklist has been read, is one chat call and no tools. The call sends counts, classes and streams, terms and dates, flags, and the waiting step. It does not send learner names or phone numbers. The call asks for the lowest reasoning effort, because this model's default thinking did not finish inside 5 seconds. Toshi answers in one or two sentences from those facts. If the facts do not cover the question, Toshi says it does not know that from this checklist.
+
+With no key, or if the call fails or takes longer than 5 seconds, Toshi answers from the saved plan instead. That answer uses the same numbers. If the limit is hit, the only sentence is: "The free model limit was hit. Wait before trying again. Nothing was written, and this was not retried." Do not send the question again.
+
+Buttons, a typed "yes", and "set up my school" do not call the model. A full click-through that only uses the buttons makes no model request. Each extra question makes one.
 
 ## If the free model limit appears
 

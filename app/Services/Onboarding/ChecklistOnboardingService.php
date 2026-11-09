@@ -1459,6 +1459,76 @@ final class ChecklistOnboardingService
     }
 
     /**
+     * Facts a single chat call may see. Counts, classes, terms, flags, and the
+     * waiting step. No learner names, parent names, or phone numbers.
+     *
+     * @return array<string, mixed>
+     */
+    public function narrationFacts(OnboardingPlan $plan): array
+    {
+        $brief = $this->conversationBrief($plan);
+        $payload = is_array($plan->payload) ? $plan->payload : [];
+        $classes = [];
+        foreach ($payload['steps']['standards']['rows'] ?? [] as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $name = trim((string) ($row['name'] ?? ''));
+            if ($name === '') {
+                continue;
+            }
+            $classes[$name]['name'] = $name;
+            $stream = trim((string) ($row['stream'] ?? ''));
+            if ($stream !== '') {
+                $classes[$name]['streams'][$stream] = $stream;
+            }
+        }
+
+        $classList = [];
+        foreach ($classes as $class) {
+            $classList[] = [
+                'name' => $class['name'],
+                'streams' => array_values($class['streams'] ?? []),
+            ];
+        }
+
+        $terms = [];
+        foreach ($payload['steps']['terms']['rows'] ?? [] as $term) {
+            if (! is_array($term)) {
+                continue;
+            }
+            $terms[] = [
+                'name' => (string) ($term['name'] ?? ''),
+                'start' => (string) ($term['start'] ?? ''),
+                'end' => (string) ($term['end'] ?? ''),
+            ];
+        }
+
+        $counts = [];
+        foreach ($brief['stats'] as $tile) {
+            $counts[mb_strtolower((string) $tile['label'])] = (string) $tile['value'];
+        }
+
+        $flags = [];
+        foreach ($brief['flags'] as $flag) {
+            $flags[] = [
+                'tab' => $flag['tab'],
+                'row' => $flag['row'],
+                'fix' => $flag['fix'],
+            ];
+        }
+
+        return [
+            'school' => $brief['school'],
+            'counts' => $counts,
+            'classes' => $classList,
+            'terms' => $terms,
+            'flags' => $flags,
+            'step' => $brief['step'],
+        ];
+    }
+
+    /**
      * @param  array<string, mixed>  $payload
      */
     private function currentKey(array $payload): ?string

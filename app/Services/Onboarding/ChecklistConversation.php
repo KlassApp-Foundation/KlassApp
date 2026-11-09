@@ -86,6 +86,24 @@ class ChecklistConversation
     }
 
     /**
+     * A free-text question that may be answered from the saved plan.
+     * Setup, greetings, and button decisions stay deterministic.
+     */
+    public function wantsNarration(string $text, ?OnboardingPlan $plan): bool
+    {
+        $lower = $this->normalize($text);
+        if ($lower === '' || ! $this->readable($plan)) {
+            return false;
+        }
+
+        if ($this->wantsSetup($lower) || $this->isGreeting($lower) || $this->isDecision($lower)) {
+            return false;
+        }
+
+        return $this->isQuestion($lower);
+    }
+
+    /**
      * @param  array<string, mixed>  $brief
      */
     private function fromPlan(string $lower, array $brief): ?string

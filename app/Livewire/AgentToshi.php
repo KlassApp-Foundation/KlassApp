@@ -4276,8 +4276,15 @@ class AgentToshi extends Component
             $plan = $school
                 ? \App\Models\OnboardingPlan::query()->where('school_id', $school->id)->latest('id')->first()
                 : null;
-            $heard = app(\App\Services\Onboarding\ChecklistConversation::class)->hear($text, $plan, (string) ($school->name ?? ''));
+            $conversation = app(\App\Services\Onboarding\ChecklistConversation::class);
+            $heard = $conversation->hear($text, $plan, (string) ($school->name ?? ''));
             if ($heard !== null) {
+                if ($plan instanceof \App\Models\OnboardingPlan && $conversation->wantsNarration($text, $plan)) {
+                    $spoken = app(\App\Services\Onboarding\ChecklistNarrator::class)->speak($text, $plan);
+                    if (is_string($spoken) && $spoken !== '') {
+                        $heard['say'] = $spoken;
+                    }
+                }
                 $this->userSay($text);
                 $this->input = '';
                 if ($heard['open']) {
