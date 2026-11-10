@@ -95,8 +95,16 @@
         {{-- 2 · Setup (only while incomplete). Checklist schools get two equal options. --}}
         @if($setupShown && $checklistSetup)
             <section class="dv2-setup-card" data-testid="dashboard-v2-setup-bar" role="region" aria-label="School setup">
-                <h2>Set up {{ $schoolLabel }}</h2>
-                <p class="dv2-setup-lead">Pick one. You can switch at any time, and nothing is saved until you approve it.</p>
+                <div class="dv2-setup-top">
+                    <div class="dv2-setup-copy">
+                        <h2>Set up {{ $schoolLabel }}</h2>
+                        <p class="dv2-setup-lead">Pick one. You can switch at any time, and nothing is saved until you approve it.</p>
+                    </div>
+                    <form method="POST" action="{{ $dismissUrl }}" class="dv2-setup-dismiss" onsubmit="return confirm('Hide the setup bar? Your progress stays in the sidebar.');">
+                        @csrf
+                        <button type="submit" class="dv2-x dv2-setup-hide" data-testid="dashboard-v2-setup-dismiss" aria-label="Hide setup bar. Progress stays in the sidebar.">Hide</button>
+                    </form>
+                </div>
                 <div class="dv2-setup-options">
                     <article class="dv2-setup-option">
                         <div class="dv2-setup-option-head">
@@ -104,7 +112,7 @@
                             <h3>Set up with Toshi</h3>
                         </div>
                         <p>Add your checklist workbook. Toshi reads it, shows what it found, and creates each part after you approve it. About 10 minutes.</p>
-                        <button type="button" class="dv2-btn" data-testid="dashboard-v2-toshi-setup" onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(false);">Set up with Toshi</button>
+                        <button type="button" class="dv2-btn" data-testid="dashboard-v2-toshi-setup" onclick="window.klassDashboardToshiSetup && window.klassDashboardToshiSetup()">Set up with Toshi</button>
                     </article>
                     <article class="dv2-setup-option">
                         <div class="dv2-setup-option-head">
@@ -115,24 +123,20 @@
                         <a class="dv2-btn secondary" href="{{ $nextHref }}" data-testid="dashboard-v2-setup-manual">Set up manually</a>
                     </article>
                 </div>
-                <form method="POST" action="{{ $dismissUrl }}" class="dv2-setup-dismiss" onsubmit="return confirm('Hide the setup bar? Your progress stays in the sidebar.');">
-                    @csrf
-                    <button type="submit" class="dv2-x" data-testid="dashboard-v2-setup-dismiss" aria-label="Hide setup bar. Progress stays in the sidebar.">Hide</button>
-                </form>
-                <details class="dv2-setup-summary" data-testid="dashboard-v2-setup-summary" open>
-                    <summary>What's set up</summary>
-                    <div class="dv2-ledger" data-testid="dashboard-v2-setup-ledger">
-                        @forelse($ledger as $row)
-                            <div class="dv2-ledger-row" data-testid="dashboard-v2-ledger-row">
-                                <span>{{ $row['label'] }}</span>
-                                <b>{{ $row['value'] }}</b>
-                            </div>
-                        @empty
-                            <p class="dv2-setup-empty" data-testid="dashboard-v2-setup-empty">Nothing is set up yet.</p>
-                        @endforelse
-                    </div>
-                </details>
             </section>
+            <details class="dv2-setup-summary" data-testid="dashboard-v2-setup-summary" open>
+                <summary>What's set up</summary>
+                <div class="dv2-ledger" data-testid="dashboard-v2-setup-ledger">
+                    @forelse($ledger as $row)
+                        <div class="dv2-ledger-row" data-testid="dashboard-v2-ledger-row">
+                            <span>{{ $row['label'] }}</span>
+                            <b>{{ $row['value'] }}</b>
+                        </div>
+                    @empty
+                        <p class="dv2-setup-empty" data-testid="dashboard-v2-setup-empty">Nothing is set up yet.</p>
+                    @endforelse
+                </div>
+            </details>
         @elseif($setupShown)
             <div class="dv2-setup" data-testid="dashboard-v2-setup-bar" role="region" aria-label="School setup">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14532D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8M13 12h8M13 18h8"/></svg>
@@ -493,6 +497,19 @@
 </div>
 @if($checklistSetup)
 <script>
+window.klassDashboardToshiSetup = function () {
+    var collapsed = document.body.classList.contains('toshi-collapsed')
+        || document.documentElement.classList.contains('toshi-collapsed');
+    var welcome = document.querySelector('[data-testid="checklist-card-welcome"]');
+    var start = document.querySelector('[data-testid="onboard-from-checklist"]');
+    if (!collapsed && welcome && start) {
+        start.focus();
+        return;
+    }
+    if (window.toshiSetCollapsed) {
+        window.toshiSetCollapsed(false);
+    }
+};
 (function () {
     if (window.klassChecklistFigures) {
         return;
@@ -565,6 +582,10 @@
             var bar = document.querySelector('[data-testid="dashboard-v2-setup-bar"]');
             if (bar) {
                 bar.hidden = true;
+            }
+            var summary = document.querySelector('[data-testid="dashboard-v2-setup-summary"]');
+            if (summary) {
+                summary.hidden = true;
             }
         }
     }

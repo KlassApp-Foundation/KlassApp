@@ -285,27 +285,63 @@ a.t-btn { display: inline-flex; align-items: center; justify-content: center; te
     body:not(.toshi-collapsed):has(.toshi-root--checklist) { overflow-x: hidden; }
 }
 
-@media (min-width: 768px) {
-    body:not(.toshi-collapsed) .dv2-shell { padding-right: 396px; box-sizing: border-box; }
+/* Below 1280 the open panel is a 420px overlay, so the dashboard column
+   gives up that width. At 1280 and up the dock already shrinks main. */
+@media (min-width: 768px) and (max-width: 1279.98px) {
+    body:not(.toshi-collapsed) .dv2-shell,
+    html:not(.toshi-collapsed) .dv2-shell {
+        width: calc(100% - min(420px, 92vw));
+        max-width: calc(100% - min(420px, 92vw));
+        box-sizing: border-box;
+    }
 }
-.dv2-setup-card { display: flex; flex-direction: column; align-items: stretch; gap: 12px; background: var(--t-card, #fff); border: 1px solid var(--t-border, #E2E8F0); border-radius: 14px; padding: 16px; margin: 18px 0 4px; }
-.dv2-setup-card h2 { margin: 0; font-family: Sora, sans-serif; font-size: 1.15rem; color: var(--t-text, #1E293B); }
-.dv2-setup-lead { margin: 0; color: var(--t-text-2, #475569); font-size: 0.9rem; }
-.dv2-setup-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.dv2-setup-option { display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--t-border, #E2E8F0); border-radius: 14px; padding: 14px; background: var(--t-panel, #fff); min-width: 0; }
-.dv2-setup-option-head { display: flex; align-items: center; gap: 10px; }
-.dv2-setup-ico { width: 32px; height: 32px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; flex: none; background: #ECFDF5; color: #15803D; }
-.dv2-setup-option h3 { margin: 0; font-size: 1rem; color: var(--t-text, #1E293B); }
-.dv2-ledger { margin: 8px 0 0; }
+.dv2-hread { flex-wrap: nowrap; align-items: flex-end; }
+.dv2-hread > :first-child { min-width: 0; flex: 1 1 auto; }
+.dv2-h1, .dv2-hsub { overflow-wrap: normal; word-break: normal; }
+.dv2-year { width: auto !important; flex: 0 0 auto; min-width: 0; max-width: 220px; }
+.dv2-year select, .dv2-year-chip { min-width: 0; width: auto; max-width: 220px; white-space: nowrap; }
+@media (max-width: 767px) {
+    /* The collapsed edge tab is 36px wide and sits on the setup card. */
+    body.toshi-collapsed #toshi-toggle.toshi-toggle,
+    html.toshi-collapsed #toshi-toggle.toshi-toggle { display: none !important; }
+}
+.dv2-setup-card { display: flex; flex-direction: column; align-items: stretch; gap: 12px; width: 100%; max-width: 100%; grid-column: 1 / -1; box-sizing: border-box; background: var(--t-card, #fff); border: 1px solid var(--t-border, #E2E8F0); border-radius: 14px; padding: 16px 12px; margin: 18px 0 4px; overflow-wrap: normal; word-break: normal; }
+.dv2-setup-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.dv2-setup-copy { min-width: 0; flex: 1 1 auto; }
+.dv2-setup-card h2 { margin: 0; font-family: Sora, sans-serif; font-size: 1.15rem; line-height: 1.3; color: var(--t-text, #1E293B); overflow-wrap: normal; word-break: normal; }
+.dv2-setup-lead { margin: 2px 0 0; color: var(--t-text-2, #475569); font-size: 0.9rem; line-height: 1.4; overflow-wrap: normal; word-break: normal; }
+.dv2-setup-hide { min-height: 44px; padding: 0 2px; background: transparent; color: #475569; font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+.dv2-setup-card .dv2-setup-dismiss { margin: 0; flex: none; }
+.dv2-setup-options { display: grid; grid-template-columns: 1fr; gap: 8px; width: 100%; }
+@container dash (min-width: 600px) {
+    .dv2-setup-options { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+    .dv2-setup-lead { white-space: nowrap; }
+}
+.dv2-setup-option { display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--t-border, #E2E8F0); border-radius: 14px; padding: 12px 10px; background: var(--t-panel, #fff); min-width: 0; }
+.dv2-setup-option-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.dv2-setup-ico { width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; flex: none; background: none; color: #15803D; }
+.dv2-setup-ico svg { width: 24px; height: 24px; display: block; }
+.dv2-setup-option h3 { margin: 0; font-size: 1rem; line-height: 1.3; color: var(--t-text, #1E293B); white-space: nowrap; }
+.dv2-setup-summary { width: 100%; max-width: 100%; grid-column: 1 / -1; margin: 8px 0 0; }
+.dv2-ledger { margin: 0; width: 100%; }
 .dv2-ledger-row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 6px 0; border-bottom: 1px dashed var(--t-border, #E2E8F0); font-size: 0.88rem; }
-.dv2-ledger-row span { color: var(--t-text-2, #475569); }
-.dv2-ledger-row b { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--t-text, #1E293B); text-align: right; }
-.dv2-setup-option p { margin: 0; font-size: 0.88rem; color: var(--t-text-2, #475569); flex: 1; }
-.dv2-setup-option .dv2-btn, .dv2-setup-option .t-btn { width: 100%; justify-content: center; min-height: 48px; }
+.dv2-ledger-row span { color: var(--t-text-2, #475569); overflow-wrap: normal; word-break: normal; }
+.dv2-ledger-row b { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--t-text, #1E293B); text-align: right; white-space: nowrap; }
+.dv2-setup-option p { margin: 0; font-size: 0.84rem; line-height: 1.4; color: var(--t-text-2, #475569); flex: 1; overflow-wrap: normal; word-break: normal; }
+@container dash (max-width: 420px) {
+    .dv2-h1 { font-size: 18px; line-height: 1.25; }
+    .dv2-year { max-width: 148px; }
+    .dv2-year-label { font-size: 12px; }
+    .dv2-year select, .dv2-year-chip { font-size: 12px; max-width: 148px; }
+    .dv2-setup-card { padding-left: 10px; padding-right: 10px; }
+    .dv2-setup-option { padding-left: 8px; padding-right: 8px; }
+}
+.dv2-setup-option .dv2-btn, .dv2-setup-option .t-btn { width: 100%; justify-content: center; min-height: 44px; white-space: nowrap; }
 .dv2-setup-option .dv2-btn { background: #15803D; }
 .dv2-setup-option .t-btn.secondary, .dv2-setup-option a.secondary { background: #fff; color: #1E293B; border: 1px solid #64748B; }
+.dv2-setup-card :focus-visible { outline: 2px solid var(--t-focus, #1E6FD9); outline-offset: 2px; }
 @media (max-width: 639px) {
-    .dv2-setup-options, .dv2-qt-actions, .dv2-setup-choices { display: flex; flex-direction: column; }
+    .dv2-qt-actions, .dv2-setup-choices { display: flex; flex-direction: column; }
     .dv2-qt-actions .dv2-btn, .dv2-setup-choices .dv2-btn { width: 100%; justify-content: center; }
 }
 @media (prefers-color-scheme: dark) {
@@ -313,8 +349,9 @@ a.t-btn { display: inline-flex; align-items: center; justify-content: center; te
     .dv2-setup-card h2, .dv2-setup-option h3 { color: #E2E8F0; }
     .dv2-setup-lead, .dv2-setup-option p { color: #CBD5E1; }
     .dv2-setup-option a.secondary { background: #0F172A; color: #E2E8F0; border-color: #64748B; }
-    .dv2-setup-card .dv2-x { color: #E2E8F0; }
-    .dv2-setup-ico, .t-ability { background: #052E16; color: #4ADE80; }
+    .dv2-setup-card .dv2-x, .dv2-setup-hide { color: #E2E8F0; }
+    .dv2-setup-ico { background: none; color: #4ADE80; }
+    .t-ability { background: #052E16; color: #4ADE80; }
     .dv2-ledger-row { border-bottom-color: #334155; }
     .dv2-ledger-row span { color: #CBD5E1; }
     .dv2-ledger-row b { color: #E2E8F0; }

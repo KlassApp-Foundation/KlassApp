@@ -557,9 +557,24 @@ class ChecklistOnboardingPocTest extends TestCase
         $this->assertStringContainsString('data-testid="dashboard-v2-toshi-setup"', $html);
         $this->assertStringContainsString('Set up with Toshi', $html);
         $this->assertMatchesRegularExpression(
-            '/data-testid="dashboard-v2-toshi-setup"[^>]*onclick="window\.toshiSetCollapsed && window\.toshiSetCollapsed\(false\);"/',
+            '/data-testid="dashboard-v2-toshi-setup"[^>]*onclick="window\.klassDashboardToshiSetup && window\.klassDashboardToshiSetup\(\)"/',
             $html,
         );
+        $this->assertMatchesRegularExpression(
+            '/klassDashboardToshiSetup = function \(\) \{.*?onboard-from-checklist.*?\.focus\(\)/s',
+            $html,
+        );
+        $cardAt = strpos($html, 'data-testid="dashboard-v2-setup-bar"');
+        $yearAt = strpos($html, 'data-testid="dashboard-v2-year"');
+        $ledgerAt = strpos($html, 'data-testid="dashboard-v2-setup-ledger"');
+        $kpisAt = strpos($html, 'data-testid="dashboard-v2-kpis"');
+        $this->assertNotFalse($yearAt);
+        $this->assertNotFalse($cardAt);
+        $this->assertNotFalse($ledgerAt);
+        $this->assertNotFalse($kpisAt);
+        $this->assertLessThan($cardAt, $yearAt);
+        $this->assertLessThan($ledgerAt, $cardAt);
+        $this->assertLessThan($kpisAt, $ledgerAt);
         $this->assertDoesNotMatchRegularExpression(
             '/data-testid="dashboard-v2-toshi-setup"[^>]*toshi-maximize/',
             $html,
