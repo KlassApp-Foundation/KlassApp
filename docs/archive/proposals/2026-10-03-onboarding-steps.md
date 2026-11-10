@@ -1,3 +1,5 @@
+> **Archived 10 November 2026.** Proposal only. The step registry it describes is shipped in `app/Onboarding/Steps/StepRegistry.php`; the current steps are in `docs/onboarding/playbook.md`.
+
 # Proposal: Shared onboarding step registry (wizard + Toshi v2)
 
 **Date:** 2026-10-03  

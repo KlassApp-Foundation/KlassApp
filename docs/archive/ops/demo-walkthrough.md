@@ -1,3 +1,5 @@
+> **Archived 10 November 2026.** Replaced by the current run sheet, `docs/demo/2026-11-12-run-sheet.md`. Kept for history only.
+
 # Demo walkthrough (staging)
 
 How to log in to the demo schools and try real actions. Demo data only — see
