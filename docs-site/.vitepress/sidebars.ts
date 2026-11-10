@@ -23,6 +23,15 @@ export const helpSidebar = [
     { text: 'Google tools', link: '/help/admins/google' },
     { text: 'Book a setup session', link: '/help/admins/book-onboarding' },
     { text: 'Classes and streams', link: '/help/concepts/classes-and-streams' } ] },
+  { text: 'School guides', collapsed: false, items: [
+    { text: 'All school guides', link: '/help/guides/' },
+    { text: 'Onboarding checklist', link: '/help/guides/school-checklist' },
+    { text: 'Marks workbook', link: '/help/guides/marks-workbook' },
+    { text: 'Take attendance', link: '/help/guides/attendance' },
+    { text: 'Filter students', link: '/help/guides/student-filters' },
+    { text: 'Class pages and streams', link: '/help/guides/class-pages' },
+    { text: 'Exam sets and exam types', link: '/help/guides/exam-sets' },
+    { text: 'Resend an invite link', link: '/help/guides/resend-invite' } ] },
   { text: 'Teachers', collapsed: true, items: [
     { text: 'Class teacher', link: '/help/teachers/class' },
     { text: 'Subject teacher', link: '/help/teachers/subject' },
