@@ -359,7 +359,9 @@ class ChecklistOnboarding extends Component
 
     public function render()
     {
-        return view('livewire.checklist-onboarding');
+        return view('livewire.checklist-onboarding', [
+            'shellStep' => $this->shellStep(),
+        ]);
     }
 
     private function guard(): bool

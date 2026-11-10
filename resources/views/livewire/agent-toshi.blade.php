@@ -117,12 +117,10 @@
                         <i class="{{ $barIndex < $shellIndex ? 'is-on' : '' }}{{ $barIndex === $shellIndex ? ' is-on is-current' : '' }}"></i>
                     @endforeach
                 </div>
-                @if($checklistStep !== 'welcome')
-                    <div class="t-progress-now">
-                        <b data-testid="checklist-progress-current">{{ $shellSteps[$checklistStep] ?? '' }}</b>
-                        <span data-testid="checklist-progress-next">Next: {{ $shellNext }}</span>
-                    </div>
-                @endif
+                <div class="t-progress-now">
+                    <b data-testid="checklist-progress-current">{{ $shellSteps[$checklistStep] ?? '' }}</b>
+                    <span data-testid="checklist-progress-next">Next: {{ $shellNext }}</span>
+                </div>
                 <ol class="t-vh">
                     @foreach($shellSteps as $barKey => $barLabel)
                         <li @if($barKey === $checklistStep) aria-current="step" @endif>{{ $barLabel }}</li>

@@ -194,11 +194,16 @@
 .t-actions.row { flex-direction: row; }
 .t-actions.row > * { flex: 1; }
 .t-btn { min-height: 48px; width: 100%; border-radius: 12px; border: 1px solid var(--t-accent); background: var(--t-accent); color: var(--t-on-accent); font-size: 0.92rem; font-weight: 700; padding: 10px 12px; cursor: pointer; box-sizing: border-box; font-family: "DM Sans", system-ui, sans-serif; }
-.t-btn.secondary { min-height: 44px; background: var(--t-card); color: var(--t-text); border-color: var(--t-border-strong); font-weight: 600; }
+.t-btn.secondary { min-height: 44px; background: var(--t-card); color: var(--t-text); border-color: var(--t-input-border); font-weight: 600; }
+.toshi-root--checklist .toshi-header-btn,
+.toshi-root--checklist .toshi-close {
+    min-width: 44px;
+    min-height: 44px;
+}
 .t-btn:disabled { background: var(--t-disabled-bg); color: var(--t-disabled-fg); border-color: var(--t-disabled-bg); cursor: not-allowed; }
 .t-btn.secondary:disabled { background: var(--t-disabled-bg); color: var(--t-disabled-fg); }
 a.t-btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
-.t-card a { color: var(--t-link); min-height: 44px; display: inline-flex; align-items: center; }
+.t-card a { color: var(--t-link); min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; }
 .t-legal { display: flex; flex-wrap: wrap; gap: 8px 14px; }
 .t-check { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 0.92rem; font-weight: 600; cursor: pointer; }
 .t-check input { width: 22px; height: 22px; flex: none; }
@@ -222,7 +227,7 @@ a.t-btn { display: inline-flex; align-items: center; justify-content: center; te
 .t-group-neutral .t-group-name { color: var(--t-text-2); }
 .t-group-name { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.02em; }
 .t-row { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; border-bottom: 1px dashed var(--t-border); font-variant-numeric: tabular-nums; font-size: 0.9rem; }
-.t-row b { font-variant-numeric: tabular-nums; font-weight: 700; }
+.t-row b { font-variant-numeric: tabular-nums; font-weight: 700; text-align: right; margin-left: auto; }
 .t-row b.is-zero { color: var(--t-text-2); font-weight: 400; }
 .t-row small { display: block; font-size: 0.74rem; color: var(--t-text-2); font-weight: 400; }
 .t-total { border-top: 2px solid var(--t-text); border-bottom: 0; font-weight: 700; margin-top: 4px; }
@@ -274,6 +279,8 @@ a.t-btn { display: inline-flex; align-items: center; justify-content: center; te
     .toshi-root--checklist .toshi-close { display: none !important; }
     .toshi-root--checklist .toshi-header-back { display: inline-flex; min-width: 44px; min-height: 44px; align-items: center; justify-content: center; border: 0; background: transparent; color: var(--t-text); cursor: pointer; }
     .toshi-root--checklist, .toshi-root--checklist .toshi-panel { overflow-x: hidden; }
+    html:has(body:not(.toshi-collapsed) .toshi-root--checklist),
+    body:not(.toshi-collapsed):has(.toshi-root--checklist) { overflow-x: hidden; }
 }
 
 .dv2-setup-card { display: flex; flex-direction: column; align-items: stretch; gap: 12px; background: var(--t-card, #fff); border: 1px solid var(--t-border, #E2E8F0); border-radius: 14px; padding: 16px; margin: 18px 0 4px; }
@@ -285,7 +292,7 @@ a.t-btn { display: inline-flex; align-items: center; justify-content: center; te
 .dv2-setup-option p { margin: 0; font-size: 0.88rem; color: var(--t-text-2, #475569); flex: 1; }
 .dv2-setup-option .dv2-btn, .dv2-setup-option .t-btn { width: 100%; justify-content: center; min-height: 48px; }
 .dv2-setup-option .dv2-btn { background: #15803D; }
-.dv2-setup-option .t-btn.secondary, .dv2-setup-option a.secondary { background: #fff; color: #1E293B; border: 1px solid #CBD5E1; }
+.dv2-setup-option .t-btn.secondary, .dv2-setup-option a.secondary { background: #fff; color: #1E293B; border: 1px solid #64748B; }
 @media (max-width: 639px) {
     .dv2-setup-options, .dv2-qt-actions, .dv2-setup-choices { display: flex; flex-direction: column; }
     .dv2-qt-actions .dv2-btn, .dv2-setup-choices .dv2-btn { width: 100%; justify-content: center; }
@@ -294,5 +301,6 @@ a.t-btn { display: inline-flex; align-items: center; justify-content: center; te
     .dv2-setup-card, .dv2-setup-option { background: #1E293B; color: #E2E8F0; border-color: #334155; }
     .dv2-setup-card h2, .dv2-setup-option h3 { color: #E2E8F0; }
     .dv2-setup-lead, .dv2-setup-option p { color: #CBD5E1; }
-    .dv2-setup-option a.secondary { background: #0F172A; color: #E2E8F0; border-color: #475569; }
+    .dv2-setup-option a.secondary { background: #0F172A; color: #E2E8F0; border-color: #64748B; }
+    .dv2-setup-card .dv2-x { color: #E2E8F0; }
 }

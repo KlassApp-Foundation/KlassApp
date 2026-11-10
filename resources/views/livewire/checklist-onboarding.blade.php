@@ -1,4 +1,4 @@
-<div class="checklist-onboarding" data-testid="checklist-onboarding" @if(!$enabled) hidden @endif>
+<div class="checklist-onboarding" data-testid="checklist-onboarding" @if($enabled) data-shell-step="{{ $shellStep ?? 'welcome' }}" @endif @if(!$enabled) hidden @endif>
     @if($enabled)
 <link rel="stylesheet" href="{{ asset('css/toshi-checklist-panel.css') }}?v={{ @filemtime(public_path('css/toshi-checklist-panel.css')) }}">
 
@@ -398,6 +398,48 @@
             if (!window.klassChecklistUi) {
                 window.klassChecklistUi = true;
                 window.klassChecklistCard = '';
+                window.klassChecklistSyncProgress = function () {
+                    var root = document.querySelector('[data-shell-step]');
+                    var nav = document.querySelector('[data-testid="checklist-progress-header"]');
+                    if (!root || !nav) {
+                        return;
+                    }
+                    var names = {
+                        agreement: 'Agreement',
+                        checklist: 'Checklist',
+                        terms: 'Terms',
+                        classes: 'Classes and streams',
+                        subjects: 'Subjects',
+                        teachers: 'Teachers and assignments',
+                        learners: 'Learners and parents',
+                        done: 'Done'
+                    };
+                    var steps = Object.keys(names);
+                    var step = root.getAttribute('data-shell-step') || 'welcome';
+                    var index = steps.indexOf(step);
+                    nav.classList.toggle('is-on', index >= 0);
+                    var bars = nav.querySelectorAll('.t-bars i');
+                    for (var i = 0; i < bars.length; i++) {
+                        bars[i].classList.toggle('is-on', i <= index);
+                        bars[i].classList.toggle('is-current', i === index);
+                    }
+                    var current = nav.querySelector('[data-testid="checklist-progress-current"]');
+                    var next = nav.querySelector('[data-testid="checklist-progress-next"]');
+                    if (current) {
+                        current.textContent = names[step] || '';
+                    }
+                    if (next) {
+                        next.textContent = 'Next: ' + (step === 'done' ? 'All done' : (names[steps[index + 1]] || ''));
+                    }
+                    var items = nav.querySelectorAll('ol li');
+                    for (var j = 0; j < items.length; j++) {
+                        if (steps[j] === step) {
+                            items[j].setAttribute('aria-current', 'step');
+                        } else {
+                            items[j].removeAttribute('aria-current');
+                        }
+                    }
+                };
                 window.klassChecklistComposer = function () {
                     var panel = document.getElementById('toshi-panel');
                     if (!panel) {
@@ -501,7 +543,12 @@
                 });
                 document.addEventListener('livewire:init', function () {
                     Livewire.hook('commit', function (payload) {
-                        payload.succeed(function () { window.klassChecklistFocus(false); });
+                        payload.succeed(function () {
+                        window.klassChecklistFocus(false);
+                        if (window.klassChecklistSyncProgress) {
+                            window.klassChecklistSyncProgress();
+                        }
+                    });
                     });
                     Livewire.on('checklist-open-picker', function (payload) {
                         var detail = Array.isArray(payload) ? (payload[0] || {}) : (payload || {});

@@ -1372,7 +1372,7 @@ class OnboardingEngine
                         'status' => 1,
                     ]);
                     if ($subject->wasRecentlyCreated) {
-                        $this->reportCreated('subjects', 'subjects', 'Creating subjects');
+                        $this->reportCreated('subject-classes', 'subjects', 'Adding subjects to classes');
                     }
                 }
             }
