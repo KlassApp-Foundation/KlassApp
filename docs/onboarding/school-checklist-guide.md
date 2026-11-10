@@ -1,78 +1,193 @@
 # Filling the school onboarding checklist
 
-This is the workbook a school sends before it starts using KlassApp. Toshi reads it and sets the school up, one approved step at a time.
+KlassApp keeps one copy of this checklist per school in Google Sheets, made from the blank template. Fill that copy in; do not make your own workbook. It collects everything KlassApp needs to set up the school in one go. Fill it once, send it back, and the KlassApp team sets up the school from it.
 
-Use the blank template the school was given. Do not add, remove or rename tabs, and do not move columns. Row 1 is the header, row 2 is a grey example, and data starts on row 3. A column headed with **\*** is required.
+## Before you type
 
-## Read the Instructions tab first
-
-The **Instructions** tab carries the rules for the whole workbook. Read it before you type anything. The rules below are the ones this guide repeats; if the Instructions tab says something different, follow the Instructions tab.
+- Work through the tabs in the order they appear: School Details, Admin & Contacts, Terms & Exams, Classes & Streams, Subjects, Teachers, Teaching Assignments, then the learners (one tab per class), then Fees and Confirmations.
+- Type only in the **yellow cells**. Green column headers marked **\*** are required. Blue headers are optional but helpful.
+- **Row 2 on every tab is a grey example row.** Leave it or delete it; KlassApp ignores it. Data starts on row 3.
+- **Do not type on Progress, Learners per Class or All Learners (for import).** They fill themselves.
+- Do not add, rename, delete or reorder tabs, and do not insert columns.
 
 ## The tabs
 
 | Tab | What it is for |
 | --- | --- |
-| **Instructions** | The rules for filling the workbook. Read only |
-| **Progress** | How much of the workbook is complete. Read only |
-| **Learners per Class** | The expected number of learners in each class and stream |
-| **School Details** | Field and answer: school name, country, curriculum, registration number (EMIS or the local equivalent) |
-| **Admin & Contacts** | The head teacher and the people KlassApp may contact |
-| **Terms & Exams** | The academic year, each term, start and end dates |
-| **Classes & Streams** | Every class, its streams, the approximate number of learners, the class teacher |
-| **Subjects** | Each subject, whether it counts on the report card, a short code |
-| **Teachers** | Each teacher: full name, real email, phone, gender, role |
-| **Teaching Assignments** | Which teacher teaches which subject in which class and stream |
-| **One tab per class** | The learners in that class, with their parent or guardian. The template has Baby Class to Primary Seven; other levels use their own class names |
-| **All Learners (for import)** | Fills itself from the class tabs. **Do not type here** |
+| **Instructions** | The rules, the column guide and the formats. Read it first |
+| **Progress** | How much is complete. Read only |
+| **Learners per Class** | Learners, boys and girls per class. Read only |
+| **School Details** | A form: the item in column A, the school's answer in column B |
+| **Admin & Contacts** | The main admin, head teacher and anyone else who needs dashboard access |
+| **Terms & Exams** | The academic year and each term's start and end dates |
+| **Classes & Streams** | Every class and stream, the approximate number of learners, the class teacher |
+| **Subjects** | Each subject, its section, which classes take it, whether it counts on the report card |
+| **Teachers** | Every teacher: name, real email, phone, gender, role |
+| **Teaching Assignments** | One row per teacher, class, stream and subject |
+| **Baby Class … Primary Seven** | One tab per class with that class's learners and their parents |
+| **All Learners (for import)** | Combines the class tabs. Read only |
 | **Fees** | Fee name, class, amount, currency, how often it is charged |
-| **Confirmations** | The statements the school must agree to before anything is loaded |
+| **Confirmations** | The statements the school must answer before data is loaded |
 
-## What is essential, and what can wait
+## School Details
 
-Bring these four lists complete. Without them there is nothing to set up:
+It is a form, not a table. Column A names the item; column B takes the answer. Answer every row marked with **\***:
 
-- **Classes & Streams** — every class and every stream.
-- **Subjects** — at least the subjects that count on the report card.
-- **Teachers** and **Teaching Assignments** — every teacher, and who teaches what.
-- **Learners and parents** — every learner, with a parent or guardian and a phone number.
+School name (as on report cards) · School level(s) · Country · District / town · School email · School phone · Curriculum · Head Teacher's full name.
 
-These can be finished during onboarding, after the first read:
+These are optional but helpful: short name or initials, day or boarding, physical address, EMIS number, UNEB centre number, school motto, Head Teacher's email.
 
-- The school's registration number (EMIS or the local equivalent) on **School Details**, if it is not to hand.
-- Contact details on **Admin & Contacts** beyond the head teacher.
-- The **Fees** detail: fees can be added or changed in KlassApp later.
-- Notes columns anywhere.
+The template's examples use Uganda (`UG`), `UGX` and Ugandan phone numbers. If the school is elsewhere, write its country and use its own local phone format; put the currency on Fees.
 
-## Formats
+## Admin & Contacts
 
-- **Dates:** `YYYY-MM-DD`, for example `2026-02-02`.
-- **Class names:** exactly as the template writes them (`Primary One`, not `P1`; `Baby Class`, not `Baby`).
-- **Streams:** one spelling everywhere. If the stream is `East` on Classes & Streams, it is `East` on the class tab and on Teaching Assignments. Do not write `P.1 East` in one place and `East` in another.
-- **Phones:** the school's local format, with the leading zero, as a text value: `0712 000001`. Add a country code only when the school's numbers are already international.
-- **Emails:** real staff addresses. An address that cannot receive mail means that person cannot set a password.
-- **Money:** a plain number (`1200`), with the currency in its own column. No symbols, no commas, no currency word inside the amount.
-- **Learner names:** the name the school uses, spelled the same way on the class tab and in the office records. The KLS number is created by KlassApp; do not type one.
+| Column | What goes in it |
+| --- | --- |
+| Role **\*** | `Main school admin` manages the school on KlassApp. Add others who need dashboard access |
+| Full name **\*** | First name then surname |
+| Email **\*** | A real, working address. The invitation to set up the account goes there; no password is sent |
+| Phone **\*** | The school's local format, one number per cell |
+| WhatsApp on this number? | `Yes` or `No` |
+| Notes | Anything the school wants to add |
 
-## Privacy
+## Terms & Exams
 
-The workbook holds children's names, dates of birth, parent names and phone numbers. Keep it in the school's own storage, not in a personal drive or a chat. Send it only through the hand-in below. The confirmations tab and the privacy policy and terms must be agreed before anything is loaded.
+| Column | What goes in it |
+| --- | --- |
+| Academic year **\*** | For example `2027` |
+| Term **\*** | `Term 1`, `Term 2` or `Term 3` |
+| Start date **\*** | `YYYY-MM-DD`, for example `2027-02-08` |
+| End date **\*** | `YYYY-MM-DD` |
+| Notes | Optional |
+
+Add one row per term. Three terms is the usual pattern.
+
+## Classes & Streams
+
+| Column | What goes in it |
+| --- | --- |
+| Class **\*** | Pick from the list. Use the exact name: `Primary One`, not `P.1` or `P1`. A different spelling creates a duplicate class |
+| Stream | Leave blank if the class has no streams. **One row per stream** |
+| Number of learners (approx.) | A whole number |
+| Class teacher full name | The teacher who heads this class or stream |
+| Class teacher email | They receive the invitation to head it |
+| Notes | Optional |
+
+A class with two streams has two rows, with the same class and different streams.
+
+## Subjects
+
+| Column | What goes in it |
+| --- | --- |
+| Subject or learning area **\*** | The subject name, spelled as the school uses it |
+| Section **\*** | `Nursery`, `Lower Primary (P.1 to P.3)` or `Upper Primary (P.4 to P.7)` |
+| Classes that take it **\*** | `All in section`, or list the classes, for example `Primary Four, Primary Five` |
+| Counts on report card total? **\*** | `Yes` or `No` |
+| Short code | For example `MTC`, `ENG`, `SST`, `SCI` |
+| Notes | Optional |
+
+## Teachers
+
+| Column | What goes in it |
+| --- | --- |
+| Full name **\*** | First name then surname |
+| Email **\*** | A real, working address. The account invitation goes there; no password is sent |
+| Phone **\*** | The school's local format, one number per cell |
+| Gender | `Male` or `Female` |
+| Role **\*** | `Teacher`, `Head Teacher`, `Deputy`, `Director of Studies` or `Other` |
+| Notes | Optional |
+
+## Teaching Assignments
+
+One row per teacher, per class (and stream), per subject. A teacher who teaches Mathematics in Primary One East and Primary One West has two rows.
+
+| Column | What goes in it |
+| --- | --- |
+| Teacher full name **\*** | The same spelling as on the Teachers tab |
+| Class **\*** | Pick from the list |
+| Stream | Leave blank if the class has no streams |
+| Subject **\*** | The same spelling as on the Subjects tab |
+| Notes | Optional |
+
+## The class tabs
+
+One tab per class. The tab name is the learner's class; do not add a Class column. Start at row 3.
+
+| Column | What goes in it |
+| --- | --- |
+| Learner full name **\*** | First name then surname, as on the register |
+| Stream | Leave blank if the class has no streams; otherwise exactly as on Classes & Streams |
+| Gender **\*** | `Male` or `Female` |
+| Date of birth | `YYYY-MM-DD` |
+| Parent / guardian full name **\*** | First name then surname |
+| Parent / guardian phone **\*** | The school's local format, one number per cell. Siblings share the same parent phone |
+| Relationship | `Mother`, `Father`, `Guardian` or `Other` |
+| Parent / guardian email | Optional |
+| Second parent / guardian name | Optional |
+| Second parent / guardian phone | Optional |
+| Existing school ID number | If the school already numbers learners |
+| Notes | Optional |
+
+## Bringing learners in from a file
+
+Do not retype learners you already have in Excel, a CSV or another Google Sheet. The Instructions tab gives the rule; this is the same rule in steps:
+
+1. Open the class tab and click cell **A3**.
+2. Paste with **Edit → Paste special → Values only**, **one column at a time**, so each column lands under its matching heading. Leave out any Class column: the tab name is the class.
+3. To bring a file in: **File → Import → Upload**, then choose **Insert new sheet(s)**. Copy from that new tab, paste as above, then delete the new tab.
+4. **Never choose "Replace spreadsheet".** It deletes every tab in the checklist.
+
+## Fees
+
+| Column | What goes in it |
+| --- | --- |
+| Fee name **\*** | For example `Tuition`, `Lunch`, `Transport`, `Development` |
+| Class **\*** | Pick a class, or write `All` |
+| Amount **\*** | Numbers only, no commas or currency signs, for example `450000` |
+| Currency **\*** | For example `UGX` |
+| Duration **\*** | `Termly` (most fees), `One-off` or `Yearly` |
+| Compulsory? | `Yes` or `No` |
+| Notes | Optional |
 
 ## Confirmations
 
-On the **Confirmations** tab, the statements must be answered **Yes**. If any required statement is not Yes, Toshi stops and loads nothing; fix the answer on the sheet and hand it in again.
+Answer **Yes** or **No** in column B for each statement. A **Yes** is required for:
 
-## How to hand it in
+- The school agrees to sign KlassApp's data processing agreement digitally before data is loaded.
+- The school has read KlassApp's privacy policy and terms of use.
 
-1. Save or export the workbook as `.xlsx`.
-2. In KlassApp, open Toshi and choose **Onboard from checklist**.
-3. Either **upload** the file, or click **Choose from Google Drive** and pick it. A Google Sheet is read as Excel; an `.xlsx` stored in Drive is read as it is.
-4. Agree to the data processing statement. Toshi does not read the file before that.
-5. Read the summary. Anything wrong is listed by tab and row; fix the sheet and hand it in again, or skip those rows.
+The other statements should also be true before the file is returned: parents have been told the school is moving to KlassApp and may link on WhatsApp; stream names are written the same way on every tab; every staff member listed has a working email address.
 
-Nothing is saved until you approve a step.
+If the data processing statement is not Yes, KlassApp stops and loads nothing.
+
+## Formats
+
+- **Class names:** exactly as in the dropdown (`Primary One`, not `P.1`).
+- **Streams:** one spelling everywhere (`East`, `West`).
+- **Dates:** `YYYY-MM-DD` (`2027-02-08`).
+- **Phones:** the school's local format, one number per cell, for example `0772 123456`.
+- **Emails:** real, working addresses. No passwords are sent.
+- **Money:** numbers only, no commas or currency signs (`450000`).
+
+## Privacy
+
+This file contains personal information about learners, parents and staff. Share it only with the KlassApp onboarding team, and do not post it in group chats. Parents will not receive WhatsApp messages from KlassApp unless they start the conversation themselves.
+
+## Returning it
+
+When it is complete, send it back to your KlassApp onboarding contact. If anything is unclear, leave a note in the Notes column or on the Confirmations tab.
+
+## Common mistakes
+
+- Typing in **All Learners (for import)** instead of the class tabs. It fills itself and is ignored.
+- Adding a **Class** column to a class tab. The tab name is the class.
+- Writing `P.1` or `P1` instead of `Primary One`; this creates a duplicate class.
+- Writing a stream two ways (`East` on one tab, `P.1 East` on another).
+- Leaving the **Currency** column blank on Fees.
+- Using **Import → Replace spreadsheet**, which deletes every tab. Use **Insert new sheet(s)**.
+- Typing a date as `08/02/2027` instead of `2027-02-08`.
 
 ## Placeholders
 
-- Screenshot: the Instructions tab.
-- Screenshot: the Confirmations tab with every required answer set to Yes.
-- Screenshot: the summary card after a read, with one flagged row.
+- Screenshot: School Details filled in.
+- Screenshot: Confirmations with the required answers set to Yes.
