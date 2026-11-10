@@ -436,6 +436,20 @@ class ChecklistOnboardingPocTest extends TestCase
         $this->assertSame(0, User::query()->where('school_id', $school->id)->where('usergroup_id', 6)->count());
     }
 
+    public function test_a_google_picker_error_code_is_shown_and_a_token_is_not(): void
+    {
+        [, $admin] = $this->demoAdmin();
+        $this->actingAs($admin);
+
+        Livewire::test(ChecklistOnboarding::class)
+            ->call('confirmAgreement')
+            ->call('noteSheet', 'google:access_denied')
+            ->assertSee('access_denied')
+            ->call('noteSheet', 'google:ya29.secret-token')
+            ->assertDontSee('ya29')
+            ->assertSee('Upload the .xlsx file');
+    }
+
     public function test_a_class_without_a_teacher_asks_before_anything_is_written(): void
     {
         [$school, $admin] = $this->demoAdmin();

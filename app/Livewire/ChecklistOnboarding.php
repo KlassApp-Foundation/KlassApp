@@ -127,6 +127,12 @@ class ChecklistOnboarding extends Component
             return;
         }
 
+        if (preg_match('/^google:([a-z0-9_]{1,64})$/', $code, $matches) === 1) {
+            $this->sheetNote = 'Google refused the connection ('.$matches[1].'). Upload the .xlsx file.';
+
+            return;
+        }
+
         $this->sheetNote = match ($code) {
             'picker-key' => 'The Google Picker key is not set on this demo. Upload the .xlsx file.',
             'picker-failed' => 'Google did not open the file picker. Upload the .xlsx file.',

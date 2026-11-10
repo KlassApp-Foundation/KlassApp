@@ -272,31 +272,46 @@
                         component.call('noteSheet', 'picker-key');
                         return;
                     }
+                    var googleReason = function (response) {
+                        var reason = response && response.error ? String(response.error) : '';
+                        if (!/^[a-z0-9_]{1,64}$/.test(reason)) {
+                            component.call('noteSheet', 'picker-failed');
+                            return;
+                        }
+                        component.call('noteSheet', 'google:' + reason);
+                    };
                     var start = function () {
+                        if (!window.google || !google.accounts || !google.accounts.oauth2 || !window.gapi) {
+                            component.call('noteSheet', 'picker-failed');
+                            return;
+                        }
                         var tokenClient = google.accounts.oauth2.initTokenClient({
                             client_id: clientId,
                             scope: scope,
                             include_granted_scopes: false,
                             callback: function (response) {
                                 if (!response || response.error || !response.access_token) {
-                                    component.call('noteSheet', 'picker-failed');
+                                    googleReason(response);
                                     return;
                                 }
-                                component.call('rememberSheetAccess', response.access_token);
-                                gapi.load('picker', { callback: function () {
-                                    var picker = new google.picker.PickerBuilder()
-                                        .addView(google.picker.ViewId.SPREADSHEETS)
-                                        .setOAuthToken(response.access_token)
-                                        .setDeveloperKey(pickerKey)
-                                        .setAppId(appId)
-                                        .setCallback(function (data) {
-                                            if (data.action === google.picker.Action.PICKED && data.docs && data.docs[0]) {
-                                                component.call('importPickedSheet', data.docs[0].id);
-                                            }
-                                        })
-                                        .build();
-                                    picker.setVisible(true);
-                                } });
+                                Promise.resolve(component.call('rememberSheetAccess', response.access_token)).then(function () {
+                                    gapi.load('picker', { callback: function () {
+                                        var picker = new google.picker.PickerBuilder()
+                                            .addView(google.picker.ViewId.SPREADSHEETS)
+                                            .setOAuthToken(response.access_token)
+                                            .setDeveloperKey(pickerKey)
+                                            .setAppId(appId)
+                                            .setCallback(function (data) {
+                                                if (data.action === google.picker.Action.PICKED && data.docs && data.docs[0]) {
+                                                    component.call('importPickedSheet', data.docs[0].id);
+                                                }
+                                            })
+                                            .build();
+                                        picker.setVisible(true);
+                                    } });
+                                }).catch(function () {
+                                    component.call('noteSheet', 'picker-failed');
+                                });
                             },
                         });
                         tokenClient.requestAccessToken({ prompt: 'consent' });
@@ -310,7 +325,8 @@
                     };
                     var load = function (src) {
                         var existing = document.querySelector('script[src="' + src + '"]');
-                        if (existing) {
+                        var gsiReady = src.indexOf('gsi/client') === -1 || (window.google && google.accounts && google.accounts.oauth2);
+                        if (existing && gsiReady) {
                             ready();
                             return;
                         }
