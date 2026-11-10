@@ -62,6 +62,7 @@ class DemoChecklistResetCommand extends Command
         $this->info('Northwind Harbour School is ready and not yet onboarded.');
         $this->line('Admin: '.self::ADMIN_EMAIL);
         $this->line('Password: read from DEMO_CHECKLIST_ADMIN_PASSWORD (not printed).');
+        $this->line('Open http://localhost:8000');
 
         return self::SUCCESS;
     }

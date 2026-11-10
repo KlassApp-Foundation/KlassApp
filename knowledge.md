@@ -14726,3 +14726,11 @@ A hello on Toshi's provider path returned in 2.6 seconds. A tool call is emitted
 **Files:** `ChecklistOnboarding.php`, `checklist-onboarding.blade.php`, `ChecklistOnboardingPocTest.php`.
 
 **Tests:** The three Google picker tests passed: 3 tests, 24 assertions. A picked file, a refused Drive response, and a shown `access_denied` with a hidden token-shaped string.
+
+## Session: 2026-11-10 — Checklist demo address is localhost:8000
+
+**Work:** Still draft [#1307](https://github.com/KlassApp-Foundation/KlassApp/pull/1307), branch `poc/toshi-checklist-onboarding`. The Northwind rehearsal address is `http://localhost:8000` for this copy and for later Google tests. `APP_URL` and the Google redirect in the gitignored `.env` use that origin. `demo:checklist-reset` prints `http://localhost:8000`. `bash scripts/demo/poc-serve.sh` starts it, and if port 8000 is taken it names the listener and leaves that process running. Port 8000 was free. The login page returned HTTP 200 at that address. The server banner says `http://localhost:8000`. The rehearsal process this session had started on port 8130 was stopped. The Riverside preview on port 8126 was left running. It does not use Google sign-in. The picker key line is still absent from this `.env`. The Google file-picker click waits until Rasta confirms the JavaScript origin and the picker key website restriction. Not merged. Not deployed.
+
+**Files:** `DemoChecklistResetCommand.php`, `ChecklistOnboardingPocTest.php`, `scripts/demo/poc-serve.sh`, `docs/demo/poc-run-sheet.md`. The preview worktree's untracked `HANDOFF.md` has the same address. It is not on this branch.
+
+**Tests:** `test_reset_refuses_a_real_school_and_clears_only_the_demo_import` passed (20 assertions). The reset output contains `http://localhost:8000` and does not contain a numeric loopback host.

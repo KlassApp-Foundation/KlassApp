@@ -10,9 +10,10 @@ In the proof-of-concept checkout, on branch `poc/toshi-checklist-onboarding`:
 
 ```bash
 php artisan demo:checklist-reset
+bash scripts/demo/poc-serve.sh
 ```
 
-Open the demo URL on that machine. The rehearsal on this computer is `http://127.0.0.1:8130`. The Wednesday laptop gets its own port after the freeze (planned as 8127) and the same reset command. Leave port 8126 alone. That is the other preview.
+Open `http://localhost:8000`. That is the address for this demo copy and for every later Google test. Type localhost in the browser. Google treats a numeric loopback host as a different origin. The reset command prints the same address. If port 8000 is already taken, the start command names the listener and leaves it running. The Riverside preview stays on port 8126. It does not use Google sign-in.
 
 The workbook with two deliberate problems is `docs/demo/poc-checklist-workbook.xlsx`. The all-correct twin is `docs/demo/poc-checklist-workbook-correct.xlsx`. Have the problem file on the desktop, ready to choose.
 
@@ -113,7 +114,7 @@ Do not keep clicking Confirm on a failed step. In the proof-of-concept checkout 
 php artisan demo:checklist-reset
 ```
 
-Sign in again and start from **Onboard from checklist**. The password is unchanged.
+Sign in again at `http://localhost:8000` and start from **Onboard from checklist**. The password is unchanged.
 
 If the upload says the file is missing, choose the `.xlsx` again and click **Read this checklist**. Reading the file does not save the school.
 
@@ -143,7 +144,7 @@ With no key, or if the call fails or takes longer than 5 seconds, Toshi answers 
 
 Buttons, a typed "yes", and "set up my school" do not call the model. A full click-through that only uses the buttons makes no model request. Each extra question makes one.
 
-On the upload card, Connect Google Sheet opens Google's file picker for one spreadsheet. The request is only the drive.file scope, so Google grants that one file. The sheet is exported as .xlsx and read on the same path as an upload. The access token stays in the session and is not logged. Upload stays available. Until the picker key, the JavaScript origin, and a test user are set on the existing Google client, the button says to upload the .xlsx file.
+On the upload card, Connect Google Sheet opens Google's file picker for one spreadsheet. The request is only the drive.file scope, so Google grants that one file. The sheet is exported as .xlsx and read on the same path as an upload. The access token stays in the session and is not logged. Upload stays available. The Google client for this demo uses JavaScript origin `http://localhost:8000` and redirect `http://localhost:8000/auth/google/callback`. Until that origin, the picker key's website restriction for `http://localhost:8000/*`, and the picker key in this checkout's `.env` are confirmed, the button says to upload the .xlsx file.
 
 ## If the free model limit appears
 

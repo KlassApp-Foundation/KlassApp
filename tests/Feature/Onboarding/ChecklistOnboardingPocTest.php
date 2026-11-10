@@ -304,7 +304,9 @@ class ChecklistOnboardingPocTest extends TestCase
         $this->assertNotNull(User::query()->where('email', DemoChecklistResetCommand::ADMIN_EMAIL)->first());
         $this->artisan('demo:checklist-reset')
             ->expectsOutputToContain('northwind.admin@example.test')
+            ->expectsOutputToContain('http://localhost:8000')
             ->doesntExpectOutputToContain('Reset-Only-1')
+            ->doesntExpectOutputToContain('127.0.0.1')
             ->assertExitCode(0);
     }
 
