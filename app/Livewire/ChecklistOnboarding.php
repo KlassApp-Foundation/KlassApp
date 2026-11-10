@@ -6,6 +6,7 @@ use App\Models\OnboardingPlan;
 use App\Models\School;
 use App\Services\Onboarding\ChecklistOnboardingGate;
 use App\Services\Onboarding\ChecklistOnboardingService;
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
@@ -403,16 +404,53 @@ class ChecklistOnboarding extends Component
     }
 
     /**
-     * Download the picked Google Sheet as xlsx. One attempt. The token is not logged.
+     * Read one picked Drive file. A native Google Sheet is exported as .xlsx.
+     * An .xlsx file stored as itself is downloaded with files.get alt=media.
+     * Each call is one attempt. The token is not logged.
      */
     private function exportSheet(string $fileId, string $token): ?string
     {
+        $mime = $this->driveMimeType($fileId, $token);
+        if ($mime === 'application/vnd.google-apps.spreadsheet') {
+            return $this->driveBytes($fileId, $token, true);
+        }
+        if ($mime === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+            return $this->driveBytes($fileId, $token, false);
+        }
+
+        return null;
+    }
+
+    private function driveMimeType(string $fileId, string $token): ?string
+    {
         try {
-            $response = Http::withToken($token)
-                ->withOptions(['allow_redirects' => false])
-                ->timeout(15)
-                ->get('https://www.googleapis.com/drive/v3/files/'.rawurlencode($fileId).'/export', [
+            $response = $this->driveRequest($token)->get(
+                'https://www.googleapis.com/drive/v3/files/'.rawurlencode($fileId),
+                ['fields' => 'mimeType']
+            );
+        } catch (Throwable) {
+            return null;
+        }
+
+        if (! $response->successful()) {
+            return null;
+        }
+
+        $mime = $response->json('mimeType');
+
+        return is_string($mime) ? $mime : null;
+    }
+
+    private function driveBytes(string $fileId, string $token, bool $export): ?string
+    {
+        try {
+            $request = $this->driveRequest($token);
+            $response = $export
+                ? $request->get('https://www.googleapis.com/drive/v3/files/'.rawurlencode($fileId).'/export', [
                     'mimeType' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                ])
+                : $request->get('https://www.googleapis.com/drive/v3/files/'.rawurlencode($fileId), [
+                    'alt' => 'media',
                 ]);
         } catch (Throwable) {
             return null;
@@ -433,6 +471,13 @@ class ChecklistOnboarding extends Component
         file_put_contents($xlsx, $body);
 
         return $xlsx;
+    }
+
+    private function driveRequest(string $token): PendingRequest
+    {
+        return Http::withToken($token)
+            ->withOptions(['allow_redirects' => false])
+            ->timeout(15);
     }
 
     private function sheetFallback(string $url): string

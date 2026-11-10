@@ -14734,3 +14734,11 @@ A hello on Toshi's provider path returned in 2.6 seconds. A tool call is emitted
 **Files:** `DemoChecklistResetCommand.php`, `ChecklistOnboardingPocTest.php`, `scripts/demo/poc-serve.sh`, `docs/demo/poc-run-sheet.md`. The preview worktree's untracked `HANDOFF.md` has the same address. It is not on this branch.
 
 **Tests:** `test_reset_refuses_a_real_school_and_clears_only_the_demo_import` passed (20 assertions). The reset output contains `http://localhost:8000` and does not contain a numeric loopback host.
+
+## Session: 2026-11-10 — Northwind sign-in and both Drive file kinds
+
+**Work:** Still draft [#1307](https://github.com/KlassApp-Foundation/KlassApp/pull/1307), branch `poc/toshi-checklist-onboarding`. On the local Northwind database only, `northwind.admin@example.test` has `is_reset` 0 and an active status. `demo:checklist-reset` keeps the password from the gitignored `.env` and does not print it. A clicked sign-in at `http://localhost:8000` landed on `/admin/dashboard` with no force-change page. The two fictional workbooks are in Downloads as `Northwind-checklist-with-2-flags.xlsx` (121 learners, phone `12345`, class Primary Eight) and `Northwind-checklist-clean.xlsx` (120 learners, no flags). Every email in both files is `@northwind.example`. Connect Google Sheet now reads a native Google Sheet by export and an `.xlsx` file stored in Drive by `files.get?alt=media`. The picker shows both. Scope stays `drive.file`. Not merged. Not deployed.
+
+**Files:** `ChecklistOnboarding.php`, `checklist-onboarding.blade.php`, `ChecklistOnboardingPocTest.php`, `docs/demo/poc-run-sheet.md`.
+
+**Tests:** The native-sheet test, the stored-xlsx test, and the refused-metadata test passed (3 tests, 36 assertions). A picked file still writes nothing until an approval button.

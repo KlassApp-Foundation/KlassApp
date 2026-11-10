@@ -144,7 +144,7 @@ With no key, or if the call fails or takes longer than 5 seconds, Toshi answers 
 
 Buttons, a typed "yes", and "set up my school" do not call the model. A full click-through that only uses the buttons makes no model request. Each extra question makes one.
 
-On the upload card, Connect Google Sheet opens Google's file picker for one spreadsheet. The request is only the drive.file scope, so Google grants that one file. The sheet is exported as .xlsx and read on the same path as an upload. The access token stays in the session and is not logged. Upload stays available. The Google client for this demo uses JavaScript origin `http://localhost:8000` and redirect `http://localhost:8000/auth/google/callback`. Until that origin, the picker key's website restriction for `http://localhost:8000/*`, and the picker key in this checkout's `.env` are confirmed, the button says to upload the .xlsx file.
+On the upload card, Connect Google Sheet opens Google's file picker. The request is only the drive.file scope, so Google grants that one file. A native Google Sheet is exported as .xlsx. An .xlsx file stored in Drive as itself is downloaded with files.get alt=media. Either way it is read on the same path as an upload. The access token stays in the session and is not logged. Upload stays available. The Google client for this demo uses JavaScript origin `http://localhost:8000` and redirect `http://localhost:8000/auth/google/callback`. The picker key's website restriction includes `http://localhost:8000/*` and `https://docs.google.com/*`.
 
 ## If the free model limit appears
 

@@ -377,13 +377,17 @@ class ChecklistOnboardingPocTest extends TestCase
             }
         });
         Http::preventStrayRequests();
-        Http::fake([
-            'https://www.googleapis.com/drive/v3/files/*/export*' => Http::response(
-                file_get_contents($path),
-                200,
-                ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
-            ),
-        ]);
+        Http::fake(function (\Illuminate\Http\Client\Request $request) use ($path) {
+            if (str_contains($request->url(), '/export')) {
+                return Http::response(
+                    file_get_contents($path),
+                    200,
+                    ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+                );
+            }
+
+            return Http::response(['mimeType' => 'application/vnd.google-apps.spreadsheet'], 200);
+        });
 
         $card = Livewire::test(ChecklistOnboarding::class)
             ->call('confirmAgreement')
@@ -395,14 +399,15 @@ class ChecklistOnboardingPocTest extends TestCase
 
         $card->assertSee('Northwind Harbour School')
             ->assertDontSee($token);
-        Http::assertSentCount(1);
+        Http::assertSentCount(2);
         Http::assertSent(function (\Illuminate\Http\Client\Request $request) use ($token): bool {
             $this->assertStringNotContainsString($token, $request->url());
             $this->assertSame('Bearer '.$token, $request->header('Authorization')[0] ?? null);
-            $this->assertStringContainsString('spreadsheetml.sheet', $request->url());
 
-            return true;
+            return str_contains($request->url(), '/export')
+                && str_contains($request->url(), 'spreadsheetml.sheet');
         });
+        Http::assertNotSent(fn (\Illuminate\Http\Client\Request $request): bool => str_contains($request->url(), 'alt=media'));
         $this->assertFalse($loggedToken);
         $this->assertNull(session('checklist_google_token'));
         $this->assertSame(0, User::query()->where('school_id', $school->id)->where('usergroup_id', 6)->count());
@@ -423,7 +428,7 @@ class ChecklistOnboardingPocTest extends TestCase
         $token = 'ya29.test-token-not-real';
         Http::preventStrayRequests();
         Http::fake([
-            'https://www.googleapis.com/drive/v3/files/*/export*' => Http::response(['error' => 'no'], 403),
+            'https://www.googleapis.com/drive/v3/files/*' => Http::response(['error' => 'no'], 403),
         ]);
 
         Livewire::test(ChecklistOnboarding::class)
@@ -436,6 +441,47 @@ class ChecklistOnboardingPocTest extends TestCase
         Http::assertSentCount(1);
         $this->assertSame(0, OnboardingPlan::query()->where('school_id', $school->id)->count());
         $this->assertSame(0, User::query()->where('school_id', $school->id)->where('usergroup_id', 6)->count());
+    }
+
+    public function test_a_picked_xlsx_file_is_downloaded_as_stored(): void
+    {
+        [$school, $admin] = $this->demoAdmin();
+        $this->actingAs($admin);
+        $path = (new DemoChecklistWorkbook)->write($this->dir.'/stored.xlsx', true, false, 'Yes');
+        $token = 'ya29.test-token-not-real';
+        Http::preventStrayRequests();
+        Http::fake(function (\Illuminate\Http\Client\Request $request) use ($path) {
+            if (str_contains($request->url(), 'alt=media')) {
+                return Http::response(file_get_contents($path), 200, [
+                    'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                ]);
+            }
+
+            return Http::response([
+                'mimeType' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ], 200);
+        });
+
+        Livewire::test(ChecklistOnboarding::class)
+            ->call('confirmAgreement')
+            ->assertSee('https://www.googleapis.com/auth/drive.file')
+            ->call('rememberSheetAccess', $token)
+            ->call('importPickedSheet', '1aBcDeFgHiJkLmNoPqRs')
+            ->assertSee('Northwind Harbour School')
+            ->assertSee('Primary Eight')
+            ->assertDontSee($token);
+
+        Http::assertSentCount(2);
+        Http::assertSent(function (\Illuminate\Http\Client\Request $request) use ($token): bool {
+            $this->assertStringNotContainsString($token, $request->url());
+            $this->assertSame('Bearer '.$token, $request->header('Authorization')[0] ?? null);
+
+            return str_contains($request->url(), 'alt=media')
+                && ! str_contains($request->url(), '/export');
+        });
+        Http::assertNotSent(fn (\Illuminate\Http\Client\Request $request): bool => str_contains($request->url(), '/export'));
+        $this->assertSame(0, User::query()->where('school_id', $school->id)->where('usergroup_id', 6)->count());
+        $this->assertNull(session('checklist_google_token'));
     }
 
     public function test_a_google_picker_error_code_is_shown_and_a_token_is_not(): void

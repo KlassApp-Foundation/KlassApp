@@ -296,8 +296,13 @@
                                 }
                                 Promise.resolve(component.call('rememberSheetAccess', response.access_token)).then(function () {
                                     gapi.load('picker', { callback: function () {
+                                        var sheets = new google.picker.DocsView(google.picker.ViewId.SPREADSHEETS);
+                                        var files = new google.picker.DocsView(google.picker.ViewId.DOCS)
+                                            .setMimeTypes('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                                            .setIncludeFolders(true);
                                         var picker = new google.picker.PickerBuilder()
-                                            .addView(google.picker.ViewId.SPREADSHEETS)
+                                            .addView(sheets)
+                                            .addView(files)
                                             .setOAuthToken(response.access_token)
                                             .setDeveloperKey(pickerKey)
                                             .setAppId(appId)
