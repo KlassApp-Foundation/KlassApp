@@ -32,25 +32,29 @@ If the report combines exam sets, the weights should add up to 100. Change a nam
 
 ## A class tab
 
-Row 1 holds the three exam set names, taken from Setup. Row 2 holds the column headers. **Data starts at row 3; there is no example row.** Each class tab has room for 150 learners.
+Row 1 holds the three exam set names, taken from Setup. Row 2 holds the headers. **Data starts at row 3; there is no example row.** Each class tab has room for 150 learners.
 
 | Column | What goes in it |
 | --- | --- |
-| A | Learner full name (`*` required) |
-| B | Stream |
-| C | Gender |
-| D | KLS number — **leave empty**; KlassApp fills it after onboarding |
+| A | **KLS number** (`*` required): the learner's KlassApp number, for example `KLS0001234` |
+| B | **Learner name**, so you can check you have the right person |
 
-Then three exam blocks. Each block has:
+Then three exam blocks:
 
-- six subject columns;
-- **Total**, **Average** and **Position** in grey cells.
+- the first six columns are the subjects;
+- **Total**, **Average** and **Position** come next, in grey cells.
 
-The first block's subjects are in columns E to J, with Total, Average and Position in K, L and M. The second block is N to V, the third W to AE. The second and third blocks copy the subject names from the first.
+The first block is columns C to K: subjects in C to H, then Total, Average and Position in I, J and K. The second block is L to T, the third U to AC. The second and third blocks copy the subject names from the first.
 
 **Type the class's subjects once**, in the yellow cells of row 2 under the first exam set. Use exactly the subject names on the **Subjects** tab of the onboarding checklist. Leave a subject cell empty if the class takes fewer than six subjects; an empty header is ignored.
 
 Primary Four to Primary Seven come pre-filled with English, Mathematics, Science and Social Studies. Change them if the school's subjects differ.
+
+## The KLS number and the name
+
+- **Copy the KLS numbers out of KlassApp**, from the class list, so you do not retype them. Column A is how KlassApp matches the marks to a learner.
+- **If a learner has no KLS number yet**, leave column A empty and write the learner's name in column B exactly as it is on the onboarding checklist. KlassApp then matches by name and class, and never guesses.
+- Column B is for checking. It is not a second place to identify the learner when column A is filled.
 
 ## Entering marks
 
@@ -59,10 +63,6 @@ Primary Four to Primary Seven come pre-filled with English, Mathematics, Science
 - Leave the cell empty if the subject was not taken.
 
 The sheet refuses anything else. Do not type in **Total**, **Average** or **Position**: they fill in by themselves.
-
-## Names and streams
-
-The learner's full name and stream must match the onboarding checklist exactly. Copy them from that class's tab on the checklist with **Edit → Paste special → Values only**. If the checklist says `Primary One` and `East`, the marks tab says `Primary One` and `East`, not `P.1` or `P1 East`.
 
 ## Positions
 
@@ -80,7 +80,18 @@ The official report cards come from KlassApp: grading, divisions, positions and 
 
 The workbook holds learners' names and marks. Share it only with the school's staff who enter marks and the KlassApp team.
 
+## Common mistakes
+
+- Typing the learner's name in column A. A is the KLS number; the name goes in B.
+- Typing the KLS number with spaces, a prefix or lower case (`kls 123`); copy it as it appears in KlassApp.
+- Adding a Stream or Gender column. The workbook no longer has them; names and streams come from the onboarding checklist.
+- Pasting a list with formatting. Use **Edit → Paste special → Values only**.
+- Typing in Total, Average or Position; they are formulas.
+- A mark above the Setup "Out of" value, or a letter other than `ABS`.
+- A subject name that differs from the Subjects tab of the checklist; the two must match.
+- Inserting a column to add a subject. Use the empty subject columns; do not move the blocks.
+
 ## Placeholders
 
 - Screenshot: the Setup tab with the three exam sets.
-- Screenshot: one class tab showing the three blocks and the grey calculated columns.
+- Screenshot: one class tab with the KLS column, the name column and the three blocks.
