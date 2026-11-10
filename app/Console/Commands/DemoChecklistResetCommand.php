@@ -149,6 +149,7 @@ class DemoChecklistResetCommand extends Command
             ->pluck('id');
 
         DB::table('onboarding_plans')->where('school_id', $schoolId)->delete();
+        DB::table('user_preferences')->where('key', 'checklist.school_agreement.'.$schoolId)->delete();
         DB::table('school_details')->where('school_id', $schoolId)->where('meta_key', 'moto')->delete();
         DB::table('teacher_invites')->where('school_id', $schoolId)->delete();
         DB::table('class_teacher_links')->where('school_id', $schoolId)->delete();

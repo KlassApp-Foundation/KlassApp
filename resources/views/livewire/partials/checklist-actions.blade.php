@@ -23,7 +23,7 @@
         <div class="t-actions">
             <button type="button" class="t-btn secondary" wire:click="closeEditor" data-testid="checklist-editor-close">Close</button>
         </div>
-    @elseif($phase === 'idle')
+    @elseif($phase === 'idle' && ! ($setupFinished ?? false))
         <div class="t-actions">
             <button type="button" class="t-btn" wire:click="start" data-testid="onboard-from-checklist">Set up from checklist</button>
         </div>
@@ -90,13 +90,6 @@
                 <button type="button" class="t-btn secondary" wire:click="answerQuestion('other')" data-testid="question-other">Something else</button>
             @endif
         </div>
-    @elseif($kind === 'preview' && ($card['step_key'] ?? '') === 'whatsapp' && ($card['connect_notice'] ?? '') !== '')
-        <div class="t-actions">
-            @if(is_array($follow) && in_array($follow['kind'] ?? '', ['preview', 'done'], true))
-                <button type="button" class="t-btn" wire:click="openNext" data-testid="checklist-next" data-checklist-focus>Next</button>
-            @endif
-            @include('livewire.partials.checklist-back')
-        </div>
     @elseif($kind === 'preview' && ! $blocked)
         <div class="t-actions">
             @if($showChange)
@@ -114,7 +107,7 @@
                     @endif
                     <button type="button" class="t-btn" wire:click="confirmReviewed" data-testid="confirm-step" data-checklist-focus @disabled($held || $emailsBlocked)>{{ $card['approve_label'] ?? 'Create' }}</button>
                 </div>
-                @if(! in_array($checkKey, ['teacher_invites'], true))
+                @if(! in_array($checkKey, ['teacher_invites', 'whatsapp'], true))
                     <button type="button" class="t-btn secondary" wire:click="openEditor" data-testid="checklist-edit">Edit</button>
                 @endif
                 @if(! in_array($checkKey, ['teacher_invites', 'whatsapp'], true))

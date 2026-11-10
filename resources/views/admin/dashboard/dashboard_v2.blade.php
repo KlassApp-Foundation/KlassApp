@@ -69,6 +69,9 @@
 @if($checklistSetup)
     <link rel="stylesheet" href="{{ asset('css/toshi-checklist-panel.css') }}?v={{ @filemtime(public_path('css/toshi-checklist-panel.css')) }}">
 @endif
+@if($checklistSetup && $setupFinished)
+<script>document.documentElement.classList.add('checklist-setup-done');</script>
+@endif
 <div class="dv2-shell" data-testid="dashboard-v2-shell">
     <div class="dv2-panel" data-testid="dashboard-v2-panel">
         @include('partials.message')
@@ -570,8 +573,20 @@ window.klassDashboardToshiSetup = function () {
         if (whatsapp) {
             whatsapp.textContent = String(payload.whatsapp.value);
         }
+        function retireSetupChrome() {
+            document.documentElement.classList.add('checklist-setup-done');
+            ['dashboard-v2-setup-bar', 'dashboard-v2-profile', 'dashboard-v2-setup-summary'].forEach(function (id) {
+                var node = document.querySelector('[data-testid="' + id + '"]');
+                if (node && node.parentNode) {
+                    node.parentNode.removeChild(node);
+                }
+            });
+        }
+        if (payload.hide_options) {
+            retireSetupChrome();
+        }
         var ledger = document.querySelector('[data-testid="dashboard-v2-setup-ledger"]');
-        if (ledger) {
+        if (ledger && !payload.hide_options) {
             ledger.replaceChildren();
             var rows = Array.isArray(payload.ledger) ? payload.ledger : [];
             if (rows.length === 0) {
@@ -661,14 +676,6 @@ window.klassDashboardToshiSetup = function () {
                 chip.hidden = count < 1;
             });
         });
-        if (payload.hide_options) {
-            ['dashboard-v2-setup-bar', 'dashboard-v2-profile', 'dashboard-v2-setup-summary'].forEach(function (id) {
-                var node = document.querySelector('[data-testid="' + id + '"]');
-                if (node) {
-                    node.hidden = true;
-                }
-            });
-        }
     }
     function tick() {
         if (busy || !url) {
@@ -690,10 +697,11 @@ window.klassDashboardToshiSetup = function () {
         });
         if (window.Livewire.on) {
             window.Livewire.on('checklist-setup-finished', function () {
+                document.documentElement.classList.add('checklist-setup-done');
                 ['dashboard-v2-setup-bar', 'dashboard-v2-profile', 'dashboard-v2-setup-summary'].forEach(function (id) {
                     var node = document.querySelector('[data-testid="' + id + '"]');
-                    if (node) {
-                        node.hidden = true;
+                    if (node && node.parentNode) {
+                        node.parentNode.removeChild(node);
                     }
                 });
             });

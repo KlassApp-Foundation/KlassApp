@@ -1322,14 +1322,12 @@ final class ChecklistOnboardingService
             'title' => 'WhatsApp',
             'proposal' => 'This is the school WhatsApp number from Admin & Contacts.',
             'statement' => true,
-            'approve_label' => 'Connect WhatsApp',
+            'approve_label' => 'Continue',
             'phone_display' => $this->formatSchoolPhone($raw, $country),
             'phone_raw' => $raw,
             'phone_hint' => PhoneCountry::hint($country, true),
             'source_tab' => 'Admin & Contacts',
             'show_editor' => false,
-            'connected' => false,
-            'connect_notice' => '',
         ];
     }
 

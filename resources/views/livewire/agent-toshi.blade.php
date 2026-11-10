@@ -92,7 +92,7 @@
                 </button>
             </div>
         </div>
-        @if($checklistOnboarding)
+        @if($checklistOnboarding && ! $checklistFinished)
             @php
                 $shellSteps = [
                     'agreement' => 'Agreement',

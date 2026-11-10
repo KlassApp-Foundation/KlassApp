@@ -449,6 +449,7 @@ class ChecklistOnboardingPocTest extends TestCase
             $service->apply($plan->fresh(), $admin);
         }
         $this->assertSame(2, User::query()->where('school_id', $school->id)->where('usergroup_id', 6)->count());
+        UserPreference::set($admin, 'checklist.school_agreement.'.$school->id, now()->toIso8601String());
         $school->forceFill([
             'motto' => 'Harbour lights',
             'onboarding_finished_at' => now(),
@@ -462,6 +463,7 @@ class ChecklistOnboardingPocTest extends TestCase
         $school = $school->fresh();
         $this->assertNull($school->motto);
         $this->assertNull($school->onboarding_finished_at);
+        $this->assertNull(UserPreference::get($admin, 'checklist.school_agreement.'.$school->id));
         $this->assertNull($school->mottoText());
         $this->assertSame(0, User::query()->where('school_id', $school->id)->where('usergroup_id', 6)->count());
         $this->assertSame(0, AcademicYear::query()->where('school_id', $school->id)->count());
@@ -1147,16 +1149,24 @@ class ChecklistOnboardingPocTest extends TestCase
             ->call('confirmReviewed')
             ->call('openNext')
             ->assertSet('card.step_key', 'whatsapp')
-            ->assertSee('No WhatsApp number on Admin & Contacts yet.')
+            ->assertSee('data-testid="checklist-wizard-form"', false)
+            ->assertSee('data-embed-step="whatsapp_verify"', false)
+            ->assertSee('data-testid="wizard-wa-phone"', false)
+            ->assertSee('Get a code')
             ->assertSee("I've checked this")
-            ->assertSee('Connect WhatsApp')
-            ->set('reviewed', true)
-            ->call('confirmReviewed')
-            ->assertSee('Verification completes on the live service')
+            ->assertSee('Continue')
+            ->assertDontSee('Connect WhatsApp')
+            ->assertDontSee('Verification completes on the live service')
             ->assertDontSee('Connected')
             ->assertDontSee('data-testid="checklist-whatsapp-connected"', false)
-            ->call('openNext')
+            ->set('reviewed', false)
+            ->call('confirmReviewed')
+            ->assertSet('card.step_key', 'whatsapp')
+            ->set('reviewed', true)
+            ->call('confirmReviewed')
             ->assertSet('card.kind', 'done')
+            ->assertDontSee('Connected')
+            ->assertDontSee('data-testid="checklist-whatsapp-connected"', false)
             ->assertSee('1 invite sent (captured on this demo copy)')
             ->assertSee('Parent invites are prepared and have not been sent.');
 
@@ -1186,6 +1196,78 @@ class ChecklistOnboardingPocTest extends TestCase
             ->assertSee('I agree on behalf of the school');
 
         $this->assertSame(0, AcademicTerm::query()->where('school_id', $school->id)->count());
+    }
+
+    public function test_the_agreement_is_kept_once_for_the_school(): void
+    {
+        [$school, $admin] = $this->demoAdmin();
+        $this->actingAs($admin);
+
+        Livewire::test(ChecklistOnboarding::class)
+            ->call('start')
+            ->assertSee('I agree on behalf of the school')
+            ->set('agreed', true)
+            ->call('confirmAgreement')
+            ->assertSet('phase', 'upload');
+
+        Livewire::test(ChecklistOnboarding::class)
+            ->call('start')
+            ->assertSet('phase', 'upload')
+            ->assertSet('agreed', true)
+            ->assertDontSee('I agree on behalf of the school')
+            ->set('agreed', false)
+            ->assertSet('agreed', true);
+
+        $this->assertNotNull(UserPreference::get($admin, 'checklist.school_agreement.'.$school->id));
+    }
+
+    public function test_a_finished_school_opens_the_assistant_from_its_own_records(): void
+    {
+        [$school, $admin] = $this->demoAdmin();
+        $this->actingAs($admin);
+        $year = AcademicYear::query()->create([
+            'school_id' => $school->id,
+            'name' => '2026',
+            'start_date' => '2026-01-01',
+            'end_date' => '2026-12-31',
+            'status' => 1,
+        ]);
+        AcademicTerm::query()->create([
+            'school_id' => $school->id,
+            'academic_year_id' => $year->id,
+            'name' => 'Term 1',
+            'starts_on' => '2026-02-02 00:00:00',
+            'ends_on' => '2026-05-08 00:00:00',
+            'status' => 'current',
+        ]);
+        $school->forceFill(['onboarding_finished_at' => now()])->save();
+
+        Livewire::test(ChecklistOnboarding::class)
+            ->assertDontSee('Set up from checklist')
+            ->assertDontSee('I agree on behalf of the school')
+            ->assertSee($school->name.' is set up. Ask me about the school.')
+            ->assertSee('When does Term 1 end?')
+            ->assertDontSee('How many learners are in Primary One?')
+            ->call('askSuggestion', 'term')
+            ->assertSee('When does Term 1 end?')
+            ->assertSee('8 May 2026')
+            ->call('start')
+            ->assertDontSee('I agree on behalf of the school')
+            ->assertDontSee('Set up from checklist');
+
+        Livewire::test(AgentToshi::class)
+            ->assertSet('checklistFinished', true)
+            ->assertDontSee('aria-label="Setup progress"', false)
+            ->set('input', 'When does Term 1 end?')
+            ->call('send')
+            ->assertSee('8 May 2026')
+            ->assertDontSee("don't know that from this checklist");
+
+        $html = $this->get('/admin/dashboard')->assertOk()->getContent();
+        $this->assertIsString($html);
+        $this->assertStringContainsString('checklist-setup-done', $html);
+        $this->assertDoesNotMatchRegularExpression('/data-testid="dashboard-v2-profile">/', $html);
+        $this->assertStringNotContainsString("What's set up", $html);
     }
 
     public function test_editing_terms_before_apply_updates_the_plan_and_not_the_school(): void

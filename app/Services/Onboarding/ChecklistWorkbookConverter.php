@@ -529,19 +529,21 @@ final class ChecklistWorkbookConverter
         $mode = 'terms';
         $grading = [];
         $skipNext = false;
+        $sawTerm = false;
         foreach ($rows as $i => $row) {
             $n = $i + 1;
             if ($i < 2) {
                 continue;
             }
             $first = $this->text($row[0] ?? '');
-            if (str_starts_with(strtolower($first), 'assessment name')) {
+            $lower = strtolower($first);
+            if (str_starts_with($lower, 'assessment name') || str_contains($lower, 'exams / assessments')) {
                 $mode = 'assess';
-                $skipNext = true;
+                $skipNext = str_starts_with($lower, 'assessment name');
 
                 continue;
             }
-            if (str_contains(strtolower($first), 'grading')) {
+            if (str_contains($lower, 'grading')) {
                 $mode = 'grading';
                 $rest = trim(implode(' ', array_filter(array_map(fn ($c) => $this->text($c), array_slice($row, 1)))));
                 if ($rest !== '') {
@@ -559,6 +561,13 @@ final class ChecklistWorkbookConverter
                 continue;
             }
             if ($first === '') {
+                if ($mode === 'terms' && $sawTerm) {
+                    $mode = 'between';
+                }
+
+                continue;
+            }
+            if ($mode === 'between') {
                 continue;
             }
             if ($mode === 'assess') {
@@ -575,6 +584,7 @@ final class ChecklistWorkbookConverter
                 continue;
             }
             $this->read($tab);
+            $sawTerm = true;
             $start = $this->date($row[2] ?? '');
             $end = $this->date($row[3] ?? '');
             $term = $this->text($row[1] ?? '');

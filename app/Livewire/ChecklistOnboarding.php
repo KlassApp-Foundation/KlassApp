@@ -7,6 +7,7 @@ use App\Models\School;
 use App\Models\UserPreference;
 use App\Onboarding\Country\CountryProfiles;
 use App\Services\FinishSchoolOnboarding;
+use App\Services\Onboarding\ChecklistAssistantPrompts;
 use App\Services\Onboarding\ChecklistOnboardingGate;
 use App\Services\Onboarding\ChecklistOnboardingService;
 use Illuminate\Http\Client\PendingRequest;
@@ -88,6 +89,10 @@ class ChecklistOnboarding extends Component
 
     public string $whatsappPhone = '';
 
+    public string $assistantQuestion = '';
+
+    public string $assistantReply = '';
+
     /** @var array<int, string> */
     public array $inviteEmails = [];
 
@@ -111,6 +116,8 @@ class ChecklistOnboarding extends Component
         }
 
         $this->resetCardUi();
+        $this->assistantQuestion = '';
+        $this->assistantReply = '';
         $this->agreed = false;
         $this->planId = null;
         $this->follow = null;
@@ -119,6 +126,21 @@ class ChecklistOnboarding extends Component
         $this->sheetFileId = '';
         $this->sheetNote = '';
         $this->progressLines = [];
+        if ($this->setupIsFinished()) {
+            $this->phase = 'idle';
+            $this->card = [];
+            $this->publishStep();
+
+            return;
+        }
+        if ($this->agreementAccepted()) {
+            $this->agreed = true;
+            $this->phase = 'upload';
+            $this->card = ['kind' => 'upload'];
+            $this->publishStep();
+
+            return;
+        }
         $this->phase = 'agreement';
         $this->card = ['kind' => 'agreement'];
         $this->publishStep();
@@ -267,7 +289,7 @@ class ChecklistOnboarding extends Component
     #[On('checklist-onboarding-hint')]
     public function hint(): void
     {
-        if (! $this->enabled || $this->phase !== 'idle') {
+        if (! $this->enabled || $this->phase !== 'idle' || $this->setupIsFinished()) {
             return;
         }
 
@@ -349,7 +371,7 @@ class ChecklistOnboarding extends Component
             return;
         }
         if ($key === 'whatsapp') {
-            $this->connectWhatsApp($service);
+            $this->openDone($service);
 
             return;
         }
@@ -477,13 +499,7 @@ class ChecklistOnboarding extends Component
         }
 
         $key = (string) ($this->card['step_key'] ?? '');
-        if ($key === 'teacher_invites') {
-            return;
-        }
-        if ($key === 'whatsapp') {
-            $this->card['show_editor'] = true;
-            $this->whatsappPhone = (string) ($this->card['phone_raw'] ?? '');
-
+        if ($key === 'teacher_invites' || $key === 'whatsapp') {
             return;
         }
         $step = match ($key) {
@@ -608,8 +624,14 @@ class ChecklistOnboarding extends Component
 
     public function render()
     {
+        $finished = $this->setupIsFinished();
+
         return view('livewire.checklist-onboarding', [
             'shellStep' => $this->shellStep(),
+            'setupFinished' => $finished,
+            'assistant' => $finished && $this->phase === 'idle'
+                ? ChecklistAssistantPrompts::forSchool($this->school())
+                : ['welcome' => '', 'questions' => []],
         ]);
     }
 
@@ -726,7 +748,25 @@ class ChecklistOnboarding extends Component
         $this->withPlan($service, fn ($plan, $actor) => $service->sendTeacherInvites($plan, $actor));
     }
 
-    public function connectWhatsApp(ChecklistOnboardingService $service): void
+    public function askSuggestion(string $id): void
+    {
+        if (! $this->guard() || ! $this->setupIsFinished() || $this->phase !== 'idle') {
+            return;
+        }
+        if (! in_array($id, ['learners', 'teacher', 'term'], true)) {
+            return;
+        }
+
+        $match = ChecklistAssistantPrompts::find($this->school(), $id);
+        if ($match === null) {
+            return;
+        }
+
+        $this->assistantQuestion = $match['text'];
+        $this->assistantReply = $match['answer'];
+    }
+
+    private function openDone(ChecklistOnboardingService $service): void
     {
         if (! $this->guard() || ! $this->passesReview()) {
             return;
@@ -746,31 +786,8 @@ class ChecklistOnboarding extends Component
             return;
         }
 
-        $this->card['connected'] = false;
-        $this->card['verify_code'] = '';
-        $this->card['verify_url'] = '';
-        if (! $service->whatsappServiceReady()) {
-            $this->card['connect_notice'] = 'Verification completes on the live service';
-        } else {
-            $phone = trim((string) ($this->card['phone_raw'] ?? ''));
-            if ($phone === '') {
-                $this->card['connect_notice'] = 'Add the school WhatsApp number first.';
-            } else {
-                $issued = app(\App\Services\WhatsApp\WhatsAppUserInitiatedVerification::class)
-                    ->issue((int) $actor->id, $phone, request()->ip());
-                $status = app(\App\Services\WhatsApp\WhatsAppUserInitiatedVerification::class)
-                    ->statusFor((int) $actor->id, $phone);
-                $this->card['connected'] = ($status['verified'] ?? false) === true;
-                $this->card['verify_code'] = (string) ($issued['code'] ?? '');
-                $this->card['verify_url'] = (string) ($issued['url'] ?? '');
-                $this->card['connect_notice'] = $this->card['connected']
-                    ? ''
-                    : (string) ($issued['message'] ?? 'Verification completes on the live service');
-            }
-        }
-
         $this->follow = $service->doneCard($plan, $actor);
-        $this->publishStep();
+        $this->openNext();
     }
 
     public function saveInviteEmail(ChecklistOnboardingService $service, int $index): void
@@ -1285,7 +1302,34 @@ class ChecklistOnboarding extends Component
             return;
         }
 
+        if ($this->agreementAccepted()) {
+            $this->agreed = true;
+
+            return;
+        }
+
         UserPreference::forget($actor, $key);
+    }
+
+    private function setupIsFinished(): bool
+    {
+        $school = $this->school();
+
+        return $school !== null && $school->fresh()->onboarding_finished_at !== null;
+    }
+
+    private function agreementAccepted(): bool
+    {
+        $school = $this->school();
+        if ($school === null) {
+            return false;
+        }
+
+        return UserPreference::query()
+            ->where('key', 'checklist.school_agreement.'.$school->id)
+            ->whereNotNull('value')
+            ->where('value', '!=', '')
+            ->exists();
     }
 
     private function openPastedLink(): void

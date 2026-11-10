@@ -2,7 +2,23 @@
     @if($enabled)
 <link rel="stylesheet" href="{{ asset('css/toshi-checklist-panel.css') }}?v={{ @filemtime(public_path('css/toshi-checklist-panel.css')) }}">
 
-        @if($phase === 'idle')
+        @if($phase === 'idle' && ($setupFinished ?? false))
+            <div class="t-card t-welcome" data-testid="checklist-card-assistant" data-checklist-card="assistant">
+                <h3>Toshi</h3>
+                <p>{{ $assistant['welcome'] ?? 'The school is set up. Ask me about the school.' }}</p>
+                @if(($assistant['questions'] ?? []) !== [])
+                    <div class="t-suggestions">
+                        @foreach($assistant['questions'] as $suggestion)
+                            <button type="button" class="t-btn" wire:click="askSuggestion('{{ $suggestion['id'] }}')" data-testid="checklist-suggestion-{{ $suggestion['id'] }}">{{ $suggestion['text'] }}</button>
+                        @endforeach
+                    </div>
+                @endif
+                @if($assistantQuestion !== '')
+                    <p data-testid="checklist-assistant-question">{{ $assistantQuestion }}</p>
+                    <p data-testid="checklist-assistant-answer">{{ $assistantReply }}</p>
+                @endif
+            </div>
+        @elseif($phase === 'idle')
             <div class="t-card t-welcome" data-testid="checklist-card-welcome" data-checklist-card="welcome">
                 <h3>Toshi</h3>
                 <p>I'm Toshi, your school's assistant.</p>
@@ -252,26 +268,13 @@
                         @endforeach
                     </ul>
                 @elseif(($preview['step_key'] ?? '') === 'whatsapp')
-                    <p data-testid="checklist-whatsapp-number">{{ ($preview['phone_display'] ?? '') !== '' ? $preview['phone_display'] : 'No WhatsApp number on Admin & Contacts yet.' }}</p>
-                    @if(! empty($preview['show_editor']))
-                        <label class="ds-form-label" for="wizard-wa">Your WhatsApp number</label>
-                        <input id="wizard-wa" type="tel" inputmode="tel" autocomplete="tel" class="ds-form-input w-full" wire:model="whatsappPhone" placeholder="Include the country code" data-testid="wizard-wa-phone" aria-describedby="wizard-wa-phone-hint" />
-                        <p class="text-xs text-gray-500 mt-1" id="wizard-wa-phone-hint" data-testid="wizard-wa-phone-hint">{{ $preview['phone_hint'] ?? 'Your WhatsApp number, including the country code.' }}</p>
-                        <button type="button" class="t-btn secondary" wire:click="saveWhatsappNumber" data-testid="save-whatsapp-number">Save</button>
-                        @error('whatsappPhone') <p class="t-note">{{ $message }}</p> @enderror
-                    @endif
-                    @if(($preview['connect_notice'] ?? '') !== '')
-                        <p data-testid="checklist-whatsapp-notice">{{ $preview['connect_notice'] }}</p>
-                    @endif
-                    @if(($preview['verify_code'] ?? '') !== '')
-                        <p class="t-note" data-testid="wizard-wa-code">{{ $preview['verify_code'] }}</p>
-                        @if(($preview['verify_url'] ?? '') !== '')
-                            <p><a href="{{ $preview['verify_url'] }}" target="_blank" rel="noopener noreferrer" data-testid="wizard-wa-open">Open WhatsApp</a></p>
-                        @endif
-                    @endif
-                    @if(! empty($preview['connected']))
-                        <p data-testid="checklist-whatsapp-connected">Connected</p>
-                    @endif
+                    <livewire:manual-onboarding-wizard
+                        :embedded="true"
+                        embed-step="whatsapp_verify"
+                        embed-persist="school"
+                        :whatsapp-phone="$preview['phone_raw'] ?? ''"
+                        :key="'checklist-wizard-whatsapp'"
+                    />
                 @endif
                 @if(! empty($preview['statement']))
                 @elseif(($preview['receipt'] ?? []) !== [])
@@ -649,8 +652,20 @@
                     var gap = thread.scrollHeight - thread.scrollTop - thread.clientHeight;
                     thread.setAttribute('data-checklist-stick', gap > 80 ? '0' : '1');
                 }, true);
+                window.klassChecklistRetireSetup = function () {
+                    document.documentElement.classList.add('checklist-setup-done');
+                    ['dashboard-v2-setup-bar', 'dashboard-v2-profile', 'dashboard-v2-setup-summary'].forEach(function (id) {
+                        var node = document.querySelector('[data-testid="' + id + '"]');
+                        if (node && node.parentNode) {
+                            node.parentNode.removeChild(node);
+                        }
+                    });
+                };
                 var klassChecklistBoot = function () {
                     window.klassChecklistSyncProgress();
+                    if (document.documentElement.classList.contains('checklist-setup-done') && window.toshiSetCollapsed) {
+                        window.toshiSetCollapsed(false);
+                    }
                     window.klassChecklistReopen();
                     window.klassChecklistPace();
                 };
@@ -662,6 +677,11 @@
                 document.addEventListener('livewire:init', function () {
                     if (!window.klassChecklistContinue && window.Livewire) {
                         window.klassChecklistContinue = true;
+                        window.Livewire.on('checklist-setup-finished', function () {
+                            if (window.klassChecklistRetireSetup) {
+                                window.klassChecklistRetireSetup();
+                            }
+                        });
                         window.Livewire.on('checklist-continue-dashboard', function () {
                             document.body.classList.add('checklist-leaving');
                             var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;

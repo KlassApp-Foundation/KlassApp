@@ -121,6 +121,8 @@ class AgentToshi extends Component
     public $schoolId = null;
 
     public bool $checklistOnboarding = false;
+
+    public bool $checklistFinished = false;
     public $preview = [];
     /** Public-demo actor: preview card shows the WhatsApp follow-along line. */
     public $publicDemo = false;
@@ -375,8 +377,10 @@ class AgentToshi extends Component
         $user = auth()->user();
         if (!$user) return;
 
+        $checklistSchool = $user->school_id ? School::query()->find($user->school_id) : null;
         $this->checklistOnboarding = app(\App\Services\Onboarding\ChecklistOnboardingGate::class)
-            ->enabledFor($user->school_id ? School::query()->find($user->school_id) : null);
+            ->enabledFor($checklistSchool);
+        $this->checklistFinished = $checklistSchool !== null && $checklistSchool->onboarding_finished_at !== null;
 
         // Panel visibility (preview / onboarding / assistant). Scripted setup and
         // the model are gated separately via onboardingEnabled / assistantEnabled.
@@ -4291,6 +4295,16 @@ class AgentToshi extends Component
         if ($this->checklistOnboarding && $text !== '' && preg_match('#https?://docs\.google\.com/spreadsheets/#i', $text) === 1) {
             $this->input = '';
             $this->dispatch('checklist-sheet-link', url: $text);
+
+            return;
+        }
+
+        if ($this->checklistOnboarding && $this->checklistFinished && $text !== '') {
+            $school = $this->schoolId ? \App\Models\School::query()->find($this->schoolId) : null;
+            $reply = \App\Services\Onboarding\ChecklistAssistantPrompts::reply($school, $text);
+            $this->userSay($text);
+            $this->input = '';
+            $this->botSay($reply ?? 'Ask about a class, a teacher, or a term.');
 
             return;
         }

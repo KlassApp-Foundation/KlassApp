@@ -52,7 +52,7 @@ class ChecklistConvertTest extends TestCase
     }
 
     /** Builds a fictional-school workbook. $bad adds the broken rows. */
-    private function workbook(bool $bad = true, string $dpa = 'Yes', bool $emptyLearners = false): string
+    private function workbook(bool $bad = true, string $dpa = 'Yes', bool $emptyLearners = false, ?array $termsRows = null): string
     {
         $b = new Spreadsheet;
         $this->addTab($b, 'School Details', [['Field', 'Answer'], ['School name', 'Fictional Hills Primary'], ['Country', 'Uganda']], true);
@@ -62,7 +62,7 @@ class ChecklistConvertTest extends TestCase
             array_fill(0, 10, ['', '', '', '', '', '']),
             [['School WhatsApp number', '0772 000111']],
         ));
-        $this->addTab($b, 'Terms & Exams', [
+        $this->addTab($b, 'Terms & Exams', $termsRows ?? [
             ['Academic year *', 'Term *', 'Start date *', 'End date *', 'Notes'],
             ['2026', 'Term 1', '01/02/2026', '30/04/2026', ''],
             ['2026', 'Term 1b', '03/02/2026', '31/12/2025', ''],
@@ -204,6 +204,53 @@ class ChecklistConvertTest extends TestCase
         $r = (new ChecklistWorkbookConverter)->convert($this->workbook(false));
         $this->assertNull($r['blocked']);
         $this->assertSame('+256772123456', $r['files']['teachers.csv'][0][4]);
+    }
+
+    public function test_terms_stop_before_the_exams_block_on_the_real_template_layout(): void
+    {
+        $blank = ['', '', '', '', ''];
+        $filled = [
+            ['Academic year *', 'Term *', 'Start date *', 'End date *', 'Notes'],
+            ['2027', 'Term 1', '2027-02-08', '2027-05-07', ''],
+            ['2026', 'Term 1', '2026-02-02', '2026-05-01', ''],
+            ['2026', 'Term 2', '2026-05-25', '2026-08-14', ''],
+            ['2026', 'Term 3', '2026-09-07', '2026-12-04', ''],
+            $blank, $blank, $blank, $blank, $blank,
+            ['Exams / assessments you give each term', '', '', '', ''],
+            ['Assessment name *', 'Classes it applies to *', 'Out of (marks) *', 'Counts on the report card? *', 'Notes'],
+            ['End of Term', 'All', '100', 'Yes', ''],
+            $blank,
+            ['Grading', 'A 80-100 Distinction', '', '', ''],
+            ['Keep this line with the scale.', '', '', '', ''],
+        ];
+        $read = (new ChecklistWorkbookConverter)->convert($this->workbook(false, 'Yes', false, $filled));
+        $this->assertNull($read['blocked']);
+        foreach ($read['flags'] as $flag) {
+            $this->assertStringNotContainsString('Missing required value in Term', (string) $flag['message']);
+            $this->assertStringNotContainsString('Start or end date missing', (string) $flag['message']);
+        }
+        $this->assertSame(['Term 1', 'Term 2', 'Term 3'], array_column($read['planRows']['terms'], 'name'));
+        $this->assertSame('End of Term', $read['pending']['assessments.csv'][1][0]);
+        $grading = strtolower((string) $read['pending']['grading.txt'][0][0]);
+        $this->assertStringContainsString('a 80-100 distinction', $grading);
+        $this->assertStringContainsString('keep this line with the scale.', $grading);
+
+        $template = [
+            ['Academic year *', 'Term *', 'Start date *', 'End date *', 'Notes'],
+            ['2027', 'Term 1', '2027-02-08', '2027-05-07', ''],
+            $blank, $blank, $blank, $blank, $blank, $blank, $blank, $blank,
+            ['Exams / assessments you give each term', '', '', '', ''],
+            ['Assessment name *', 'Classes it applies to *', 'Out of (marks) *', 'Counts on the report card? *', 'Notes'],
+            ['End of Term', 'All', '100', 'Yes', ''],
+        ];
+        $untouched = (new ChecklistWorkbookConverter)->convert($this->workbook(false, 'Yes', false, $template));
+        $this->assertNull($untouched['blocked']);
+        $this->assertSame([], array_column($untouched['planRows']['terms'], 'name'));
+        foreach ($untouched['flags'] as $flag) {
+            $this->assertStringNotContainsString('Missing required value in Term', (string) $flag['message']);
+            $this->assertStringNotContainsString('Start or end date missing', (string) $flag['message']);
+        }
+        $this->assertSame('End of Term', $untouched['pending']['assessments.csv'][1][0]);
     }
 
     public function test_T079_refuses_to_overwrite_a_non_empty_folder_without_force(): void
