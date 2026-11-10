@@ -22,7 +22,7 @@ Task pages. Each one is written as clicks.
 | [`demo/2026-11-12-run-sheet.md`](demo/2026-11-12-run-sheet.md) | The current demo run sheet |
 | [`demo/public-demo-lockdown.md`](demo/public-demo-lockdown.md) | What the public demo blocks |
 
-Staff task guides live in `docs/guides/admin/`. Two are open as drafts: attendance, student filters, class pages, exam sets, resend invite, and Toshi onboarding.
+Staff task guides are being added in open drafts: attendance, student filters, class pages, exam sets, resend invite (PRs #1309–#1313) and Toshi onboarding (#1317).
 
 ## Developers
 
@@ -30,7 +30,6 @@ Staff task guides live in `docs/guides/admin/`. Two are open as drafts: attendan
 | --- | --- |
 | [`architecture.md`](architecture.md) | Architecture bridge; deep architecture is on [DeepWiki](https://deepwiki.com/KlassApp-Foundation/KlassApp) |
 | [`dev/`](dev/) | Setup, environment, connectors |
-| [`dev/people-list-filters.md`](dev/people-list-filters.md) | The shared people list: query keys and how to add a filter (draft PR) |
 | [`build-safeguards.md`](build-safeguards.md) | Build and test safeguards |
 | [`project-provenance.md`](project-provenance.md) | Fork and upstream provenance |
 | [`../CONTRIBUTING.md`](../CONTRIBUTING.md) | How to contribute |
