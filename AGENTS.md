@@ -120,6 +120,9 @@ KlassApp is a fork of **GeGoK12** (GoGo Technologies, India). The codebase conta
 
 ## Path-specific notes
 
+### `docs/**` and `docs-site/**`
+School-facing guides go in `docs-site/`; internal docs (release notes and runbooks, audits, demo files, developer and architecture docs) go in `docs/`. The public guides are built to `/docs-preview/help/guides/`.
+
 ### `app/Console/Commands/**`
 Section naming convention: `P.1`–`P.7` = Primary One through Primary Seven; `S.1`–`S.6` = Senior One through Senior Six ("S" = Secondary/Senior, never spell out "Primary One" as a long-form string in matching logic). Nursery sections use word names: Baby Class, Middle Class, Top Class.
 
