@@ -1,3 +1,5 @@
+> **Archived 10 November 2026.** Replaced by `docs/release/2026-11-09-deploy-runbook.md`. Kept for history only.
+
 # Production Deploy Checklist
 
 > **Status**: ready-to-use runbook, re-checked 2026-10-13 against `main`

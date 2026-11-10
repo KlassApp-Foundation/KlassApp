@@ -1,3 +1,5 @@
+> **Archived 10 November 2026.** Design record. The engine it proposed is shipped in `app/Services/OnboardingEngine.php`; current setup steps are described in `docs/onboarding/playbook.md`.
+
 # Onboarding Engine — Phase 1 Design Doc
 
 > **Status:** design-only, pending human review. No implementation code has been written.
