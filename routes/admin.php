@@ -7,6 +7,7 @@ include ('addon.php');
 
 
 Route::get( '/dashboard', 'DashboardController@index' )->name( 'dashboard' );
+Route::get('/dashboard/checklist-figures', 'DashboardController@checklistFigures')->name('admin.dashboard.checklist-figures');
 
 // Wave 3 — manual onboarding wizard shell (UI layer; persistence via Livewire + existing models)
 Route::get('/onboarding/wizard', function () {

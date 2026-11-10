@@ -14,6 +14,13 @@ final class DemoChecklistWorkbook
 {
     public const SCHOOL = 'Northwind Harbour School';
 
+    /** Class tabs in the checklist template, Baby Class through Primary Seven. */
+    private const CLASS_TABS = [
+        'Baby Class', 'Middle Class', 'Top Class',
+        'Primary One', 'Primary Two', 'Primary Three', 'Primary Four',
+        'Primary Five', 'Primary Six', 'Primary Seven',
+    ];
+
     /**
      * @return array{0: string, 1: string} problem workbook, all-correct twin
      */
@@ -45,11 +52,12 @@ final class DemoChecklistWorkbook
             ['Field', 'Answer'],
             ['School name', self::SCHOOL],
             ['Country', 'Kenya'],
+            ['Curriculum', 'CBC'],
         ], true);
         $this->sheet($book, 'Admin & Contacts', [
             ['Role *', 'Full name *', 'Email', 'Phone', 'WhatsApp on this number?', 'Notes'],
-            ['Example', 'Example Person', 'person@northwind.example', '0712000098', 'Yes', ''],
-            ['Head teacher', 'Nia Example', 'nia@northwind.example', '0712000099', 'Yes', ''],
+            ['Example', 'Example Person', 'person@northwind.example', '0712 000098', 'Yes', ''],
+            ['Head teacher', 'Nia Example', 'nia@northwind.example', '0712 000099', 'Yes', ''],
         ]);
         $termRows = [['Academic year *', 'Term *', 'Start date *', 'End date *', 'Notes'], ['2026', 'Term 1', '02/02/2026', '30/04/2026', '']];
         foreach ($terms as $term) {
@@ -71,7 +79,7 @@ final class DemoChecklistWorkbook
         }
         $this->sheet($book, 'Subjects', $subjectRows);
 
-        $teacherRows = [['Full name *', 'Email *', 'Phone', 'Gender', 'Role', 'Notes'], ['Example Teacher', 'example.teacher@northwind.example', '0713000099', 'Female', 'Teacher', '']];
+        $teacherRows = [['Full name *', 'Email *', 'Phone', 'Gender', 'Role', 'Notes'], ['Example Teacher', 'example.teacher@northwind.example', '0713 000099', 'Female', 'Teacher', '']];
         foreach ($teachers as $teacher) {
             $teacherRows[] = [$teacher['name'], $teacher['email'], $teacher['phone'], $teacher['gender'], 'Teacher', ''];
         }
@@ -84,33 +92,46 @@ final class DemoChecklistWorkbook
         }
         $this->sheet($book, 'Teaching Assignments', $assignmentRows);
 
-        $learnerRows = [[
+        $learnerHeader = [
             'Learner full name *', 'Class *', 'Stream', 'Gender', 'Date of birth',
             'Parent / guardian full name', 'Parent / guardian phone', 'Relationship',
             'Parent / guardian email', 'Second parent / guardian name', 'Second parent / guardian phone',
             'Existing school ID number', 'Notes',
-        ], [
-            'Example Child', 'Baby Class', '', 'Female', '01/01/2018',
-            'Example Parent', '0712000000', 'Parent', 'example.parent@northwind.example', '', '', 'NW-EXAMPLE', '',
-        ]];
+        ];
+        $learnerRows = [$learnerHeader];
+        $onClassTab = [];
+        foreach (self::CLASS_TABS as $className) {
+            $onClassTab[$className] = [];
+        }
         $number = 1;
         foreach ($sections as $section) {
             for ($i = 0; $i < $section['count']; $i++) {
-                $learnerRows[] = $this->learner($number, $section['class'], $section['stream'], $this->phone(712, $number));
+                $row = $this->learner($number, $section['class'], $section['stream'], $this->phone(712, $number));
+                $learnerRows[] = $row;
+                $onClassTab[$section['class']][] = $row;
                 $number++;
             }
         }
         if ($problems) {
-            $learnerRows[] = $this->learner($number, 'Baby Class', '', '12345', 'NW-PHONE');
+            $phoneRow = $this->learner($number, 'Baby Class', '', '12345', 'NW-PHONE');
+            $learnerRows[] = $phoneRow;
+            $onClassTab['Baby Class'][] = $phoneRow;
             $number++;
             $learnerRows[] = $this->learner($number, 'Primary Eight', '', $this->phone(712, 9000), 'NW-CLASS');
         }
+        foreach (self::CLASS_TABS as $className) {
+            $this->sheet($book, $className, array_merge([$learnerHeader], $onClassTab[$className]));
+        }
         $this->sheet($book, 'All Learners (for import)', $learnerRows);
 
-        $perClass = [['Class', 'Stream', 'Learners'], ['Example', '', 0]];
+        $perClass = [['Class', 'Stream', 'Learners']];
+        $totalLearners = 0;
         foreach ($sections as $section) {
-            $perClass[] = [$section['class'], $section['stream'], $section['count']];
+            $count = $section['count'] + (($problems && $section['class'] === 'Baby Class' && $section['stream'] === '') ? 1 : 0);
+            $perClass[] = [$section['class'], $section['stream'], $count];
+            $totalLearners += $count;
         }
+        $perClass[] = ['Total', '', $totalLearners];
         $this->sheet($book, 'Learners per Class', $perClass);
 
         $this->sheet($book, 'Fees', [
@@ -208,7 +229,7 @@ final class DemoChecklistWorkbook
 
     private function phone(int $prefix, int $number): string
     {
-        return sprintf('0%d%06d', $prefix, $number);
+        return sprintf('0%d %06d', $prefix, $number);
     }
 
     /**

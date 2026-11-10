@@ -54,6 +54,8 @@ class DemoChecklistResetCommand extends Command
             $school->forceFill([
                 'toshi_mode' => ToshiMode::Preview,
                 'toshi_enabled' => 1,
+                'registration_country' => 'Kenya',
+                'curriculum' => 'cbc',
             ])->save();
             $admin = $this->admin($school, $password);
             $this->wipeImported($school, (int) $admin->id);
@@ -77,6 +79,7 @@ class DemoChecklistResetCommand extends Command
             'slug' => self::SLUG,
             'status' => 1,
             'registration_country' => 'Kenya',
+            'curriculum' => 'cbc',
             'school_category' => null,
             'toshi_mode' => ToshiMode::Preview,
             'toshi_enabled' => 1,

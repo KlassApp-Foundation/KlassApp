@@ -179,6 +179,62 @@ class DashboardController extends Controller
     }
 
     /**
+     * Live figures for a checklist proof-of-concept school. Real rows only,
+     * and only for the signed-in admin's own school.
+     */
+    public function checklistFigures(Request $request)
+    {
+        $user = $request->user();
+        $school = $user?->school;
+        if (! $user || ! $school || (int) $user->school_id !== (int) $school->id) {
+            abort(404);
+        }
+        if (! app(\App\Services\Onboarding\ChecklistOnboardingGate::class)->enabledFor($school)) {
+            abort(404);
+        }
+
+        $data = app(\App\Services\DashboardV2DataService::class)->build($school, $user);
+        $kpis = $data['kpis'] ?? [];
+        $board = app(\App\Services\WhatsApp\LinkRequestBoard::class);
+        $pending = $board->pendingCount((int) $school->id);
+        $linked = $board->linkedNumberCount((int) $school->id);
+        $fees = $kpis['fees'] ?? [];
+        $feesOk = ($fees['state'] ?? '') === 'ok';
+        $reports = $kpis['report_cards'] ?? [];
+        $setup = $data['setup'] ?? ['done' => 0, 'total' => 0];
+
+        return response()->json([
+            'students' => [
+                'value' => (string) ($kpis['students']['value'] ?? 0),
+                'detail' => (string) ($kpis['students']['detail'] ?? ''),
+            ],
+            'staff' => [
+                'value' => (string) ($kpis['staff']['value'] ?? 0),
+                'detail' => (string) ($kpis['staff']['detail'] ?? ''),
+            ],
+            'attendance' => [
+                'value' => (string) ($kpis['attendance']['value'] ?? '–'),
+                'detail' => (string) ($kpis['attendance']['detail'] ?? ''),
+            ],
+            'fees' => [
+                'value' => $feesOk ? ((string) ($fees['percent'] ?? 0).'%') : '–',
+                'detail' => $feesOk
+                    ? trim((string) ($fees['collected_label'] ?? '').' of '.(string) ($fees['expected_label'] ?? ''))
+                    : 'Set up fees first',
+            ],
+            'reports' => [
+                'value' => (string) ($reports['ready'] ?? 0),
+                'detail' => 'of '.(string) ($reports['students'] ?? 0).((($reports['state'] ?? '') === 'no_exam') ? ' · No exam closed yet' : ''),
+            ],
+            'whatsapp' => [
+                'value' => (string) ($pending > 0 ? $pending : $linked),
+            ],
+            'ledger' => \App\Onboarding\OnboardingProgress::ledger($school, (int) $user->id),
+            'setup_complete' => (int) ($setup['total'] ?? 0) > 0 && (int) ($setup['done'] ?? 0) >= (int) ($setup['total'] ?? 0),
+        ]);
+    }
+
+    /**
      * Kit home shell: time-of-day greeting + first name.
      *
      * @return array{phrase: string, name: string}

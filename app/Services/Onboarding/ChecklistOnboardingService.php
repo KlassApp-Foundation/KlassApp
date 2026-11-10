@@ -1569,11 +1569,11 @@ final class ChecklistOnboardingService
 
         $rows = [];
         foreach ($sheet->toArray(null, true, false, false) as $index => $row) {
-            if ($index < 2) {
+            if ($index === 0) {
                 continue;
             }
             $class = trim((string) ($row[0] ?? ''));
-            if ($class === '') {
+            if ($class === '' || strcasecmp($class, 'Total') === 0 || strcasecmp($class, 'Example') === 0 || str_starts_with(strtolower($class), 'example ')) {
                 continue;
             }
             if (! is_numeric($row[2] ?? null)) {

@@ -185,7 +185,7 @@ class OnboardingEngine
         }
 
         // FLAGGED(product-decision): curriculum is a fixed list headed by uneb, not the country profile. see docs/onboarding-engine-plan.md
-        if (! in_array($curriculum, ['uneb', 'cambridge', 'montessori', 'other'], true)) {
+        if (! in_array($curriculum, ['uneb', 'cambridge', 'montessori', 'cbc', 'other'], true)) {
             throw ValidationException::withMessages(['curriculum' => 'Choose a valid curriculum.']);
         }
 

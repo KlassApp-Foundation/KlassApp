@@ -15,7 +15,7 @@ bash scripts/demo/poc-serve.sh
 
 Open `http://localhost:8000`. That is the address for this demo copy and for every later Google test. Type localhost in the browser. Google treats a numeric loopback host as a different origin. The reset command prints the same address. If port 8000 is already taken, the start command names the listener and leaves it running. The Riverside preview stays on port 8126. It does not use Google sign-in.
 
-The workbook with two deliberate problems is `docs/demo/poc-checklist-workbook.xlsx`. The all-correct twin is `docs/demo/poc-checklist-workbook-correct.xlsx`. Have the problem file on the desktop, ready to choose.
+The workbook with two deliberate problems is `docs/demo/poc-checklist-workbook.xlsx`. The all-correct twin is `docs/demo/poc-checklist-workbook-correct.xlsx`. The same files are on the desktop as `Northwind-template-2-flags.xlsx` and `Northwind-template-clean.xlsx`. Class tabs run from Baby Class to Primary Seven. All Learners has no example row, so the first learner is on row 2. Phones are written `07XX XXXXXX`. The school is Kenya and the curriculum is CBC. Have the problem file ready to choose.
 
 Sign in. You land on the school dashboard. If you land on "Setting up without Toshi", you are on the manual wizard, which hides this panel. Go back to the dashboard. Do not finish that wizard.
 

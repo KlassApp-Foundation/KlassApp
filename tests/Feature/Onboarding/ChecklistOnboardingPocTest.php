@@ -213,7 +213,7 @@ class ChecklistOnboardingPocTest extends TestCase
         [$school, $admin] = $this->demoAdmin();
         $path = (new DemoChecklistWorkbook)->write($this->dir.'/bad-email.xlsx', false, false, 'Yes');
         $book = IOFactory::load($path);
-        $book->getSheetByName('All Learners (for import)')->setCellValueExplicit('I4', 'not-an-email', \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+        $book->getSheetByName('All Learners (for import)')->setCellValueExplicit('I3', 'not-an-email', \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
         IOFactory::createWriter($book, 'Xlsx')->save($path);
 
         $service = app(ChecklistOnboardingService::class);
@@ -247,7 +247,10 @@ class ChecklistOnboardingPocTest extends TestCase
         $this->assertSame(2, User::query()->where('school_id', $school->id)->where('usergroup_id', 6)->count());
         $this->assertNull(User::query()->where('school_id', $school->id)->where('name', 'like', '%9000%')->first());
         $done = $service->previewCard($plan->fresh(), $admin);
-        $this->assertTrue($done['checks'][0]['match']);
+        $this->assertSame('Baby Class', $done['checks'][0]['label']);
+        $this->assertSame(3, $done['checks'][0]['expected']);
+        $this->assertSame(2, $done['checks'][0]['actual']);
+        $this->assertFalse($done['checks'][0]['match']);
         Mail::assertNothingQueued();
     }
 
@@ -354,6 +357,59 @@ class ChecklistOnboardingPocTest extends TestCase
         $this->assertSame('Created 6 classes and 4 streams.', $applied['card']['line']);
     }
 
+    public function test_all_learners_starts_at_row_two_and_matches_learners_per_class(): void
+    {
+        $path = (new DemoChecklistWorkbook)->write($this->dir.'/template.xlsx', true, true, 'Yes');
+        $book = IOFactory::load($path);
+        $details = $book->getSheetByName('School Details')->toArray();
+        $this->assertSame('Kenya', $details[2][1]);
+        $this->assertSame('CBC', $details[3][1]);
+
+        $all = $book->getSheetByName('All Learners (for import)')->toArray();
+        $this->assertSame('Learner 0001 Example', $all[1][0]);
+        $this->assertMatchesRegularExpression('/^07\d{2} \d{6}$/', (string) $all[1][6]);
+        $this->assertNotSame('Example Child', $all[1][0]);
+
+        $baby = $book->getSheetByName('Baby Class')->toArray();
+        $this->assertSame('Learner 0001 Example', $baby[1][0]);
+        $this->assertSame('Primary Seven', $book->getSheetByName('Primary Seven')->getTitle());
+        $this->assertNull($book->getSheetByName('Primary Seven')->getCell('A2')->getValue());
+
+        $sheetCounts = [];
+        $total = null;
+        foreach ($book->getSheetByName('Learners per Class')->toArray() as $index => $row) {
+            if ($index === 0) {
+                continue;
+            }
+            if (strcasecmp((string) $row[0], 'Total') === 0) {
+                $total = (int) $row[2];
+                continue;
+            }
+            $label = $row[0].($row[1] !== '' && $row[1] !== null ? ' / '.$row[1] : '');
+            $sheetCounts[$label] = (int) $row[2];
+        }
+
+        $converted = (new \App\Services\Onboarding\ChecklistWorkbookConverter)->convert($path);
+        $this->assertSame(2, $converted['planRows']['students'][0]['row']);
+        $this->assertSame('Learner 0001 Example', $converted['planRows']['students'][0]['name']);
+        $read = $converted['learnersByClass'];
+        ksort($sheetCounts);
+        ksort($read);
+        $this->assertSame($sheetCounts, $read);
+        $this->assertSame(array_sum($sheetCounts), $total);
+        $this->assertArrayNotHasKey('Primary Eight', $converted['learnersByClass']);
+
+        [$school, $admin] = $this->demoAdmin();
+        $this->actingAs($admin)->get('/admin/dashboard/checklist-figures')->assertOk()->assertJsonStructure([
+            'students' => ['value', 'detail'],
+            'staff' => ['value'],
+            'ledger',
+            'setup_complete',
+        ]);
+        $real = $this->school(false, false, 'real-figures');
+        $this->actingAs($this->admin($real))->get('/admin/dashboard/checklist-figures')->assertNotFound();
+    }
+
     public function test_reset_refuses_a_real_school_and_clears_only_the_demo_import(): void
     {
         $real = $this->school(false, false, DemoChecklistResetCommand::SLUG);
@@ -370,6 +426,8 @@ class ChecklistOnboardingPocTest extends TestCase
         $bystander = $this->school(true, true, 'other-demo');
         $this->artisan('demo:checklist-reset')->assertExitCode(0);
         $school = School::query()->where('slug', DemoChecklistResetCommand::SLUG)->firstOrFail();
+        $this->assertSame('Kenya', $school->registration_country);
+        $this->assertSame('cbc', $school->curriculum);
         $this->assertTrue((bool) $school->is_demo);
         $this->assertTrue((bool) $school->is_test);
         $this->assertSame(1, (int) $school->toshi_enabled);
@@ -407,6 +465,10 @@ class ChecklistOnboardingPocTest extends TestCase
         $this->actingAs($admin);
         $component = Livewire::test(ChecklistOnboarding::class)
             ->assertSee('Set up from checklist')
+            ->assertSee('class="t-ability"', false)
+            ->assertSee('Set up the school from its checklist')
+            ->assertSee('Answer questions about the school')
+            ->assertSee('Help with everyday tasks')
             ->assertSee('Nothing is saved without your approval')
             ->call('start')
             ->assertSee('I agree on behalf of the school')
@@ -504,15 +566,20 @@ class ChecklistOnboardingPocTest extends TestCase
         );
         $this->assertStringNotContainsString('data-testid="dashboard-v2-setup-continue"', $html);
         $this->assertStringContainsString("What's set up", $html);
+        $this->assertStringContainsString('data-testid="dashboard-v2-setup-ledger"', $html);
+        $this->assertStringContainsString('data-checklist-live', $html);
+        $this->assertStringContainsString('data-testid="dashboard-v2-kpi-students"', $html);
+        $this->assertStringContainsString('data-testid="dashboard-v2-kpi-staff"', $html);
+        $this->assertStringContainsString('data-testid="dashboard-v2-kpi-whatsapp"', $html);
+        $this->assertStringNotContainsString('data-testid="dashboard-v2-actions"', $html);
+        $this->assertStringNotContainsString('data-testid="dashboard-v2-empty-students"', $html);
+        $this->assertStringNotContainsString('Add your students to get started', $html);
+        $this->assertStringNotContainsString('data-testid="dashboard-v2-tile-toshi-1"', $html);
         $this->assertMatchesRegularExpression(
             '/data-testid="dashboard-v2-setup-dismiss"[^>]*>\s*Hide\s*</',
             $html,
         );
-        $this->assertDoesNotMatchRegularExpression(
-            '/data-testid="dashboard-v2-setup-summary"[\s\S]*<ul>\s*<\/ul>/',
-            $html,
-        );
-        if (! preg_match('/data-testid="dashboard-v2-setup-summary"[\s\S]*<li>/', $html)) {
+        if (! preg_match('/data-testid="dashboard-v2-ledger-row"/', $html)) {
             $this->assertStringContainsString('Nothing is set up yet.', $html);
         }
     }

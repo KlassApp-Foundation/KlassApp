@@ -142,6 +142,52 @@ final class OnboardingProgress
         ];
     }
 
+    /**
+     * Completed steps only, as label and value pairs from saved rows.
+     *
+     * @return list<array{label: string, value: string}>
+     */
+    public static function ledger(School $school, ?int $userId = null): array
+    {
+        $school = $school->fresh() ?? $school;
+        if ($userId !== null && $userId < 1) {
+            $userId = null;
+        }
+
+        $rows = [];
+        foreach (OnboardingStepsService::steps($school, $userId) as $step) {
+            if (empty($step['is_complete'])) {
+                continue;
+            }
+            $key = (string) $step['key'];
+            $values = self::values($key, $school, $userId);
+            $value = $key === 'curriculum'
+                ? self::curriculumName((string) ($values['curriculum'] ?? ''))
+                : implode(' · ', array_map(static fn ($part): string => trim((string) $part), $values));
+            if ($value === '') {
+                continue;
+            }
+            $rows[] = [
+                'label' => OnboardingStepsService::displayLabel($key, $step, $school),
+                'value' => $value,
+            ];
+        }
+
+        return $rows;
+    }
+
+    private static function curriculumName(string $code): string
+    {
+        return match (strtolower(trim($code))) {
+            'uneb' => 'UNEB',
+            'cambridge' => 'Cambridge',
+            'montessori' => 'Montessori',
+            'cbc' => 'CBC',
+            'other' => 'Other',
+            default => $code,
+        };
+    }
+
     private static function line(string $key, School $school, ?int $userId): string
     {
         $tokens = self::summaryTokens()[$key] ?? null;

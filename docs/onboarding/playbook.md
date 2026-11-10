@@ -146,7 +146,7 @@ Summary: Curriculum: {curriculum}
 
 | Code | Cause | Fix |
 | --- | --- | --- |
-| `curriculum.choice` | Choose a curriculum option. | Choose UNEB, Cambridge, Montessori, or Other. |
+| `curriculum.choice` | Choose a curriculum option. | Choose UNEB, Cambridge, Montessori, CBC, or Other. |
 
 ## step: school_category
 

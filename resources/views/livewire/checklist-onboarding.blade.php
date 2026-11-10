@@ -7,9 +7,9 @@
                 <h3>Toshi</h3>
                 <p>I'm Toshi, your school's assistant.</p>
                 <ul class="t-points">
-                    <li>Set up the school from its checklist</li>
-                    <li>Answer questions about the school</li>
-                    <li>Help with everyday tasks</li>
+                    <li><span class="t-ability" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M8 13h8M8 17h5"/></svg></span>Set up the school from its checklist</li>
+                    <li><span class="t-ability" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3V12a8 8 0 1 1 18 0z"/></svg></span>Answer questions about the school</li>
+                    <li><span class="t-ability" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>Help with everyday tasks</li>
                 </ul>
                 <p>Nothing is saved without your approval.</p>
                 <div class="t-actions">

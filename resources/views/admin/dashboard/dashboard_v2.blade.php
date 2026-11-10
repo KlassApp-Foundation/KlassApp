@@ -39,6 +39,9 @@
     $toshiMode = $school ? $toshiSwitch->mode($v2User) : \App\Enums\ToshiMode::Preview;
     $toshiPathOpen = $school && app(\App\Services\Toshi\ToshiOnboardingPath::class)->openFor($school);
     $checklistSetup = $school && app(\App\Services\Onboarding\ChecklistOnboardingGate::class)->enabledFor($school);
+    $ledger = ($checklistSetup && $school)
+        ? \App\Onboarding\OnboardingProgress::ledger($school, (int) $v2User->id)
+        : [];
 
     // Quick actions (kept from v2) — row in the data state, tiles otherwise.
     $quickActions = [
@@ -96,12 +99,18 @@
                 <p class="dv2-setup-lead">Pick one. You can switch at any time, and nothing is saved until you approve it.</p>
                 <div class="dv2-setup-options">
                     <article class="dv2-setup-option">
-                        <h3>Set up with Toshi</h3>
+                        <div class="dv2-setup-option-head">
+                            <span class="dv2-setup-ico" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M8 13h8M8 17h5"/></svg></span>
+                            <h3>Set up with Toshi</h3>
+                        </div>
                         <p>Add your checklist workbook. Toshi reads it, shows what it found, and creates each part after you approve it. About 10 minutes.</p>
                         <button type="button" class="dv2-btn" data-testid="dashboard-v2-toshi-setup" onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(false);">Set up with Toshi</button>
                     </article>
                     <article class="dv2-setup-option">
-                        <h3>Set up manually</h3>
+                        <div class="dv2-setup-option-head">
+                            <span class="dv2-setup-ico" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg></span>
+                            <h3>Set up manually</h3>
+                        </div>
                         <p>Fill in a short form for each part: terms, classes, subjects, teachers, learners. Best if you have no checklist yet.</p>
                         <a class="dv2-btn secondary" href="{{ $nextHref }}" data-testid="dashboard-v2-setup-manual">Set up manually</a>
                     </article>
@@ -110,23 +119,18 @@
                     @csrf
                     <button type="submit" class="dv2-x" data-testid="dashboard-v2-setup-dismiss" aria-label="Hide setup bar. Progress stays in the sidebar.">Hide</button>
                 </form>
-                @php
-                    $setupLines = array_values(array_filter(
-                        is_array($setup['summary'] ?? null) ? $setup['summary'] : [],
-                        fn ($line) => is_string($line) && trim($line) !== ''
-                    ));
-                @endphp
                 <details class="dv2-setup-summary" data-testid="dashboard-v2-setup-summary" open>
                     <summary>What's set up</summary>
-                    @if($setupLines !== [])
-                        <ul>
-                            @foreach($setupLines as $line)
-                                <li>{{ $line }}</li>
-                            @endforeach
-                        </ul>
-                    @else
-                        <p class="dv2-setup-empty" data-testid="dashboard-v2-setup-empty">Nothing is set up yet.</p>
-                    @endif
+                    <div class="dv2-ledger" data-testid="dashboard-v2-setup-ledger">
+                        @forelse($ledger as $row)
+                            <div class="dv2-ledger-row" data-testid="dashboard-v2-ledger-row">
+                                <span>{{ $row['label'] }}</span>
+                                <b>{{ $row['value'] }}</b>
+                            </div>
+                        @empty
+                            <p class="dv2-setup-empty" data-testid="dashboard-v2-setup-empty">Nothing is set up yet.</p>
+                        @endforelse
+                    </div>
                 </details>
             </section>
         @elseif($setupShown)
@@ -183,7 +187,7 @@
             <livewire:admin.whatsapp-dashboard-card />
         @endif
 
-        @if($state === 'new')
+        @if($state === 'new' && ! $checklistSetup)
             {{-- Brand new: quick-action tiles + zeroed tiles + one empty state --}}
             <div class="dv2-qat" data-testid="dashboard-v2-actions">
                 @foreach($quickActions as $i => $action)
@@ -232,7 +236,7 @@
             </div>
         @else
             {{-- 4 · KPI tiles. The old quick-action row is gone; each tile links to its list. --}}
-            <div class="dv2-kpis" data-testid="dashboard-v2-kpis">
+            <div class="dv2-kpis" data-testid="dashboard-v2-kpis" @if($checklistSetup) data-checklist-live data-figures-url="{{ url('/admin/dashboard/checklist-figures') }}" @endif>
                 @include('admin.dashboard._whatsapp_stat')
                 <div class="dv2-kpi">
                     <a class="dv2-kpi-link" href="{{ url('/admin/students') }}" aria-label="Students, open the students list">
@@ -263,7 +267,7 @@
                         <span class="dv2-meter" role="img" aria-label="{{ $kpis['fees']['percent'] }}% collected"><i style="width:{{ $kpis['fees']['percent'] }}%"></i></span>
                         <p class="dv2-kpi-sub">{{ $kpis['fees']['collected_label'] }} of {{ $kpis['fees']['expected_label'] }}</p>
                     @else
-                        <span class="dv2-kpi-value">–</span>
+                        <span class="dv2-kpi-value" data-testid="dashboard-v2-kpi-fees">–</span>
                         <p class="dv2-kpi-sub warn">Set up fees first</p>
                     @endif
                     @if($currency === null && ($kpis['fees']['state'] ?? 'ok') === 'ok')
@@ -487,4 +491,104 @@
         @endif
     </div>
 </div>
+@if($checklistSetup)
+<script>
+(function () {
+    if (window.klassChecklistFigures) {
+        return;
+    }
+    window.klassChecklistFigures = true;
+    var root = document.querySelector('[data-checklist-live]');
+    if (!root) {
+        return;
+    }
+    var url = root.getAttribute('data-figures-url');
+    var busy = false;
+    function setText(id, value) {
+        var node = document.querySelector('[data-testid="' + id + '"]');
+        if (node && node.textContent !== value) {
+            node.textContent = value;
+        }
+    }
+    function setDetail(id, value) {
+        var node = document.querySelector('[data-testid="' + id + '"]');
+        if (!node) {
+            return;
+        }
+        var card = node.closest('.dv2-kpi');
+        var detail = card ? card.querySelector('.dv2-kpi-sub') : null;
+        if (detail && value !== '' && detail.textContent !== value) {
+            detail.textContent = value;
+        }
+    }
+    function paint(payload) {
+        setText('dashboard-v2-kpi-students', String(payload.students.value));
+        setDetail('dashboard-v2-kpi-students', payload.students.detail || '');
+        setText('dashboard-v2-kpi-staff', String(payload.staff.value));
+        setDetail('dashboard-v2-kpi-staff', payload.staff.detail || '');
+        setText('dashboard-v2-kpi-attendance', String(payload.attendance.value));
+        setDetail('dashboard-v2-kpi-attendance', payload.attendance.detail || '');
+        setText('dashboard-v2-kpi-fees', String(payload.fees.value));
+        setDetail('dashboard-v2-kpi-fees', payload.fees.detail || '');
+        setText('dashboard-v2-kpi-reports', String(payload.reports.value));
+        setDetail('dashboard-v2-kpi-reports', payload.reports.detail || '');
+        var whatsapp = document.querySelector('[data-testid="dashboard-whatsapp-waiting-count"], [data-testid="dashboard-connected-whatsapp-count"]');
+        if (whatsapp) {
+            whatsapp.textContent = String(payload.whatsapp.value);
+        }
+        var ledger = document.querySelector('[data-testid="dashboard-v2-setup-ledger"]');
+        if (ledger) {
+            ledger.replaceChildren();
+            var rows = Array.isArray(payload.ledger) ? payload.ledger : [];
+            if (rows.length === 0) {
+                var empty = document.createElement('p');
+                empty.className = 'dv2-setup-empty';
+                empty.setAttribute('data-testid', 'dashboard-v2-setup-empty');
+                empty.textContent = 'Nothing is set up yet.';
+                ledger.appendChild(empty);
+            } else {
+                rows.forEach(function (row) {
+                    var line = document.createElement('div');
+                    line.className = 'dv2-ledger-row';
+                    line.setAttribute('data-testid', 'dashboard-v2-ledger-row');
+                    var label = document.createElement('span');
+                    label.textContent = row.label || '';
+                    var value = document.createElement('b');
+                    value.textContent = row.value || '';
+                    line.appendChild(label);
+                    line.appendChild(value);
+                    ledger.appendChild(line);
+                });
+            }
+        }
+        if (payload.setup_complete) {
+            var bar = document.querySelector('[data-testid="dashboard-v2-setup-bar"]');
+            if (bar) {
+                bar.hidden = true;
+            }
+        }
+    }
+    function tick() {
+        if (busy || !url) {
+            return;
+        }
+        busy = true;
+        fetch(url, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+            .then(function (response) { return response.ok ? response.json() : null; })
+            .then(function (payload) { if (payload) { paint(payload); } })
+            .catch(function () {})
+            .finally(function () { busy = false; });
+    }
+    document.addEventListener('livewire:init', function () {
+        if (!window.Livewire || !window.Livewire.hook) {
+            return;
+        }
+        window.Livewire.hook('commit', function (payload) {
+            payload.succeed(function () { tick(); });
+        });
+    });
+    setInterval(tick, 3000);
+})();
+</script>
+@endif
 @endsection

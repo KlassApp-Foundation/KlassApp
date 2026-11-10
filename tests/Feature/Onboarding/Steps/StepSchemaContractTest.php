@@ -195,6 +195,7 @@ class StepSchemaContractTest extends TestCase
                 ['uneb', true],
                 ['cambridge', true],
                 ['montessori', true],
+                ['cbc', true],
                 ['other', true],
                 ['UNEB', false],
                 ['ib', false],

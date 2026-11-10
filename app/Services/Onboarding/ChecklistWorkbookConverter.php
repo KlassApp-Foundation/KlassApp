@@ -14,8 +14,9 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
  * plus a validation report. It never touches the database and never invents data: anything that
  * does not fit is flagged with its tab and row number.
  *
- * Layout assumed for every data tab: row 1 header, row 2 grey example row (skipped), data from
- * row 3. A header ending " *" is required. Rows whose first column is empty are skipped.
+ * Layout: row 1 is the header. Row 2 is skipped only when it is the grey example row
+ * (a grey fill, or a first cell of "Example"). Otherwise data starts at row 2.
+ * A header ending " *" is required. Rows whose first column is empty are skipped.
  */
 final class ChecklistWorkbookConverter
 {
@@ -681,10 +682,13 @@ final class ChecklistWorkbookConverter
         }
         $rows = [];
         foreach ($all as $i => $row) {
-            if ($i < 2) {
-                continue; // row 1 header, row 2 grey example
+            if ($i === 0) {
+                continue;
             }
             $n = $i + 1;
+            if ($i === 1 && $this->isExampleRow($ws, $row)) {
+                continue;
+            }
             if ($this->text($row[0] ?? '') === '' || ($skip && $skip($row, $n))) {
                 continue;
             }
@@ -763,7 +767,7 @@ final class ChecklistWorkbookConverter
             if ($canonical === null) {
                 continue;
             }
-            foreach (array_slice($s->toArray(null, true, false, false), 2) as $row) {
+            foreach (array_slice($s->toArray(null, true, false, false), 1) as $row) {
                 if ($this->text($row[0] ?? '') !== '') {
                     $found[] = $canonical;
                     break;
@@ -864,6 +868,16 @@ final class ChecklistWorkbookConverter
         $ts = strtotime($s);
 
         return $ts !== false && preg_match('/[a-z]{3}/i', $s) ? date('Y-m-d', $ts) : null;
+    }
+
+    private function isExampleRow(Worksheet $ws, array $row): bool
+    {
+        if ($this->isGreyRow($ws, 2)) {
+            return true;
+        }
+        $first = strtolower($this->text($row[0] ?? ''));
+
+        return $first === 'example' || str_starts_with($first, 'example ');
     }
 
     private function isGreyRow(Worksheet $ws, int $row): bool
