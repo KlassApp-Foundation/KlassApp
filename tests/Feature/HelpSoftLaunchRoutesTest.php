@@ -21,10 +21,11 @@ class HelpSoftLaunchRoutesTest extends TestCase
     public function test_admin_sidebar_help_footer_points_at_klassapp_help(): void
     {
         // Sidebar v3: Help lives in the account menu, not a sidebar row.
-        // Destination stays klassapp.xyz/help, not the docs host.
+        // The menu opens /help/guide for the page the person was on.
         $dropdown = file_get_contents(resource_path('views/layouts/partials/profile-dropdown.blade.php'));
         $this->assertIsString($dropdown);
-        $this->assertStringContainsString('https://klassapp.xyz/help', $dropdown);
+        $this->assertStringContainsString("route('help.guide'", $dropdown);
+        $this->assertStringNotContainsString('https://klassapp.xyz/help', $dropdown);
         $this->assertStringNotContainsString('docs.klassapp.com', $dropdown);
 
         $labels = [];
