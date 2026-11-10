@@ -14718,3 +14718,11 @@ A hello on Toshi's provider path returned in 2.6 seconds. A tool call is emitted
 ## Session: 2026-11-10 — Connect Google Sheet button on the checklist card
 
 **Work:** Still draft [#1307](https://github.com/KlassApp-Foundation/KlassApp/pull/1307), branch `poc/toshi-checklist-onboarding`, tip `379e3661`. The upload card has Connect Google Sheet. It asks Google only for `drive.file`, exports the picked spreadsheet as .xlsx, and reads it through the same checklist path as an upload. The access token is kept in the session, removed after one use, and is not written to the log. Upload and the paste-link download note stay. The existing sign-in OAuth client was found in another local checkout and copied into this checkout's gitignored `.env`. No picker browser key exists in any local env, so the button tells the admin to upload the .xlsx file. The live click at 1280 and 375 showed that sentence, the upload control, and a panel that fits 375. A picked file and a refused Drive response are covered by tests. Nothing is written until an approval button. Not merged. Not deployed. The picker is not end to end until the Cloud console clicks in the session report are done.
+
+## Session: 2026-11-10 — Connect Google Sheet stopped before the consent screen
+
+**Work:** Still draft [#1307](https://github.com/KlassApp-Foundation/KlassApp/pull/1307), branch `poc/toshi-checklist-onboarding`, tip `8ece240f`. The Cloud console steps were reported done. The file the demo on port 8130 reads still has no `GOOGLE_PICKER_API_KEY`. A click of Connect Google Sheet showed "The Google Picker key is not set on this demo. Upload the .xlsx file." Google did not open a popup, so there is no Google error code. The card now shows a short Google error code when one arrives, and it does not echo a token-shaped string. The picker waits until the session has stored the access token. Checked at 414 (panel x33, width 381) and 375 (panel x30, width 345). Both fit. A real phone was not used. Not merged. Not deployed. The pick is still not end to end.
+
+**Files:** `ChecklistOnboarding.php`, `checklist-onboarding.blade.php`, `ChecklistOnboardingPocTest.php`.
+
+**Tests:** The three Google picker tests passed: 3 tests, 24 assertions. A picked file, a refused Drive response, and a shown `access_denied` with a hidden token-shaped string.
