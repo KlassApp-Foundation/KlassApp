@@ -2,6 +2,8 @@
 
 namespace App\Services\Onboarding;
 
+use App\Helpers\WhatsAppPhoneHelper;
+use App\Mail\TeacherInviteLinkMail;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\OnboardingPlan;
@@ -16,9 +18,14 @@ use App\Models\User;
 use App\Services\OnboardingEngine;
 use App\Services\OnboardingStepsService;
 use App\Services\StudentIdGeneratorService;
+use App\Services\TeacherInviteLinkService;
+use App\Support\PhoneCountry;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
+use libphonenumber\PhoneNumberFormat;
+use libphonenumber\PhoneNumberUtil;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 /**
@@ -540,7 +547,9 @@ final class ChecklistOnboardingService
             ],
             'school' => [
                 'name' => (string) ($converted['school'] ?? ''),
-                'country' => '',
+                'country' => (string) ($converted['schoolCountry'] ?? ''),
+                'curriculum' => (string) ($converted['schoolCurriculum'] ?? ''),
+                'whatsapp' => (string) ($converted['schoolWhatsapp'] ?? ''),
             ],
             'dpa' => [
                 'confirmed' => true,
@@ -1127,6 +1136,323 @@ final class ChecklistOnboardingService
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    public function teacherInvitesCard(OnboardingPlan $plan, User $actor): array
+    {
+        $plan = $this->fresh($plan, $actor);
+        $payload = is_array($plan->payload) ? $plan->payload : [];
+        $teachers = [];
+        $blocked = false;
+        $ready = 0;
+        foreach ($payload['steps']['teachers']['rows'] ?? [] as $index => $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $email = trim((string) ($row['email'] ?? ''));
+            $valid = filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+            $classes = [];
+            foreach ($row['links'] ?? [] as $link) {
+                if (! is_array($link)) {
+                    continue;
+                }
+                $label = trim((string) ($link['class'] ?? '').' '.(string) ($link['stream'] ?? ''));
+                if ($label !== '') {
+                    $classes[$label] = $label;
+                }
+            }
+            $classList = implode(', ', array_values($classes));
+            $name = trim((string) ($row['name'] ?? ''));
+            $shownEmail = $email !== '' ? $email : 'no email';
+            $line = $name.', '.$shownEmail.($classList !== '' ? ', '.$classList : '');
+            if (! $valid) {
+                $blocked = true;
+            } else {
+                $ready++;
+            }
+            $teachers[] = [
+                'index' => (int) $index,
+                'name' => $name,
+                'email' => $email,
+                'line' => $line,
+                'valid' => $valid,
+            ];
+        }
+
+        return [
+            'kind' => 'preview',
+            'step_key' => 'teacher_invites',
+            'name' => 'Teacher invites',
+            'title' => 'Teacher invites',
+            'proposal' => 'Each teacher is listed with the email and the classes from the checklist.',
+            'statement' => true,
+            'approve_label' => $ready === 1 ? 'Send 1 invite' : 'Send '.$ready.' invites',
+            'teachers' => $teachers,
+            'emails_blocked' => $blocked,
+            'ready' => $ready,
+            'source_tab' => 'Teachers',
+        ];
+    }
+
+    /**
+     * @return array{ok: bool, code: string, card: array<string, mixed>}
+     */
+    public function sendTeacherInvites(OnboardingPlan $plan, User $actor): array
+    {
+        $plan = $this->fresh($plan, $actor);
+        $payload = is_array($plan->payload) ? $plan->payload : [];
+        if (array_key_exists('teacher_invites_sent', $payload)) {
+            return ['ok' => true, 'code' => 'result', 'card' => $this->teacherInviteResult($payload)];
+        }
+
+        $sent = 0;
+        $missing = 0;
+        $captured = '';
+        $school = $plan->school;
+        foreach ($payload['steps']['teachers']['rows'] ?? [] as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $email = trim((string) ($row['email'] ?? ''));
+            if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+                continue;
+            }
+            $teacher = $this->teacherByEmail((int) $school->id, $email);
+            if ($teacher === null) {
+                $missing++;
+
+                continue;
+            }
+            $classes = [];
+            foreach ($row['links'] ?? [] as $link) {
+                if (! is_array($link)) {
+                    continue;
+                }
+                $label = trim((string) ($link['class'] ?? '').' '.(string) ($link['stream'] ?? ''));
+                if ($label !== '') {
+                    $classes[$label] = $label;
+                }
+            }
+            $className = implode(', ', array_values($classes));
+            $existing = TeacherInvite::query()
+                ->where('school_id', $school->id)
+                ->whereRaw('LOWER(email) = ?', [mb_strtolower($email)])
+                ->whereNull('claimed_at')
+                ->whereNull('revoked_at')
+                ->orderByDesc('id')
+                ->first();
+            $issued = $existing
+                ? TeacherInviteLinkService::reissue($existing)
+                : TeacherInviteLinkService::issue($school, $email, (string) $teacher->name, null, (string) ($row['phone'] ?? ''));
+            $invite = $issued['invite'];
+            $invite->user_id = $teacher->id;
+            $invite->role = 'teacher';
+            $invite->save();
+            $mailable = new TeacherInviteLinkMail(
+                name: (string) ($teacher->name ?: $row['name'] ?? 'Teacher'),
+                schoolName: (string) ($school->name ?: 'KlassApp'),
+                inviteUrl: TeacherInviteLinkService::inviteUrl($issued['token']),
+                className: $className !== '' ? $className : null,
+                expiresAt: $invite->expires_at,
+            );
+            Mail::to($email)->send($mailable);
+            if ($captured === '') {
+                $preview = new TeacherInviteLinkMail(
+                    name: (string) ($teacher->name ?: $row['name'] ?? 'Teacher'),
+                    schoolName: (string) ($school->name ?: 'KlassApp'),
+                    inviteUrl: TeacherInviteLinkService::inviteUrl($issued['token']),
+                    className: $className !== '' ? $className : null,
+                    expiresAt: $invite->expires_at,
+                );
+                $captured = trim(preg_replace('/\s+/', ' ', strip_tags($preview->render())) ?? '');
+            }
+            $sent++;
+        }
+
+        $payload['teacher_invites_sent'] = $sent;
+        $payload['teacher_invites_missing'] = $missing;
+        $payload['teacher_invite_preview'] = $captured;
+        $this->savePayload($plan, $payload, (string) $plan->status);
+
+        return ['ok' => true, 'code' => 'result', 'card' => $this->teacherInviteResult($payload)];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function saveTeacherEmail(OnboardingPlan $plan, User $actor, int $index, string $email): array
+    {
+        $plan = $this->fresh($plan, $actor);
+        $payload = is_array($plan->payload) ? $plan->payload : [];
+        $rows = $payload['steps']['teachers']['rows'] ?? [];
+        if (! isset($rows[$index]) || ! is_array($rows[$index])) {
+            throw ValidationException::withMessages(['inviteEmails.'.$index => 'That teacher is not on this checklist.']);
+        }
+        $email = trim($email);
+        if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            throw ValidationException::withMessages(['inviteEmails.'.$index => 'Enter a valid email.']);
+        }
+        $previous = mb_strtolower(trim((string) ($rows[$index]['email'] ?? '')));
+        $rows[$index]['email'] = $email;
+        $payload['steps']['teachers']['rows'] = array_values($rows);
+        $this->savePayload($plan, $payload, (string) $plan->status);
+        $teacher = $this->teacherByEmail((int) $plan->school_id, $previous) ?? $this->teacherByEmail((int) $plan->school_id, $email);
+        if ($teacher !== null) {
+            $teacher->email = $email;
+            $teacher->save();
+        }
+
+        return $this->teacherInvitesCard($plan->fresh(), $actor);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function whatsappCard(OnboardingPlan $plan, User $actor): array
+    {
+        $plan = $this->fresh($plan, $actor);
+        $payload = is_array($plan->payload) ? $plan->payload : [];
+        $raw = trim((string) ($payload['school']['whatsapp'] ?? ''));
+        $country = (string) ($payload['school']['country'] ?? '');
+
+        return [
+            'kind' => 'preview',
+            'step_key' => 'whatsapp',
+            'name' => 'WhatsApp',
+            'title' => 'WhatsApp',
+            'proposal' => 'This is the school WhatsApp number from Admin & Contacts.',
+            'statement' => true,
+            'approve_label' => 'Connect WhatsApp',
+            'phone_display' => $this->formatSchoolPhone($raw, $country),
+            'phone_raw' => $raw,
+            'phone_hint' => PhoneCountry::hint($country, true),
+            'source_tab' => 'Admin & Contacts',
+            'show_editor' => false,
+            'connected' => false,
+            'connect_notice' => '',
+        ];
+    }
+
+    /**
+     * @return array{phone_display: string, phone_raw: string, phone_hint: string}
+     */
+    public function saveSchoolWhatsapp(OnboardingPlan $plan, User $actor, string $phone, string $country): array
+    {
+        $plan = $this->fresh($plan, $actor);
+        $normalised = PhoneCountry::normalise($phone, $country);
+        if ($normalised === null) {
+            throw ValidationException::withMessages([
+                'whatsappPhone' => PhoneCountry::error($country, true),
+            ]);
+        }
+        $payload = is_array($plan->payload) ? $plan->payload : [];
+        $payload['school']['whatsapp'] = $normalised;
+        if ($country !== '' && trim((string) ($payload['school']['country'] ?? '')) === '') {
+            $payload['school']['country'] = $country;
+        }
+        $this->savePayload($plan, $payload, (string) $plan->status);
+
+        return [
+            'phone_display' => $this->formatSchoolPhone($normalised, (string) ($payload['school']['country'] ?? $country)),
+            'phone_raw' => $normalised,
+            'phone_hint' => PhoneCountry::hint((string) ($payload['school']['country'] ?? $country), true),
+        ];
+    }
+
+    public function whatsappServiceReady(): bool
+    {
+        $token = trim((string) config('services.whatsapp.business_api_token'));
+        $phoneId = trim((string) config('services.whatsapp.business_phone_number_id'));
+        $secret = trim((string) config('services.whatsapp.app_secret'));
+
+        return $token !== '' && $phoneId !== '' && $secret !== '';
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function doneCard(OnboardingPlan $plan, User $actor): array
+    {
+        $plan = $this->fresh($plan, $actor);
+        $payload = is_array($plan->payload) ? $plan->payload : [];
+
+        return $this->completionCard($plan->school, $payload);
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    private function teacherInviteResult(array $payload): array
+    {
+        $sent = (int) ($payload['teacher_invites_sent'] ?? 0);
+        $missing = (int) ($payload['teacher_invites_missing'] ?? 0);
+        $line = $sent === 1
+            ? '1 invite sent (captured on this demo copy)'
+            : $sent.' invites sent (captured on this demo copy)';
+        if ($missing > 0) {
+            $line .= $missing === 1
+                ? ' 1 teacher is not in the school yet, so no invite was sent for them.'
+                : ' '.$missing.' teachers are not in the school yet, so no invite was sent for them.';
+        }
+
+        return [
+            'kind' => 'result',
+            'step_key' => 'teacher_invites',
+            'name' => 'Teacher invites',
+            'title' => 'Teacher invites',
+            'created' => $sent,
+            'line' => $line,
+            'href' => '',
+            'href_label' => '',
+            'receipt' => [],
+            'captured_invite' => (string) ($payload['teacher_invite_preview'] ?? ''),
+            'source_tab' => 'Teachers',
+        ];
+    }
+
+    private function teacherByEmail(int $schoolId, string $email): ?User
+    {
+        $email = mb_strtolower(trim($email));
+        if ($email === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            return null;
+        }
+
+        $matches = User::query()
+            ->where('school_id', $schoolId)
+            ->where('usergroup_id', 5)
+            ->where('status', 'active')
+            ->whereRaw('LOWER(email) = ?', [$email])
+            ->get();
+
+        return $matches->count() === 1 ? $matches->first() : null;
+    }
+
+    private function formatSchoolPhone(string $raw, string $country): string
+    {
+        $raw = trim($raw);
+        if ($raw === '') {
+            return '';
+        }
+
+        $e164 = PhoneCountry::normalise($raw, $country);
+        if ($e164 === null) {
+            $e164 = WhatsAppPhoneHelper::normaliseInternational($raw);
+        }
+        if ($e164 === null) {
+            return $raw;
+        }
+
+        try {
+            $parsed = PhoneNumberUtil::getInstance()->parse($e164, null);
+
+            return PhoneNumberUtil::getInstance()->format($parsed, PhoneNumberFormat::INTERNATIONAL);
+        } catch (\Throwable) {
+            return $e164;
+        }
+    }
+
+    /**
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
@@ -1180,6 +1506,7 @@ final class ChecklistOnboardingService
             'phones_e164' => $badPhones === 0,
             'phones_bad' => $badPhones,
             'invites_ready' => (int) ($payload['invites_ready'] ?? 0),
+            'teacher_invites_sent' => (int) ($payload['teacher_invites_sent'] ?? 0),
             'class_teachers_listed' => (int) ($payload['class_teachers_listed'] ?? 0),
             'skipped' => count($payload['skipped_flags'] ?? []),
             'later' => array_map(function (array $flag) use ($payload): array {

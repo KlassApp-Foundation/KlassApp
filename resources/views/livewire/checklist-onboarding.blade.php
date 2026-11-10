@@ -175,38 +175,11 @@
                         $flagRows = $showAll ? $card['flags'] : array_slice($card['flags'], 0, 8);
                         $flagBlocking = collect($card['flags'])->contains(fn ($flag): bool => ($flag['severity'] ?? '') === 'blocking');
                     @endphp
-                    <div class="t-flags" data-testid="checklist-flags">
-                        <p class="t-flag-note" data-testid="checklist-flag-guidance">{{ $flagBlocking ? 'Fix the workbook' : 'Safe to continue, fix it later in KlassApp' }}</p>
-                        @if($flagBlocking)
-                            <p>Toshi recommends fixing the workbook. You can still continue. Flagged rows are left out.</p>
-                        @endif
-                        <div class="t-table-wrap">
-                            <table class="t-table">
-                                <thead>
-                                    <tr>
-                                        <th>Tab</th>
-                                        <th>Row</th>
-                                        <th>Field</th>
-                                        <th>Value</th>
-                                        <th>Problem</th>
-                                        <th>Suggested fix</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($flagRows as $flag)
-                                        <tr wire:key="flag-{{ $flag['tab'] }}-{{ $flag['row'] }}-{{ $loop->index }}" data-testid="checklist-flag" data-severity="{{ $flag['severity'] ?? 'minor' }}">
-                                            <td>{{ $flag['tab'] }}</td>
-                                            <td>{{ $flag['row'] ?? '—' }}</td>
-                                            <td>{{ $flag['field'] }}</td>
-                                            <td>{{ $flag['value'] ?? '' }}</td>
-                                            <td>{{ $flag['message'] }}</td>
-                                            <td>{{ $flag['fix'] ?? '' }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                    @include('livewire.partials.checklist-flag-table', [
+                        'rows' => $flagRows,
+                        'testId' => 'checklist-flags',
+                        'note' => $flagBlocking ? 'Fix the workbook' : 'Safe to continue, fix it later in KlassApp',
+                    ])
                     @if(count($card['flags']) > 8)
                         <button type="button" class="t-btn secondary" wire:click="toggleShown" data-testid="checklist-show-all">{{ $showAll ? 'Show less' : 'See every row' }}</button>
                     @endif
@@ -229,7 +202,15 @@
                     <p data-testid="result-line">{{ $card['line'] ?? ('Created '.$card['created'].'.') }}</p>
                 @endif
                 <p data-testid="result-line" class="t-note">{{ $card['line'] ?? '' }}</p>
-                <p><a href="{{ $card['href'] }}" data-testid="result-link">{{ $card['href_label'] }}</a></p>
+                @if(($card['href'] ?? '') !== '')
+                    <p><a href="{{ $card['href'] }}" data-testid="result-link">{{ $card['href_label'] }}</a></p>
+                @endif
+                @if(($card['captured_invite'] ?? '') !== '')
+                    <button type="button" class="t-btn secondary" wire:click="$toggle('showCaptured')" data-testid="checklist-open-invite">See one invite</button>
+                    @if($showCaptured)
+                        <pre class="t-capture" data-testid="checklist-captured-invite">{{ $card['captured_invite'] }}</pre>
+                    @endif
+                @endif
                 @if(is_array($editor))
                     <livewire:manual-onboarding-wizard :embedded="true" :embed-step="$editor['step']" :embed-persist="$editor['persist']" :embed-field="$editor['field'] ?? ''" :embed-terms="$editor['terms'] ?? []" :key="'checklist-wizard-'.$editor['step'].'-result'" />
                 @endif
@@ -246,14 +227,54 @@
                 $shown = $showAll ? $examples : array_slice($examples, 0, 3);
                 $exampleTotal = (int) ($preview['example_total'] ?? count($examples));
             @endphp
-            <div class="t-card" data-testid="checklist-card-preview" data-checklist-card="preview" wire:loading.attr="aria-busy" wire:target="confirmStep">
-                <p class="t-kicker" data-testid="checklist-step-kicker">Step {{ $preview['step_number'] }} of {{ $preview['step_total'] }}</p>
+            <div class="t-card" data-testid="checklist-card-preview" data-checklist-card="preview" wire:loading.attr="aria-busy" wire:target="confirmStep,confirmReviewed">
+                @if(($preview['step_number'] ?? null) !== null && ($preview['step_number'] ?? '') !== '')
+                    <p class="t-kicker" data-testid="checklist-step-kicker">Step {{ $preview['step_number'] }} of {{ $preview['step_total'] }}</p>
+                @endif
                 <h3>{{ $preview['name'] ?? $preview['title'] }}</h3>
                 @if(!empty($preview['source_tab']))
                     <p class="t-source" data-testid="checklist-source">From your checklist: {{ $preview['source_tab'] }}</p>
                 @endif
                 <p data-testid="checklist-proposal">{{ $preview['proposal'] }}</p>
-                @if(($preview['receipt'] ?? []) !== [])
+                @if(($preview['step_key'] ?? '') === 'teacher_invites')
+                    <ul class="t-statements" data-testid="teacher-invites">
+                        @foreach($preview['teachers'] ?? [] as $person)
+                            <li data-testid="teacher-invite-row" @if(empty($person['valid'])) class="is-invalid" @endif>
+                                <p>{{ $person['line'] }}</p>
+                                @if(empty($person['valid']))
+                                    <label class="t-inline" for="wizard-teacher-email-{{ $loop->index }}">Email
+                                        <input id="wizard-teacher-email-{{ $loop->index }}" type="text" inputmode="email" autocomplete="email" class="ds-form-input w-full" wire:model="inviteEmails.{{ $loop->index }}" placeholder="teacher@school.ug" data-testid="wizard-teacher-email" />
+                                    </label>
+                                    @error('inviteEmails.'.$loop->index) <p class="t-note">{{ $message }}</p> @enderror
+                                    <button type="button" class="t-btn secondary" wire:click="saveInviteEmail({{ $loop->index }})" data-testid="save-teacher-email">Save this email</button>
+                                @endif
+                            </li>
+                        @endforeach
+                    </ul>
+                @elseif(($preview['step_key'] ?? '') === 'whatsapp')
+                    <p data-testid="checklist-whatsapp-number">{{ ($preview['phone_display'] ?? '') !== '' ? $preview['phone_display'] : 'No WhatsApp number on Admin & Contacts yet.' }}</p>
+                    @if(! empty($preview['show_editor']))
+                        <label class="ds-form-label" for="wizard-wa">Your WhatsApp number</label>
+                        <input id="wizard-wa" type="tel" inputmode="tel" autocomplete="tel" class="ds-form-input w-full" wire:model="whatsappPhone" placeholder="Include the country code" data-testid="wizard-wa-phone" aria-describedby="wizard-wa-phone-hint" />
+                        <p class="text-xs text-gray-500 mt-1" id="wizard-wa-phone-hint" data-testid="wizard-wa-phone-hint">{{ $preview['phone_hint'] ?? 'Your WhatsApp number, including the country code.' }}</p>
+                        <button type="button" class="t-btn secondary" wire:click="saveWhatsappNumber" data-testid="save-whatsapp-number">Save</button>
+                        @error('whatsappPhone') <p class="t-note">{{ $message }}</p> @enderror
+                    @endif
+                    @if(($preview['connect_notice'] ?? '') !== '')
+                        <p data-testid="checklist-whatsapp-notice">{{ $preview['connect_notice'] }}</p>
+                    @endif
+                    @if(($preview['verify_code'] ?? '') !== '')
+                        <p class="t-note" data-testid="wizard-wa-code">{{ $preview['verify_code'] }}</p>
+                        @if(($preview['verify_url'] ?? '') !== '')
+                            <p><a href="{{ $preview['verify_url'] }}" target="_blank" rel="noopener noreferrer" data-testid="wizard-wa-open">Open WhatsApp</a></p>
+                        @endif
+                    @endif
+                    @if(! empty($preview['connected']))
+                        <p data-testid="checklist-whatsapp-connected">Connected</p>
+                    @endif
+                @endif
+                @if(! empty($preview['statement']))
+                @elseif(($preview['receipt'] ?? []) !== [])
                     @include('livewire.partials.checklist-receipt', ['groups' => $preview['receipt']])
                 @else
                     <p data-testid="preview-counts">Create {{ $preview['create'] }}. Already exists {{ $preview['exists'] }}. Conflict {{ $preview['conflict'] }}.</p>
@@ -341,8 +362,13 @@
                             ['label' => 'Rows skipped', 'value' => (int) ($done['skipped'] ?? 0)],
                         ]],
                     ]])
-                    <p data-testid="invites-ready">Invites ready: {{ $done['invites_ready'] }}, not sent</p>
-                    <p class="t-note">No email or WhatsApp message was sent.</p>
+                    @if((int) ($done['teacher_invites_sent'] ?? 0) > 0)
+                        <p data-testid="teacher-invites-sent">{{ (int) $done['teacher_invites_sent'] === 1 ? '1 invite sent (captured on this demo copy)' : (int) $done['teacher_invites_sent'].' invites sent (captured on this demo copy)' }}</p>
+                        <p class="t-note">Parent invites are prepared and have not been sent.</p>
+                    @else
+                        <p data-testid="invites-ready">Invites ready: {{ $done['invites_ready'] }}, not sent</p>
+                        <p class="t-note">No email or WhatsApp message was sent.</p>
+                    @endif
                     @include('livewire.partials.checklist-later', ['rows' => $done['later'] ?? []])
                     <p>KLS numbers present: {{ $done['kls_present'] ? 'yes' : 'no' }}@if(($done['kls_missing'] ?? 0) > 0) ({{ $done['kls_missing'] }} missing)@endif.</p>
                     <p>Phones in international format: {{ $done['phones_e164'] ? 'yes' : 'no' }}.</p>
@@ -370,7 +396,12 @@
             <div class="t-card t-finished" data-testid="checklist-card-finished" data-checklist-card="finished">
                 <p class="t-kicker">Ready</p>
                 <h3 tabindex="-1" data-checklist-focus>{{ $card['school_name'] }} is set up</h3>
-                <p>Invites are ready and have not been sent.</p>
+                @if((int) ($card['teacher_invites_sent'] ?? 0) > 0)
+                    <p data-testid="teacher-invites-sent">{{ (int) $card['teacher_invites_sent'] === 1 ? '1 invite sent (captured on this demo copy)' : (int) $card['teacher_invites_sent'].' invites sent (captured on this demo copy)' }}</p>
+                    <p>Parent invites are prepared and have not been sent.</p>
+                @else
+                    <p>Invites are ready and have not been sent.</p>
+                @endif
                 @include('livewire.partials.checklist-receipt', ['groups' => [
                     ['tone' => 'structure', 'name' => 'School structure', 'rows' => [
                         ['label' => 'Terms', 'value' => (int) ($card['terms'] ?? 0)],
@@ -384,7 +415,9 @@
                         ['label' => 'Parents', 'value' => (int) ($card['parents'] ?? 0)],
                     ]],
                 ]])
-                <p data-testid="invites-ready">Invites ready: {{ (int) ($card['invites_ready'] ?? 0) }}, not sent</p>
+                @if((int) ($card['teacher_invites_sent'] ?? 0) < 1)
+                    <p data-testid="invites-ready">Invites ready: {{ (int) ($card['invites_ready'] ?? 0) }}, not sent</p>
+                @endif
                 @include('livewire.partials.checklist-later', ['rows' => $card['later'] ?? []])
                 <p class="t-kicker">What KlassApp helps with next</p>
                 <ul class="t-next">

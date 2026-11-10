@@ -77,6 +77,9 @@ final class ChecklistWorkbookConverter
         $out['school'] = $this->pairValue($details, 'school name') ?? '';
         $this->emitLine('school-details', 'Reading School Details', 'done', 'read');
         $this->country = $this->pairValue($details, 'country');
+        $out['schoolCountry'] = (string) ($this->country ?? '');
+        $out['schoolCurriculum'] = (string) ($this->pairValue($details, 'curriculum') ?? '');
+        $out['schoolWhatsapp'] = '';
         if ($this->country === null) {
             $this->flag('School Details', null, 'Country', 'No country given, so local phone numbers cannot be completed; only numbers starting with + or 00 are converted.');
         }
@@ -654,12 +657,36 @@ final class ChecklistWorkbookConverter
             $csv[] = [$t['get']($r, 'role'), $t['get']($r, 'full name'), $t['get']($r, 'email'), $this->phone($t['get']($r, 'phone'), $tab, $r['n'], 'Phone'), $t['get']($r, 'whatsapp on this number?'), $t['get']($r, 'notes')];
             $this->accept($tab);
         }
+        $captured = '';
         if ($ws !== null) {
-            $wa = $this->text($ws->getCell('B14')->getValue());
-            if ($wa !== '') {
-                $csv[] = ['School WhatsApp number', '', '', $this->phone($wa, $tab, 14, 'School WhatsApp number'), 'Yes', ''];
+            $b14 = $this->text($ws->getCell('B14')->getValue());
+            if ($b14 !== '') {
+                $parsed = $this->phone($b14, $tab, 14, 'School WhatsApp number');
+                $csv[] = ['School WhatsApp number', '', '', $parsed !== '' ? $parsed : $b14, 'Yes', ''];
+                $captured = $parsed;
+            }
+            if ($captured === '') {
+                foreach ($ws->toArray(null, true, false, false) as $i => $row) {
+                    $label = strtolower($this->text($row[0] ?? ''));
+                    if (! str_contains($label, 'whatsapp')) {
+                        continue;
+                    }
+                    $candidate = $this->text($row[3] ?? '');
+                    if ($candidate === '') {
+                        $candidate = $this->text($row[1] ?? '');
+                    }
+                    if ($candidate === '' || strtolower($candidate) === 'phone') {
+                        continue;
+                    }
+                    $parsed = $this->phone($candidate, $tab, $i + 1, 'School WhatsApp number');
+                    if ($parsed !== '') {
+                        $captured = $parsed;
+                        break;
+                    }
+                }
             }
         }
+        $out['schoolWhatsapp'] = $captured;
         $out['noImporter']['admin-contacts.csv'] = $csv;
     }
 

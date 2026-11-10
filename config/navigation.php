@@ -104,8 +104,8 @@ return [
         // Academic years and terms → /admin/academics (terms editor
         // /admin/academic-term/create stays on the same row).
         // Data exports → /admin/reports.
-        // count keys are resolved by SidebarCounts; a parent never shows both
-        // a chevron and a chip.
+        // count keys are resolved by SidebarCounts. A roster count on Students
+        // or Classes and subjects shows beside the label as well as the chevron.
         'admin' => [
             'prefix' => 'admin',
             'layout' => 'v3',
@@ -123,25 +123,25 @@ return [
                     'label' => 'People',
                     'rows' => [
                         [
-                            'label' => 'Students', 'icon' => 'students', 'url' => 'admin/students',
+                            'label' => 'Students', 'icon' => 'students', 'url' => 'admin/students', 'count' => 'students',
                             'children' => [
                                 ['label' => 'All students', 'url' => 'admin/students', 'paths' => ['admin/students*', 'admin/student*', 'admin/alumni*', 'admin/blocked_students*']],
                                 ['label' => 'Admissions', 'url' => 'admin/admissions', 'paths' => ['admin/admissions*', 'admin/admission*', 'admin/admissionlist*'], 'count' => 'admissions'],
                                 ['label' => 'Health records', 'url' => 'admin/health', 'paths' => ['admin/health*', 'admin/medical*']],
                             ],
                         ],
-                        ['label' => 'Teachers and staff', 'icon' => 'teachers', 'url' => 'admin/teachers', 'paths' => ['admin/teachers*', 'admin/teacher*', 'admin/staff*', 'admin/staffs*']],
-                        ['label' => 'Parents', 'icon' => 'parents', 'url' => 'admin/parents', 'paths' => ['admin/parents*', 'admin/parent*']],
+                        ['label' => 'Teachers and staff', 'icon' => 'teachers', 'url' => 'admin/teachers', 'paths' => ['admin/teachers*', 'admin/teacher*', 'admin/staff*', 'admin/staffs*'], 'count' => 'teachers'],
+                        ['label' => 'Parents', 'icon' => 'parents', 'url' => 'admin/parents', 'paths' => ['admin/parents*', 'admin/parent*'], 'count' => 'parents'],
                     ],
                 ],
                 [
                     'label' => 'Academics',
                     'rows' => [
                         [
-                            'label' => 'Classes and subjects', 'icon' => 'classes', 'url' => 'admin/classes',
+                            'label' => 'Classes and subjects', 'icon' => 'classes', 'url' => 'admin/classes', 'count' => 'classes',
                             'children' => [
                                 ['label' => 'Classes and streams', 'url' => 'admin/classes', 'paths' => ['admin/classes*', 'admin/sections*', 'admin/standardlinks*', 'admin/standardLink*'], 'condition' => 'school_admin'],
-                                ['label' => 'Subjects', 'url' => 'admin/subjects', 'paths' => ['admin/subjects*', 'admin/subject*']],
+                                ['label' => 'Subjects', 'url' => 'admin/subjects', 'paths' => ['admin/subjects*', 'admin/subject*'], 'count' => 'subjects'],
                                 ['label' => 'Timetable', 'url' => 'admin/timetable', 'paths' => ['admin/timetable*', 'admin/timetables*']],
                                 ['label' => 'Calendar', 'url' => 'admin/calendar', 'paths' => ['admin/calendar*', 'admin/events*']],
                             ],

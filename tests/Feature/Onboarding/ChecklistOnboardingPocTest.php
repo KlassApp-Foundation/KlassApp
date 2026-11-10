@@ -5,6 +5,8 @@ namespace Tests\Feature\Onboarding;
 use App\Console\Commands\DemoChecklistResetCommand;
 use App\Helpers\AuthRedirectHelper;
 use App\Livewire\ChecklistOnboarding;
+use App\Mail\StudentParentSetupLinkMail;
+use App\Mail\TeacherInviteLinkMail;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Livewire\AgentToshi;
@@ -409,6 +411,7 @@ class ChecklistOnboardingPocTest extends TestCase
             'academic_year' => ['id', 'label'],
             'term_label',
             'profile_line',
+            'sidebar' => ['students', 'teachers', 'parents', 'classes', 'subjects'],
         ]);
         $real = $this->school(false, false, 'real-figures');
         $this->actingAs($this->admin($real))->get('/admin/dashboard/checklist-figures')->assertNotFound();
@@ -518,6 +521,7 @@ class ChecklistOnboardingPocTest extends TestCase
             ->assertSee('12345')
             ->assertSee('Primary Eight')
             ->assertSee('Learner ready, parent skipped.')
+            ->set('reviewed', true)
             ->call('skipFlags')
             ->assertSee('Create 1 term')
             ->assertSee('Use the term names and dates as written')
@@ -1055,7 +1059,11 @@ class ChecklistOnboardingPocTest extends TestCase
             ->assertSee('Toshi is working', false)
             ->assertSee('data-testid="checklist-actions"', false)
             ->assertSee('To fix later')
-            ->assertSee('Tab Learners, row 40, field Phone, value 12345.')
+            ->assertSee('t-flag-table', false)
+            ->assertSee('Learners · 40', false)
+            ->assertSee('Phone')
+            ->assertSee('12345')
+            ->assertDontSee('Tab Learners, row 40, field Phone, value 12345.')
             ->assertSee('Suggested fix')
             ->assertSee('Phone is not a number we can use')
             ->assertSee('Use the full number with the country code')
@@ -1076,6 +1084,86 @@ class ChecklistOnboardingPocTest extends TestCase
 
         $this->assertNotNull($school->fresh()->onboarding_finished_at);
         $this->assertNull(session(ChecklistOnboarding::sessionKey($school->id, $admin->id)));
+
+        $html = $this->get('/admin/dashboard')->assertOk()->getContent();
+        $this->assertIsString($html);
+        $this->assertDoesNotMatchRegularExpression('/data-testid="dashboard-v2-profile">/', $html);
+        $this->assertDoesNotMatchRegularExpression('/data-testid="dashboard-v2-setup-summary"/', $html);
+        $this->assertStringNotContainsString("What's set up", $html);
+        $this->assertStringContainsString('data-testid="dashboard-v2-kpi-students"', $html);
+        $this->assertStringContainsString('data-testid="dashboard-v2-year"', $html);
+    }
+
+    public function test_teacher_invites_are_captured_and_whatsapp_is_not_marked_connected(): void
+    {
+        [$school, $admin] = $this->demoAdmin();
+        $this->actingAs($admin);
+        config([
+            'services.whatsapp.business_api_token' => null,
+            'services.whatsapp.business_phone_number_id' => null,
+            'services.whatsapp.app_secret' => null,
+        ]);
+        $path = (new DemoChecklistWorkbook)->write($this->dir.'/invites.xlsx', false, false, 'Yes');
+        $upload = new UploadedFile($path, 'invites.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true);
+
+        $component = Livewire::test(ChecklistOnboarding::class)
+            ->set('agreed', true)
+            ->call('confirmAgreement')
+            ->set('workbook', $upload)
+            ->call('ingest')
+            ->set('reviewed', true)
+            ->call('openNext');
+
+        foreach (['terms', 'standards', 'subjects', 'teachers'] as $key) {
+            $this->assertSame($key, $component->get('card')['step_key']);
+            if (in_array($key, ['terms', 'standards', 'teachers'], true)) {
+                $component->set('reviewed', false)->call('confirmReviewed');
+                $this->assertSame($key, $component->get('card')['step_key']);
+                if ($key === 'terms') {
+                    $this->assertSame(0, AcademicTerm::query()->where('school_id', $school->id)->count());
+                }
+                $component->set('reviewed', true);
+            }
+            $component->call('confirmReviewed');
+            $this->assertSame('result', $component->get('card')['kind'], $key);
+            $component->call('openNext');
+        }
+
+        $component
+            ->assertSet('card.step_key', 'teacher_invites')
+            ->assertSee('Send 1 invite')
+            ->assertSee("I've checked these")
+            ->set('reviewed', false)
+            ->call('confirmReviewed')
+            ->assertSet('card.step_key', 'teacher_invites')
+            ->set('reviewed', true)
+            ->call('confirmReviewed')
+            ->assertSee('1 invite sent (captured on this demo copy)')
+            ->assertSee('See one invite')
+            ->set('showCaptured', true)
+            ->assertSee('Set your password')
+            ->call('openNext')
+            ->assertSet('card.step_key', 'students')
+            ->call('confirmReviewed')
+            ->call('openNext')
+            ->assertSet('card.step_key', 'whatsapp')
+            ->assertSee('No WhatsApp number on Admin & Contacts yet.')
+            ->assertSee("I've checked this")
+            ->assertSee('Connect WhatsApp')
+            ->set('reviewed', true)
+            ->call('confirmReviewed')
+            ->assertSee('Verification completes on the live service')
+            ->assertDontSee('Connected')
+            ->assertDontSee('data-testid="checklist-whatsapp-connected"', false)
+            ->call('openNext')
+            ->assertSet('card.kind', 'done')
+            ->assertSee('1 invite sent (captured on this demo copy)')
+            ->assertSee('Parent invites are prepared and have not been sent.');
+
+        Mail::assertSent(TeacherInviteLinkMail::class, 1);
+        Mail::assertNotSent(StudentParentSetupLinkMail::class);
+        $this->assertSame(1, User::query()->where('school_id', $school->id)->where('usergroup_id', 5)->where('status', 'active')->count());
+        $this->assertSame(2, User::query()->where('school_id', $school->id)->where('usergroup_id', 6)->where('status', 'active')->count());
     }
 
     public function test_back_returns_to_the_agreement_and_a_new_page_reopens_the_step(): void
@@ -1112,6 +1200,7 @@ class ChecklistOnboardingPocTest extends TestCase
             ->call('confirmAgreement')
             ->set('workbook', $upload)
             ->call('ingest')
+            ->set('reviewed', true)
             ->call('openNext')
             ->assertSee('Edit')
             ->call('planFields', 'terms', [[
@@ -1174,7 +1263,9 @@ class ChecklistOnboardingPocTest extends TestCase
             ->call('ingest')
             ->assertSee('Reading Terms & Exams')
             ->assertSee('What Toshi did')
+            ->set('reviewed', true)
             ->call('skipFlags')
+            ->set('reviewed', true)
             ->call('confirmStep')
             ->assertSee('Reading Terms & Exams')
             ->assertSee('What Toshi did');

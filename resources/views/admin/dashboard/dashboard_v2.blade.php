@@ -96,7 +96,7 @@
             </div>
         </div>
 
-        @if($checklistSetup && $profile)
+        @if($checklistSetup && $profile && ! $setupFinished)
             <section class="dv2-profile" data-testid="dashboard-v2-profile">
                 <h2>{{ $profile['name'] }}</h2>
                 <p>{{ collect([$profile['country'], $profile['curriculum'], $profile['year'], $profile['term'] !== '' ? $profile['term'] : null])->filter()->implode(' · ') }}</p>
@@ -653,11 +653,21 @@ window.klassDashboardToshiSetup = function () {
                 profileLine.textContent = payload.profile_line;
             }
         }
+        var sidebar = payload.sidebar || {};
+        Object.keys(sidebar).forEach(function (key) {
+            var count = parseInt(sidebar[key], 10) || 0;
+            document.querySelectorAll('[data-sidebar-count="' + key + '"]').forEach(function (chip) {
+                chip.textContent = count > 0 ? String(count) : '';
+                chip.hidden = count < 1;
+            });
+        });
         if (payload.hide_options) {
-            var bar = document.querySelector('[data-testid="dashboard-v2-setup-bar"]');
-            if (bar) {
-                bar.hidden = true;
-            }
+            ['dashboard-v2-setup-bar', 'dashboard-v2-profile', 'dashboard-v2-setup-summary'].forEach(function (id) {
+                var node = document.querySelector('[data-testid="' + id + '"]');
+                if (node) {
+                    node.hidden = true;
+                }
+            });
         }
     }
     function tick() {
@@ -680,10 +690,12 @@ window.klassDashboardToshiSetup = function () {
         });
         if (window.Livewire.on) {
             window.Livewire.on('checklist-setup-finished', function () {
-                var bar = document.querySelector('[data-testid="dashboard-v2-setup-bar"]');
-                if (bar) {
-                    bar.hidden = true;
-                }
+                ['dashboard-v2-setup-bar', 'dashboard-v2-profile', 'dashboard-v2-setup-summary'].forEach(function (id) {
+                    var node = document.querySelector('[data-testid="' + id + '"]');
+                    if (node) {
+                        node.hidden = true;
+                    }
+                });
             });
         }
     });

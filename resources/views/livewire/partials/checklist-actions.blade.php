@@ -5,9 +5,17 @@
     $waiting = $kind === 'preview' && is_array($question) && ! $questionCleared;
     $blocked = is_array($question) && ! empty($question['blocks_write']);
     $readReady = $workbook !== null || trim($sheetUrl) !== '' || $sheetFileId !== '';
+    $checkKey = (string) ($card['step_key'] ?? '');
+    $needsCheck = ($card['connect_notice'] ?? '') === '' && (
+        $kind === 'summary'
+        || ($kind === 'preview' && in_array($checkKey, ['terms', 'standards', 'teachers', 'teacher_invites', 'whatsapp'], true))
+    );
+    $checkLabel = $checkKey === 'whatsapp' ? "I've checked this" : "I've checked these";
+    $held = $needsCheck && ! $reviewed;
+    $emailsBlocked = ! empty($card['emails_blocked']);
 @endphp
 <div class="t-actionbar" data-testid="checklist-actions">
-    <p class="t-working" data-testid="checklist-working" wire:loading.class="is-on" wire:target="ingest,confirmStep,importPickedSheet,skipFlags,finishSetup">
+    <p class="t-working" data-testid="checklist-working" wire:loading.class="is-on" wire:target="ingest,confirmStep,confirmReviewed,importPickedSheet,skipFlags,finishSetup">
         <span class="t-ring" aria-hidden="true"></span>
         <span>Toshi is working…</span>
     </p>
@@ -33,7 +41,15 @@
             @if($details !== [])
                 <button type="button" class="t-btn secondary" wire:click="openDetail" data-testid="checklist-detail">Fill this in</button>
             @endif
-            <button type="button" class="t-btn" wire:click="skipFlags" data-testid="skip-these-rows" data-checklist-focus>Continue</button>
+            <div class="t-confirm-row">
+                @if($needsCheck)
+                    <label class="t-check" data-testid="checklist-reviewed">
+                        <input type="checkbox" wire:model.live="reviewed" data-testid="checklist-reviewed-input">
+                        <span>{{ $checkLabel }}</span>
+                    </label>
+                @endif
+                <button type="button" class="t-btn" wire:click="skipFlags" data-testid="skip-these-rows" data-checklist-focus @disabled($held)>Continue</button>
+            </div>
             <button type="button" class="t-btn secondary" wire:click="stopForFix" data-testid="stop-fix-workbook">Stop, I'll fix the workbook</button>
             @include('livewire.partials.checklist-back')
         </div>
@@ -42,7 +58,15 @@
             @if($details !== [])
                 <button type="button" class="t-btn secondary" wire:click="openDetail" data-testid="checklist-detail">Fill this in</button>
             @endif
-            <button type="button" class="t-btn" wire:click="openNext" data-testid="checklist-next" data-checklist-focus>Next: {{ $follow['name'] ?? 'Terms' }}</button>
+            <div class="t-confirm-row">
+                @if($needsCheck)
+                    <label class="t-check" data-testid="checklist-reviewed">
+                        <input type="checkbox" wire:model.live="reviewed" data-testid="checklist-reviewed-input">
+                        <span>{{ $checkLabel }}</span>
+                    </label>
+                @endif
+                <button type="button" class="t-btn" wire:click="openNext" data-testid="checklist-next" data-checklist-focus @disabled($held)>Next: {{ $follow['name'] ?? 'Terms' }}</button>
+            </div>
             @include('livewire.partials.checklist-back')
         </div>
     @elseif($kind === 'summary')
@@ -66,6 +90,13 @@
                 <button type="button" class="t-btn secondary" wire:click="answerQuestion('other')" data-testid="question-other">Something else</button>
             @endif
         </div>
+    @elseif($kind === 'preview' && ($card['step_key'] ?? '') === 'whatsapp' && ($card['connect_notice'] ?? '') !== '')
+        <div class="t-actions">
+            @if(is_array($follow) && in_array($follow['kind'] ?? '', ['preview', 'done'], true))
+                <button type="button" class="t-btn" wire:click="openNext" data-testid="checklist-next" data-checklist-focus>Next</button>
+            @endif
+            @include('livewire.partials.checklist-back')
+        </div>
     @elseif($kind === 'preview' && ! $blocked)
         <div class="t-actions">
             @if($showChange)
@@ -74,12 +105,24 @@
                     <button type="button" class="t-btn secondary" wire:click="answerQuestion('other')" data-testid="question-other">Something else</button>
                 @endif
             @else
-                <button type="button" class="t-btn" wire:click="confirmStep" data-testid="confirm-step" data-checklist-focus>{{ $card['approve_label'] ?? 'Create' }}</button>
-                <button type="button" class="t-btn secondary" wire:click="openEditor" data-testid="checklist-edit">Edit</button>
-                <div class="t-actions row">
-                    <button type="button" class="t-btn secondary" wire:click="openChange" data-testid="change-step">Change</button>
-                    <button type="button" class="t-btn secondary" wire:click="skipStep" data-testid="skip-step">Skip</button>
+                <div class="t-confirm-row">
+                    @if($needsCheck)
+                        <label class="t-check" data-testid="checklist-reviewed">
+                            <input type="checkbox" wire:model.live="reviewed" data-testid="checklist-reviewed-input">
+                            <span>{{ $checkLabel }}</span>
+                        </label>
+                    @endif
+                    <button type="button" class="t-btn" wire:click="confirmReviewed" data-testid="confirm-step" data-checklist-focus @disabled($held || $emailsBlocked)>{{ $card['approve_label'] ?? 'Create' }}</button>
                 </div>
+                @if(! in_array($checkKey, ['teacher_invites'], true))
+                    <button type="button" class="t-btn secondary" wire:click="openEditor" data-testid="checklist-edit">Edit</button>
+                @endif
+                @if(! in_array($checkKey, ['teacher_invites', 'whatsapp'], true))
+                    <div class="t-actions row">
+                        <button type="button" class="t-btn secondary" wire:click="openChange" data-testid="change-step">Change</button>
+                        <button type="button" class="t-btn secondary" wire:click="skipStep" data-testid="skip-step">Skip</button>
+                    </div>
+                @endif
             @endif
             @include('livewire.partials.checklist-back')
         </div>

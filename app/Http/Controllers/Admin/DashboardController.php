@@ -235,6 +235,7 @@ class DashboardController extends Controller
             'academic_year' => $this->checklistAcademicYear($school),
             'term_label' => (string) ($data['termLabel'] ?? ''),
             'profile_line' => $this->checklistProfileLine($school),
+            'sidebar' => \App\Support\SidebarCounts::roster((int) $school->id),
         ]);
     }
 

@@ -82,6 +82,15 @@ class ChecklistOnboarding extends Component
      */
     public array $details = [];
 
+    public bool $reviewed = false;
+
+    public bool $showCaptured = false;
+
+    public string $whatsappPhone = '';
+
+    /** @var array<int, string> */
+    public array $inviteEmails = [];
+
     public function mount(ChecklistOnboardingGate $gate): void
     {
         $school = $this->school();
@@ -303,6 +312,10 @@ class ChecklistOnboarding extends Component
 
     public function skipFlags(ChecklistOnboardingService $service): void
     {
+        if (! $this->passesReview()) {
+            return;
+        }
+
         $this->pushHistory();
         $this->withPlan($service, fn ($plan, $actor) => $service->skipFlags($plan, $actor));
     }
@@ -315,22 +328,53 @@ class ChecklistOnboarding extends Component
 
     public function confirmStep(ChecklistOnboardingService $service): void
     {
+        if (! $this->passesReview()) {
+            return;
+        }
+
         $this->progressLines = [];
         $this->withPlan($service, fn ($plan, $actor) => $service->apply($plan, $actor, $this->trackProgress()));
     }
 
+    public function confirmReviewed(ChecklistOnboardingService $service): void
+    {
+        if (! $this->passesReview()) {
+            return;
+        }
+
+        $key = (string) ($this->card['step_key'] ?? '');
+        if ($key === 'teacher_invites') {
+            $this->sendTeacherInvites($service);
+
+            return;
+        }
+        if ($key === 'whatsapp') {
+            $this->connectWhatsApp($service);
+
+            return;
+        }
+
+        $this->confirmStep($service);
+    }
+
     public function openNext(): void
     {
-        if (! $this->guard() || ! is_array($this->follow) || ($this->follow['kind'] ?? '') !== 'preview') {
+        if (! $this->guard() || ! is_array($this->follow) || ! $this->passesReview()) {
+            return;
+        }
+
+        $followKind = (string) ($this->follow['kind'] ?? '');
+        if (! in_array($followKind, ['preview', 'done'], true)) {
             return;
         }
 
         $this->pushHistory();
         $this->progressLines = [];
         $this->card = $this->follow;
-        $this->phase = 'preview';
+        $this->phase = $followKind === 'done' ? 'done' : 'preview';
         $this->follow = null;
         $this->resetCardUi();
+        $this->seedInviteEmails();
         $this->publishStep();
     }
 
@@ -399,6 +443,7 @@ class ChecklistOnboarding extends Component
             'learners' => (int) ($stats['Learners'] ?? 0),
             'parents' => (int) ($stats['Parents'] ?? 0),
             'invites_ready' => (int) ($done['invites_ready'] ?? 0),
+            'teacher_invites_sent' => (int) ($done['teacher_invites_sent'] ?? 0),
             'later' => is_array($done['later'] ?? null) ? $done['later'] : [],
             'links' => [
                 ['label' => 'Attendance registers', 'href' => route('admin.attendance.index')],
@@ -432,6 +477,15 @@ class ChecklistOnboarding extends Component
         }
 
         $key = (string) ($this->card['step_key'] ?? '');
+        if ($key === 'teacher_invites') {
+            return;
+        }
+        if ($key === 'whatsapp') {
+            $this->card['show_editor'] = true;
+            $this->whatsappPhone = (string) ($this->card['phone_raw'] ?? '');
+
+            return;
+        }
         $step = match ($key) {
             'terms' => 'terms',
             'standards' => 'standards',
@@ -633,24 +687,151 @@ class ChecklistOnboarding extends Component
 
         $this->resetCardUi();
         $this->card = $result['card'];
-        $this->phase = (string) ($result['card']['kind'] ?? 'failed');
+        if (($this->card['step_key'] ?? '') === 'students' && ($this->card['kind'] ?? '') === 'done') {
+            $this->card['kind'] = 'result';
+            unset($this->card['completion']);
+        }
+        $this->phase = (string) ($this->card['kind'] ?? 'failed');
         $this->follow = null;
+        $actor = auth()->user();
 
-        if ($this->phase === 'summary' && empty($this->card['needs_flag_choice']) && $this->planId && $school) {
+        if ($this->phase === 'summary' && empty($this->card['needs_flag_choice']) && $this->planId && $school && $actor) {
             $plan = OnboardingPlan::query()->where('school_id', $school->id)->whereKey($this->planId)->first();
-            if ($plan && auth()->user()) {
-                $this->follow = $service->previewCard($plan, auth()->user());
+            if ($plan) {
+                $this->follow = $service->previewCard($plan, $actor);
             }
         }
 
-        if ($this->phase === 'result' && $this->planId && $school) {
+        if ($this->phase === 'result' && $this->planId && $school && $actor) {
             $plan = OnboardingPlan::query()->where('school_id', $school->id)->whereKey($this->planId)->first();
-            if ($plan && auth()->user()) {
-                $next = $service->previewCard($plan, auth()->user());
-                $this->follow = ($next['kind'] ?? '') === 'preview' ? $next : null;
+            if ($plan) {
+                $this->follow = $this->followFor($service, $plan, $actor, (string) ($this->card['step_key'] ?? ''));
             }
         }
 
+        $this->seedInviteEmails();
+        $this->publishStep();
+    }
+
+    public function sendTeacherInvites(ChecklistOnboardingService $service): void
+    {
+        if (! $this->guard() || ! $this->passesReview() || ! empty($this->card['emails_blocked'])) {
+            return;
+        }
+        if (($this->card['step_key'] ?? '') !== 'teacher_invites') {
+            return;
+        }
+
+        $this->progressLines = [];
+        $this->withPlan($service, fn ($plan, $actor) => $service->sendTeacherInvites($plan, $actor));
+    }
+
+    public function connectWhatsApp(ChecklistOnboardingService $service): void
+    {
+        if (! $this->guard() || ! $this->passesReview()) {
+            return;
+        }
+        if (($this->card['step_key'] ?? '') !== 'whatsapp') {
+            return;
+        }
+
+        $school = $this->school();
+        $actor = auth()->user();
+        if ($school === null || $actor === null || $this->planId === null) {
+            return;
+        }
+
+        $plan = OnboardingPlan::query()->where('school_id', $school->id)->whereKey($this->planId)->first();
+        if ($plan === null) {
+            return;
+        }
+
+        $this->card['connected'] = false;
+        $this->card['verify_code'] = '';
+        $this->card['verify_url'] = '';
+        if (! $service->whatsappServiceReady()) {
+            $this->card['connect_notice'] = 'Verification completes on the live service';
+        } else {
+            $phone = trim((string) ($this->card['phone_raw'] ?? ''));
+            if ($phone === '') {
+                $this->card['connect_notice'] = 'Add the school WhatsApp number first.';
+            } else {
+                $issued = app(\App\Services\WhatsApp\WhatsAppUserInitiatedVerification::class)
+                    ->issue((int) $actor->id, $phone, request()->ip());
+                $status = app(\App\Services\WhatsApp\WhatsAppUserInitiatedVerification::class)
+                    ->statusFor((int) $actor->id, $phone);
+                $this->card['connected'] = ($status['verified'] ?? false) === true;
+                $this->card['verify_code'] = (string) ($issued['code'] ?? '');
+                $this->card['verify_url'] = (string) ($issued['url'] ?? '');
+                $this->card['connect_notice'] = $this->card['connected']
+                    ? ''
+                    : (string) ($issued['message'] ?? 'Verification completes on the live service');
+            }
+        }
+
+        $this->follow = $service->doneCard($plan, $actor);
+        $this->publishStep();
+    }
+
+    public function saveInviteEmail(ChecklistOnboardingService $service, int $index): void
+    {
+        if (! $this->guard() || $this->planId === null) {
+            return;
+        }
+
+        $email = trim((string) ($this->inviteEmails[$index] ?? ''));
+        if (filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+            $this->addError('inviteEmails.'.$index, 'Enter a valid email.');
+
+            return;
+        }
+
+        $school = $this->school();
+        $actor = auth()->user();
+        if ($school === null || $actor === null) {
+            return;
+        }
+
+        $plan = OnboardingPlan::query()->where('school_id', $school->id)->whereKey($this->planId)->first();
+        if ($plan === null) {
+            return;
+        }
+
+        $this->card = $service->saveTeacherEmail($plan, $actor, $index, $email);
+        $this->phase = 'preview';
+        $this->seedInviteEmails();
+        $this->publishStep();
+    }
+
+    public function saveWhatsappNumber(ChecklistOnboardingService $service): void
+    {
+        if (! $this->guard() || ($this->card['step_key'] ?? '') !== 'whatsapp') {
+            return;
+        }
+
+        $school = $this->school();
+        $actor = auth()->user();
+        if ($school === null || $actor === null || $this->planId === null) {
+            return;
+        }
+
+        $plan = OnboardingPlan::query()->where('school_id', $school->id)->whereKey($this->planId)->first();
+        if ($plan === null) {
+            return;
+        }
+
+        $country = (string) ($plan->payload['school']['country'] ?? $school->registration_country ?? '');
+        try {
+            $saved = $service->saveSchoolWhatsapp($plan, $actor, $this->whatsappPhone, $country);
+        } catch (ValidationException $exception) {
+            $message = collect($exception->errors())->flatten()->first();
+            $this->addError('whatsappPhone', is_string($message) ? $message : \App\Support\PhoneCountry::error($country, true));
+
+            return;
+        }
+
+        $this->card = array_merge($this->card, $saved);
+        $this->card['show_editor'] = false;
         $this->publishStep();
     }
 
@@ -790,8 +971,9 @@ class ChecklistOnboarding extends Component
             'terms' => 'terms',
             'standards' => 'classes',
             'subjects' => 'subjects',
-            'teachers' => 'teachers',
+            'teachers', 'teacher_invites' => 'teachers',
             'students' => 'learners',
+            'whatsapp' => 'checklist',
             default => 'checklist',
         };
     }
@@ -842,13 +1024,71 @@ class ChecklistOnboarding extends Component
 
         $this->card = $view;
         $this->phase = 'result';
+        $this->follow = $this->followFor($service, $plan, $actor, (string) ($view['step_key'] ?? $key));
+    }
+
+    private function passesReview(): bool
+    {
+        return ! $this->needsReview() || $this->reviewed;
+    }
+
+    private function needsReview(): bool
+    {
+        if (($this->card['connect_notice'] ?? '') !== '') {
+            return false;
+        }
+
+        $kind = (string) ($this->card['kind'] ?? '');
+        $key = (string) ($this->card['step_key'] ?? '');
+        if ($kind === 'summary') {
+            return true;
+        }
+
+        return $kind === 'preview' && in_array($key, ['terms', 'standards', 'teachers', 'teacher_invites', 'whatsapp'], true);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function followFor(ChecklistOnboardingService $service, OnboardingPlan $plan, \App\Models\User $actor, string $stepKey): ?array
+    {
+        if ($stepKey === 'teachers') {
+            return $service->teacherInvitesCard($plan, $actor);
+        }
+        if ($stepKey === 'teacher_invites') {
+            try {
+                $next = $service->previewCard($plan, $actor);
+            } catch (ValidationException) {
+                return null;
+            }
+
+            return ($next['kind'] ?? '') === 'preview' ? $next : null;
+        }
+        if ($stepKey === 'students') {
+            return $service->whatsappCard($plan, $actor);
+        }
+
         try {
             $next = $service->previewCard($plan, $actor);
         } catch (ValidationException) {
+            return null;
+        }
+
+        return ($next['kind'] ?? '') === 'preview' ? $next : null;
+    }
+
+    private function seedInviteEmails(): void
+    {
+        if (($this->card['step_key'] ?? '') !== 'teacher_invites') {
             return;
         }
-        if (($next['kind'] ?? '') === 'preview' && ($next['step_key'] ?? '') !== $key) {
-            $this->follow = $next;
+
+        $this->inviteEmails = [];
+        foreach ($this->card['teachers'] ?? [] as $index => $person) {
+            if (! is_array($person)) {
+                continue;
+            }
+            $this->inviteEmails[(int) $index] = (string) ($person['email'] ?? '');
         }
     }
 
@@ -940,6 +1180,9 @@ class ChecklistOnboarding extends Component
         $this->questionCleared = false;
         $this->otherText = '';
         $this->otherNote = '';
+        $this->reviewed = false;
+        $this->showCaptured = false;
+        $this->inviteEmails = [];
     }
 
     /**
