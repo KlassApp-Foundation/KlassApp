@@ -17,7 +17,6 @@ The class chip shows how many students are in that class. The stream chips show 
 
 ## What to know
 
-- The filter is in the address bar: `standard` is the class, `stream` is the stream. Sharing the link shares the view.
 - **Clear filters** clears the class, the stream and the search, and returns to the full list.
 - The list is paged. The count on the chip is the class total, not the number on this page.
 - Filtering changes what you see, not who is in the class. To move a student, open the student's profile.
