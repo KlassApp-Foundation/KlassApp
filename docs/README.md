@@ -1,5 +1,7 @@
 # KlassApp docs
 
+> School-facing guides live in `docs-site/` and are published at `/docs-preview/help/guides/`.
+
 What is here, by audience. Every page below is on this branch. Draft pages not yet merged are noted at the end.
 
 ## Schools
