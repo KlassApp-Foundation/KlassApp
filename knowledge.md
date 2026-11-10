@@ -2,6 +2,13 @@
 
 > **Canonical location**: `/Users/mac/projects/KlassApp/knowledge.md` (workspace root). Worktrees (e.g. `KlassApp-main-checkout`) should sync to that path when copies diverge — keep one body of truth; do not maintain parallel divergent session logs.
 
+### 2026-11-10: T-131 checklist panel handoff
+- **Work done**: The checklist panel on draft #1307 follows the handoff: every step, receipt rows, the step card, and lines that appear when the server reports an operation. A Northwind rehearsal was clicked through at 1280 and 375, in light and in dark. Skipping every step left terms, learners, teachers, parents and invites at 0.
+- **Files modified**: `ChecklistOnboarding`, `OnboardingEngine`, `public/css/toshi-checklist-panel.css`, the Toshi and checklist blades, `public/images/brand/google-drive.svg`.
+- **Key decisions**: The agreement links the served Privacy Policy and Terms only. Those pages do not say data is used only for that school, and they do not mention model training, so the card does not say that. Control borders use the input-border token so they meet 3:1. The progress header is updated from the card in the same paint. Subject progress counts the class rows written (50); the receipt still shows 5 subjects and 30 subject-in-class. Classes 6 and streams 4 are the 8 Northwind sections.
+- **Status**: 🚧 Draft [#1307](https://github.com/KlassApp-Foundation/KlassApp/pull/1307) open on `poc/toshi-checklist-onboarding`. Tip `6e30f03cf1e45349dd6c72c242e3d55188985f12`, on top of `9ae54fe9` and `9075ac65`. Not merged. Not deployed.
+- **Edge cases flagged**: Skipping terms makes the later steps report a missing academic year; Skip this step moves on and writes nothing. The handoff CSS and HTML reference files were not in the downloads folder; the tokens came from HANDOFF.md. The private Google Sheet was not downloaded. Google's Drive product icon is stored unchanged.
+
 ## Session: 2026-11-09 — T-131 checklist onboarding proof of concept
 
 - **Work:** A demo or test school can onboard from its checklist inside the Toshi panel: a data-agreement gate, upload, a summary with tab and row flags, a proposal for each step, then a completion card. Writes go through OnboardingEngine only, after approval. Invites are prepared and not sent. Homeroom class teachers are listed and not written. A pasted Google Sheets link tells the admin to download .xlsx and upload it. This demo has no Google account that can read a shared sheet.
