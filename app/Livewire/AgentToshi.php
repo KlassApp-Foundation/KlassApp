@@ -39,7 +39,10 @@ class AgentToshi extends Component
     /** @var array<string, string> */
     protected $listeners = [
         'manual-onboarding-finished' => 'syncOnboardingAfterManualWizard',
+        'checklist-shell' => 'checklistShell',
     ];
+
+    public string $checklistStep = 'welcome';
 
     /**
      * Map of tool name (as stored in pendingToolConfirm) to Tool class FQCN.
@@ -1250,9 +1253,26 @@ class AgentToshi extends Component
         $this->persistState();
     }
 
+    public function checklistShell(string $step = 'welcome'): void
+    {
+        $allowed = ['welcome', 'agreement', 'checklist', 'terms', 'classes', 'subjects', 'teachers', 'learners', 'done'];
+        $this->checklistStep = in_array($step, $allowed, true) ? $step : 'welcome';
+    }
+
     public function show() { $this->visible = true; $this->maximized = false; }
     public function hide() { $this->visible = false; $this->maximized = false; }
-    public function maximize() { $this->maximized = true; $this->visible = false; }
+    public function maximize()
+    {
+        if ($this->checklistOnboarding) {
+            $this->maximized = false;
+            $this->visible = true;
+
+            return;
+        }
+
+        $this->maximized = true;
+        $this->visible = false;
+    }
     public function restore() { $this->maximized = false; $this->visible = true; }
 
     public function resetSchoolOnboarding()

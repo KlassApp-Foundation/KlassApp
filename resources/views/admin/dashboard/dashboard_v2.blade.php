@@ -38,6 +38,7 @@
     $toshiSwitch = app(\App\Services\Toshi\ToshiUiSwitch::class);
     $toshiMode = $school ? $toshiSwitch->mode($v2User) : \App\Enums\ToshiMode::Preview;
     $toshiPathOpen = $school && app(\App\Services\Toshi\ToshiOnboardingPath::class)->openFor($school);
+    $checklistSetup = $school && app(\App\Services\Onboarding\ChecklistOnboardingGate::class)->enabledFor($school);
 
     // Quick actions (kept from v2) — row in the data state, tiles otherwise.
     $quickActions = [
@@ -58,6 +59,9 @@
     };
 @endphp
 <link rel="stylesheet" href="{{ asset('css/dashboard-v2.css') }}?v={{ filemtime(public_path('css/dashboard-v2.css')) }}">
+@if($checklistSetup)
+    <link rel="stylesheet" href="{{ asset('css/toshi-checklist-panel.css') }}?v={{ @filemtime(public_path('css/toshi-checklist-panel.css')) }}">
+@endif
 <div class="dv2-shell" data-testid="dashboard-v2-shell">
     <div class="dv2-panel" data-testid="dashboard-v2-panel">
         @include('partials.message')
@@ -85,8 +89,47 @@
             </div>
         </div>
 
-        {{-- 2 · Setup bar (only while incomplete) --}}
-        @if($setupShown)
+        {{-- 2 · Setup (only while incomplete). Checklist schools get two equal options. --}}
+        @if($setupShown && $checklistSetup)
+            <section class="dv2-setup-card" data-testid="dashboard-v2-setup-bar" role="region" aria-label="School setup">
+                <h2>Set up {{ $schoolLabel }}</h2>
+                <p class="dv2-setup-lead">Pick one. You can switch at any time, and nothing is saved until you approve it.</p>
+                <div class="dv2-setup-options">
+                    <article class="dv2-setup-option">
+                        <h3>Set up with Toshi</h3>
+                        <p>Add your checklist workbook. Toshi reads it, shows what it found, and creates each part after you approve it. About 10 minutes.</p>
+                        <button type="button" class="dv2-btn" data-testid="dashboard-v2-toshi-setup" onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(false);">Set up with Toshi</button>
+                    </article>
+                    <article class="dv2-setup-option">
+                        <h3>Set up manually</h3>
+                        <p>Fill in a short form for each part: terms, classes, subjects, teachers, learners. Best if you have no checklist yet.</p>
+                        <a class="dv2-btn secondary" href="{{ $nextHref }}" data-testid="dashboard-v2-setup-manual">Set up manually</a>
+                    </article>
+                </div>
+                <form method="POST" action="{{ $dismissUrl }}" class="dv2-setup-dismiss" onsubmit="return confirm('Hide the setup bar? Your progress stays in the sidebar.');">
+                    @csrf
+                    <button type="submit" class="dv2-x" data-testid="dashboard-v2-setup-dismiss" aria-label="Hide setup bar. Progress stays in the sidebar.">Hide</button>
+                </form>
+                @php
+                    $setupLines = array_values(array_filter(
+                        is_array($setup['summary'] ?? null) ? $setup['summary'] : [],
+                        fn ($line) => is_string($line) && trim($line) !== ''
+                    ));
+                @endphp
+                <details class="dv2-setup-summary" data-testid="dashboard-v2-setup-summary" open>
+                    <summary>What's set up</summary>
+                    @if($setupLines !== [])
+                        <ul>
+                            @foreach($setupLines as $line)
+                                <li>{{ $line }}</li>
+                            @endforeach
+                        </ul>
+                    @else
+                        <p class="dv2-setup-empty" data-testid="dashboard-v2-setup-empty">Nothing is set up yet.</p>
+                    @endif
+                </details>
+            </section>
+        @elseif($setupShown)
             <div class="dv2-setup" data-testid="dashboard-v2-setup-bar" role="region" aria-label="School setup">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14532D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8M13 12h8M13 18h8"/></svg>
                 <b data-testid="dashboard-v2-setup-count">Setup {{ $setup['done'] }} of {{ $setup['total'] }} done</b>
@@ -97,34 +140,41 @@
                     <span class="dv2-setup-next" data-testid="dashboard-v2-setup-next">Next: {{ $setup['next']['label'] }}</span>
                 @endif
                 <a href="{{ $nextHref }}" class="dv2-btn" data-testid="dashboard-v2-setup-continue">Continue setup</a>
-                @if($toshiMode === \App\Enums\ToshiMode::Onboarding)
-                    @if($toshiPathOpen)
-                    <button type="button" class="dv2-btn dv2-btn--ghost" data-testid="dashboard-v2-toshi-setup"
-                            onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(false); window.dispatchEvent(new CustomEvent('toshi-maximize'));">
-                        Set up with Toshi
-                    </button>
-                    @else
-                    <button type="button" disabled class="dv2-btn dv2-btn--ghost" data-testid="dashboard-v2-toshi-setup" aria-disabled="true">
-                        Set up with Toshi
-                        <span data-testid="dashboard-v2-toshi-soon">Coming soon</span>
-                    </button>
+                    @if($toshiMode === \App\Enums\ToshiMode::Onboarding)
+                        @if($toshiPathOpen)
+                        <button type="button" class="dv2-btn dv2-btn--ghost" data-testid="dashboard-v2-toshi-setup"
+                                onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(false); window.dispatchEvent(new CustomEvent('toshi-maximize'));">
+                            Set up with Toshi
+                        </button>
+                        @else
+                        <button type="button" disabled class="dv2-btn dv2-btn--ghost" data-testid="dashboard-v2-toshi-setup" aria-disabled="true">
+                            Set up with Toshi
+                            <span data-testid="dashboard-v2-toshi-soon">Coming soon</span>
+                        </button>
+                        @endif
                     @endif
-                @endif
-                @php $setupLines = array_values($setup['labels'] ?? []); @endphp
-                @if($setupLines !== [])
-                    <details class="dv2-setup-summary" data-testid="dashboard-v2-setup-summary">
-                        <summary>What's set up</summary>
+                <form method="POST" action="{{ $dismissUrl }}" class="dv2-setup-dismiss" onsubmit="return confirm('Hide the setup bar? Your progress stays in the sidebar.');">
+                    @csrf
+                    <button type="submit" class="dv2-x" data-testid="dashboard-v2-setup-dismiss" aria-label="Hide setup bar. Progress stays in the sidebar.">Hide</button>
+                </form>
+                @php
+                    $setupLines = array_values(array_filter(
+                        is_array($setup['summary'] ?? null) ? $setup['summary'] : [],
+                        fn ($line) => is_string($line) && trim($line) !== ''
+                    ));
+                @endphp
+                <details class="dv2-setup-summary" data-testid="dashboard-v2-setup-summary" open>
+                    <summary>What's set up</summary>
+                    @if($setupLines !== [])
                         <ul>
                             @foreach($setupLines as $line)
                                 <li>{{ $line }}</li>
                             @endforeach
                         </ul>
-                    </details>
-                @endif
-                <form method="POST" action="{{ $dismissUrl }}" class="inline" onsubmit="return confirm('Hide the setup bar? Your progress stays in the sidebar.');">
-                    @csrf
-                    <button type="submit" class="dv2-x" data-testid="dashboard-v2-setup-dismiss" aria-label="Hide setup bar. Progress stays in the sidebar.">✕</button>
-                </form>
+                    @else
+                        <p class="dv2-setup-empty" data-testid="dashboard-v2-setup-empty">Nothing is set up yet.</p>
+                    @endif
+                </details>
             </div>
         @endif
 
@@ -138,13 +188,28 @@
             <div class="dv2-qat" data-testid="dashboard-v2-actions">
                 @foreach($quickActions as $i => $action)
                     @php $missing = $missingFor($action); @endphp
-                    <a class="dv2-qt" href="{{ $missing ? (($setup['routes'][$action['prereqs'][0]] ?? null) ?: ($setup['destination'] ?? $wizardUrl)) : $action['href'] }}" data-testid="dashboard-v2-tile-{{ $i + 1 }}" data-icon="{{ $action['icon'] }}">
-                        <span class="dv2-ico" aria-hidden="true"><x-ka-icon :name="$action['icon']" :size="18" tone="default" /></span>
-                        <span>
-                            <b>{{ $action['title'] }}</b>
-                            <span class="help {{ $missing ? 'missing' : '' }}">{{ $missing ? 'Finish “'.$missing.'” in setup first.' : $action['helper'] }}</span>
-                        </span>
-                    </a>
+                    @if($missing && $checklistSetup)
+                        <div class="dv2-qt" data-testid="dashboard-v2-tile-{{ $i + 1 }}" data-icon="{{ $action['icon'] }}">
+                            <span class="dv2-ico" aria-hidden="true"><x-ka-icon :name="$action['icon']" :size="18" tone="default" /></span>
+                            <span>
+                                <b>{{ $action['title'] }}</b>
+                                <span class="help missing">Finish “{{ $missing }}” in setup first.</span>
+                                <span class="dv2-qt-actions">
+                                    <button type="button" class="dv2-btn" data-testid="dashboard-v2-tile-toshi-{{ $i + 1 }}"
+                                            onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(false);">Set up with Toshi</button>
+                                    <a class="dv2-btn" href="{{ $nextHref }}" data-testid="dashboard-v2-tile-manual-{{ $i + 1 }}">Set up manually</a>
+                                </span>
+                            </span>
+                        </div>
+                    @else
+                        <a class="dv2-qt" href="{{ $missing ? $nextHref : $action['href'] }}" data-testid="dashboard-v2-tile-{{ $i + 1 }}" data-icon="{{ $action['icon'] }}">
+                            <span class="dv2-ico" aria-hidden="true"><x-ka-icon :name="$action['icon']" :size="18" tone="default" /></span>
+                            <span>
+                                <b>{{ $action['title'] }}</b>
+                                <span class="help {{ $missing ? 'missing' : '' }}">{{ $missing ? 'Finish “'.$missing.'” in setup first.' : $action['helper'] }}</span>
+                            </span>
+                        </a>
+                    @endif
                 @endforeach
             </div>
 

@@ -43,6 +43,14 @@ final class ChecklistOnboardingService
         'students' => 'Learners and parents',
     ];
 
+    private const STEP_NAMES = [
+        'terms' => 'Terms',
+        'standards' => 'Classes and streams',
+        'subjects' => 'Subjects',
+        'teachers' => 'Teachers and assignments',
+        'students' => 'Learners and parents',
+    ];
+
     public function __construct(
         private ChecklistWorkbookConverter $converter,
         private ChecklistOnboardingGate $gate,
@@ -52,7 +60,7 @@ final class ChecklistOnboardingService
     /**
      * @return array{ok: bool, code: string, plan_id?: int, card: array<string, mixed>}
      */
-    public function ingest(School $school, User $actor, string $path, string $originalName): array
+    public function ingest(School $school, User $actor, string $path, string $originalName, ?callable $progress = null): array
     {
         $this->assertActor($school, $actor);
         if (! is_file($path)) {
@@ -60,7 +68,7 @@ final class ChecklistOnboardingService
         }
 
         try {
-            $converted = $this->converter->convert($path);
+            $converted = $this->converter->convert($path, $progress);
         } catch (\Throwable $e) {
             Log::warning('Checklist workbook could not be read', [
                 'school_id' => $school->id,
@@ -148,24 +156,27 @@ final class ChecklistOnboardingService
             'kind' => 'preview',
             'step_key' => $key,
             'title' => self::TITLES[$key],
+            'name' => self::STEP_NAMES[$key],
             'step_number' => is_int($index) ? $index + 1 : 1,
             'step_total' => count(self::WALK),
             'create' => $preview['create'],
             'exists' => $preview['exists'],
             'conflict' => $preview['conflict'],
+            'skipped' => count($payload['skipped_flags'] ?? []),
             'proposal' => $this->proposalFor($key),
             'approve_label' => $this->approveLabel($key, $preview['create']),
             'question' => $this->questionFor($payload, $key, $preview),
             'examples' => array_slice($preview['examples'], 0, 8),
             'example_total' => $preview['create'] + $preview['exists'] + $preview['conflict'],
             'conflicts' => array_slice($preview['conflicts'], 0, 3),
+            'receipt' => $this->receipt($key, $preview, $payload, 'proposal'),
         ];
     }
 
     /**
      * @return array{ok: bool, code: string, card: array<string, mixed>}
      */
-    public function apply(OnboardingPlan $plan, User $actor): array
+    public function apply(OnboardingPlan $plan, User $actor, ?callable $progress = null): array
     {
         $plan = $this->fresh($plan, $actor);
         $payload = $this->requireReady($plan);
@@ -174,8 +185,27 @@ final class ChecklistOnboardingService
             return ['ok' => true, 'code' => 'done', 'card' => $this->completionCard($plan->school, $payload)];
         }
 
+        if ($progress) {
+            $progress([
+                'step' => $key,
+                'line' => 'check-'.$key,
+                'label' => 'Checking '.self::STEP_NAMES[$key],
+                'status' => 'running',
+                'result' => null,
+            ]);
+        }
         $preview = $this->previewStep($plan->school, $payload, $key);
         if ($preview['conflict'] > 0) {
+            if ($progress) {
+                $progress([
+                    'step' => $key,
+                    'line' => 'check-'.$key,
+                    'label' => 'Checking '.self::STEP_NAMES[$key],
+                    'status' => 'problem',
+                    'result' => $preview['conflict'].($preview['conflict'] === 1 ? ' conflict' : ' conflicts'),
+                ]);
+            }
+
             return [
                 'ok' => false,
                 'code' => 'conflict',
@@ -188,12 +218,43 @@ final class ChecklistOnboardingService
             ];
         }
 
+        if ($progress) {
+            $progress([
+                'step' => $key,
+                'line' => 'check-'.$key,
+                'label' => 'Checking '.self::STEP_NAMES[$key],
+                'status' => 'done',
+                'result' => 'no conflicts',
+            ]);
+        }
+
         $beforeInvites = TeacherInvite::query()->where('school_id', $plan->school_id)->count();
+        $tallies = [];
+        $this->engine->listenForCreates(function (array $event) use ($progress, &$tallies): void {
+            $id = (string) ($event['line'] ?? '');
+            if ($id === '') {
+                return;
+            }
+            $tallies[$id] = [
+                'step' => (string) ($event['step'] ?? ''),
+                'label' => (string) ($event['label'] ?? ''),
+                'count' => ($tallies[$id]['count'] ?? 0) + 1,
+            ];
+            if ($progress) {
+                $progress([
+                    'step' => $tallies[$id]['step'],
+                    'line' => $id,
+                    'label' => $tallies[$id]['label'],
+                    'status' => 'running',
+                    'result' => (string) $tallies[$id]['count'],
+                ]);
+            }
+        });
         try {
-            DB::transaction(function () use ($plan, $payload, $key, $preview): void {
-                ChecklistInviteHold::hold(function () use ($plan, $payload, $key, $preview): void {
+            DB::transaction(function () use ($plan, $payload, $key, $preview, $progress): void {
+                ChecklistInviteHold::hold(function () use ($plan, $payload, $key, $preview, $progress): void {
                     if ($preview['create'] > 0) {
-                        $this->writeStep($plan->school, $payload, $key, $preview['creates']);
+                        $this->writeStep($plan->school, $payload, $key, $preview['creates'], $progress);
                     }
                 });
             });
@@ -204,14 +265,25 @@ final class ChecklistOnboardingService
                 'exception' => $e::class,
             ]);
 
+            $message = collect($e->errors())->flatten()->first()
+                ?: 'This step was not applied. Nothing from this step was saved.';
+            if ($progress) {
+                $progress([
+                    'step' => $key,
+                    'line' => 'failed',
+                    'label' => self::STEP_NAMES[$key],
+                    'status' => 'problem',
+                    'result' => $message,
+                ]);
+            }
+
             return [
                 'ok' => false,
                 'code' => 'failed',
                 'card' => [
                     'kind' => 'failed',
                     'title' => self::TITLES[$key],
-                    'message' => collect($e->errors())->flatten()->first()
-                        ?: 'This step was not applied. Nothing from this step was saved.',
+                    'message' => $message,
                 ],
             ];
         } catch (\Throwable $e) {
@@ -220,6 +292,16 @@ final class ChecklistOnboardingService
                 'step' => $key,
                 'exception' => $e::class,
             ]);
+
+            if ($progress) {
+                $progress([
+                    'step' => $key,
+                    'line' => 'failed',
+                    'label' => self::STEP_NAMES[$key],
+                    'status' => 'problem',
+                    'result' => 'This step was not applied. Nothing from this step was saved.',
+                ]);
+            }
 
             return [
                 'ok' => false,
@@ -230,13 +312,38 @@ final class ChecklistOnboardingService
                     'message' => 'This step was not applied. Nothing from this step was saved.',
                 ],
             ];
+        } finally {
+            $this->engine->listenForCreates(null);
         }
 
-        $payload['invites_ready'] = (int) ($payload['invites_ready'] ?? 0)
-            + max(0, TeacherInvite::query()->where('school_id', $plan->school_id)->count() - $beforeInvites);
+        if ($progress) {
+            foreach ($tallies as $id => $info) {
+                $progress([
+                    'step' => $info['step'],
+                    'line' => $id,
+                    'label' => $info['label'],
+                    'status' => 'done',
+                    'result' => $info['count'].' of '.$info['count'],
+                ]);
+            }
+        }
+
+        $inviteDelta = max(0, TeacherInvite::query()->where('school_id', $plan->school_id)->count() - $beforeInvites);
+        if ($progress && in_array($key, ['teachers', 'students'], true)) {
+            $progress([
+                'step' => $key,
+                'line' => 'invites',
+                'label' => 'Preparing invites',
+                'status' => 'done',
+                'result' => $inviteDelta.' ready, not sent',
+            ]);
+        }
+
+        $payload['invites_ready'] = (int) ($payload['invites_ready'] ?? 0) + $inviteDelta;
         $payload['results'][$key] = [
             'created' => $preview['create'],
             'existed' => $preview['exists'],
+            'invites' => $inviteDelta,
         ];
         $payload['walk_index'] = (int) $payload['walk_index'] + 1;
         $status = $this->currentKey($payload) === null ? 'applied' : 'applying';
@@ -704,7 +811,7 @@ final class ChecklistOnboardingService
      * @param  array<string, mixed>  $payload
      * @param  list<array<string, mixed>>  $creates
      */
-    private function writeStep(School $school, array $payload, string $key, array $creates): void
+    private function writeStep(School $school, array $payload, string $key, array $creates, ?callable $progress = null): void
     {
         $year = $this->ensureYear($school, $payload);
 
@@ -733,7 +840,38 @@ final class ChecklistOnboardingService
                     'streams' => array_values($class['streams'] ?? []),
                 ];
             }
+            if ($progress) {
+                $progress([
+                    'step' => 'standards',
+                    'line' => 'classes',
+                    'label' => 'Creating classes',
+                    'status' => 'running',
+                    'result' => null,
+                ]);
+            }
             $this->engine->saveStandards($school, $year, $classes);
+            if ($progress) {
+                $progress([
+                    'step' => 'standards',
+                    'line' => 'classes',
+                    'label' => 'Creating classes',
+                    'status' => 'done',
+                    'result' => count($classes).' of '.count($classes),
+                ]);
+                $streams = 0;
+                foreach ($classes as $class) {
+                    $streams += count($class['streams'] ?? []);
+                }
+                if ($streams > 0) {
+                    $progress([
+                        'step' => 'standards',
+                        'line' => 'streams',
+                        'label' => 'Creating streams',
+                        'status' => 'done',
+                        'result' => $streams.' of '.$streams,
+                    ]);
+                }
+            }
 
             return;
         }
@@ -834,12 +972,16 @@ final class ChecklistOnboardingService
 
         return [
             'kind' => $next === null ? 'done' : 'result',
+            'step_key' => $key,
+            'name' => self::STEP_NAMES[$key],
             'title' => self::TITLES[$key],
             'created' => $preview['create'],
             'existed' => $preview['exists'],
             'line' => $this->doneLine($key, $preview['create']),
             'href' => $link['href'],
             'href_label' => $link['label'],
+            'receipt' => $this->receipt($key, $preview, $payload, 'result'),
+            'invites' => (int) ($payload['results'][$key]['invites'] ?? 0),
             'completion' => $next === null ? $this->completionCard($school, $payload) : null,
         ];
     }
@@ -899,17 +1041,161 @@ final class ChecklistOnboardingService
             'phones_bad' => $badPhones,
             'invites_ready' => (int) ($payload['invites_ready'] ?? 0),
             'class_teachers_listed' => (int) ($payload['class_teachers_listed'] ?? 0),
+            'skipped' => count($payload['skipped_flags'] ?? []),
         ];
+    }
+
+    /**
+     * Receipt groups for one step. Figures come from the preview of rows that
+     * would be written. A total is not added across unlike units.
+     *
+     * @param  array{create: int, exists: int, creates?: list<array<string, mixed>>}  $preview
+     * @param  array<string, mixed>  $payload
+     * @return list<array{tone: string, name: string, rows: list<array{label: string, value: int}>}>
+     */
+    private function receipt(string $key, array $preview, array $payload, string $mode): array
+    {
+        $creates = $preview['creates'] ?? [];
+        $createRows = match ($key) {
+            'terms' => [['label' => 'Terms', 'value' => (int) $preview['create']]],
+            'standards' => $this->classStreamFigures($creates, (int) $preview['create']),
+            'subjects' => [
+                ['label' => 'Subjects', 'value' => (int) $preview['create']],
+                ['label' => 'Subject in a class', 'value' => $this->sumList($creates, 'classes')],
+            ],
+            'teachers' => [
+                ['label' => 'Teachers', 'value' => (int) $preview['create']],
+                ['label' => 'Subject assignments', 'value' => $this->assignmentCount($creates)],
+            ],
+            'students' => [
+                ['label' => 'Learners', 'value' => (int) $preview['create']],
+                ['label' => 'Parents', 'value' => $this->namedParents($creates)],
+            ],
+            default => [['label' => 'Rows', 'value' => (int) $preview['create']]],
+        };
+
+        if ($mode === 'result' && in_array($key, ['teachers', 'students'], true)) {
+            $createRows[] = [
+                'label' => 'Invites ready, not sent',
+                'value' => (int) ($payload['results'][$key]['invites'] ?? 0),
+            ];
+        }
+
+        $people = in_array($key, ['teachers', 'students'], true);
+        $groups = [
+            [
+                'tone' => $people ? 'people' : 'structure',
+                'name' => $mode === 'result' ? ($people ? 'People' : 'School structure') : 'Create',
+                'rows' => $createRows,
+            ],
+            [
+                'tone' => 'neutral',
+                'name' => 'Already exists',
+                'rows' => [['label' => 'Already stored', 'value' => (int) ($preview['exists'] ?? 0)]],
+            ],
+        ];
+
+        if ($key === 'students') {
+            $groups[] = [
+                'tone' => 'flag',
+                'name' => $mode === 'result' ? 'Left out' : 'Skipped',
+                'rows' => [['label' => 'Flagged rows', 'value' => count($payload['skipped_flags'] ?? [])]],
+            ];
+        } else {
+            $groups[] = [
+                'tone' => 'flag',
+                'name' => 'Conflict',
+                'rows' => [['label' => 'Conflicts', 'value' => (int) ($preview['conflict'] ?? 0)]],
+            ];
+        }
+
+        return $groups;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $creates
+     * @return list<array{label: string, value: int}>
+     */
+    private function classStreamFigures(array $creates, int $fallback): array
+    {
+        $names = [];
+        $streams = 0;
+        foreach ($creates as $row) {
+            $name = trim((string) ($row['name'] ?? ''));
+            if ($name !== '') {
+                $names[$name] = true;
+            }
+            if (trim((string) ($row['stream'] ?? '')) !== '') {
+                $streams++;
+            }
+        }
+
+        if ($names === []) {
+            return [['label' => 'Classes and streams', 'value' => $fallback]];
+        }
+
+        return [
+            ['label' => 'Classes', 'value' => count($names)],
+            ['label' => 'Streams', 'value' => $streams],
+        ];
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $rows
+     */
+    private function sumList(array $rows, string $field): int
+    {
+        $total = 0;
+        foreach ($rows as $row) {
+            $value = $row[$field] ?? null;
+            if (is_array($value)) {
+                $total += count($value);
+            }
+        }
+
+        return $total;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $rows
+     */
+    /**
+     * @param  list<array<string, mixed>>  $rows
+     */
+    private function assignmentCount(array $rows): int
+    {
+        $total = 0;
+        foreach ($rows as $row) {
+            $links = $row['resolved_links'] ?? $row['links'] ?? [];
+            $total += is_array($links) ? count($links) : 0;
+        }
+
+        return $total;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $rows
+     */
+    private function namedParents(array $rows): int
+    {
+        $total = 0;
+        foreach ($rows as $row) {
+            if (trim((string) ($row['parent_name'] ?? '')) !== '') {
+                $total++;
+            }
+        }
+
+        return $total;
     }
 
     private function proposalFor(string $key): string
     {
         return match ($key) {
-            'terms' => 'Use the term names and dates as written. Those dates define the year.',
-            'standards' => 'Use the stream names as written, in the class order on the sheet.',
-            'subjects' => 'Attach each subject to the classes named on its row.',
-            'teachers' => 'Add the teachers and the teaching assignments as written.',
-            'students' => 'Add the learners and their parents. Flagged rows stay out.',
+            'terms' => 'Use the term names and dates as written, and nothing changes until you press the button.',
+            'standards' => 'Use the stream names as written, in the class order on the sheet, and nothing changes until you press the button.',
+            'subjects' => 'Attach each subject to the classes named on its row, and nothing changes until you press the button.',
+            'teachers' => 'Add the teachers and the teaching assignments as written, and nothing changes until you press the button.',
+            'students' => 'Add the learners and their parents, leave flagged rows out, and nothing changes until you press the button.',
             default => 'Use the rows as written on the sheet.',
         };
     }

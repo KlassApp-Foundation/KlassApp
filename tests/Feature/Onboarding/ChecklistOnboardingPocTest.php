@@ -7,7 +7,9 @@ use App\Helpers\AuthRedirectHelper;
 use App\Livewire\ChecklistOnboarding;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
+use App\Livewire\AgentToshi;
 use App\Models\OnboardingPlan;
+use App\Models\UserPreference;
 use App\Models\School;
 use App\Models\Section;
 use App\Models\StudentAcademic;
@@ -75,7 +77,7 @@ class ChecklistOnboardingPocTest extends TestCase
         $admin = $this->admin($real);
         $this->actingAs($admin);
         Livewire::test(ChecklistOnboarding::class)
-            ->assertDontSee('Onboard from checklist')
+            ->assertDontSee('Set up from checklist')
             ->assertSet('enabled', false);
     }
 
@@ -318,15 +320,23 @@ class ChecklistOnboardingPocTest extends TestCase
 
         $this->actingAs($admin);
         $component = Livewire::test(ChecklistOnboarding::class)
+            ->assertSee('Set up from checklist')
+            ->assertSee('Nothing is saved without your approval')
             ->call('start')
-            ->assertSee('I agree, continue')
-            ->assertSee('Privacy')
+            ->assertSee('I agree on behalf of the school')
+            ->assertDontSee('Data Processing Agreement')
+            ->assertSee('Nothing is saved until you approve each step')
+            ->assertSee('Privacy Policy')
             ->assertSee('Terms')
+            ->assertSee('Continue')
+            ->assertDontSee('I agree, continue')
             ->set('workbook', $upload)
             ->call('ingest')
+            ->assertSet('phase', 'agreement')
             ->assertDontSee('Northwind Harbour School');
         $this->assertSame(0, OnboardingPlan::query()->where('school_id', $school->id)->count());
         $component
+            ->set('agreed', true)
             ->call('confirmAgreement')
             ->set('workbook', $upload)
             ->call('ingest')
@@ -341,21 +351,79 @@ class ChecklistOnboardingPocTest extends TestCase
             ->assertSee('Create 1 term')
             ->assertSee('Use the term names and dates as written')
             ->assertSee('Change')
-            ->assertSee('Skip step')
+            ->assertSee('Skip')
+            ->assertDontSee('Skip step')
             ->assertDontSee('Confirm step');
     }
 
-    public function test_a_google_sheet_link_asks_for_an_xlsx_download(): void
+    public function test_a_pasted_sheet_link_opens_the_picker_for_that_file(): void
     {
-        [, $admin] = $this->demoAdmin();
+        [$school, $admin] = $this->demoAdmin();
         $this->actingAs($admin);
+        config([
+            'services.google.client_id' => 'test-client.apps.googleusercontent.com',
+            'services.google.picker_key' => 'test-picker-key',
+            'services.google.project_number' => '123456',
+        ]);
 
         Livewire::test(ChecklistOnboarding::class)
+            ->set('agreed', true)
             ->call('confirmAgreement')
-            ->call('pasteSheetLink', 'https://docs.google.com/spreadsheets/d/abc/edit')
-            ->assertSee('download the sheet as .xlsx', false)
-            ->assertSee('File, then Download', false)
-            ->assertDontSee('anyone with the link');
+            ->assertSee('Choose from Google Drive')
+            ->assertSee('setFileIds', false)
+            ->assertDontSee('This demo has no Google account', false)
+            ->assertDontSee('Connect Google Sheet')
+            ->call('pasteSheetLink', 'https://example.test/sheet')
+            ->assertSee('not a Google Drive or Sheets link', false)
+            ->call('pasteSheetLink', 'https://docs.google.com/spreadsheets/d/1aBcDeFgHiJkLmNoPqRs/edit')
+            ->assertSet('sheetFileId', '1aBcDeFgHiJkLmNoPqRs')
+            ->assertDispatched('checklist-open-picker', fileId: '1aBcDeFgHiJkLmNoPqRs')
+            ->call('clearSheetLink')
+            ->assertSet('sheetFileId', '')
+            ->call('ingest')
+            ->assertSet('phase', 'upload');
+
+        $this->assertNotNull(UserPreference::get($admin, 'checklist.school_agreement.'.$school->id));
+    }
+
+    public function test_a_checklist_school_keeps_one_launcher_and_points_setup_at_toshi(): void
+    {
+        [$school, $admin] = $this->demoAdmin();
+        $school->forceFill(['toshi_enabled' => 1])->save();
+        $this->actingAs($admin);
+
+        Livewire::test(AgentToshi::class)
+            ->assertSet('checklistOnboarding', true)
+            ->assertDontSee('data-testid="toshi-pill"', false);
+
+        $html = $this->get('/admin/dashboard')->assertOk()->getContent();
+        $this->assertIsString($html);
+        $this->assertStringNotContainsString('Onboarding Session', $html);
+        $this->assertStringContainsString('Set up manually', $html);
+        $this->assertStringContainsString('About 10 minutes.', $html);
+        $this->assertStringContainsString('data-testid="dashboard-v2-toshi-setup"', $html);
+        $this->assertStringContainsString('Set up with Toshi', $html);
+        $this->assertMatchesRegularExpression(
+            '/data-testid="dashboard-v2-toshi-setup"[^>]*onclick="window\.toshiSetCollapsed && window\.toshiSetCollapsed\(false\);"/',
+            $html,
+        );
+        $this->assertDoesNotMatchRegularExpression(
+            '/data-testid="dashboard-v2-toshi-setup"[^>]*toshi-maximize/',
+            $html,
+        );
+        $this->assertStringNotContainsString('data-testid="dashboard-v2-setup-continue"', $html);
+        $this->assertStringContainsString("What's set up", $html);
+        $this->assertMatchesRegularExpression(
+            '/data-testid="dashboard-v2-setup-dismiss"[^>]*>\s*Hide\s*</',
+            $html,
+        );
+        $this->assertDoesNotMatchRegularExpression(
+            '/data-testid="dashboard-v2-setup-summary"[\s\S]*<ul>\s*<\/ul>/',
+            $html,
+        );
+        if (! preg_match('/data-testid="dashboard-v2-setup-summary"[\s\S]*<li>/', $html)) {
+            $this->assertStringContainsString('Nothing is set up yet.', $html);
+        }
     }
 
     public function test_a_picked_google_sheet_is_read_like_an_upload_and_the_token_is_not_logged(): void
@@ -390,8 +458,9 @@ class ChecklistOnboardingPocTest extends TestCase
         });
 
         $card = Livewire::test(ChecklistOnboarding::class)
+            ->set('agreed', true)
             ->call('confirmAgreement')
-            ->assertSee('Connect Google Sheet')
+            ->assertSee('Choose from Google Drive')
             ->assertSee('https://www.googleapis.com/auth/drive.file')
             ->assertDontSee('https://www.googleapis.com/auth/drive.readonly')
             ->call('rememberSheetAccess', $token)
@@ -415,6 +484,7 @@ class ChecklistOnboardingPocTest extends TestCase
 
         Http::fake();
         Livewire::test(ChecklistOnboarding::class)
+            ->set('agreed', true)
             ->call('confirmAgreement')
             ->call('importPickedSheet', '1aBcDeFgHiJkLmNoPqRs')
             ->assertSee('upload the .xlsx file');
@@ -432,6 +502,7 @@ class ChecklistOnboardingPocTest extends TestCase
         ]);
 
         Livewire::test(ChecklistOnboarding::class)
+            ->set('agreed', true)
             ->call('confirmAgreement')
             ->call('rememberSheetAccess', $token)
             ->call('importPickedSheet', '1aBcDeFgHiJkLmNoPqRs')
@@ -463,6 +534,7 @@ class ChecklistOnboardingPocTest extends TestCase
         });
 
         Livewire::test(ChecklistOnboarding::class)
+            ->set('agreed', true)
             ->call('confirmAgreement')
             ->assertSee('https://www.googleapis.com/auth/drive.file')
             ->call('rememberSheetAccess', $token)
@@ -490,6 +562,7 @@ class ChecklistOnboardingPocTest extends TestCase
         $this->actingAs($admin);
 
         Livewire::test(ChecklistOnboarding::class)
+            ->set('agreed', true)
             ->call('confirmAgreement')
             ->call('noteSheet', 'google:access_denied')
             ->assertSee('access_denied')

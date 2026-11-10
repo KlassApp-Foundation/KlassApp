@@ -22,14 +22,15 @@
         window.addEventListener('toshi-collapsed-changed', syncVisibleFromDock);
      "
      x-on:toshi-run-plan-step.window="if ($wire.mode !== 'preview') setTimeout(() => $wire.executeNextPlanStep(), 200)"
-     x-on:toshi-maximize.window="if ($wire.mode !== 'preview') $wire.maximize()"
+     x-on:toshi-maximize.window="if ($wire.mode !== 'preview' && ! $wire.checklistOnboarding) $wire.maximize()"
      data-toshi-root
-     class="toshi-root{{ $maximized ? ' toshi-root--maximized' : '' }}{{ $mode === 'preview' ? ' toshi-root--preview' : '' }}">
+     class="toshi-root{{ $maximized ? ' toshi-root--maximized' : '' }}{{ $mode === 'preview' ? ' toshi-root--preview' : '' }}{{ $checklistOnboarding ? ' toshi-root--checklist' : '' }}">
     {{-- The floating "Toshi Agent · Talk" pill is a promo surface: it shows only
          when the school is in assistant mode. Everywhere else the dock stays
          reachable through the edge toggle, and the panel itself switches to its
          preview / onboarding treatment. --}}
     @toshiAssistantMode
+    @unless($checklistOnboarding)
     <div id="toshi-pill"
          wire:click="show"
          onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(false);"
@@ -43,6 +44,7 @@
             <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="1" y="4" width="3" height="6" rx="1"/><rect x="5.5" y="1" width="3" height="12" rx="1"/><rect x="10" y="3" width="3" height="8" rx="1"/></svg> Talk
         </div>
     </div>
+    @endunless
     @endtoshiAssistantMode
 
     <div id="toshi-resize-handle"
@@ -58,9 +60,15 @@
 
     <div id="toshi-panel"
          class="toshi-panel{{ $visible && !$maximized ? ' toshi-panel--open' : '' }}"
+         @if($checklistOnboarding) role="complementary" aria-label="Toshi assistant" @endif
          style="{{ $visible && !$maximized ? 'display: flex;' : 'display: none;' }}">
         <div class="toshi-header" data-testid="toshi-header">
             <div class="toshi-header-logo">
+                @if($checklistOnboarding)
+                    <button type="button" class="toshi-header-back" aria-label="Back to KlassApp" data-testid="toshi-back" onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(true);">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                    </button>
+                @endif
                 <img src="{{ asset('images/klassapp-logo.svg') }}" alt="KlassApp">
                 <span>Toshi</span>
             </div>
@@ -79,17 +87,63 @@
                 @endunless
                 <button type="button"
                         onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(true);"
-                        class="toshi-header-btn" title="Close" data-testid="toshi-close">
+                        class="toshi-header-btn toshi-close" title="Close" aria-label="Close Toshi" data-testid="toshi-close">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>
                 </button>
             </div>
         </div>
+        @if($checklistOnboarding)
+            @php
+                $shellSteps = [
+                    'agreement' => 'Agreement',
+                    'checklist' => 'Checklist',
+                    'terms' => 'Terms',
+                    'classes' => 'Classes and streams',
+                    'subjects' => 'Subjects',
+                    'teachers' => 'Teachers and assignments',
+                    'learners' => 'Learners and parents',
+                    'done' => 'Done',
+                ];
+                $shellKeys = array_keys($shellSteps);
+                $shellIndex = array_search($checklistStep, $shellKeys, true);
+                $shellIndex = $shellIndex === false ? -1 : (int) $shellIndex;
+                $shellNext = $checklistStep === 'done'
+                    ? 'All done'
+                    : ($shellSteps[$shellKeys[$shellIndex + 1] ?? ''] ?? '');
+            @endphp
+            <nav class="t-progress{{ $checklistStep === 'welcome' ? '' : ' is-on' }}" aria-label="Setup progress" data-testid="checklist-progress-header">
+                <div class="t-bars" aria-hidden="true">
+                    @foreach($shellKeys as $barIndex => $barKey)
+                        <i class="{{ $barIndex < $shellIndex ? 'is-on' : '' }}{{ $barIndex === $shellIndex ? ' is-on is-current' : '' }}"></i>
+                    @endforeach
+                </div>
+                @if($checklistStep !== 'welcome')
+                    <div class="t-progress-now">
+                        <b data-testid="checklist-progress-current">{{ $shellSteps[$checklistStep] ?? '' }}</b>
+                        <span data-testid="checklist-progress-next">Next: {{ $shellNext }}</span>
+                    </div>
+                @endif
+                <ol class="t-vh">
+                    @foreach($shellSteps as $barKey => $barLabel)
+                        <li @if($barKey === $checklistStep) aria-current="step" @endif>{{ $barLabel }}</li>
+                    @endforeach
+                </ol>
+            </nav>
+        @endif
         <div class="toshi-messages-area"
+             @if($checklistOnboarding) aria-live="polite" @endif
              x-init="$nextTick(() => $el.scrollTop = $el.scrollHeight); $wire.$watch('messages', () => $nextTick(() => $el.scrollTop = $el.scrollHeight))">
             @if($checklistOnboarding)
                 <livewire:checklist-onboarding />
-            @endif
-            @if($mode === 'preview' && !$checklistOnboarding)
+                @foreach($messages as $msg)
+                    @php $isUser = ($msg['role'] ?? '') === 'user'; @endphp
+                    <div class="{{ $isUser ? 'toshi-msg-row-end' : 'toshi-msg-row' }}">
+                        <div class="{{ $isUser ? 'toshi-msg-user' : 'toshi-msg-bot' }}">{!! nl2br(e($msg['text'] ?? '')) !!}</div>
+                    </div>
+                @endforeach
+        </div>
+            @else
+            @if($mode === 'preview')
             <div class="toshi-preview-card" data-testid="toshi-preview-coming-soon">
                 @if($publicDemo)
                     <p class="toshi-preview-eyebrow">Coming soon</p>
@@ -915,6 +969,7 @@
         @endif
 
         @endif {{-- end non-preview messages --}}
+            @endif {{-- checklist messages area is already closed --}}
 
         @if($mode === 'preview' && !$checklistOnboarding)
         <div class="toshi-composer toshi-composer--preview" data-testid="toshi-composer-preview">
@@ -957,18 +1012,19 @@
                     <input type="file" wire:model="attachment" class="hidden" accept=".csv,.xlsx,.xls,.pdf,.png,.jpg,.jpeg,.docx,.txt">
                 </label>
                 <textarea rows="1" wire:model.defer="input"
-                          placeholder="{{ $awaitingConfirm ? 'Type yes or no…' : 'Message Toshi…' }}"
+                          placeholder="{{ $awaitingConfirm ? 'Type yes or no…' : ($checklistOnboarding ? 'Ask Toshi anything about your school…' : 'Message Toshi…') }}"
                           id="toshi-input-panel"
                           data-testid="toshi-input-panel"
                           @input="
                               hasText = $el.value.trim().length > 0;
                               $el.style.height = 'auto';
-                              $el.style.height = Math.min($el.scrollHeight, 320) + 'px';
+                              $el.style.height = Math.min($el.scrollHeight, {{ $checklistOnboarding ? 120 : 320 }}) + 'px';
                           "
                            @keydown.enter="if(!$event.shiftKey) { $event.preventDefault(); $el.closest('form').dispatchEvent(new Event('submit', {cancelable:true, bubbles:true})) }"
                            class="toshi-composer-input"></textarea>
                 <button type="submit"
                         :disabled="!hasText"
+                        aria-label="Send"
                         data-testid="toshi-send"
                         :style="hasText ? 'color: #141413; cursor: pointer;' : 'color: #CBD5E1; cursor: default;'"
                         style="width: 32px; height: 32px; background: none; border: none; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: color 0.15s; margin-right: 2px; border-radius: 8px;"
@@ -982,6 +1038,8 @@
         @endif {{-- end preview vs live composer --}}
     </div>
 
+    {{-- The checklist schools never mount the retired full-screen onboarding modal. --}}
+    @unless($checklistOnboarding)
     {{-- ===== MAXIMIZED MODAL — Claude-inspired two-column layout ===== --}}
     <div id="toshi-modal"
          class="toshi-modal-overlay{{ $maximized ? ' toshi-modal-overlay--open' : '' }}"
@@ -1822,4 +1880,5 @@
             </div>
         </div>
     </div>
+    @endunless
 </div>

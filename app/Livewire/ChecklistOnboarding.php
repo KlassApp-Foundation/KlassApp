@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\OnboardingPlan;
 use App\Models\School;
+use App\Models\UserPreference;
 use App\Services\Onboarding\ChecklistOnboardingGate;
 use App\Services\Onboarding\ChecklistOnboardingService;
 use Illuminate\Http\Client\PendingRequest;
@@ -50,7 +51,12 @@ class ChecklistOnboarding extends Component
 
     public string $sheetUrl = '';
 
+    public string $sheetFileId = '';
+
     public string $sheetNote = '';
+
+    /** @var list<array{step: string, line: string, label: string, status: string, result: ?string}> */
+    public array $progressLines = [];
 
     public function mount(ChecklistOnboardingGate $gate): void
     {
@@ -70,20 +76,32 @@ class ChecklistOnboarding extends Component
         $this->planId = null;
         $this->follow = null;
         $this->sheetUrl = '';
+        $this->sheetFileId = '';
         $this->sheetNote = '';
+        $this->progressLines = [];
         $this->phase = 'agreement';
         $this->card = ['kind' => 'agreement'];
+        $this->publishStep();
+    }
+
+    public function updatedAgreed(bool $agreed): void
+    {
+        $this->recordAgreement($agreed);
     }
 
     public function confirmAgreement(): void
     {
-        if (! $this->guard()) {
+        if (! $this->guard() || ! $this->agreed) {
+            $this->agreed = false;
+
             return;
         }
 
-        $this->agreed = true;
+        $this->recordAgreement(true);
         $this->phase = 'upload';
         $this->card = ['kind' => 'upload'];
+        $this->publishStep();
+        $this->openPastedLink();
     }
 
     #[On('checklist-sheet-link')]
@@ -97,7 +115,24 @@ class ChecklistOnboarding extends Component
             $this->start();
         }
 
-        $this->sheetNote = $this->sheetFallback($url);
+        $this->sheetUrl = trim($url);
+        $this->openPastedLink();
+    }
+
+    public function updatedSheetUrl(): void
+    {
+        if (! $this->guard() || $this->phase !== 'upload' || ! $this->agreed) {
+            return;
+        }
+
+        $this->openPastedLink();
+    }
+
+    public function clearSheetLink(): void
+    {
+        $this->sheetUrl = '';
+        $this->sheetFileId = '';
+        $this->sheetNote = '';
     }
 
     public function submitSheetLink(): void
@@ -169,7 +204,8 @@ class ChecklistOnboarding extends Component
         }
 
         try {
-            $result = $service->ingest($this->school(), auth()->user(), $path, 'google-sheet.xlsx');
+            $this->progressLines = [];
+            $result = $service->ingest($this->school(), auth()->user(), $path, 'google-sheet.xlsx', $this->trackProgress());
             $this->applyResult($result, $service, $this->school());
         } catch (ValidationException $e) {
             $this->phase = 'failed';
@@ -212,13 +248,22 @@ class ChecklistOnboarding extends Component
             return;
         }
 
+        if ($this->workbook === null) {
+            if ($this->sheetFileId !== '') {
+                $this->dispatch('checklist-open-picker', fileId: $this->sheetFileId);
+            }
+
+            return;
+        }
+
         $this->validate([
             'workbook' => 'required|file|mimes:xlsx|max:10240',
         ]);
 
         $school = $this->school();
         $actor = auth()->user();
-        $result = $service->ingest($school, $actor, $this->workbook->getRealPath(), $this->workbook->getClientOriginalName());
+        $this->progressLines = [];
+        $result = $service->ingest($school, $actor, $this->workbook->getRealPath(), $this->workbook->getClientOriginalName(), $this->trackProgress());
         $this->applyResult($result, $service, $school);
     }
 
@@ -234,7 +279,22 @@ class ChecklistOnboarding extends Component
 
     public function confirmStep(ChecklistOnboardingService $service): void
     {
-        $this->withPlan($service, fn ($plan, $actor) => $service->apply($plan, $actor));
+        $this->progressLines = [];
+        $this->withPlan($service, fn ($plan, $actor) => $service->apply($plan, $actor, $this->trackProgress()));
+    }
+
+    public function openNext(): void
+    {
+        if (! $this->guard() || ! is_array($this->follow) || ($this->follow['kind'] ?? '') !== 'preview') {
+            return;
+        }
+
+        $this->progressLines = [];
+        $this->card = $this->follow;
+        $this->phase = 'preview';
+        $this->follow = null;
+        $this->resetCardUi();
+        $this->publishStep();
     }
 
     public function skipStep(ChecklistOnboardingService $service): void
@@ -362,6 +422,7 @@ class ChecklistOnboarding extends Component
         }
 
         $this->applyResult($result, $service, $plan->school);
+        $this->publishStep();
     }
 
     /**
@@ -388,9 +449,91 @@ class ChecklistOnboarding extends Component
         if ($this->phase === 'result' && $this->planId && $school) {
             $plan = OnboardingPlan::query()->where('school_id', $school->id)->whereKey($this->planId)->first();
             if ($plan && auth()->user()) {
-                $this->follow = $service->previewCard($plan, auth()->user());
+                $next = $service->previewCard($plan, auth()->user());
+                $this->follow = ($next['kind'] ?? '') === 'preview' ? $next : null;
             }
         }
+
+        $this->publishStep();
+    }
+
+    private function trackProgress(): \Closure
+    {
+        return function (array $event): void {
+            $this->noteProgress($event);
+        };
+    }
+
+    /**
+     * @param  array{step?: string, line?: string, label?: string, status?: string, result?: ?string}  $event
+     */
+    private function noteProgress(array $event): void
+    {
+        $line = [
+            'step' => (string) ($event['step'] ?? ''),
+            'line' => (string) ($event['line'] ?? ''),
+            'label' => (string) ($event['label'] ?? ''),
+            'status' => (string) ($event['status'] ?? 'done'),
+            'result' => isset($event['result']) && $event['result'] !== null ? (string) $event['result'] : null,
+        ];
+        if (! in_array($line['status'], ['running', 'done', 'problem'], true)) {
+            $line['status'] = 'done';
+        }
+
+        $replaced = false;
+        foreach ($this->progressLines as $index => $existing) {
+            if ($line['line'] !== '' && $existing['line'] === $line['line']) {
+                $this->progressLines[$index] = $line;
+                $replaced = true;
+                break;
+            }
+        }
+        if (! $replaced) {
+            $this->progressLines[] = $line;
+        }
+
+        if (app()->runningUnitTests()) {
+            return;
+        }
+
+        $html = '';
+        foreach ($this->progressLines as $progressLine) {
+            $html .= view('livewire.partials.checklist-progress-lines', ['line' => $progressLine])->render();
+        }
+        $this->stream('checklist-progress', $html, true);
+    }
+
+    private function publishStep(): void
+    {
+        $this->dispatch('checklist-shell', step: $this->shellStep())->to(AgentToshi::class);
+    }
+
+    private function shellStep(): string
+    {
+        $kind = (string) ($this->card['kind'] ?? '');
+        if ($this->phase === 'idle' || $kind === 'hint' || ($kind === '' && $this->phase === 'idle')) {
+            return 'welcome';
+        }
+        if ($kind === 'done' || $this->phase === 'done') {
+            return 'done';
+        }
+        if ($kind === 'agreement' || $this->phase === 'agreement') {
+            return 'agreement';
+        }
+        if (in_array($kind, ['upload', 'summary', 'refused'], true) || $this->phase === 'upload') {
+            return 'checklist';
+        }
+
+        $key = (string) ($this->card['step_key'] ?? '');
+
+        return match ($key) {
+            'terms' => 'terms',
+            'standards' => 'classes',
+            'subjects' => 'subjects',
+            'teachers' => 'teachers',
+            'students' => 'learners',
+            default => 'checklist',
+        };
     }
 
     private function resetCardUi(): void
@@ -480,14 +623,77 @@ class ChecklistOnboarding extends Component
             ->timeout(15);
     }
 
-    private function sheetFallback(string $url): string
+    private function recordAgreement(bool $agreed): void
     {
-        $url = trim($url);
-        $isSheet = preg_match('#^https://docs\.google\.com/spreadsheets/#i', $url) === 1;
-        if (! $isSheet) {
-            return 'That is not a Google Sheets link. Upload the checklist as an .xlsx file.';
+        if (! $this->guard()) {
+            $this->agreed = false;
+
+            return;
         }
 
-        return 'This demo cannot read a Google Sheet directly. In the sheet, choose File, then Download, then Microsoft Excel (.xlsx), and upload that file here. Share the sheet only with the people who should see the children\'s data.';
+        $actor = auth()->user();
+        $school = $this->school();
+        if (! $actor || ! $school) {
+            return;
+        }
+
+        $key = 'checklist.school_agreement.'.$school->id;
+        if ($agreed) {
+            if (UserPreference::get($actor, $key) === null) {
+                UserPreference::set($actor, $key, now()->toIso8601String());
+            }
+
+            return;
+        }
+
+        UserPreference::forget($actor, $key);
+    }
+
+    private function openPastedLink(): void
+    {
+        if ($this->phase !== 'upload' || ! $this->agreed) {
+            return;
+        }
+
+        $url = trim($this->sheetUrl);
+        if ($url === '') {
+            $this->sheetFileId = '';
+            $this->sheetNote = '';
+
+            return;
+        }
+
+        $fileId = $this->fileIdFromLink($url);
+        if ($fileId === null) {
+            $this->sheetFileId = '';
+            $this->sheetNote = 'That is not a Google Drive or Sheets link. Upload the checklist as an .xlsx file.';
+
+            return;
+        }
+
+        $this->sheetNote = '';
+        if ($fileId === $this->sheetFileId) {
+            return;
+        }
+
+        $this->sheetFileId = $fileId;
+        $this->dispatch('checklist-open-picker', fileId: $fileId);
+    }
+
+    private function fileIdFromLink(string $url): ?string
+    {
+        if (preg_match('#^https://(?:docs|drive)\.google\.com/#i', $url) !== 1) {
+            return null;
+        }
+
+        if (preg_match('#/d/([A-Za-z0-9_-]{10,128})#', $url, $matches) === 1) {
+            return $matches[1];
+        }
+
+        if (preg_match('#[?&]id=([A-Za-z0-9_-]{10,128})#', $url, $matches) === 1) {
+            return $matches[1];
+        }
+
+        return null;
     }
 }

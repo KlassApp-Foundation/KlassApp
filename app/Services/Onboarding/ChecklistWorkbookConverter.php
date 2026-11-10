@@ -49,6 +49,8 @@ final class ChecklistWorkbookConverter
 
     private string $dpaAnswer = '';
 
+    private $progress = null;
+
     /**
      * @return array{
      *   blocked: ?string, files: array<string,list<list<string>>>, noImporter: array<string,list<list<string>>>,
@@ -56,10 +58,11 @@ final class ChecklistWorkbookConverter
      *   pendingNotes: list<string>, school: string
      * }
      */
-    public function convert(string $path): array
+    public function convert(string $path, ?callable $progress = null): array
     {
         $this->flags = [];
         $this->counts = [];
+        $this->progress = $progress;
         $reader = IOFactory::createReaderForFile($path);
         $book = $reader->load($path);
 
@@ -68,14 +71,23 @@ final class ChecklistWorkbookConverter
             'counts' => [], 'learnersByClass' => [], 'pendingNotes' => [], 'school' => '',
         ];
 
+        $this->emitLine('school-details', 'Reading School Details', 'running');
         $details = $this->formPairs($this->sheet($book, 'School Details'));
         $out['school'] = $this->pairValue($details, 'school name') ?? '';
+        $this->emitLine('school-details', 'Reading School Details', 'done', 'read');
         $this->country = $this->pairValue($details, 'country');
         if ($this->country === null) {
             $this->flag('School Details', null, 'Country', 'No country given, so local phone numbers cannot be completed; only numbers starting with + or 00 are converted.');
         }
 
+        $this->emitLine('confirmations', 'Checking Confirmations', 'running');
         $out['blocked'] = $this->checkConfirmations($this->sheet($book, 'Confirmations'));
+        $this->emitLine(
+            'confirmations',
+            'Checking Confirmations',
+            $out['blocked'] !== null ? 'problem' : 'done',
+            $out['blocked'] !== null ? 'not confirmed' : 'confirmed'
+        );
         if ($out['blocked'] !== null) {
             $out['flags'] = $this->flags;
             $out['dpa'] = $this->dpaPayload();
@@ -97,10 +109,18 @@ final class ChecklistWorkbookConverter
             }
         }
 
+        $this->emitLine('tab-classes', 'Reading Classes & Streams', 'running');
         $classes = $this->classes($this->sheet($book, 'Classes & Streams'));
+        $this->reportTab('Classes & Streams', 'tab-classes', 'Reading Classes & Streams');
+        $this->emitLine('tab-subjects', 'Reading Subjects', 'running');
         $subjects = $this->subjects($this->sheet($book, 'Subjects'), $out);
+        $this->reportTab('Subjects', 'tab-subjects', 'Reading Subjects');
+        $this->emitLine('tab-teachers', 'Reading Teachers', 'running');
         $teachers = $this->teachers($this->sheet($book, 'Teachers'), $out);
+        $this->reportTab('Teachers', 'tab-teachers', 'Reading Teachers');
+        $this->emitLine('tab-assignments', 'Reading Teaching Assignments', 'running');
         $links = $this->assignments($this->sheet($book, 'Teaching Assignments'), $teachers, $subjects, $classes);
+        $this->reportTab('Teaching Assignments', 'tab-assignments', 'Reading Teaching Assignments');
 
         // Teachers file: aggregate subjects/classes from the matched assignments.
         $teacherRows = [];
@@ -117,15 +137,24 @@ final class ChecklistWorkbookConverter
         $out['noImporter']['classes-and-streams.csv'] = array_merge([['Class', 'Stream', 'Learners (approx.)']], array_map(fn ($c) => [$c['class'], $c['stream'], $c['count']], $classes['list']));
         $out['noImporter']['subjects.csv'] = $subjects['csv'];
 
+        $this->emitLine('tab-learners', 'Reading Learners', 'running');
         [$students, $guardian, $byClass, $learnerPlan] = $this->learners($learnerRows, $classes);
+        $this->reportTab('Learners', 'tab-learners', 'Reading Learners');
         $out['files']['students.csv'] = $students;
         $out['pending']['learner-guardian-details.csv'] = $guardian;
         $out['learnersByClass'] = $byClass;
 
+        $this->emitLine('tab-terms', 'Reading Terms & Exams', 'running');
         $termPlan = $this->terms($this->sheet($book, 'Terms & Exams'), $out);
+        $this->reportTab('Terms & Exams', 'tab-terms', 'Reading Terms & Exams');
+        $this->emitLine('tab-fees', 'Reading Fees', 'running');
         $this->fees($this->sheet($book, 'Fees'), $classes, $out);
+        $this->reportTab('Fees', 'tab-fees', 'Reading Fees');
+        $this->emitLine('tab-admin', 'Reading Admin & Contacts', 'running');
         $this->adminContacts($this->sheet($book, 'Admin & Contacts'), $out);
+        $this->reportTab('Admin & Contacts', 'tab-admin', 'Reading Admin & Contacts');
 
+        $this->emitLine('learner-counts', 'Checking learner counts', 'running');
         // Expected (approx.) vs actual learners per class and stream.
         foreach ($classes['list'] as $c) {
             $actual = $byClass[$c['class'].($c['stream'] !== '' ? ' / '.$c['stream'] : '')] ?? 0;
@@ -133,6 +162,7 @@ final class ChecklistWorkbookConverter
                 $this->flag('Classes & Streams', $c['row'], 'Number of learners (approx.)', "Says about {$c['count']} but {$actual} learners were found in All Learners for ".trim($c['class'].' '.$c['stream']).'.', 'info');
             }
         }
+        $this->emitLine('learner-counts', 'Checking learner counts', 'done', 'checked');
 
         $out['pendingNotes'] = [
             'Parent / guardian email, relationship and the second parent / guardian: the student importer has no column for them. Full list in pending/learner-guardian-details.csv.',
@@ -875,5 +905,36 @@ final class ChecklistWorkbookConverter
     private function flag(string $tab, ?int $row, string $field, string $message, string $severity = 'error'): void
     {
         $this->flags[] = ['tab' => $tab, 'row' => $row, 'field' => $field, 'message' => $message, 'severity' => $severity];
+    }
+
+    private function emitLine(string $line, string $label, string $status, ?string $result = null): void
+    {
+        if ($this->progress) {
+            ($this->progress)([
+                'step' => 'checklist',
+                'line' => $line,
+                'label' => $label,
+                'status' => $status,
+                'result' => $result,
+            ]);
+        }
+    }
+
+    private function reportTab(string $tab, string $line, string $label): void
+    {
+        $read = (int) ($this->counts[$tab]['read'] ?? 0);
+        $flagged = count(array_filter(
+            $this->flags,
+            fn (array $flag): bool => $flag['tab'] === $tab && $flag['row'] !== null && ($flag['severity'] ?? 'error') !== 'info'
+        ));
+        $this->emitLine($line, $label, 'done', $read.' rows');
+        if ($flagged > 0) {
+            $this->emitLine(
+                $line.'-flags',
+                'Checking '.$tab,
+                'problem',
+                $flagged.($flagged === 1 ? ' problem' : ' problems')
+            );
+        }
     }
 }

@@ -281,7 +281,10 @@ class DashboardV2Test extends TestCase
         $this->assertStringContainsString('class="help missing"', $html);
         $this->assertStringContainsString('Structure &amp; Class Teachers', $html);
         $this->assertStringContainsString('in setup first.', $html);
-        $this->assertStringContainsString('/admin/standard/create', $html);
+        $this->assertMatchesRegularExpression(
+            '/href="[^"]*\/admin\/onboarding\/wizard[^"]*"[^>]*data-testid="dashboard-v2-tile-1"/',
+            $html,
+        );
     }
 
     public function test_snapshot_empty_state_for_a_school_with_no_students(): void

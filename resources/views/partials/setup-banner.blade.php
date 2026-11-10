@@ -50,15 +50,27 @@
                 <a href="{{ $setupHref }}" class="ds-btn ds-btn-primary ds-btn-md" data-testid="setup-banner-manual">
                     Set up manually
                 </a>
+                @php
+                    $checklistEntry = $setupSchool
+                        && app(\App\Services\Onboarding\ChecklistOnboardingGate::class)->enabledFor($setupSchool);
+                @endphp
+                @if($checklistEntry)
+                <button type="button"
+                        class="ds-btn ds-btn-success ds-btn-md"
+                        data-testid="setup-banner-toshi"
+                        onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(false);">
+                    Set up with Toshi
+                </button>
+                @endif
                 @toshiOnboarding
-                @if(auth()->user()?->school && app(\App\Services\Toshi\ToshiOnboardingPath::class)->openFor(auth()->user()->school))
+                @if(! $checklistEntry && auth()->user()?->school && app(\App\Services\Toshi\ToshiOnboardingPath::class)->openFor(auth()->user()->school))
                 <button type="button"
                         class="ds-btn ds-btn-success ds-btn-md"
                         data-testid="setup-banner-toshi"
                         onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(false); window.dispatchEvent(new CustomEvent('toshi-maximize'));">
                     Set up with Toshi
                 </button>
-                @else
+                @elseif(! $checklistEntry)
                 <button type="button"
                         disabled
                         class="ds-btn ds-btn-success ds-btn-md"

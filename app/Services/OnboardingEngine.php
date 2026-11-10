@@ -38,6 +38,26 @@ use Illuminate\Validation\ValidationException;
 
 class OnboardingEngine
 {
+    private $createListener = null;
+
+    public function listenForCreates(?callable $listener): void
+    {
+        $this->createListener = $listener;
+    }
+
+    private function reportCreated(string $line, string $step, string $label): void
+    {
+        if ($this->createListener) {
+            ($this->createListener)([
+                'step' => $step,
+                'line' => $line,
+                'label' => $label,
+                'status' => 'running',
+                'result' => null,
+            ]);
+        }
+    }
+
     /**
      * Earliest setup step that is not finished, in playbook order.
      * Null when every applicable step is finished.
@@ -1340,7 +1360,7 @@ class OnboardingEngine
                 foreach ($subjectNames as $subjectName) {
                     $subjectName = trim((string) $subjectName);
 
-                    Subject::firstOrCreate([
+                    $subject = Subject::firstOrCreate([
                         'school_id' => $school->id,
                         'academic_year_id' => $year->id,
                         'standard_id' => $link->standard_id,
@@ -1351,6 +1371,9 @@ class OnboardingEngine
                         'type' => 'core',
                         'status' => 1,
                     ]);
+                    if ($subject->wasRecentlyCreated) {
+                        $this->reportCreated('subjects', 'subjects', 'Creating subjects');
+                    }
                 }
             }
         }
@@ -1427,10 +1450,13 @@ class OnboardingEngine
                 $createAttrs['ends_on'] = Carbon::parse(trim((string) $end))->endOfDay();
             }
 
-            AcademicTerm::firstOrCreate(
+            $term = AcademicTerm::firstOrCreate(
                 ['school_id' => $school->id, 'name' => $name],
                 $createAttrs,
             );
+            if ($term->wasRecentlyCreated) {
+                $this->reportCreated('terms', 'terms', 'Creating terms');
+            }
         }
 
         $this->normalizeAcademicTermCurrentStatus($school, $terms);
@@ -2001,17 +2027,21 @@ class OnboardingEngine
                     }
 
                     foreach ($links as $linkRow) {
-                        Teacherlink::firstOrCreate([
+                        $assignment = Teacherlink::firstOrCreate([
                             'school_id'        => $school->id,
                             'academic_year_id'  => $year->id,
                             'standardLink_id'  => $linkRow['standardLink_id'],
                             'subject_id'       => $linkRow['subject_id'],
                             'teacher_id'       => $teacher->id,
                         ]);
+                        if ($assignment->wasRecentlyCreated) {
+                            $this->reportCreated('assignments', 'teachers', 'Assigning subjects');
+                        }
                     }
 
                     $createdCount++;
                     $created[] = ['name' => $name, 'email' => $email, 'user_id' => $teacher->id];
+                    $this->reportCreated('teachers', 'teachers', 'Creating teacher accounts');
                 }
 
                 DashboardCache::forgetRosterCounts((int) $school->id);
@@ -2336,6 +2366,7 @@ class OnboardingEngine
                     $newParent = $this->linkImportedParent($school, $student, $draft, $parentsByPhone);
                     if ($newParent instanceof User) {
                         $createdParents[] = $newParent;
+                        $this->reportCreated('parents', 'students', 'Creating parents');
                     }
 
                     $created[] = [
@@ -2346,6 +2377,7 @@ class OnboardingEngine
                         'class'        => $link?->section?->name,
                         'standardLink_id' => $link?->id,
                     ];
+                    $this->reportCreated('learners', 'students', 'Creating learners');
                 }
 
                 $result = [
