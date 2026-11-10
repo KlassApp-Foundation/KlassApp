@@ -388,17 +388,18 @@ body.checklist-leaving:not(.toshi-collapsed) .toshi-root--checklist .toshi-panel
     body.toshi-collapsed #toshi-toggle.toshi-toggle,
     html.toshi-collapsed #toshi-toggle.toshi-toggle { display: none !important; }
 }
-.dv2-setup-card { display: flex; flex-direction: column; align-items: stretch; gap: 12px; width: 100%; max-width: 100%; grid-column: 1 / -1; box-sizing: border-box; background: var(--t-card, #fff); border: 1px solid var(--t-border, #E2E8F0); border-radius: 14px; padding: 16px 12px; margin: 18px 0 4px; overflow-wrap: normal; word-break: normal; }
+.dv2-setup-card { display: flex; flex-direction: column; align-items: stretch; gap: 8px; width: 100%; max-width: 100%; grid-column: 1 / -1; box-sizing: border-box; background: var(--t-card, #fff); border: 1px solid var(--t-border, #E2E8F0); border-radius: 14px; padding: 12px; margin: 0 0 4px; overflow-wrap: normal; word-break: normal; }
 .dv2-setup-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .dv2-setup-copy { min-width: 0; flex: 1 1 auto; }
-.dv2-setup-card h2 { margin: 0; font-family: Sora, sans-serif; font-size: 1.15rem; line-height: 1.3; color: var(--t-text, #1E293B); overflow-wrap: normal; word-break: normal; }
-.dv2-setup-lead { margin: 2px 0 0; color: var(--t-text-2, #475569); font-size: 0.9rem; line-height: 1.4; overflow-wrap: normal; word-break: normal; }
+.dv2-setup-card h2 { margin: 0; font-family: Sora, sans-serif; font-size: 1.05rem; line-height: 1.3; color: var(--t-text, #1E293B); overflow-wrap: normal; word-break: normal; }
+.dv2-setup-lead { margin: 2px 0 0; color: var(--t-text-2, #475569); font-size: 0.9rem; line-height: 1.4; overflow-wrap: anywhere; word-break: normal; }
+.dv2-setup-actions { display: flex; flex-direction: row; align-items: stretch; gap: 8px; width: 100%; min-width: 0; }
+.dv2-setup-actions .dv2-btn { flex: 1 1 0; min-width: 0; width: auto; justify-content: center; white-space: nowrap; padding: 0 8px; font-size: 13px; }
 .dv2-setup-hide { min-height: 44px; padding: 0 2px; background: transparent; color: #475569; font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
 .dv2-setup-card .dv2-setup-dismiss { margin: 0; flex: none; }
 .dv2-setup-options { display: grid; grid-template-columns: 1fr; gap: 8px; width: 100%; }
 @container dash (min-width: 600px) {
     .dv2-setup-options { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
-    .dv2-setup-lead { white-space: nowrap; }
 }
 .dv2-setup-option { display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--t-border, #E2E8F0); border-radius: 14px; padding: 12px 10px; background: var(--t-panel, #fff); min-width: 0; }
 .dv2-setup-option-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
@@ -429,8 +430,8 @@ html.checklist-setup-done [data-testid="dashboard-v2-setup-bar"] { display: none
     .dv2-setup-option { padding-left: 8px; padding-right: 8px; }
 }
 .dv2-setup-option .dv2-btn, .dv2-setup-option .t-btn { width: 100%; justify-content: center; min-height: 44px; white-space: nowrap; }
-.dv2-setup-option .dv2-btn { background: #15803D; }
-.dv2-setup-option .t-btn.secondary, .dv2-setup-option a.secondary { background: #fff; color: #1E293B; border: 1px solid #64748B; }
+.dv2-setup-option .dv2-btn, .dv2-setup-actions .dv2-btn { background: #15803D; }
+.dv2-setup-option .t-btn.secondary, .dv2-setup-option a.secondary, .dv2-setup-actions a.secondary { background: #fff; color: #1E293B; border: 1px solid #64748B; }
 .dv2-setup-card :focus-visible { outline: 2px solid var(--t-focus, #1E6FD9); outline-offset: 2px; }
 @media (max-width: 639px) {
     .dv2-qt-actions, .dv2-setup-choices { display: flex; flex-direction: column; }
@@ -440,7 +441,7 @@ html.checklist-setup-done [data-testid="dashboard-v2-setup-bar"] { display: none
     .dv2-setup-card, .dv2-setup-option { background: #1E293B; color: #E2E8F0; border-color: #334155; }
     .dv2-setup-card h2, .dv2-setup-option h3 { color: #E2E8F0; }
     .dv2-setup-lead, .dv2-setup-option p { color: #CBD5E1; }
-    .dv2-setup-option a.secondary { background: #0F172A; color: #E2E8F0; border-color: #64748B; }
+    .dv2-setup-option a.secondary, .dv2-setup-actions a.secondary { background: #0F172A; color: #E2E8F0; border-color: #64748B; }
     .dv2-setup-card .dv2-x, .dv2-setup-hide { color: #E2E8F0; }
     .dv2-setup-ico { background: none; color: #4ADE80; }
     .t-ability { background: #052E16; color: #4ADE80; }

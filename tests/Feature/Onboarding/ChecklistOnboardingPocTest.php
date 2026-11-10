@@ -577,9 +577,12 @@ class ChecklistOnboardingPocTest extends TestCase
         $this->assertIsString($html);
         $this->assertStringNotContainsString('Onboarding Session', $html);
         $this->assertStringContainsString('Set up manually', $html);
-        $this->assertStringContainsString('About 10 minutes.', $html);
-        $this->assertStringContainsString('data-testid="dashboard-v2-toshi-setup"', $html);
+        $this->assertStringNotContainsString('About 10 minutes.', $html);
+        $this->assertStringNotContainsString('dv2-setup-option', $html);
+        $this->assertSame(1, substr_count($html, 'data-testid="dashboard-v2-toshi-setup"'));
+        $this->assertSame(1, substr_count($html, 'data-testid="dashboard-v2-setup-bar"'));
         $this->assertStringContainsString('Set up with Toshi', $html);
+        $this->assertStringContainsString('Pick one. You can switch at any time, and nothing is saved until you approve it.', $html);
         $this->assertMatchesRegularExpression(
             '/data-testid="dashboard-v2-toshi-setup"[^>]*onclick="window\.klassDashboardToshiSetup && window\.klassDashboardToshiSetup\(\)"/',
             $html,
@@ -590,25 +593,37 @@ class ChecklistOnboardingPocTest extends TestCase
         );
         $cardAt = strpos($html, 'data-testid="dashboard-v2-setup-bar"');
         $yearAt = strpos($html, 'data-testid="dashboard-v2-year"');
-        $profileAt = strpos($html, 'data-testid="dashboard-v2-profile"');
-        $ledgerAt = strpos($html, 'data-testid="dashboard-v2-setup-ledger"');
         $kpisAt = strpos($html, 'data-testid="dashboard-v2-kpis"');
+        $performanceAt = strpos($html, 'data-testid="dashboard-v2-chart-performance"');
+        $attendanceAt = strpos($html, 'data-testid="dashboard-v2-chart-attendance"');
+        $genderAt = strpos($html, 'data-testid="dashboard-v2-chart-gender"');
+        $feesAt = strpos($html, 'data-testid="dashboard-v2-chart-fees"');
+        $activityAt = strpos($html, 'data-testid="dashboard-v2-activity"');
         $this->assertNotFalse($yearAt);
-        $this->assertNotFalse($profileAt);
         $this->assertNotFalse($cardAt);
-        $this->assertNotFalse($ledgerAt);
         $this->assertNotFalse($kpisAt);
-        $this->assertLessThan($profileAt, $yearAt);
-        $this->assertLessThan($ledgerAt, $profileAt);
-        $this->assertLessThan($kpisAt, $ledgerAt);
-        $this->assertLessThan($cardAt, $kpisAt);
+        $this->assertNotFalse($performanceAt);
+        $this->assertNotFalse($attendanceAt);
+        $this->assertNotFalse($genderAt);
+        $this->assertNotFalse($feesAt);
+        $this->assertNotFalse($activityAt);
+        $this->assertLessThan($cardAt, $yearAt);
+        $this->assertLessThan($kpisAt, $cardAt);
+        $this->assertLessThan($performanceAt, $kpisAt);
+        $this->assertLessThan($attendanceAt, $performanceAt);
+        $this->assertLessThan($genderAt, $attendanceAt);
+        $this->assertLessThan($feesAt, $genderAt);
+        $this->assertLessThan($activityAt, $feesAt);
+        $this->assertStringNotContainsString('data-testid="dashboard-v2-profile"', $html);
+        $this->assertStringNotContainsString('data-testid="dashboard-v2-setup-ledger"', $html);
+        $this->assertStringNotContainsString('data-testid="dashboard-v2-setup-summary"', $html);
         $this->assertDoesNotMatchRegularExpression(
             '/data-testid="dashboard-v2-toshi-setup"[^>]*toshi-maximize/',
             $html,
         );
         $this->assertStringNotContainsString('data-testid="dashboard-v2-setup-continue"', $html);
-        $this->assertStringContainsString("What's set up", $html);
-        $this->assertStringContainsString('data-testid="dashboard-v2-setup-ledger"', $html);
+        $this->assertStringNotContainsString("What's set up", $html);
+        $this->assertStringNotContainsString('Nothing is set up yet.', $html);
         $this->assertStringContainsString('data-checklist-live', $html);
         $this->assertStringContainsString('data-testid="dashboard-v2-kpi-students"', $html);
         $this->assertStringContainsString('data-testid="dashboard-v2-kpi-staff"', $html);
@@ -621,9 +636,10 @@ class ChecklistOnboardingPocTest extends TestCase
             '/data-testid="dashboard-v2-setup-dismiss"[^>]*>\s*Hide\s*</',
             $html,
         );
-        if (! preg_match('/data-testid="dashboard-v2-ledger-row"/', $html)) {
-            $this->assertStringContainsString('Nothing is set up yet.', $html);
-        }
+        $this->assertMatchesRegularExpression(
+            '/<h2>\s*Set up [^<]+<\/h2>/',
+            $html,
+        );
     }
 
     public function test_a_picked_google_sheet_is_read_like_an_upload_and_the_token_is_not_logged(): void

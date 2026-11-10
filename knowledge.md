@@ -2,6 +2,13 @@
 
 > **Canonical location**: `/Users/mac/projects/KlassApp/knowledge.md` (workspace root). Worktrees (e.g. `KlassApp-main-checkout`) should sync to that path when copies diverge — keep one body of truth; do not maintain parallel divergent session logs.
 
+### 2026-11-11: T-131 demo lock — one setup banner on the production dashboard
+- **Work done**: On draft #1307 only. Tagged `demo-final-2026-11-11-pre` at `0174ba672717d33bf937b1ce91cd3bc7ba6ff166` before this change. The checklist dashboard no longer shows the school profile block or What's set up. The receipt and the step log stay in the Toshi panel. One compact banner, "Set up {school}", sits above the stat cards with one short line, Set up with Toshi, Set up manually, and Hide. It renders once and is gone after Finish. Stat cards, Performance by class, Attendance trend, Students by gender, Fees collection, and Recent activity stay in that order. Stat cards and sidebar counts still update while setup runs. Clicked through at 1280 with the panel open and at 375. Both passed with no horizontal overflow and no console errors. Tag `demo-final-2026-11-11` moves to this commit. Tag `demo-safe-2026-11-10d` stays at `0fde4f538325f48e5b3540cb9b9bfd061e081c90`.
+- **Files modified**: dashboard v2, `toshi-checklist-panel.css`, `ChecklistOnboardingPocTest`, knowledge.md.
+- **Key decisions**: The banner stays until Finish, including when every step is already done, and Hide still dismisses it. The figures endpoint still returns the ledger; the dashboard does not paint it.
+- **Status**: 🚧 Draft [#1307](https://github.com/KlassApp-Foundation/KlassApp/pull/1307) open on `poc/toshi-checklist-onboarding`. Demo from tag `demo-final-2026-11-11`. Not merged. Not deployed.
+- **Edge cases flagged**: The full guarded suite was not run. Focused dashboard tests passed. Northwind was reset after the rehearsal.
+
 ### 2026-11-10: T-131 demo lock for 11 November
 - **Work done**: On draft #1307 only. The commit to demo from is this one, tagged `demo-final-2026-11-11`. `f791f9a3` is the rehearsal underneath it. `d673da73` is the earlier evening review and is not the demo. The Classes and subjects sidebar chips are hidden. Students, teachers, and parents stay. The early-access label is hidden while the desktop panel is open, which removes the 11px overhang. Clicked through again at 1280 with the panel open and at 375. Both passed with no horizontal overflow. Tag `demo-safe-2026-11-10d` stays at `0fde4f538325f48e5b3540cb9b9bfd061e081c90`.
 - **Files modified**: sidebar v3, `toshi-checklist-panel.css`, `ChecklistOnboardingPocTest`.

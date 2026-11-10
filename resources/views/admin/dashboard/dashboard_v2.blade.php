@@ -4,9 +4,9 @@
     school-admin dashboard.
 
     One count: the setup bar and the sidebar chip read OnboardingStepsService
-    (neutral step names via displayLabel — K25). The setup bar's "What's set up"
-    list is OnboardingProgress, one line per finished step. No promo carousel,
-    no Toshi slide, no Connected tools card.
+    (neutral step names via displayLabel — K25). A checklist school's receipt
+    and step log stay in the Toshi panel. No promo carousel, no Toshi slide,
+    no Connected tools card.
 --}}
 @extends('layouts.admin.layout')
 
@@ -39,13 +39,8 @@
     $toshiMode = $school ? $toshiSwitch->mode($v2User) : \App\Enums\ToshiMode::Preview;
     $toshiPathOpen = $school && app(\App\Services\Toshi\ToshiOnboardingPath::class)->openFor($school);
     $checklistSetup = $school && app(\App\Services\Onboarding\ChecklistOnboardingGate::class)->enabledFor($school);
-    $ledger = ($checklistSetup && $school)
-        ? \App\Onboarding\OnboardingProgress::checklistRows($school, (int) $v2User->id)
-        : [];
-    $profile = ($checklistSetup && $school)
-        ? \App\Onboarding\OnboardingProgress::profile($school)
-        : null;
     $setupFinished = $school && $school->onboarding_finished_at !== null;
+    $checklistBanner = $checklistSetup && ! $setupFinished && empty($setup['dismissed']);
 
     // Quick actions (kept from v2) — row in the data state, tiles otherwise.
     $quickActions = [
@@ -98,31 +93,6 @@
                 @endif
             </div>
         </div>
-
-        @if($checklistSetup && $profile && ! $setupFinished)
-            <section class="dv2-profile" data-testid="dashboard-v2-profile">
-                <h2>{{ $profile['name'] }}</h2>
-                <p>{{ collect([$profile['country'], $profile['curriculum'], $profile['year'], $profile['term'] !== '' ? $profile['term'] : null])->filter()->implode(' · ') }}</p>
-            </section>
-            <details class="dv2-setup-summary" data-testid="dashboard-v2-setup-summary" open>
-                <summary>What's set up</summary>
-                <div class="dv2-ledger" data-testid="dashboard-v2-setup-ledger">
-                    @php $ledgerGroup = null; @endphp
-                    @forelse($ledger as $row)
-                        @if(($row['group'] ?? '') !== $ledgerGroup)
-                            @php $ledgerGroup = $row['group'] ?? ''; @endphp
-                            <h3 class="dv2-ledger-group">{{ $ledgerGroup }}</h3>
-                        @endif
-                        <div class="dv2-ledger-row" data-testid="dashboard-v2-ledger-row">
-                            <span>{{ $row['label'] }}</span>
-                            <b>{{ $row['value'] }}</b>
-                        </div>
-                    @empty
-                        <p class="dv2-setup-empty" data-testid="dashboard-v2-setup-empty">Nothing is set up yet.</p>
-                    @endforelse
-                </div>
-            </details>
-        @endif
 
         @if($setupShown && ! $checklistSetup)
             <div class="dv2-setup" data-testid="dashboard-v2-setup-bar" role="region" aria-label="School setup">
@@ -226,6 +196,25 @@
                 </span>
             </div>
         @else
+            @if($checklistBanner)
+                <section class="dv2-setup-card" data-testid="dashboard-v2-setup-bar" role="region" aria-label="School setup">
+                    <div class="dv2-setup-top">
+                        <div class="dv2-setup-copy">
+                            <h2>Set up {{ $schoolLabel }}</h2>
+                            <p class="dv2-setup-lead">Pick one. You can switch at any time, and nothing is saved until you approve it.</p>
+                        </div>
+                        <form method="POST" action="{{ $dismissUrl }}" class="dv2-setup-dismiss" onsubmit="return confirm('Hide the setup bar? Your progress stays in the sidebar.');">
+                            @csrf
+                            <button type="submit" class="dv2-x dv2-setup-hide" data-testid="dashboard-v2-setup-dismiss" aria-label="Hide setup bar. Progress stays in the sidebar.">Hide</button>
+                        </form>
+                    </div>
+                    <div class="dv2-setup-actions">
+                        <button type="button" class="dv2-btn" data-testid="dashboard-v2-toshi-setup" onclick="window.klassDashboardToshiSetup && window.klassDashboardToshiSetup()">Set up with Toshi</button>
+                        <a class="dv2-btn secondary" href="{{ $nextHref }}" data-testid="dashboard-v2-setup-manual">Set up manually</a>
+                    </div>
+                </section>
+            @endif
+
             {{-- 4 · KPI tiles. The old quick-action row is gone; each tile links to its list. --}}
             <div class="dv2-kpis" data-testid="dashboard-v2-kpis" @if($checklistSetup) data-checklist-live data-figures-url="{{ url('/admin/dashboard/checklist-figures') }}" @endif>
                 @include('admin.dashboard._whatsapp_stat')
@@ -277,39 +266,6 @@
                     </a>
                 </div>
             </div>
-
-            @if($checklistSetup && $setupShown && ! $setupFinished)
-                <section class="dv2-setup-card" data-testid="dashboard-v2-setup-bar" role="region" aria-label="School setup">
-                    <div class="dv2-setup-top">
-                        <div class="dv2-setup-copy">
-                            <h2>Set up {{ $schoolLabel }}</h2>
-                            <p class="dv2-setup-lead">Pick one. You can switch at any time, and nothing is saved until you approve it.</p>
-                        </div>
-                        <form method="POST" action="{{ $dismissUrl }}" class="dv2-setup-dismiss" onsubmit="return confirm('Hide the setup bar? Your progress stays in the sidebar.');">
-                            @csrf
-                            <button type="submit" class="dv2-x dv2-setup-hide" data-testid="dashboard-v2-setup-dismiss" aria-label="Hide setup bar. Progress stays in the sidebar.">Hide</button>
-                        </form>
-                    </div>
-                    <div class="dv2-setup-options">
-                        <article class="dv2-setup-option">
-                            <div class="dv2-setup-option-head">
-                                <span class="dv2-setup-ico" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M8 13h8M8 17h5"/></svg></span>
-                                <h3>Set up with Toshi</h3>
-                            </div>
-                            <p>Add your checklist workbook. Toshi reads it, shows what it found, and creates each part after you approve it. About 10 minutes.</p>
-                            <button type="button" class="dv2-btn" data-testid="dashboard-v2-toshi-setup" onclick="window.klassDashboardToshiSetup && window.klassDashboardToshiSetup()">Set up with Toshi</button>
-                        </article>
-                        <article class="dv2-setup-option">
-                            <div class="dv2-setup-option-head">
-                                <span class="dv2-setup-ico" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg></span>
-                                <h3>Set up manually</h3>
-                            </div>
-                            <p>Fill in a short form for each part: terms, classes, subjects, teachers, learners. Best if you have no checklist yet.</p>
-                            <a class="dv2-btn secondary" href="{{ $nextHref }}" data-testid="dashboard-v2-setup-manual">Set up manually</a>
-                        </article>
-                    </div>
-                </section>
-            @endif
 
             {{-- 5 · Charts --}}
             <div class="dv2-grid2">
@@ -585,39 +541,6 @@ window.klassDashboardToshiSetup = function () {
         if (payload.hide_options) {
             retireSetupChrome();
         }
-        var ledger = document.querySelector('[data-testid="dashboard-v2-setup-ledger"]');
-        if (ledger && !payload.hide_options) {
-            ledger.replaceChildren();
-            var rows = Array.isArray(payload.ledger) ? payload.ledger : [];
-            if (rows.length === 0) {
-                var empty = document.createElement('p');
-                empty.className = 'dv2-setup-empty';
-                empty.setAttribute('data-testid', 'dashboard-v2-setup-empty');
-                empty.textContent = 'Nothing is set up yet.';
-                ledger.appendChild(empty);
-            } else {
-                var group = '';
-                rows.forEach(function (row) {
-                    if ((row.group || '') !== group) {
-                        group = row.group || '';
-                        var heading = document.createElement('h3');
-                        heading.className = 'dv2-ledger-group';
-                        heading.textContent = group;
-                        ledger.appendChild(heading);
-                    }
-                    var line = document.createElement('div');
-                    line.className = 'dv2-ledger-row';
-                    line.setAttribute('data-testid', 'dashboard-v2-ledger-row');
-                    var label = document.createElement('span');
-                    label.textContent = row.label || '';
-                    var value = document.createElement('b');
-                    value.textContent = row.value || '';
-                    line.appendChild(label);
-                    line.appendChild(value);
-                    ledger.appendChild(line);
-                });
-            }
-        }
         var yearBox = document.querySelector('[data-testid="dashboard-v2-year"]');
         var year = payload.academic_year || {};
         var yearLabel = year.label || '';
@@ -660,12 +583,6 @@ window.klassDashboardToshiSetup = function () {
             }
             if (termNode && termNode.textContent !== payload.term_label) {
                 termNode.textContent = payload.term_label;
-            }
-        }
-        if (payload.profile_line) {
-            var profileLine = document.querySelector('[data-testid="dashboard-v2-profile"] p');
-            if (profileLine && profileLine.textContent !== payload.profile_line) {
-                profileLine.textContent = payload.profile_line;
             }
         }
         var sidebar = payload.sidebar || {};
