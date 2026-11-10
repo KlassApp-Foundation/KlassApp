@@ -388,6 +388,10 @@ class AgentToshi extends Component
         // The checklist demo is the conversation. Do not resume the 13-step
         // setup script, and do not restore a session that would.
         if ($this->checklistOnboarding && $user->school_id) {
+            $saved = session()->get(ChecklistOnboarding::sessionKey((int) $user->school_id, (int) $user->id));
+            if (is_array($saved) && is_string($saved['shell'] ?? null)) {
+                $this->checklistShell($saved['shell']);
+            }
             $this->capabilities = ToshiActionService::getRoleCapabilities($user->usergroup_id);
             $this->scope = $this->capabilities['scope'] ?? 'school';
             $this->schoolId = $user->school_id;

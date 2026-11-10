@@ -51,6 +51,24 @@ final class ChecklistOnboardingService
         'students' => 'Learners and parents',
     ];
 
+    /** @var array<string, string> */
+    private const SOURCE_TABS = [
+        'terms' => 'Terms & Exams',
+        'standards' => 'Classes & Streams',
+        'subjects' => 'Subjects',
+        'teachers' => 'Teachers',
+        'students' => 'Learners',
+    ];
+
+    /** @var array<string, array{0: string, 1: string}> */
+    private const NOUNS = [
+        'terms' => ['term', 'terms'],
+        'standards' => ['class', 'classes'],
+        'subjects' => ['subject', 'subjects'],
+        'teachers' => ['teacher', 'teachers'],
+        'students' => ['learner', 'learners'],
+    ];
+
     public function __construct(
         private ChecklistWorkbookConverter $converter,
         private ChecklistOnboardingGate $gate,
@@ -163,6 +181,7 @@ final class ChecklistOnboardingService
             'exists' => $preview['exists'],
             'conflict' => $preview['conflict'],
             'skipped' => count($payload['skipped_flags'] ?? []),
+            'source_tab' => self::SOURCE_TABS[$key],
             'proposal' => $this->proposalFor($key),
             'approve_label' => $this->approveLabel($key, $preview['create'], $preview['creates'] ?? []),
             'question' => $this->questionFor($payload, $key, $preview),
@@ -227,6 +246,7 @@ final class ChecklistOnboardingService
                 'result' => 'no conflicts',
             ]);
         }
+        $this->emitRead($progress, $key, $payload);
 
         $beforeInvites = TeacherInvite::query()->where('school_id', $plan->school_id)->count();
         $tallies = [];
@@ -347,9 +367,33 @@ final class ChecklistOnboardingService
         ];
         $payload['walk_index'] = (int) $payload['walk_index'] + 1;
         $status = $this->currentKey($payload) === null ? 'applied' : 'applying';
+        $card = $this->resultCard($plan->school, $payload, $key, $preview);
+        $view = $card;
+        if (($view['kind'] ?? '') === 'done') {
+            $view['kind'] = 'result';
+            $view['completion'] = null;
+        }
+        $payload['results'][$key]['view'] = $view;
         $this->savePayload($plan, $payload, $status);
 
-        return ['ok' => true, 'code' => 'result', 'card' => $this->resultCard($plan->school, $payload, $key, $preview)];
+        return ['ok' => true, 'code' => 'result', 'card' => $card];
+    }
+
+    /**
+     * The result card stored when the step was applied. Reading it writes nothing.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function storedResult(OnboardingPlan $plan, User $actor, string $key): ?array
+    {
+        $plan = $this->fresh($plan, $actor);
+        $payload = is_array($plan->payload) ? $plan->payload : [];
+        $view = $payload['results'][$key]['view'] ?? null;
+        if (! is_array($view) || ($view['kind'] ?? '') !== 'result') {
+            return null;
+        }
+
+        return $view;
     }
 
     /**
@@ -599,13 +643,88 @@ final class ChecklistOnboardingService
             'steps' => $steps,
             'stats' => $this->statTiles($this->leavingFlaggedRowsOut($payload)),
             'flags' => array_map(function (array $flag) use ($payload): array {
-                $flag['fix'] = $this->plainFix($flag, $payload);
-
-                return $flag;
+                return $this->presentFlag($flag, $payload);
             }, $payload['flags']),
             'notes' => $payload['notes'],
             'class_teachers_listed' => (int) $payload['class_teachers_listed'],
             'needs_flag_choice' => $payload['flags'] !== [] && ! $payload['flags_skipped'],
+            'core_gaps' => $this->coreGaps($steps),
+        ];
+    }
+
+    /**
+     * Core lists have to come from the checklist. An empty one is said plainly.
+     *
+     * @param  list<array{key: string, label: string, accepted: int}>  $steps
+     * @return list<string>
+     */
+    private function coreGaps(array $steps): array
+    {
+        $core = [
+            'standards' => 'Classes and streams',
+            'subjects' => 'Subjects',
+            'teachers' => 'Teachers and assignments',
+            'students' => 'Learners and parents',
+        ];
+        $gaps = [];
+        foreach ($steps as $step) {
+            $name = $core[$step['key']] ?? null;
+            if ($name !== null && (int) $step['accepted'] < 1) {
+                $gaps[] = $name.' must come from the checklist. This list is empty. Fix the workbook.';
+            }
+        }
+
+        return $gaps;
+    }
+
+    /**
+     * Replace the term rows on the plan. Does not write the school.
+     *
+     * @param  list<array<string, mixed>>  $terms
+     * @return array{ok: bool, code: string, card: array<string, mixed>}
+     */
+    public function replaceTermRows(OnboardingPlan $plan, User $actor, array $terms): array
+    {
+        $plan = $this->fresh($plan, $actor);
+        $payload = $this->requireReady($plan);
+        $existing = $payload['steps']['terms']['rows'] ?? [];
+        $rows = [];
+        foreach (array_values($terms) as $index => $term) {
+            if (! is_array($term)) {
+                continue;
+            }
+            $name = trim((string) ($term['name'] ?? ''));
+            $start = substr(trim((string) ($term['start'] ?? '')), 0, 10);
+            $end = substr(trim((string) ($term['end'] ?? '')), 0, 10);
+            if ($name === '' || $start === '' || $end === '') {
+                throw ValidationException::withMessages(['termName' => 'Add at least one academic term.']);
+            }
+            $prior = is_array($existing[$index] ?? null) ? $existing[$index] : [];
+            $rows[] = array_merge($prior, [
+                'name' => $name,
+                'start' => $start,
+                'end' => $end,
+            ]);
+        }
+        if ($rows === []) {
+            throw ValidationException::withMessages(['termName' => 'Add at least one academic term.']);
+        }
+
+        $payload['steps']['terms']['rows'] = $rows;
+        if (isset($payload['steps']['terms']['counts']) && is_array($payload['steps']['terms']['counts'])) {
+            $payload['steps']['terms']['counts']['accepted'] = count($rows);
+            $payload['steps']['terms']['counts']['read'] = max(
+                (int) ($payload['steps']['terms']['counts']['read'] ?? 0),
+                count($rows)
+            );
+        }
+        $plan->payload = $payload;
+        $plan->save();
+
+        return [
+            'ok' => true,
+            'code' => 'preview',
+            'card' => $this->previewCard($plan->fresh(), $actor),
         ];
     }
 
@@ -993,6 +1112,7 @@ final class ChecklistOnboardingService
         return [
             'kind' => $next === null ? 'done' : 'result',
             'step_key' => $key,
+            'source_tab' => self::SOURCE_TABS[$key] ?? '',
             'name' => self::STEP_NAMES[$key],
             'title' => self::TITLES[$key],
             'created' => $preview['create'],
@@ -1062,6 +1182,10 @@ final class ChecklistOnboardingService
             'invites_ready' => (int) ($payload['invites_ready'] ?? 0),
             'class_teachers_listed' => (int) ($payload['class_teachers_listed'] ?? 0),
             'skipped' => count($payload['skipped_flags'] ?? []),
+            'later' => array_map(fn (array $flag): array => [
+                'tab' => (string) ($flag['tab'] ?? ''),
+                'row' => $flag['row'] ?? null,
+            ], array_values($payload['skipped_flags'] ?? [])),
         ];
     }
 
@@ -1399,6 +1523,104 @@ final class ChecklistOnboardingService
      * @param  array{field?: string, tab?: string, row?: int|null}  $flag
      * @param  array<string, mixed>  $payload
      */
+    /**
+     * @param  array{field?: string, tab?: string, row?: int|null, message?: string}  $flag
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    private function presentFlag(array $flag, array $payload): array
+    {
+        $flag['fix'] = $this->plainFix($flag, $payload);
+        $flag['value'] = $this->flagValue($flag);
+        $flag['severity'] = $this->flagSeverity($flag);
+        $flag['guidance'] = $flag['severity'] === 'blocking'
+            ? 'Fix the workbook'
+            : 'Safe to continue, fix it later in KlassApp';
+
+        return $flag;
+    }
+
+    /**
+     * @param  array{field?: string, message?: string}  $flag
+     */
+    private function flagValue(array $flag): string
+    {
+        $message = (string) ($flag['message'] ?? '');
+        if (preg_match('/"([^"]*)"/', $message, $matches) === 1) {
+            return $matches[1];
+        }
+
+        return '';
+    }
+
+    /**
+     * A missing required name, or a class name KlassApp does not know, blocks the row.
+     * A parent phone or a date of birth can wait.
+     *
+     * @param  array{field?: string, message?: string}  $flag
+     */
+    private function flagSeverity(array $flag): string
+    {
+        $field = strtolower((string) ($flag['field'] ?? ''));
+        $message = (string) ($flag['message'] ?? '');
+        if (str_contains($message, 'is not a KlassApp class name')) {
+            return 'blocking';
+        }
+        if (str_starts_with($message, 'Missing required') && (str_contains($field, 'name') || $field === 'term')) {
+            return 'blocking';
+        }
+        if ($field === 'tab' && str_contains($message, 'was not found')) {
+            return 'blocking';
+        }
+
+        return 'minor';
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    private function emitRead(?callable $progress, string $key, array $payload): void
+    {
+        if ($progress === null) {
+            return;
+        }
+
+        $rows = $payload['steps'][$key]['rows'] ?? [];
+        $numbers = [];
+        $tab = self::SOURCE_TABS[$key] ?? 'Checklist';
+        $classNames = [];
+        foreach ($rows as $row) {
+            $source = is_array($row['source'] ?? null) ? $row['source'] : [];
+            if (($source['tab'] ?? '') !== '') {
+                $tab = (string) $source['tab'];
+            }
+            if (isset($source['row']) && is_numeric($source['row'])) {
+                $numbers[] = (int) $source['row'];
+            }
+            if ($key === 'standards') {
+                $name = trim((string) ($row['name'] ?? ''));
+                if ($name !== '') {
+                    $classNames[$name] = true;
+                }
+            }
+        }
+        $count = $key === 'standards' && $classNames !== [] ? count($classNames) : count($rows);
+        [$one, $many] = self::NOUNS[$key] ?? ['row', 'rows'];
+        $span = '';
+        if ($numbers !== []) {
+            $min = min($numbers);
+            $max = max($numbers);
+            $span = $min === $max ? ', row '.$min : ', rows '.$min.' to '.$max;
+        }
+        $progress([
+            'step' => $key,
+            'line' => 'read-'.$key,
+            'label' => 'Reading '.$tab.$span,
+            'status' => 'done',
+            'result' => $count.' '.($count === 1 ? $one : $many),
+        ]);
+    }
+
     private function plainFix(array $flag, array $payload): string
     {
         if ($this->parentPhoneOnly($flag, $payload)) {

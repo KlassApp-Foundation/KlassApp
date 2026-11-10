@@ -229,8 +229,9 @@ class DashboardController extends Controller
             'whatsapp' => [
                 'value' => (string) ($pending > 0 ? $pending : $linked),
             ],
-            'ledger' => \App\Onboarding\OnboardingProgress::ledger($school, (int) $user->id),
+            'ledger' => \App\Onboarding\OnboardingProgress::checklistRows($school, (int) $user->id),
             'setup_complete' => (int) ($setup['total'] ?? 0) > 0 && (int) ($setup['done'] ?? 0) >= (int) ($setup['total'] ?? 0),
+            'hide_options' => $school->onboarding_finished_at !== null,
         ]);
     }
 

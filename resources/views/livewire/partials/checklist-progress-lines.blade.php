@@ -1,4 +1,12 @@
-<div class="t-line t-line-{{ $line['status'] }}" data-testid="progress-line" data-progress-status="{{ $line['status'] }}">
+@php
+    $paceDone = null;
+    $paceTotal = null;
+    if (preg_match('/(\d+) of (\d+)/', (string) ($line['result'] ?? ''), $paceMatch) === 1) {
+        $paceDone = (int) $paceMatch[1];
+        $paceTotal = (int) $paceMatch[2];
+    }
+@endphp
+<div class="t-line t-line-{{ $line['status'] }}" data-testid="progress-line" data-progress-status="{{ $line['status'] }}" data-progress-id="{{ $line['line'] }}">
     <span class="t-mark" aria-hidden="true">
         @if($line['status'] === 'running')
             <span class="t-spin"></span>
@@ -10,4 +18,7 @@
     </span>
     <span class="t-line-label">{{ $line['label'] }}@if($line['status'] === 'running')…@endif</span>
     <span class="t-line-result">@if($line['status'] !== 'running' && ($line['result'] ?? '') !== ''){{ $line['result'] }}@endif</span>
+    @if($paceTotal)
+        <span class="t-meter" role="progressbar" aria-valuemin="0" aria-valuemax="{{ $paceTotal }}" aria-valuenow="{{ $paceDone }}"><i style="width: {{ (int) round(($paceDone / max(1, $paceTotal)) * 100) }}%"></i></span>
+    @endif
 </div>

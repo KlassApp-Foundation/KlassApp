@@ -14,6 +14,7 @@
         <label class="ds-form-label" for="wizard-school-name">School name<span class="text-red-500">*</span></label>
         <input id="wizard-school-name" type="text" class="ds-form-input w-full" wire:model="schoolName" placeholder="e.g. Sunrise Academy" />
     </div>
+    @include('livewire.partials.manual-wizard-step-fields', ['stepKey' => 'school_contact', 'embedField' => $embedField ?? ''])
 
 @elseif($stepKey === 'student_size')
     <div class="ds-form-group">
@@ -102,6 +103,30 @@
         <label class="ds-form-label" for="wizard-emis">EMIS / Ministry code<span class="text-red-500">*</span></label>
         <input id="wizard-emis" type="text" class="ds-form-input w-full" wire:model="ministryCode" placeholder="e.g. EMIS-1001" />
     </div>
+
+@elseif($stepKey === 'school_contact')
+    @php $only = $embedField ?? ''; @endphp
+    @if($only === '' || $only === 'phone')
+        <div class="ds-form-group">
+            <label class="ds-form-label" for="wizard-school-phone">School phone</label>
+            <input id="wizard-school-phone" type="tel" class="ds-form-input w-full" wire:model="schoolPhone" data-testid="wizard-school-phone" autocomplete="tel" />
+            @error('phone') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+        </div>
+    @endif
+    @if($only === '' || $only === 'email')
+        <div class="ds-form-group">
+            <label class="ds-form-label" for="wizard-school-email">School email</label>
+            <input id="wizard-school-email" type="email" class="ds-form-input w-full" wire:model="schoolEmail" data-testid="wizard-school-email" autocomplete="email" />
+            @error('email') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+        </div>
+    @endif
+    @if($only === '' || $only === 'motto')
+        <div class="ds-form-group">
+            <label class="ds-form-label" for="wizard-school-motto">Motto</label>
+            <input id="wizard-school-motto" type="text" class="ds-form-input w-full" wire:model="schoolMotto" data-testid="wizard-school-motto" maxlength="100" />
+            @error('motto') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
+        </div>
+    @endif
 
 @elseif($stepKey === 'uneb_center')
     <div class="ds-form-group">

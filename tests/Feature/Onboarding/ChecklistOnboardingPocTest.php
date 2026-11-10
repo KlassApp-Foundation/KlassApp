@@ -11,6 +11,7 @@ use App\Livewire\AgentToshi;
 use App\Models\OnboardingPlan;
 use App\Models\UserPreference;
 use App\Models\School;
+use App\Models\SchoolDetail;
 use App\Models\Section;
 use App\Models\StudentAcademic;
 use App\Models\Subject;
@@ -442,8 +443,20 @@ class ChecklistOnboardingPocTest extends TestCase
             $service->apply($plan->fresh(), $admin);
         }
         $this->assertSame(2, User::query()->where('school_id', $school->id)->where('usergroup_id', 6)->count());
+        $school->forceFill([
+            'motto' => 'Harbour lights',
+            'onboarding_finished_at' => now(),
+        ])->save();
+        SchoolDetail::query()->updateOrCreate(
+            ['school_id' => $school->id, 'meta_key' => 'moto'],
+            ['meta_value' => 'Harbour lights']
+        );
 
         $this->artisan('demo:checklist-reset')->assertExitCode(0);
+        $school = $school->fresh();
+        $this->assertNull($school->motto);
+        $this->assertNull($school->onboarding_finished_at);
+        $this->assertNull($school->mottoText());
         $this->assertSame(0, User::query()->where('school_id', $school->id)->where('usergroup_id', 6)->count());
         $this->assertSame(0, AcademicYear::query()->where('school_id', $school->id)->count());
         $this->assertSame(0, OnboardingPlan::query()->where('school_id', $school->id)->count());
@@ -495,7 +508,9 @@ class ChecklistOnboardingPocTest extends TestCase
             ->call('ingest')
             ->assertSee('Northwind Harbour School')
             ->assertSee('Learners')
-            ->assertSee('Skip these rows')
+            ->assertSee('Continue')
+            ->assertSee('Fix the workbook')
+            ->assertDontSee('Skip these rows')
             ->assertSee("Stop, I'll fix the workbook", false)
             ->assertSee('12345')
             ->assertSee('Primary Eight')
@@ -566,15 +581,18 @@ class ChecklistOnboardingPocTest extends TestCase
         );
         $cardAt = strpos($html, 'data-testid="dashboard-v2-setup-bar"');
         $yearAt = strpos($html, 'data-testid="dashboard-v2-year"');
+        $profileAt = strpos($html, 'data-testid="dashboard-v2-profile"');
         $ledgerAt = strpos($html, 'data-testid="dashboard-v2-setup-ledger"');
         $kpisAt = strpos($html, 'data-testid="dashboard-v2-kpis"');
         $this->assertNotFalse($yearAt);
+        $this->assertNotFalse($profileAt);
         $this->assertNotFalse($cardAt);
         $this->assertNotFalse($ledgerAt);
         $this->assertNotFalse($kpisAt);
-        $this->assertLessThan($cardAt, $yearAt);
-        $this->assertLessThan($ledgerAt, $cardAt);
+        $this->assertLessThan($profileAt, $yearAt);
+        $this->assertLessThan($ledgerAt, $profileAt);
         $this->assertLessThan($kpisAt, $ledgerAt);
+        $this->assertLessThan($cardAt, $kpisAt);
         $this->assertDoesNotMatchRegularExpression(
             '/data-testid="dashboard-v2-toshi-setup"[^>]*toshi-maximize/',
             $html,
@@ -994,6 +1012,241 @@ class ChecklistOnboardingPocTest extends TestCase
         $message = \App\Services\Toshi\ToshiRateLimit::adminMessage();
         $this->assertStringContainsString('Nothing was written', $message);
         $this->assertStringContainsString('not retried', $message);
+    }
+
+    public function test_finish_setup_names_the_school_and_keeps_rows_for_later(): void
+    {
+        [$school, $admin] = $this->demoAdmin();
+        $this->actingAs($admin);
+
+        Livewire::test(ChecklistOnboarding::class)
+            ->set('phase', 'done')
+            ->set('card', [
+                'kind' => 'done',
+                'checks' => [],
+                'stats' => [
+                    ['label' => 'Terms', 'value' => 3],
+                    ['label' => 'Classes', 'value' => 6],
+                    ['label' => 'Streams', 'value' => 4],
+                    ['label' => 'Subjects', 'value' => 2],
+                    ['label' => 'Teachers', 'value' => 1],
+                    ['label' => 'Learners', 'value' => 2],
+                    ['label' => 'Parents', 'value' => 2],
+                ],
+                'invites_ready' => 3,
+                'later' => [['tab' => 'Learners', 'row' => 40]],
+                'kls_present' => true,
+                'kls_missing' => 0,
+                'phones_e164' => true,
+                'class_teachers_listed' => 0,
+                'skipped' => 1,
+            ])
+            ->assertSee('Finish setup')
+            ->assertSee('To fix later')
+            ->assertSee('row 40')
+            ->call('finishSetup')
+            ->assertSee($school->name.' is set up')
+            ->assertSee('What KlassApp helps with next')
+            ->assertSee('Attendance registers')
+            ->assertSee('Marks and report cards')
+            ->assertSee('Parents on WhatsApp');
+
+        $this->assertNotNull($school->fresh()->onboarding_finished_at);
+    }
+
+    public function test_back_returns_to_the_agreement_and_a_new_page_reopens_the_step(): void
+    {
+        [$school, $admin] = $this->demoAdmin();
+        $this->actingAs($admin);
+
+        $component = Livewire::test(ChecklistOnboarding::class)
+            ->call('start')
+            ->set('agreed', true)
+            ->call('confirmAgreement')
+            ->assertSet('phase', 'upload')
+            ->assertSee('data-testid="checklist-back"', false);
+
+        Livewire::test(ChecklistOnboarding::class)->assertSet('phase', 'upload');
+        Livewire::test(AgentToshi::class)->assertSet('checklistStep', 'checklist');
+
+        $component->call('back')
+            ->assertSet('phase', 'agreement')
+            ->assertSee('I agree on behalf of the school');
+
+        $this->assertSame(0, AcademicTerm::query()->where('school_id', $school->id)->count());
+    }
+
+    public function test_editing_terms_before_apply_updates_the_plan_and_not_the_school(): void
+    {
+        [$school, $admin] = $this->demoAdmin();
+        $this->actingAs($admin);
+        $path = (new DemoChecklistWorkbook)->write($this->dir.'/terms-edit.xlsx', false, false, 'Yes');
+        $upload = new UploadedFile($path, 'terms-edit.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true);
+
+        $component = Livewire::test(ChecklistOnboarding::class)
+            ->set('agreed', true)
+            ->call('confirmAgreement')
+            ->set('workbook', $upload)
+            ->call('ingest')
+            ->call('openNext')
+            ->assertSee('Edit')
+            ->call('planFields', 'terms', [[
+                'name' => 'Opening term',
+                'start' => '2026-01-12',
+                'end' => '2026-04-10',
+            ]])
+            ->assertSee('Opening term');
+
+        $this->assertSame(0, AcademicTerm::query()->where('school_id', $school->id)->count());
+        $plan = OnboardingPlan::query()->where('school_id', $school->id)->first();
+        $this->assertNotNull($plan);
+        $this->assertSame('Opening term', $plan->payload['steps']['terms']['rows'][0]['name']);
+        unset($component);
+    }
+
+    public function test_the_panel_form_uses_the_same_email_check_as_the_engine(): void
+    {
+        [$school, $admin] = $this->demoAdmin();
+        $this->actingAs($admin);
+        $message = '';
+        try {
+            app(\App\Services\OnboardingEngine::class)->saveSchoolContact($school, '', 'not-an-email', '');
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            $message = $exception->errors()['email'][0];
+        }
+        $this->assertSame('Enter a valid school email.', $message);
+
+        Livewire::test(\App\Livewire\ManualOnboardingWizard::class)
+            ->set('embedded', true)
+            ->set('embedStep', 'school_contact')
+            ->set('embedPersist', 'school')
+            ->set('schoolEmail', 'not-an-email')
+            ->call('saveEmbedded')
+            ->assertHasErrors(['email'])
+            ->assertSee($message);
+
+        $school->forceFill(['motto' => null])->save();
+        Livewire::test(\App\Livewire\ManualOnboardingWizard::class)
+            ->set('embedded', true)
+            ->set('embedStep', 'school_contact')
+            ->set('embedPersist', 'school')
+            ->set('schoolMotto', 'Harbour lights')
+            ->call('saveEmbedded');
+
+        $this->assertSame('Harbour lights', $school->fresh()->motto);
+    }
+
+    public function test_applying_a_step_logs_the_real_read_and_the_rows_written(): void
+    {
+        [$school, $admin] = $this->demoAdmin();
+        $this->actingAs($admin);
+        $path = (new DemoChecklistWorkbook)->write($this->dir.'/apply-log.xlsx', true, false, 'Yes');
+        $upload = new UploadedFile($path, 'apply-log.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true);
+
+        $component = Livewire::test(ChecklistOnboarding::class)
+            ->set('agreed', true)
+            ->call('confirmAgreement')
+            ->set('workbook', $upload)
+            ->call('ingest')
+            ->assertSee('Reading Terms & Exams')
+            ->assertSee('What Toshi did')
+            ->call('skipFlags')
+            ->call('confirmStep')
+            ->assertSee('Reading Terms & Exams')
+            ->assertSee('What Toshi did');
+
+        $written = AcademicTerm::query()->where('school_id', $school->id)->count();
+        $this->assertGreaterThan(0, $written);
+        $component->assertSee($written.' of '.$written);
+        $lines = collect($component->get('progressLines'));
+        $this->assertTrue($lines->contains(fn (array $line): bool => str_contains((string) ($line['label'] ?? ''), 'Reading Terms & Exams') && ($line['result'] ?? '') !== ''));
+        $this->assertTrue($lines->contains(fn (array $line): bool => str_contains((string) ($line['result'] ?? ''), $written.' of '.$written)));
+    }
+
+    public function test_editing_terms_after_apply_saves_through_the_engine(): void
+    {
+        [$school, $admin] = $this->demoAdmin();
+        $this->actingAs($admin);
+        AcademicYear::query()->create([
+            'school_id' => $school->id,
+            'name' => '2026',
+            'start_date' => '2026-01-01',
+            'end_date' => '2026-12-31',
+            'status' => 1,
+        ]);
+
+        Livewire::test(\App\Livewire\ManualOnboardingWizard::class, [
+            'embedded' => true,
+            'embedStep' => 'terms',
+            'embedPersist' => 'school',
+        ])
+            ->set('termDrafts', [[
+                'name' => 'Opening term',
+                'start' => '2026-01-12',
+                'end' => '2026-04-10',
+            ]])
+            ->set('currentTermName', 'Opening term')
+            ->call('saveEmbedded')
+            ->assertHasNoErrors();
+
+        $term = AcademicTerm::query()->where('school_id', $school->id)->first();
+        $this->assertNotNull($term);
+        $this->assertSame('Opening term', $term->name);
+        $this->assertSame(1, AcademicTerm::query()->where('school_id', $school->id)->count());
+
+        Livewire::test(\App\Livewire\ManualOnboardingWizard::class, [
+            'embedded' => true,
+            'embedStep' => 'terms',
+            'embedPersist' => 'school',
+        ])
+            ->assertSet('termDrafts.0.name', 'Opening term')
+            ->set('termDrafts', [[
+                'name' => 'Opening term',
+                'start' => '2026-01-12',
+                'end' => '2026-04-24',
+            ]])
+            ->set('currentTermName', 'Opening term')
+            ->call('saveEmbedded');
+
+        $updated = AcademicTerm::query()->where('school_id', $school->id)->first();
+        $this->assertNotNull($updated);
+        $this->assertSame('Opening term', $updated->name);
+        $this->assertSame('2026-04-24', $updated->ends_on->format('Y-m-d'));
+        $this->assertSame(1, AcademicTerm::query()->where('school_id', $school->id)->count());
+    }
+
+    public function test_the_panel_embeds_the_wizard_as_its_own_component(): void
+    {
+        [$school, $admin] = $this->demoAdmin();
+        $this->actingAs($admin);
+        $html = Livewire::test(\App\Livewire\ManualOnboardingWizard::class, [
+            'embedded' => true,
+            'embedStep' => 'school_contact',
+            'embedPersist' => 'school',
+            'embedField' => 'motto',
+        ])->html();
+
+        $this->assertMatchesRegularExpression('/<div [^>]*wire:id="[^"]+"/', $html);
+        $this->assertDoesNotMatchRegularExpression('/<label[^>]*wire:id=/', $html);
+        $this->assertStringContainsString('checklist-wizard-save', $html);
+        unset($school);
+    }
+
+    public function test_plan_mode_subject_edits_do_not_write_the_school(): void
+    {
+        [$school, $admin] = $this->demoAdmin();
+        $this->actingAs($admin);
+
+        Livewire::test(\App\Livewire\ManualOnboardingWizard::class, [
+            'embedded' => true,
+            'embedStep' => 'subjects',
+            'embedPersist' => 'plan',
+        ])
+            ->set('subjectName', 'Marine science')
+            ->call('addSubjects')
+            ->assertSee('This part of the plan cannot be edited here yet.');
+
+        $this->assertSame(0, Subject::query()->where('school_id', $school->id)->count());
     }
 
     /**

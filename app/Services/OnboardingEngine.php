@@ -248,6 +248,43 @@ class OnboardingEngine
     }
 
     /**
+     * Phone, email, and motto. Empty values are left as they are.
+     *
+     * @throws ValidationException
+     */
+    public function saveSchoolContact(School $school, string $phone, string $email, string $motto): void
+    {
+        $phone = trim($phone);
+        $email = trim($email);
+        $motto = trim($motto);
+
+        Validator::make(
+            ['phone' => $phone, 'email' => $email, 'motto' => $motto],
+            [
+                'phone' => ['nullable', 'string', 'max:30'],
+                'email' => ['nullable', 'email', 'max:255'],
+                'motto' => ['nullable', 'string', 'max:100'],
+            ],
+            [
+                'email.email' => 'Enter a valid school email.',
+                'motto.max' => 'The motto can be at most 100 characters.',
+                'phone.max' => 'The phone number can be at most 30 characters.',
+            ]
+        )->validate();
+
+        if ($phone !== '') {
+            $school->phone = $phone;
+        }
+        if ($email !== '') {
+            $school->email = $email;
+        }
+        if ($motto !== '') {
+            $school->motto = $motto;
+        }
+        $school->save();
+    }
+
+    /**
      * Persist the UNEB centre number if the column exists.
      *
      * null means "not asked yet" and is a no-op.
@@ -1450,13 +1487,28 @@ class OnboardingEngine
                 $createAttrs['ends_on'] = Carbon::parse(trim((string) $end))->endOfDay();
             }
 
-            $term = AcademicTerm::firstOrCreate(
-                ['school_id' => $school->id, 'name' => $name],
-                $createAttrs,
-            );
-            if ($term->wasRecentlyCreated) {
-                $this->reportCreated('terms', 'terms', 'Creating terms');
+            $existing = AcademicTerm::query()
+                ->where('school_id', $school->id)
+                ->where('name', $name)
+                ->first();
+            if ($existing instanceof AcademicTerm) {
+                if ($hasStart) {
+                    $existing->starts_on = Carbon::parse(trim((string) $start))->startOfDay();
+                }
+                if ($hasEnd) {
+                    $existing->ends_on = Carbon::parse(trim((string) $end))->endOfDay();
+                }
+                $existing->academic_year_id = $year->id;
+                $existing->save();
+
+                continue;
             }
+
+            AcademicTerm::query()->create(array_merge($createAttrs, [
+                'school_id' => $school->id,
+                'name' => $name,
+            ]));
+            $this->reportCreated('terms', 'terms', 'Creating terms');
         }
 
         $this->normalizeAcademicTermCurrentStatus($school, $terms);

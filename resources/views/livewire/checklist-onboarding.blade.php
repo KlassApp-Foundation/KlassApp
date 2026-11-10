@@ -1,4 +1,4 @@
-<div class="checklist-onboarding" data-testid="checklist-onboarding" @if($enabled) data-shell-step="{{ $shellStep ?? 'welcome' }}" @endif @if(!$enabled) hidden @endif>
+<div class="checklist-onboarding" data-testid="checklist-onboarding" @if($enabled) data-shell-step="{{ $shellStep ?? 'welcome' }}" @endif @if($enabled && ($shellStep ?? 'welcome') !== 'welcome') data-checklist-reopen="1" @endif @if(!$enabled) hidden @endif>
     @if($enabled)
 <link rel="stylesheet" href="{{ asset('css/toshi-checklist-panel.css') }}?v={{ @filemtime(public_path('css/toshi-checklist-panel.css')) }}">
 
@@ -81,6 +81,7 @@
                 <div class="t-stream" wire:stream="checklist-progress" aria-live="polite" data-testid="checklist-progress"></div>
                 <div class="t-actions">
                     <button type="button" class="t-btn" wire:click="ingest" data-testid="checklist-read" @disabled($workbook === null && trim($sheetUrl) === '' && $sheetFileId === '') @if($workbook === null && trim($sheetUrl) === '' && $sheetFileId === '') aria-describedby="checklist-read-hint" @endif>Read this checklist</button>
+                    @include('livewire.partials.checklist-back')
                 </div>
                 <p class="t-note" id="checklist-read-hint">Choose an .xlsx file or paste a link before reading.</p>
                 @if($sheetNote !== '')
@@ -101,6 +102,27 @@
         @if(($card['kind'] ?? '') === 'summary')
             <div class="t-card" data-testid="checklist-card-summary" data-checklist-card="summary">
                 <h3 tabindex="-1" @if(($card['flags'] ?? []) === []) data-checklist-focus @endif>{{ $card['school_name'] !== '' ? $card['school_name'] : 'School checklist' }}</h3>
+                <p class="t-source" data-testid="checklist-source">From your checklist: School Details, Terms &amp; Exams, Classes &amp; Streams, Subjects, Teachers, Learners</p>
+                @if(($card['core_gaps'] ?? []) !== [])
+                    <div class="t-flags" data-testid="checklist-core-gaps">
+                        @foreach($card['core_gaps'] as $gap)
+                            <p data-testid="checklist-core-gap">{{ $gap }}</p>
+                        @endforeach
+                    </div>
+                @endif
+                @if($details !== [] && ! is_array($editor))
+                    <div data-testid="checklist-details">
+                        <p class="t-kicker">A few details to finish</p>
+                        <p>{{ $details[0]['label'] }}</p>
+                        <div class="t-actions">
+                            <button type="button" class="t-btn" wire:click="openDetail" data-testid="checklist-detail">Fill this in</button>
+                        </div>
+                    </div>
+                @endif
+                @if(is_array($editor))
+                    <livewire:manual-onboarding-wizard :embedded="true" :embed-step="$editor['step']" :embed-persist="$editor['persist']" :embed-field="$editor['field'] ?? ''" :embed-terms="$editor['terms'] ?? []" :key="'checklist-wizard-'.$editor['step'].'-'.($editor['field'] ?? '')" />
+                    <button type="button" class="t-btn secondary" wire:click="closeEditor" data-testid="checklist-editor-close">Close</button>
+                @endif
                 @php
                     $sheetSteps = $card['steps'] ?? [];
                     $structureKeys = ['terms', 'standards', 'subjects'];
@@ -163,47 +185,72 @@
                     ]],
                 ]])
                 @if($card['flags'] !== [])
-                    <div class="t-flags">
-                        <p><strong>Flagged rows</strong></p>
-                        <ul>
-                            @foreach($showAll ? $card['flags'] : array_slice($card['flags'], 0, 3) as $flag)
-                                <li wire:key="flag-{{ $flag['tab'] }}-{{ $flag['row'] }}-{{ $loop->index }}" data-testid="checklist-flag">{{ $flag['tab'] }}, row {{ $flag['row'] ?? '—' }}: {{ $flag['field'] }}. {{ $flag['message'] }} {{ $flag['fix'] ?? '' }}</li>
-                            @endforeach
-                        </ul>
+                    @php
+                        $flagRows = $showAll ? $card['flags'] : array_slice($card['flags'], 0, 8);
+                        $flagBlocking = collect($card['flags'])->contains(fn ($flag): bool => ($flag['severity'] ?? '') === 'blocking');
+                    @endphp
+                    <div class="t-flags" data-testid="checklist-flags">
+                        <p class="t-flag-note" data-testid="checklist-flag-guidance">{{ $flagBlocking ? 'Fix the workbook' : 'Safe to continue, fix it later in KlassApp' }}</p>
+                        @if($flagBlocking)
+                            <p>Toshi recommends fixing the workbook. You can still continue. Flagged rows are left out.</p>
+                        @endif
+                        <div class="t-table-wrap">
+                            <table class="t-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tab</th>
+                                        <th>Row</th>
+                                        <th>Field</th>
+                                        <th>Value</th>
+                                        <th>Problem</th>
+                                        <th>Suggested fix</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($flagRows as $flag)
+                                        <tr wire:key="flag-{{ $flag['tab'] }}-{{ $flag['row'] }}-{{ $loop->index }}" data-testid="checklist-flag" data-severity="{{ $flag['severity'] ?? 'minor' }}">
+                                            <td>{{ $flag['tab'] }}</td>
+                                            <td>{{ $flag['row'] ?? '—' }}</td>
+                                            <td>{{ $flag['field'] }}</td>
+                                            <td>{{ $flag['value'] ?? '' }}</td>
+                                            <td>{{ $flag['message'] }}</td>
+                                            <td>{{ $flag['fix'] ?? '' }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    @if(count($card['flags']) > 3)
+                    @if(count($card['flags']) > 8)
                         <button type="button" class="t-btn secondary" wire:click="toggleShown" data-testid="checklist-show-all">{{ $showAll ? 'Show less' : 'See every row' }}</button>
                     @endif
                     <div class="t-actions">
-                        <button type="button" class="t-btn" wire:click="skipFlags" data-testid="skip-these-rows" data-checklist-focus>Skip these rows</button>
+                        <button type="button" class="t-btn" wire:click="skipFlags" data-testid="skip-these-rows" data-checklist-focus>Continue</button>
                         <button type="button" class="t-btn secondary" wire:click="stopForFix" data-testid="stop-fix-workbook">Stop, I'll fix the workbook</button>
+                        @include('livewire.partials.checklist-back')
                     </div>
                 @elseif(is_array($follow) && ($follow['kind'] ?? '') === 'preview')
                     <div class="t-actions">
                         <button type="button" class="t-btn" wire:click="openNext" data-testid="checklist-next" data-checklist-focus>Next: {{ $follow['name'] ?? 'Terms' }}</button>
+                        @include('livewire.partials.checklist-back')
+                    </div>
+                @else
+                    <div class="t-actions">
+                        @include('livewire.partials.checklist-back')
                     </div>
                 @endif
                 <p class="t-note">Class teachers listed: {{ $card['class_teachers_listed'] }}. Not written.</p>
-                @if($progressLines !== [])
-                    <div class="t-stream" aria-live="polite">
-                        @foreach($progressLines as $progressLine)
-                            @include('livewire.partials.checklist-progress-lines', ['line' => $progressLine])
-                        @endforeach
-                    </div>
-                @endif
+                @include('livewire.partials.checklist-settled-log')
             </div>
         @endif
 
         @if(($card['kind'] ?? '') === 'result' && isset($card['created']))
             <div class="t-card" data-testid="checklist-card-result" data-checklist-card="result">
                 <p class="t-kicker">{{ $card['name'] ?? $card['title'] }}</p>
-                @if($progressLines !== [])
-                    <div class="t-stream" aria-live="polite" data-testid="checklist-progress">
-                        @foreach($progressLines as $progressLine)
-                            @include('livewire.partials.checklist-progress-lines', ['line' => $progressLine])
-                        @endforeach
-                    </div>
+                @if(!empty($card['source_tab']))
+                    <p class="t-source" data-testid="checklist-source">From your checklist: {{ $card['source_tab'] }}</p>
                 @endif
+                @include('livewire.partials.checklist-settled-log', ['streamTestId' => 'checklist-progress'])
                 @if(($card['receipt'] ?? []) !== [])
                     @include('livewire.partials.checklist-receipt', ['groups' => $card['receipt']])
                 @else
@@ -214,7 +261,18 @@
                 @if(is_array($follow) && ($follow['kind'] ?? '') === 'preview')
                     <div class="t-actions">
                         <button type="button" class="t-btn" wire:click="openNext" data-testid="checklist-next" data-checklist-focus>Next: {{ $follow['name'] ?? '' }}</button>
+                        <button type="button" class="t-btn secondary" wire:click="openEditor" data-testid="checklist-edit">Edit</button>
+                        @include('livewire.partials.checklist-back')
                     </div>
+                @else
+                    <div class="t-actions">
+                        <button type="button" class="t-btn secondary" wire:click="openEditor" data-testid="checklist-edit">Edit</button>
+                        @include('livewire.partials.checklist-back')
+                    </div>
+                @endif
+                @if(is_array($editor))
+                    <livewire:manual-onboarding-wizard :embedded="true" :embed-step="$editor['step']" :embed-persist="$editor['persist']" :embed-field="$editor['field'] ?? ''" :embed-terms="$editor['terms'] ?? []" :key="'checklist-wizard-'.$editor['step'].'-result'" />
+                    <button type="button" class="t-btn secondary" wire:click="closeEditor" data-testid="checklist-editor-close">Close</button>
                 @endif
             </div>
         @endif
@@ -232,6 +290,9 @@
             <div class="t-card" data-testid="checklist-card-preview" data-checklist-card="preview" wire:loading.attr="aria-busy" wire:target="confirmStep">
                 <p class="t-kicker" data-testid="checklist-step-kicker">Step {{ $preview['step_number'] }} of {{ $preview['step_total'] }}</p>
                 <h3>{{ $preview['name'] ?? $preview['title'] }}</h3>
+                @if(!empty($preview['source_tab']))
+                    <p class="t-source" data-testid="checklist-source">From your checklist: {{ $preview['source_tab'] }}</p>
+                @endif
                 <p data-testid="checklist-proposal">{{ $preview['proposal'] }}</p>
                 @if(($preview['receipt'] ?? []) !== [])
                     @include('livewire.partials.checklist-receipt', ['groups' => $preview['receipt']])
@@ -302,13 +363,19 @@
                     @if(! $blocked)
                         <div class="t-actions">
                             <button type="button" class="t-btn" wire:click="confirmStep" data-testid="confirm-step" data-checklist-focus>{{ $preview['approve_label'] }}</button>
+                            <button type="button" class="t-btn secondary" wire:click="openEditor" data-testid="checklist-edit">Edit</button>
                             <div class="t-actions row">
                                 @if(! $showChange)
                                     <button type="button" class="t-btn secondary" wire:click="openChange" data-testid="change-step">Change</button>
                                 @endif
                                 <button type="button" class="t-btn secondary" wire:click="skipStep" data-testid="skip-step">Skip</button>
                             </div>
+                            @include('livewire.partials.checklist-back')
                         </div>
+                        @if(is_array($editor))
+                            <livewire:manual-onboarding-wizard :embedded="true" :embed-step="$editor['step']" :embed-persist="$editor['persist']" :embed-field="$editor['field'] ?? ''" :embed-terms="$editor['terms'] ?? []" :key="'checklist-wizard-'.$editor['step'].'-preview'" />
+                            <button type="button" class="t-btn secondary" wire:click="closeEditor" data-testid="checklist-editor-close">Close</button>
+                        @endif
                     @endif
                 @endif
             </div>
@@ -326,13 +393,7 @@
                 @endphp
                 <div class="t-card" data-testid="checklist-card-done" data-checklist-card="done">
                     <h3 tabindex="-1" data-checklist-focus>Done</h3>
-                    @if($progressLines !== [])
-                        <div class="t-stream" aria-live="polite">
-                            @foreach($progressLines as $progressLine)
-                                @include('livewire.partials.checklist-progress-lines', ['line' => $progressLine])
-                            @endforeach
-                        </div>
-                    @endif
+                    @include('livewire.partials.checklist-settled-log')
                     @include('livewire.partials.checklist-receipt', ['groups' => [
                         ['tone' => 'structure', 'name' => 'School structure', 'rows' => [
                             ['label' => 'Terms', 'value' => $doneStats['Terms'] ?? 0],
@@ -351,8 +412,16 @@
                     ]])
                     <p data-testid="invites-ready">Invites ready: {{ $done['invites_ready'] }}, not sent</p>
                     <p class="t-note">No email or WhatsApp message was sent.</p>
-                    <p><a href="{{ url('/admin/students') }}">Learners</a></p>
-                    <p><a href="{{ url('/admin/academics') }}">Classes</a></p>
+                    @if(($done['later'] ?? []) !== [])
+                        <div data-testid="checklist-later">
+                            <p class="t-kicker">To fix later</p>
+                            <ul class="t-points">
+                                @foreach($done['later'] as $later)
+                                    <li>Tab {{ $later['tab'] }}, row {{ $later['row'] ?? '—' }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
                     <p>KLS numbers present: {{ $done['kls_present'] ? 'yes' : 'no' }}@if(($done['kls_missing'] ?? 0) > 0) ({{ $done['kls_missing'] }} missing)@endif.</p>
                     <p>Phones in international format: {{ $done['phones_e164'] ? 'yes' : 'no' }}.</p>
                     @if(($done['checks'] ?? []) !== [])
@@ -371,21 +440,58 @@
                         @endif
                     @endif
                     <p class="t-note">Class teachers listed: {{ $done['class_teachers_listed'] }}. Not written.</p>
+                    <div class="t-actions">
+                        <button type="button" class="t-btn" wire:click="finishSetup" data-testid="checklist-finish" data-checklist-focus>Finish setup</button>
+                        @include('livewire.partials.checklist-back')
+                    </div>
                 </div>
             @endif
+        @endif
+
+        @if(($card['kind'] ?? '') === 'finished')
+            <div class="t-card t-finished" data-testid="checklist-card-finished" data-checklist-card="finished">
+                <p class="t-kicker">Ready</p>
+                <h3 tabindex="-1" data-checklist-focus>{{ $card['school_name'] }} is set up</h3>
+                <p>Invites are ready and have not been sent.</p>
+                @include('livewire.partials.checklist-receipt', ['groups' => [
+                    ['tone' => 'structure', 'name' => 'School structure', 'rows' => [
+                        ['label' => 'Terms', 'value' => (int) ($card['terms'] ?? 0)],
+                        ['label' => 'Classes', 'value' => (int) ($card['classes'] ?? 0)],
+                        ['label' => 'Streams', 'value' => (int) ($card['streams'] ?? 0)],
+                        ['label' => 'Subjects', 'value' => (int) ($card['subjects'] ?? 0)],
+                    ]],
+                    ['tone' => 'people', 'name' => 'People', 'rows' => [
+                        ['label' => 'Teachers', 'value' => (int) ($card['teachers'] ?? 0)],
+                        ['label' => 'Learners', 'value' => (int) ($card['learners'] ?? 0)],
+                        ['label' => 'Parents', 'value' => (int) ($card['parents'] ?? 0)],
+                    ]],
+                ]])
+                <p data-testid="invites-ready">Invites ready: {{ (int) ($card['invites_ready'] ?? 0) }}, not sent</p>
+                @if(($card['later'] ?? []) !== [])
+                    <div data-testid="checklist-later">
+                        <p class="t-kicker">To fix later</p>
+                        <ul class="t-points">
+                            @foreach($card['later'] as $later)
+                                <li>Tab {{ $later['tab'] }}, row {{ $later['row'] ?? '—' }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+                <p class="t-kicker">What KlassApp helps with next</p>
+                <div class="t-actions">
+                    @foreach($card['links'] ?? [] as $link)
+                        <a class="t-btn secondary" href="{{ $link['href'] }}">{{ $link['label'] }}</a>
+                    @endforeach
+                    @include('livewire.partials.checklist-back')
+                </div>
+            </div>
         @endif
 
         @if(($card['kind'] ?? '') === 'failed')
             <div class="t-card" data-testid="checklist-card-failed" data-checklist-card="failed">
                 <h3 tabindex="-1" data-checklist-focus>{{ $card['title'] ?? 'Not applied' }}</h3>
                 <p>{{ $card['message'] }}</p>
-                @if($progressLines !== [])
-                    <div class="t-stream" aria-live="polite">
-                        @foreach($progressLines as $progressLine)
-                            @include('livewire.partials.checklist-progress-lines', ['line' => $progressLine])
-                        @endforeach
-                    </div>
-                @endif
+                @include('livewire.partials.checklist-settled-log')
             </div>
         @endif
 
@@ -400,6 +506,43 @@
             if (!window.klassChecklistUi) {
                 window.klassChecklistUi = true;
                 window.klassChecklistCard = '';
+                window.klassChecklistSeen = window.klassChecklistSeen || {};
+                window.klassChecklistPace = function () {
+                    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                    var delay = 0;
+                    var lines = document.querySelectorAll('[data-testid="progress-line"]');
+                    lines.forEach(function (line) {
+                        var id = line.getAttribute('data-progress-id') || '';
+                        if (id === '' || window.klassChecklistSeen[id] || reduce) {
+                            if (id !== '') {
+                                window.klassChecklistSeen[id] = true;
+                            }
+                            line.style.opacity = '1';
+                            return;
+                        }
+                        window.klassChecklistSeen[id] = true;
+                        line.style.setProperty('--pace', delay + 'ms');
+                        line.classList.add('is-entering');
+                        delay += 250;
+                    });
+                    window.klassChecklistFollow(lines);
+                };
+                window.klassChecklistFollow = function (lines) {
+                    if (!lines || !lines.length) {
+                        return;
+                    }
+                    var thread = document.querySelector('.toshi-thread, .toshi-messages, .checklist-onboarding');
+                    if (!thread || thread.getAttribute('data-checklist-stick') === '0') {
+                        return;
+                    }
+                    lines[lines.length - 1].scrollIntoView({ block: 'nearest' });
+                };
+                window.klassChecklistReopen = function () {
+                    if (!document.querySelector('[data-checklist-reopen="1"]') || !window.toshiSetCollapsed) {
+                        return;
+                    }
+                    window.toshiSetCollapsed(false);
+                };
                 window.klassChecklistSyncProgress = function () {
                     var root = document.querySelector('[data-shell-step]');
                     var nav = document.querySelector('[data-testid="checklist-progress-header"]');
@@ -543,12 +686,36 @@
                     setTimeout(function () { window.klassChecklistFocus(true); }, 80);
                     setTimeout(function () { window.klassChecklistFocus(true); }, 350);
                 });
+                document.addEventListener('scroll', function (event) {
+                    var thread = event.target;
+                    if (!thread || !thread.classList) {
+                        return;
+                    }
+                    if (!thread.classList.contains('toshi-thread') && !thread.classList.contains('toshi-messages') && !thread.classList.contains('checklist-onboarding')) {
+                        return;
+                    }
+                    var gap = thread.scrollHeight - thread.scrollTop - thread.clientHeight;
+                    thread.setAttribute('data-checklist-stick', gap > 80 ? '0' : '1');
+                }, true);
+                var klassChecklistBoot = function () {
+                    window.klassChecklistSyncProgress();
+                    window.klassChecklistReopen();
+                    window.klassChecklistPace();
+                };
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', klassChecklistBoot);
+                } else {
+                    klassChecklistBoot();
+                }
                 document.addEventListener('livewire:init', function () {
                     Livewire.hook('commit', function (payload) {
                         payload.succeed(function () {
                         window.klassChecklistFocus(false);
                         if (window.klassChecklistSyncProgress) {
                             window.klassChecklistSyncProgress();
+                        }
+                        if (window.klassChecklistPace) {
+                            window.klassChecklistPace();
                         }
                     });
                     });

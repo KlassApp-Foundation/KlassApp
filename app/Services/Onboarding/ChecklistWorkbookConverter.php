@@ -112,16 +112,16 @@ final class ChecklistWorkbookConverter
 
         $this->emitLine('tab-classes', 'Reading Classes & Streams', 'running');
         $classes = $this->classes($this->sheet($book, 'Classes & Streams'));
-        $this->reportTab('Classes & Streams', 'tab-classes', 'Reading Classes & Streams');
+        $this->reportTab('Classes & Streams', 'tab-classes', $classes['list'], 'class', 'classes');
         $this->emitLine('tab-subjects', 'Reading Subjects', 'running');
         $subjects = $this->subjects($this->sheet($book, 'Subjects'), $out);
-        $this->reportTab('Subjects', 'tab-subjects', 'Reading Subjects');
+        $this->reportTab('Subjects', 'tab-subjects', $subjects['plan'] ?? [], 'subject', 'subjects');
         $this->emitLine('tab-teachers', 'Reading Teachers', 'running');
         $teachers = $this->teachers($this->sheet($book, 'Teachers'), $out);
-        $this->reportTab('Teachers', 'tab-teachers', 'Reading Teachers');
+        $this->reportTab('Teachers', 'tab-teachers', $teachers['list'], 'teacher', 'teachers');
         $this->emitLine('tab-assignments', 'Reading Teaching Assignments', 'running');
         $links = $this->assignments($this->sheet($book, 'Teaching Assignments'), $teachers, $subjects, $classes);
-        $this->reportTab('Teaching Assignments', 'tab-assignments', 'Reading Teaching Assignments');
+        $this->reportTab('Teaching Assignments', 'tab-assignments', $links['plan'] ?? [], 'assignment', 'assignments');
 
         // Teachers file: aggregate subjects/classes from the matched assignments.
         $teacherRows = [];
@@ -140,20 +140,20 @@ final class ChecklistWorkbookConverter
 
         $this->emitLine('tab-learners', 'Reading Learners', 'running');
         [$students, $guardian, $byClass, $learnerPlan] = $this->learners($learnerRows, $classes);
-        $this->reportTab('Learners', 'tab-learners', 'Reading Learners');
+        $this->reportTab('Learners', 'tab-learners', $learnerPlan, 'learner', 'learners');
         $out['files']['students.csv'] = $students;
         $out['pending']['learner-guardian-details.csv'] = $guardian;
         $out['learnersByClass'] = $byClass;
 
         $this->emitLine('tab-terms', 'Reading Terms & Exams', 'running');
         $termPlan = $this->terms($this->sheet($book, 'Terms & Exams'), $out);
-        $this->reportTab('Terms & Exams', 'tab-terms', 'Reading Terms & Exams');
+        $this->reportTab('Terms & Exams', 'tab-terms', $termPlan, 'term', 'terms');
         $this->emitLine('tab-fees', 'Reading Fees', 'running');
         $this->fees($this->sheet($book, 'Fees'), $classes, $out);
-        $this->reportTab('Fees', 'tab-fees', 'Reading Fees');
+        $this->reportTab('Fees', 'tab-fees', [], 'row', 'rows');
         $this->emitLine('tab-admin', 'Reading Admin & Contacts', 'running');
         $this->adminContacts($this->sheet($book, 'Admin & Contacts'), $out);
-        $this->reportTab('Admin & Contacts', 'tab-admin', 'Reading Admin & Contacts');
+        $this->reportTab('Admin & Contacts', 'tab-admin', [], 'row', 'rows');
 
         $this->emitLine('learner-counts', 'Checking learner counts', 'running');
         // Expected (approx.) vs actual learners per class and stream.
@@ -934,14 +934,42 @@ final class ChecklistWorkbookConverter
         }
     }
 
-    private function reportTab(string $tab, string $line, string $label): void
+    /**
+     * @param  list<array<string, mixed>>  $rows
+     */
+    private function reportTab(string $tab, string $line, array $rows, string $one, string $many): void
     {
-        $read = (int) ($this->counts[$tab]['read'] ?? 0);
+        $numbers = [];
+        foreach ($rows as $row) {
+            if (isset($row['row']) && is_numeric($row['row'])) {
+                $numbers[] = (int) $row['row'];
+            }
+        }
+        $count = $rows !== [] ? count($rows) : (int) ($this->counts[$tab]['read'] ?? 0);
+        if ($one === 'class') {
+            $names = [];
+            foreach ($rows as $row) {
+                $name = trim((string) ($row['class'] ?? ''));
+                if ($name !== '') {
+                    $names[$name] = true;
+                }
+            }
+            if ($names !== []) {
+                $count = count($names);
+            }
+        }
+        $span = '';
+        if ($numbers !== []) {
+            $min = min($numbers);
+            $max = max($numbers);
+            $span = $min === $max ? ', row '.$min : ', rows '.$min.' to '.$max;
+        }
+        $noun = $count === 1 ? $one : $many;
+        $this->emitLine($line, 'Reading '.$tab.$span, 'done', $count.' '.$noun);
         $flagged = count(array_filter(
             $this->flags,
             fn (array $flag): bool => $flag['tab'] === $tab && $flag['row'] !== null && ($flag['severity'] ?? 'error') !== 'info'
         ));
-        $this->emitLine($line, $label, 'done', $read.' rows');
         if ($flagged > 0) {
             $this->emitLine(
                 $line.'-flags',

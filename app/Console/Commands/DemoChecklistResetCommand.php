@@ -56,6 +56,9 @@ class DemoChecklistResetCommand extends Command
                 'toshi_enabled' => 1,
                 'registration_country' => 'Kenya',
                 'curriculum' => 'cbc',
+                'onboarding_finished_at' => null,
+                'onboarding_skipped_steps' => null,
+                'motto' => null,
             ])->save();
             $admin = $this->admin($school, $password);
             $this->wipeImported($school, (int) $admin->id);
@@ -146,6 +149,7 @@ class DemoChecklistResetCommand extends Command
             ->pluck('id');
 
         DB::table('onboarding_plans')->where('school_id', $schoolId)->delete();
+        DB::table('school_details')->where('school_id', $schoolId)->where('meta_key', 'moto')->delete();
         DB::table('teacher_invites')->where('school_id', $schoolId)->delete();
         DB::table('class_teacher_links')->where('school_id', $schoolId)->delete();
         DB::table('student_parent_links')->where('school_id', $schoolId)->delete();
