@@ -6,7 +6,7 @@ KlassApp keeps one copy of this checklist per school in Google Sheets, made from
 
 - Work through the tabs in the order they appear: School Details, Admin & Contacts, Terms & Exams, Classes & Streams, Subjects, Teachers, Teaching Assignments, then the learners (one tab per class), then Fees and Confirmations.
 - Type only in the **yellow cells**. Green column headers marked **\*** are required. Blue headers are optional but helpful.
-- **Row 2 on every tab is a grey example row.** Leave it or delete it; KlassApp ignores it. Data starts on row 3.
+- **On the list tabs, row 2 is a grey example row.** Leave it or delete it; KlassApp ignores it, and data starts on row 3. **School Details** and **Confirmations** have no example row: they start on row 2. **All Learners (for import)** also starts on row 2.
 - **Do not type on Progress, Learners per Class or All Learners (for import).** They fill themselves.
 - Do not add, rename, delete or reorder tabs, and do not insert columns.
 
