@@ -42,15 +42,41 @@ class AccountMenuConsistencyTest extends TestCase
         }
     }
 
-    public function test_only_school_admin_and_platform_admin_have_extras(): void
+    public function test_settings_stay_with_admins_and_help_reaches_head_and_class_teachers(): void
     {
         $plain = ['Profile', 'Change password', 'Log out'];
-        foreach ([4, 5, 6, 7, 8, 9, 10, 11, 12] as $id) {
+        foreach ([6, 7, 8, 9, 10, 11, 12] as $id) {
             $this->assertSame($plain, $this->menuLabels($this->userFor($id)), self::ROLES[$id]);
+        }
+
+        $withHelp = ['Profile', 'Change password', 'Help', 'Log out'];
+        foreach ([4, 5] as $id) {
+            $this->assertSame($withHelp, $this->menuLabels($this->userFor($id)), self::ROLES[$id]);
         }
 
         $this->assertSame(['Profile', 'Change password', 'Settings', 'Help', 'Log out'], $this->menuLabels($this->userFor(3)));
         $this->assertSame(['Profile', 'Change password', 'Settings', 'Log out'], $this->menuLabels($this->userFor(1)));
+    }
+
+    public function test_help_deep_link_is_for_admin_head_teacher_and_class_teacher_only(): void
+    {
+        foreach ([3, 4, 5] as $id) {
+            Auth::guard('web')->setUser($this->userFor($id));
+            $html = view('layouts.partials.profile-dropdown')->render();
+
+            $this->assertMatchesRegularExpression('#href="[^"]*/help/guide[^"]*" target="_blank"#', $html, self::ROLES[$id]);
+            $this->assertStringContainsString('data-testid="account-menu-help"', $html, self::ROLES[$id]);
+            $this->assertStringNotContainsString('https://klassapp.xyz/help', $html, self::ROLES[$id]);
+        }
+
+        foreach ([6, 7] as $id) {
+            Auth::guard('web')->setUser($this->userFor($id));
+            $html = view('layouts.partials.profile-dropdown')->render();
+
+            $this->assertStringNotContainsString('/help/guide', $html, self::ROLES[$id]);
+            $this->assertStringNotContainsString('data-testid="account-menu-help"', $html, self::ROLES[$id]);
+            $this->assertNotContains('Help', $this->menuLabels($this->userFor($id)), self::ROLES[$id]);
+        }
     }
 
     public function test_profile_and_password_point_at_the_same_pages_for_every_role(): void
