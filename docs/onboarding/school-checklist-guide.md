@@ -62,6 +62,20 @@ The template's examples use Uganda (`UG`), `UGX` and Ugandan phone numbers. If t
 
 Add one row per term. Three terms is the usual pattern.
 
+## Exams / assessments (below the terms)
+
+The same tab has a second block, below the terms, headed **Exams / assessments you give each term**. Fill one row per assessment:
+
+| Column | What goes in it |
+| --- | --- |
+| Assessment name **\*** | For example `End of Term` |
+| Classes it applies to **\*** | `All`, or list the classes |
+| Out of (marks) **\*** | A whole number |
+| Counts on the report card? **\*** | `Yes` or `No` |
+| Notes | Optional |
+
+Do not move this block or put term rows inside it. The terms go above; the assessments go here.
+
 ## Classes & Streams
 
 | Column | What goes in it |
