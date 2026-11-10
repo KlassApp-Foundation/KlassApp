@@ -1268,6 +1268,9 @@ class ChecklistOnboardingPocTest extends TestCase
         $this->assertStringContainsString('checklist-setup-done', $html);
         $this->assertDoesNotMatchRegularExpression('/data-testid="dashboard-v2-profile">/', $html);
         $this->assertStringNotContainsString("What's set up", $html);
+        $this->assertStringContainsString('data-sidebar-count="students"', $html);
+        $this->assertStringNotContainsString('data-sidebar-count="classes"', $html);
+        $this->assertStringNotContainsString('data-sidebar-count="subjects"', $html);
     }
 
     public function test_editing_terms_before_apply_updates_the_plan_and_not_the_school(): void

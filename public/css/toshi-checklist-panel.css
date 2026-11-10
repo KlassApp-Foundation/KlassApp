@@ -362,6 +362,12 @@ body.checklist-leaving:not(.toshi-collapsed) .toshi-root--checklist .toshi-panel
     body:not(.toshi-collapsed):has(.toshi-root--checklist) { overflow-x: hidden; }
 }
 
+/* The early-access label is centred on the right edge, so half of it
+   (11px) sticks out while the panel is open. */
+@media (min-width: 1280px) {
+    body:not(.toshi-collapsed) .toshi-early-pill { display: none; }
+}
+
 /* Below 1280 the open panel is a 420px overlay, so the dashboard column
    gives up that width. At 1280 and up the dock already shrinks main. */
 @media (min-width: 768px) and (max-width: 1279.98px) {
