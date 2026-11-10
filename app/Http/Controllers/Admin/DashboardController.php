@@ -232,7 +232,45 @@ class DashboardController extends Controller
             'ledger' => \App\Onboarding\OnboardingProgress::checklistRows($school, (int) $user->id),
             'setup_complete' => (int) ($setup['total'] ?? 0) > 0 && (int) ($setup['done'] ?? 0) >= (int) ($setup['total'] ?? 0),
             'hide_options' => $school->onboarding_finished_at !== null,
+            'academic_year' => $this->checklistAcademicYear($school),
+            'term_label' => (string) ($data['termLabel'] ?? ''),
+            'profile_line' => $this->checklistProfileLine($school),
         ]);
+    }
+
+    /**
+     * @return array{id: int|null, label: string}
+     */
+    private function checklistAcademicYear(\App\Models\School $school): array
+    {
+        $year = \App\Models\AcademicYear::query()
+            ->where('school_id', $school->id)
+            ->orderByRaw('CASE WHEN status = 1 THEN 0 ELSE 1 END')
+            ->orderByDesc('start_date')
+            ->first();
+
+        if ($year === null) {
+            return ['id' => null, 'label' => ''];
+        }
+
+        $name = trim((string) $year->name);
+
+        return [
+            'id' => (int) $year->id,
+            'label' => $name.((int) $year->status === 1 ? ' (current)' : ''),
+        ];
+    }
+
+    private function checklistProfileLine(\App\Models\School $school): string
+    {
+        $profile = \App\Onboarding\OnboardingProgress::profile($school);
+
+        return collect([
+            $profile['country'],
+            $profile['curriculum'],
+            $profile['year'],
+            $profile['term'] !== '' ? $profile['term'] : null,
+        ])->filter()->implode(' · ');
     }
 
     /**

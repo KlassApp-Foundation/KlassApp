@@ -177,7 +177,8 @@
 .t-progress-now span { color: var(--t-text-2); }
 .t-vh { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
-.checklist-onboarding { width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; padding: 14px; overflow-x: hidden; }
+.toshi-root--checklist .toshi-messages-area { display: flex; flex-direction: column; }
+.checklist-onboarding { width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; padding: 14px; overflow-x: clip; display: flex; flex-direction: column; flex: 1 0 auto; min-height: 100%; }
 .checklist-onboarding:focus-visible,
 .t-card :focus-visible,
 .toshi-root--checklist :focus-visible {
@@ -195,11 +196,31 @@
 .t-points { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .t-points li { display: flex; align-items: center; gap: 10px; min-height: 44px; }
 .t-ability { width: 32px; height: 32px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; flex: none; background: #ECFDF5; color: var(--t-accent, #15803D); }
+.t-next { list-style: disc; margin: 0; padding-left: 1.15rem; display: flex; flex-direction: column; gap: 4px; }
+.t-next li { display: list-item; }
 .t-actions { display: flex; flex-direction: column; gap: 8px; }
 .t-actions.row { flex-direction: row; }
 .t-actions.row > * { flex: 1; }
-.t-btn { min-height: 48px; width: 100%; border-radius: 12px; border: 1px solid var(--t-accent); background: var(--t-accent); color: var(--t-on-accent); font-size: 0.92rem; font-weight: 700; padding: 10px 12px; cursor: pointer; box-sizing: border-box; font-family: "DM Sans", system-ui, sans-serif; }
+.t-actionbar { position: sticky; bottom: 0; z-index: 3; margin-top: auto; background: var(--t-panel); padding-top: 8px; border-top: 1px solid var(--t-border); }
+.t-actionbar:not(:has(.t-actions)):not(:has(.t-working.is-on)) { display: none; }
+.t-working { display: none; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 0.85rem; font-weight: 600; color: var(--t-text); }
+.t-working.is-on { display: flex; }
+.t-ring { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #d1fae5; border-top-color: #15803D; display: inline-block; flex: none; animation: t-spin 0.8s linear infinite; }
+.t-btn { min-height: 48px; width: 100%; border-radius: 12px; border: 1px solid var(--t-accent); background: var(--t-accent); color: var(--t-on-accent); font-size: 0.92rem; font-weight: 700; padding: 10px 12px; cursor: pointer; box-sizing: border-box; font-family: "DM Sans", system-ui, sans-serif; transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease; }
+.t-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--t-accent) 86%, #000); }
 .t-btn.secondary { min-height: 44px; background: var(--t-card); color: var(--t-text); border-color: var(--t-input-border); font-weight: 600; }
+.t-btn.secondary:hover:not(:disabled) { background: color-mix(in srgb, var(--t-accent) 12%, var(--t-card)); }
+.t-btn:focus-visible,
+.t-actionbar :focus-visible,
+.t-drive:focus-visible,
+.t-clear:focus-visible,
+.toshi-root--checklist button:focus-visible { outline: 2px solid var(--t-focus); outline-offset: 2px; }
+.toshi-root--checklist button:hover:not(:disabled),
+.t-drive:hover:not(:disabled) { cursor: pointer; }
+.t-drive:hover:not(:disabled) { background: color-mix(in srgb, var(--t-accent) 8%, #fff); }
+.toshi-root--checklist .toshi-header-btn:hover,
+.toshi-root--checklist .toshi-close:hover,
+.toshi-root--checklist .toshi-header-back:hover { background: color-mix(in srgb, var(--t-accent) 12%, transparent); }
 .toshi-root--checklist .toshi-header-btn,
 .toshi-root--checklist .toshi-close {
     min-width: 44px;
@@ -246,7 +267,8 @@ a.t-btn { display: inline-flex; align-items: center; justify-content: center; te
 .t-table th, .t-table td { padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--t-border); white-space: nowrap; overflow-wrap: normal; word-break: normal; }
 .t-table th { font-size: 0.7rem; color: var(--t-text-2); font-weight: 700; }
 .t-flags { background: var(--t-warn-bg); border: 1px solid var(--t-warn-border); border-radius: 12px; padding: 10px 12px; color: var(--t-warn-fg); }
-.t-flags li { color: var(--t-warn-fg); }
+.t-flags li, .t-flags .t-later { color: var(--t-warn-fg); }
+.t-later { overflow-wrap: anywhere; }
 .t-stream { display: flex; flex-direction: column; gap: 8px; }
 .t-log { margin: 4px 0 0; }
 .t-log summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-size: 0.88rem; font-weight: 600; }
@@ -254,6 +276,18 @@ a.t-btn { display: inline-flex; align-items: center; justify-content: center; te
 .t-line { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 8px; align-items: center; min-height: 28px; font-size: 0.88rem; }
 .t-meter { grid-column: 1 / -1; display: block; height: 6px; border-radius: 999px; background: var(--t-border); overflow: hidden; }
 .t-meter i { display: block; height: 100%; background: var(--t-accent); width: 0; }
+body:has(.t-working.is-on) .t-bars i.is-on,
+.checklist-onboarding:has(.t-working.is-on) .t-meter i {
+    background-image: repeating-linear-gradient(-45deg, #15803D 0 8px, #22c55e 8px 16px);
+    background-size: 32px 32px;
+    animation: t-stripes 0.9s linear infinite;
+}
+@keyframes t-stripes { from { background-position: 0 0; } to { background-position: 32px 0; } }
+body.checklist-leaving:not(.toshi-collapsed) .toshi-root--checklist .toshi-panel {
+    transition: opacity 220ms ease, transform 220ms ease !important;
+    opacity: 0 !important;
+    transform: translateY(8px) !important;
+}
 .t-line.is-entering { opacity: 0; animation: t-line-in 200ms ease forwards; animation-delay: var(--pace, 0ms); }
 .t-line-label { font-weight: 400; }
 .t-line-running .t-line-label { font-weight: 600; }
@@ -267,7 +301,12 @@ a.t-btn { display: inline-flex; align-items: center; justify-content: center; te
 @keyframes t-line-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 .t-line { animation: t-line-in 160ms ease; }
 @media (prefers-reduced-motion: reduce) {
-    .t-spin, .t-line, .t-line.is-entering, .t-finished, .toshi-root--checklist .toshi-panel { animation: none !important; opacity: 1 !important; }
+    .t-spin, .t-ring, .t-line, .t-line.is-entering, .t-finished, .toshi-root--checklist .toshi-panel { animation: none !important; }
+    .t-line, .t-line.is-entering, .t-finished { opacity: 1 !important; }
+    .t-btn, .t-drive, body.checklist-leaving:not(.toshi-collapsed) .toshi-root--checklist .toshi-panel { transition: none !important; }
+    body.checklist-leaving:not(.toshi-collapsed) .toshi-root--checklist .toshi-panel { transform: none !important; opacity: 1 !important; }
+    body:has(.t-working.is-on) .t-bars i.is-on,
+    .checklist-onboarding:has(.t-working.is-on) .t-meter i { animation: none !important; background-image: none !important; }
 }
 @media (max-width: 767px) {
     .t-table th, .t-table td { white-space: normal; }

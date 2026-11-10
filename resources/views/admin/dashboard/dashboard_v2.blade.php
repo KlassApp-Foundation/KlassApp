@@ -603,6 +603,56 @@ window.klassDashboardToshiSetup = function () {
                 });
             }
         }
+        var yearBox = document.querySelector('[data-testid="dashboard-v2-year"]');
+        var year = payload.academic_year || {};
+        var yearLabel = year.label || '';
+        if (yearBox && yearLabel !== '') {
+            var select = yearBox.querySelector('[data-testid="dashboard-v2-year-select"]');
+            if (!select) {
+                yearBox.replaceChildren();
+                var caption = document.createElement('label');
+                caption.className = 'dv2-year-label';
+                caption.setAttribute('for', 'dv2-year-select');
+                caption.textContent = 'Academic year';
+                select = document.createElement('select');
+                select.id = 'dv2-year-select';
+                select.setAttribute('aria-label', 'Academic year');
+                select.setAttribute('data-testid', 'dashboard-v2-year-select');
+                var option = document.createElement('option');
+                option.value = year.id ? String(year.id) : '';
+                option.selected = true;
+                option.textContent = yearLabel;
+                select.appendChild(option);
+                yearBox.appendChild(caption);
+                yearBox.appendChild(select);
+            } else {
+                var chosen = select.options[select.selectedIndex] || select.options[0];
+                if (chosen && chosen.textContent !== yearLabel) {
+                    chosen.textContent = yearLabel;
+                }
+            }
+        }
+        if (payload.term_label) {
+            setText('dashboard-v2-title', payload.term_label);
+            var termNode = document.querySelector('.nav-school-term');
+            if (!termNode) {
+                var schoolLine = document.querySelector('.nav-school-line');
+                if (schoolLine) {
+                    termNode = document.createElement('span');
+                    termNode.className = 'nav-school-term';
+                    schoolLine.appendChild(termNode);
+                }
+            }
+            if (termNode && termNode.textContent !== payload.term_label) {
+                termNode.textContent = payload.term_label;
+            }
+        }
+        if (payload.profile_line) {
+            var profileLine = document.querySelector('[data-testid="dashboard-v2-profile"] p');
+            if (profileLine && profileLine.textContent !== payload.profile_line) {
+                profileLine.textContent = payload.profile_line;
+            }
+        }
         if (payload.hide_options) {
             var bar = document.querySelector('[data-testid="dashboard-v2-setup-bar"]');
             if (bar) {

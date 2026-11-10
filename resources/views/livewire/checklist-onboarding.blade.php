@@ -12,9 +12,6 @@
                     <li><span class="t-ability" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>Help with everyday tasks</li>
                 </ul>
                 <p>Nothing is saved without your approval.</p>
-                <div class="t-actions">
-                    <button type="button" class="t-btn" wire:click="start" data-testid="onboard-from-checklist">Set up from checklist</button>
-                </div>
             </div>
             @if(($card['kind'] ?? '') === 'hint')
                 <p class="t-note" data-testid="checklist-hint">{{ $card['message'] }}</p>
@@ -36,9 +33,6 @@
                 </p>
                 <span id="checklist-privacy-draft" hidden></span>
                 <span id="checklist-terms-draft" hidden></span>
-                <div class="t-actions">
-                    <button type="button" class="t-btn" wire:click="confirmAgreement" data-testid="confirm-agreement" @disabled(! $agreed) @if(! $agreed) aria-describedby="checklist-agree-hint" @endif>Continue</button>
-                </div>
             </div>
         @endif
 
@@ -79,10 +73,6 @@
                     @endif
                 </div>
                 <div class="t-stream" wire:stream="checklist-progress" aria-live="polite" data-testid="checklist-progress"></div>
-                <div class="t-actions">
-                    <button type="button" class="t-btn" wire:click="ingest" data-testid="checklist-read" @disabled($workbook === null && trim($sheetUrl) === '' && $sheetFileId === '') @if($workbook === null && trim($sheetUrl) === '' && $sheetFileId === '') aria-describedby="checklist-read-hint" @endif>Read this checklist</button>
-                    @include('livewire.partials.checklist-back')
-                </div>
                 <p class="t-note" id="checklist-read-hint">Choose an .xlsx file or paste a link before reading.</p>
                 @if($sheetNote !== '')
                     <p class="t-note" data-testid="checklist-sheet-note">{{ $sheetNote }}</p>
@@ -114,14 +104,10 @@
                     <div data-testid="checklist-details">
                         <p class="t-kicker">A few details to finish</p>
                         <p>{{ $details[0]['label'] }}</p>
-                        <div class="t-actions">
-                            <button type="button" class="t-btn" wire:click="openDetail" data-testid="checklist-detail">Fill this in</button>
-                        </div>
                     </div>
                 @endif
                 @if(is_array($editor))
                     <livewire:manual-onboarding-wizard :embedded="true" :embed-step="$editor['step']" :embed-persist="$editor['persist']" :embed-field="$editor['field'] ?? ''" :embed-terms="$editor['terms'] ?? []" :key="'checklist-wizard-'.$editor['step'].'-'.($editor['field'] ?? '')" />
-                    <button type="button" class="t-btn secondary" wire:click="closeEditor" data-testid="checklist-editor-close">Close</button>
                 @endif
                 @php
                     $sheetSteps = $card['steps'] ?? [];
@@ -224,20 +210,6 @@
                     @if(count($card['flags']) > 8)
                         <button type="button" class="t-btn secondary" wire:click="toggleShown" data-testid="checklist-show-all">{{ $showAll ? 'Show less' : 'See every row' }}</button>
                     @endif
-                    <div class="t-actions">
-                        <button type="button" class="t-btn" wire:click="skipFlags" data-testid="skip-these-rows" data-checklist-focus>Continue</button>
-                        <button type="button" class="t-btn secondary" wire:click="stopForFix" data-testid="stop-fix-workbook">Stop, I'll fix the workbook</button>
-                        @include('livewire.partials.checklist-back')
-                    </div>
-                @elseif(is_array($follow) && ($follow['kind'] ?? '') === 'preview')
-                    <div class="t-actions">
-                        <button type="button" class="t-btn" wire:click="openNext" data-testid="checklist-next" data-checklist-focus>Next: {{ $follow['name'] ?? 'Terms' }}</button>
-                        @include('livewire.partials.checklist-back')
-                    </div>
-                @else
-                    <div class="t-actions">
-                        @include('livewire.partials.checklist-back')
-                    </div>
                 @endif
                 <p class="t-note">Class teachers listed: {{ $card['class_teachers_listed'] }}. Not written.</p>
                 @include('livewire.partials.checklist-settled-log')
@@ -258,21 +230,8 @@
                 @endif
                 <p data-testid="result-line" class="t-note">{{ $card['line'] ?? '' }}</p>
                 <p><a href="{{ $card['href'] }}" data-testid="result-link">{{ $card['href_label'] }}</a></p>
-                @if(is_array($follow) && ($follow['kind'] ?? '') === 'preview')
-                    <div class="t-actions">
-                        <button type="button" class="t-btn" wire:click="openNext" data-testid="checklist-next" data-checklist-focus>Next: {{ $follow['name'] ?? '' }}</button>
-                        <button type="button" class="t-btn secondary" wire:click="openEditor" data-testid="checklist-edit">Edit</button>
-                        @include('livewire.partials.checklist-back')
-                    </div>
-                @else
-                    <div class="t-actions">
-                        <button type="button" class="t-btn secondary" wire:click="openEditor" data-testid="checklist-edit">Edit</button>
-                        @include('livewire.partials.checklist-back')
-                    </div>
-                @endif
                 @if(is_array($editor))
                     <livewire:manual-onboarding-wizard :embedded="true" :embed-step="$editor['step']" :embed-persist="$editor['persist']" :embed-field="$editor['field'] ?? ''" :embed-terms="$editor['terms'] ?? []" :key="'checklist-wizard-'.$editor['step'].'-result'" />
-                    <button type="button" class="t-btn secondary" wire:click="closeEditor" data-testid="checklist-editor-close">Close</button>
                 @endif
             </div>
         @endif
@@ -324,14 +283,6 @@
 
                 @if($waiting)
                     <p data-testid="checklist-question">{{ $question['prompt'] }}</p>
-                    <div class="t-actions">
-                        @foreach($question['answers'] as $answer)
-                            <button type="button" class="t-btn" wire:click="answerQuestion('{{ $answer['id'] }}')" data-testid="question-{{ $answer['id'] }}" @if($loop->first) data-checklist-focus @endif>{{ $answer['label'] }}</button>
-                        @endforeach
-                        @if(! $showOther)
-                            <button type="button" class="t-btn secondary" wire:click="answerQuestion('other')" data-testid="question-other">Something else</button>
-                        @endif
-                    </div>
                     @if($showOther)
                         <textarea class="t-text" wire:model="otherText" maxlength="200" data-testid="question-other-text" rows="3"></textarea>
                         <div class="t-actions">
@@ -347,12 +298,6 @@
                     @endif
                     @if($showChange)
                         <p>Keep the names and dates as they are written on the sheet, or type a note. A note does not change the sheet and does not write anything.</p>
-                        <div class="t-actions">
-                            <button type="button" class="t-btn secondary" wire:click="keepSheet" data-testid="keep-sheet">Keep the sheet as written</button>
-                            @if(! $showOther)
-                                <button type="button" class="t-btn secondary" wire:click="answerQuestion('other')" data-testid="question-other">Something else</button>
-                            @endif
-                        </div>
                         @if($showOther)
                             <textarea class="t-text" wire:model="otherText" maxlength="200" data-testid="question-other-text" rows="3"></textarea>
                             <div class="t-actions">
@@ -360,22 +305,8 @@
                             </div>
                         @endif
                     @endif
-                    @if(! $blocked)
-                        <div class="t-actions">
-                            <button type="button" class="t-btn" wire:click="confirmStep" data-testid="confirm-step" data-checklist-focus>{{ $preview['approve_label'] }}</button>
-                            <button type="button" class="t-btn secondary" wire:click="openEditor" data-testid="checklist-edit">Edit</button>
-                            <div class="t-actions row">
-                                @if(! $showChange)
-                                    <button type="button" class="t-btn secondary" wire:click="openChange" data-testid="change-step">Change</button>
-                                @endif
-                                <button type="button" class="t-btn secondary" wire:click="skipStep" data-testid="skip-step">Skip</button>
-                            </div>
-                            @include('livewire.partials.checklist-back')
-                        </div>
-                        @if(is_array($editor))
-                            <livewire:manual-onboarding-wizard :embedded="true" :embed-step="$editor['step']" :embed-persist="$editor['persist']" :embed-field="$editor['field'] ?? ''" :embed-terms="$editor['terms'] ?? []" :key="'checklist-wizard-'.$editor['step'].'-preview'" />
-                            <button type="button" class="t-btn secondary" wire:click="closeEditor" data-testid="checklist-editor-close">Close</button>
-                        @endif
+                    @if(! $blocked && is_array($editor))
+                        <livewire:manual-onboarding-wizard :embedded="true" :embed-step="$editor['step']" :embed-persist="$editor['persist']" :embed-field="$editor['field'] ?? ''" :embed-terms="$editor['terms'] ?? []" :key="'checklist-wizard-'.$editor['step'].'-preview'" />
                     @endif
                 @endif
             </div>
@@ -412,16 +343,7 @@
                     ]])
                     <p data-testid="invites-ready">Invites ready: {{ $done['invites_ready'] }}, not sent</p>
                     <p class="t-note">No email or WhatsApp message was sent.</p>
-                    @if(($done['later'] ?? []) !== [])
-                        <div data-testid="checklist-later">
-                            <p class="t-kicker">To fix later</p>
-                            <ul class="t-points">
-                                @foreach($done['later'] as $later)
-                                    <li>Tab {{ $later['tab'] }}, row {{ $later['row'] ?? '—' }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
+                    @include('livewire.partials.checklist-later', ['rows' => $done['later'] ?? []])
                     <p>KLS numbers present: {{ $done['kls_present'] ? 'yes' : 'no' }}@if(($done['kls_missing'] ?? 0) > 0) ({{ $done['kls_missing'] }} missing)@endif.</p>
                     <p>Phones in international format: {{ $done['phones_e164'] ? 'yes' : 'no' }}.</p>
                     @if(($done['checks'] ?? []) !== [])
@@ -440,10 +362,6 @@
                         @endif
                     @endif
                     <p class="t-note">Class teachers listed: {{ $done['class_teachers_listed'] }}. Not written.</p>
-                    <div class="t-actions">
-                        <button type="button" class="t-btn" wire:click="finishSetup" data-testid="checklist-finish" data-checklist-focus>Finish setup</button>
-                        @include('livewire.partials.checklist-back')
-                    </div>
                 </div>
             @endif
         @endif
@@ -467,23 +385,14 @@
                     ]],
                 ]])
                 <p data-testid="invites-ready">Invites ready: {{ (int) ($card['invites_ready'] ?? 0) }}, not sent</p>
-                @if(($card['later'] ?? []) !== [])
-                    <div data-testid="checklist-later">
-                        <p class="t-kicker">To fix later</p>
-                        <ul class="t-points">
-                            @foreach($card['later'] as $later)
-                                <li>Tab {{ $later['tab'] }}, row {{ $later['row'] ?? '—' }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
+                @include('livewire.partials.checklist-later', ['rows' => $card['later'] ?? []])
                 <p class="t-kicker">What KlassApp helps with next</p>
-                <div class="t-actions">
-                    @foreach($card['links'] ?? [] as $link)
-                        <a class="t-btn secondary" href="{{ $link['href'] }}">{{ $link['label'] }}</a>
-                    @endforeach
-                    @include('livewire.partials.checklist-back')
-                </div>
+                <ul class="t-next">
+                    <li>Attendance registers</li>
+                    <li>Marks and report cards</li>
+                    <li>Fees</li>
+                    <li>Parents on WhatsApp</li>
+                </ul>
             </div>
         @endif
 
@@ -498,9 +407,10 @@
         @if(($card['kind'] ?? '') === 'stopped')
             <div class="t-card" data-testid="checklist-card-stopped" data-checklist-card="stopped">
                 <p>{{ $card['message'] }}</p>
-                <button type="button" class="t-btn" wire:click="start" data-testid="onboard-from-checklist-again" data-checklist-focus>Set up from checklist</button>
             </div>
         @endif
+
+        @include('livewire.partials.checklist-actions')
 
         <script>
             if (!window.klassChecklistUi) {
@@ -528,14 +438,23 @@
                     window.klassChecklistFollow(lines);
                 };
                 window.klassChecklistFollow = function (lines) {
-                    if (!lines || !lines.length) {
+                    var thread = document.querySelector('.toshi-messages-area');
+                    if (!thread || thread.getAttribute('data-checklist-stick') === '0' || !lines || !lines.length) {
                         return;
                     }
-                    var thread = document.querySelector('.toshi-thread, .toshi-messages, .checklist-onboarding');
-                    if (!thread || thread.getAttribute('data-checklist-stick') === '0') {
-                        return;
+                    var last = lines[lines.length - 1];
+                    var limit = thread.getBoundingClientRect().bottom;
+                    var bar = document.querySelector('.t-actionbar');
+                    if (bar) {
+                        var barTop = bar.getBoundingClientRect().top;
+                        if (barTop > 0 && barTop < limit) {
+                            limit = barTop;
+                        }
                     }
-                    lines[lines.length - 1].scrollIntoView({ block: 'nearest' });
+                    var bottom = last.getBoundingClientRect().bottom;
+                    if (bottom > limit - 8) {
+                        thread.scrollTop += bottom - limit + 12;
+                    }
                 };
                 window.klassChecklistReopen = function () {
                     if (!document.querySelector('[data-checklist-reopen="1"]') || !window.toshiSetCollapsed) {
@@ -691,7 +610,7 @@
                     if (!thread || !thread.classList) {
                         return;
                     }
-                    if (!thread.classList.contains('toshi-thread') && !thread.classList.contains('toshi-messages') && !thread.classList.contains('checklist-onboarding')) {
+                    if (!thread.classList.contains('toshi-messages-area') && !thread.classList.contains('toshi-thread') && !thread.classList.contains('toshi-messages') && !thread.classList.contains('checklist-onboarding')) {
                         return;
                     }
                     var gap = thread.scrollHeight - thread.scrollTop - thread.clientHeight;
@@ -708,6 +627,19 @@
                     klassChecklistBoot();
                 }
                 document.addEventListener('livewire:init', function () {
+                    if (!window.klassChecklistContinue && window.Livewire) {
+                        window.klassChecklistContinue = true;
+                        window.Livewire.on('checklist-continue-dashboard', function () {
+                            document.body.classList.add('checklist-leaving');
+                            var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                            window.setTimeout(function () {
+                                if (window.toshiSetCollapsed) {
+                                    window.toshiSetCollapsed(true);
+                                }
+                                window.location.assign('/admin/dashboard');
+                            }, reduce ? 0 : 280);
+                        });
+                    }
                     Livewire.hook('commit', function (payload) {
                         payload.succeed(function () {
                         window.klassChecklistFocus(false);

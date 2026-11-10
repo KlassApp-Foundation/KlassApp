@@ -411,6 +411,20 @@ class ChecklistOnboarding extends Component
         $this->publishStep();
     }
 
+    public function continueToDashboard(): void
+    {
+        if (! $this->guard() || ($this->card['kind'] ?? '') !== 'finished') {
+            return;
+        }
+
+        $key = $this->rememberKey();
+        if ($key !== null) {
+            session()->forget($key);
+        }
+
+        $this->dispatch('checklist-continue-dashboard');
+    }
+
     public function openEditor(): void
     {
         if (! $this->guard()) {

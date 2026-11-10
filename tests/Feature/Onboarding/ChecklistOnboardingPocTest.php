@@ -406,6 +406,9 @@ class ChecklistOnboardingPocTest extends TestCase
             'staff' => ['value'],
             'ledger',
             'setup_complete',
+            'academic_year' => ['id', 'label'],
+            'term_label',
+            'profile_line',
         ]);
         $real = $this->school(false, false, 'real-figures');
         $this->actingAs($this->admin($real))->get('/admin/dashboard/checklist-figures')->assertNotFound();
@@ -1034,7 +1037,14 @@ class ChecklistOnboardingPocTest extends TestCase
                     ['label' => 'Parents', 'value' => 2],
                 ],
                 'invites_ready' => 3,
-                'later' => [['tab' => 'Learners', 'row' => 40]],
+                'later' => [[
+                    'tab' => 'Learners',
+                    'row' => 40,
+                    'field' => 'Phone',
+                    'value' => '12345',
+                    'message' => 'Phone is not a number we can use',
+                    'fix' => 'Use the full number with the country code',
+                ]],
                 'kls_present' => true,
                 'kls_missing' => 0,
                 'phones_e164' => true,
@@ -1042,16 +1052,30 @@ class ChecklistOnboardingPocTest extends TestCase
                 'skipped' => 1,
             ])
             ->assertSee('Finish setup')
+            ->assertSee('Toshi is working', false)
+            ->assertSee('data-testid="checklist-actions"', false)
             ->assertSee('To fix later')
-            ->assertSee('row 40')
+            ->assertSee('Tab Learners, row 40, field Phone, value 12345.')
+            ->assertSee('Suggested fix')
+            ->assertSee('Phone is not a number we can use')
+            ->assertSee('Use the full number with the country code')
             ->call('finishSetup')
             ->assertSee($school->name.' is set up')
             ->assertSee('What KlassApp helps with next')
+            ->assertSee('class="t-next"', false)
             ->assertSee('Attendance registers')
             ->assertSee('Marks and report cards')
-            ->assertSee('Parents on WhatsApp');
+            ->assertSee('Fees')
+            ->assertSee('Parents on WhatsApp')
+            ->assertSee('Continue to dashboard')
+            ->assertSee('data-testid="checklist-continue"', false)
+            ->assertDontSee('data-testid="checklist-back"', false)
+            ->assertDontSee('class="t-btn secondary" href', false)
+            ->call('continueToDashboard')
+            ->assertDispatched('checklist-continue-dashboard');
 
         $this->assertNotNull($school->fresh()->onboarding_finished_at);
+        $this->assertNull(session(ChecklistOnboarding::sessionKey($school->id, $admin->id)));
     }
 
     public function test_back_returns_to_the_agreement_and_a_new_page_reopens_the_step(): void

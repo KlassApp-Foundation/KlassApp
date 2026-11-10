@@ -1182,10 +1182,18 @@ final class ChecklistOnboardingService
             'invites_ready' => (int) ($payload['invites_ready'] ?? 0),
             'class_teachers_listed' => (int) ($payload['class_teachers_listed'] ?? 0),
             'skipped' => count($payload['skipped_flags'] ?? []),
-            'later' => array_map(fn (array $flag): array => [
-                'tab' => (string) ($flag['tab'] ?? ''),
-                'row' => $flag['row'] ?? null,
-            ], array_values($payload['skipped_flags'] ?? [])),
+            'later' => array_map(function (array $flag) use ($payload): array {
+                $shown = $this->presentFlag($flag, $payload);
+
+                return [
+                    'tab' => (string) ($shown['tab'] ?? ''),
+                    'row' => $shown['row'] ?? null,
+                    'field' => (string) ($shown['field'] ?? ''),
+                    'value' => (string) ($shown['value'] ?? ''),
+                    'message' => (string) ($shown['message'] ?? ''),
+                    'fix' => (string) ($shown['fix'] ?? ''),
+                ];
+            }, array_values($payload['skipped_flags'] ?? [])),
         ];
     }
 
