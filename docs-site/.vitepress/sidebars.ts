@@ -24,9 +24,9 @@ export const helpSidebar = [
     { text: 'Book a setup session', link: '/help/admins/book-onboarding' },
     { text: 'Classes and streams', link: '/help/concepts/classes-and-streams' } ] },
   { text: 'School guides', collapsed: false, items: [
+    { text: 'All school guides', link: '/help/guides/' },
     { text: 'Onboarding checklist', link: '/help/guides/school-checklist' },
     { text: 'Marks workbook', link: '/help/guides/marks-workbook' },
-    { text: 'Onboarding with Toshi', link: '/help/guides/onboarding-with-toshi' },
     { text: 'Take attendance', link: '/help/guides/attendance' },
     { text: 'Filter students', link: '/help/guides/student-filters' },
     { text: 'Class pages and streams', link: '/help/guides/class-pages' },
