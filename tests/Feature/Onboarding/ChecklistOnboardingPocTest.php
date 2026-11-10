@@ -268,6 +268,92 @@ class ChecklistOnboardingPocTest extends TestCase
         $this->assertCount(6, $classNames);
     }
 
+    public function test_every_step_reads_as_ready_plus_flagged_and_the_summary_matches_done(): void
+    {
+        [$school, $admin] = $this->demoAdmin();
+        $path = (new DemoChecklistWorkbook)->write($this->dir.'/reconcile.xlsx', true, false, 'Yes');
+        $service = app(ChecklistOnboardingService::class);
+        $ingested = $service->ingest($school, $admin, $path, 'reconcile.xlsx');
+
+        $this->assertTrue($ingested['ok']);
+        $summaryPeople = $this->peopleTotal($ingested['card']['stats']);
+        $learners = null;
+        foreach ($ingested['card']['steps'] as $step) {
+            $this->assertSame($step['read'], $step['accepted'] + $step['flagged'], $step['key']);
+            if ($step['key'] === 'students') {
+                $learners = $step;
+            }
+        }
+        $this->assertNotNull($learners);
+        $this->assertSame(4, $learners['read']);
+        $this->assertSame(2, $learners['accepted']);
+        $this->assertSame(2, $learners['flagged']);
+        $stats = $this->statsByLabel($ingested['card']['stats']);
+        $this->assertSame($learners['accepted'], $stats['Learners']);
+        $this->assertSame($learners['accepted'], $stats['Parents']);
+        $phone = collect($ingested['card']['flags'])->first(fn (array $flag): bool => str_contains((string) $flag['message'], '12345'));
+        $this->assertIsArray($phone);
+        $this->assertSame('Learner ready, parent skipped.', $phone['fix']);
+
+        $plan = OnboardingPlan::query()->findOrFail($ingested['plan_id']);
+        $service->skipFlags($plan, $admin);
+        foreach (['terms', 'standards', 'subjects', 'teachers', 'students'] as $key) {
+            $preview = $service->previewCard($plan->fresh(), $admin);
+            $this->assertSame($key, $preview['step_key']);
+            if ($key === 'standards') {
+                $this->assertSame('Create 1 class', $preview['approve_label']);
+            }
+            $applied = $service->apply($plan->fresh(), $admin);
+            $this->assertTrue($applied['ok'], $applied['card']['message'] ?? $key);
+            if ($key === 'standards') {
+                $this->assertSame('Created 1 class.', $applied['card']['line']);
+            }
+        }
+
+        $done = $service->previewCard($plan->fresh(), $admin);
+        $this->assertSame('done', $done['kind']);
+        $this->assertSame($summaryPeople, $this->peopleTotal($done['stats']));
+        $this->assertSame($this->statsByLabel($ingested['card']['stats']), $this->statsByLabel($done['stats']));
+        $this->assertSame(2, User::query()->where('school_id', $school->id)->where('usergroup_id', 6)->count());
+        $this->assertSame(2, User::query()->where('school_id', $school->id)->where('usergroup_id', 7)->count());
+    }
+
+    public function test_the_full_checklist_ready_count_matches_the_rows_that_will_be_created(): void
+    {
+        [$school, $admin] = $this->demoAdmin();
+        $path = (new DemoChecklistWorkbook)->write($this->dir.'/full-counts.xlsx', true, true, 'Yes');
+        $service = app(ChecklistOnboardingService::class);
+        $ingested = $service->ingest($school, $admin, $path, 'full-counts.xlsx');
+
+        $this->assertTrue($ingested['ok']);
+        foreach ($ingested['card']['steps'] as $step) {
+            $this->assertSame($step['read'], $step['accepted'] + $step['flagged'], $step['key']);
+        }
+        $learners = collect($ingested['card']['steps'])->firstWhere('key', 'students');
+        $this->assertSame(['read' => 122, 'accepted' => 120, 'flagged' => 2], [
+            'read' => $learners['read'],
+            'accepted' => $learners['accepted'],
+            'flagged' => $learners['flagged'],
+        ]);
+        $stats = $this->statsByLabel($ingested['card']['stats']);
+        $this->assertSame(120, $stats['Learners']);
+        $this->assertSame(120, $stats['Parents']);
+        $this->assertSame(8, $stats['Teachers']);
+        $this->assertSame(6, $stats['Classes']);
+        $this->assertSame(4, $stats['Streams']);
+        $this->assertSame(248, $this->peopleTotal($ingested['card']['stats']));
+
+        $plan = OnboardingPlan::query()->findOrFail($ingested['plan_id']);
+        $service->skipFlags($plan, $admin);
+        $service->apply($plan->fresh(), $admin);
+        $preview = $service->previewCard($plan->fresh(), $admin);
+        $this->assertSame('standards', $preview['step_key']);
+        $this->assertSame('Create 6 classes and 4 streams', $preview['approve_label']);
+        $applied = $service->apply($plan->fresh(), $admin);
+        $this->assertTrue($applied['ok'], $applied['card']['message'] ?? 'standards');
+        $this->assertSame('Created 6 classes and 4 streams.', $applied['card']['line']);
+    }
+
     public function test_reset_refuses_a_real_school_and_clears_only_the_demo_import(): void
     {
         $real = $this->school(false, false, DemoChecklistResetCommand::SLUG);
@@ -326,8 +412,13 @@ class ChecklistOnboardingPocTest extends TestCase
             ->assertSee('I agree on behalf of the school')
             ->assertDontSee('Data Processing Agreement')
             ->assertSee('Nothing is saved until you approve each step')
-            ->assertSee('Privacy Policy')
-            ->assertSee('Terms')
+            ->assertSee('Privacy Policy (draft)')
+            ->assertSee('Terms (draft)')
+            ->assertSee('href="#checklist-privacy-draft"', false)
+            ->assertSee('href="#checklist-terms-draft"', false)
+            ->assertDontSee(route('privacy'), false)
+            ->assertDontSee(route('terms'), false)
+            ->assertDontSee('Gegosoft', false)
             ->assertSee('Continue')
             ->assertDontSee('I agree, continue')
             ->set('workbook', $upload)
@@ -346,7 +437,7 @@ class ChecklistOnboardingPocTest extends TestCase
             ->assertSee("Stop, I'll fix the workbook", false)
             ->assertSee('12345')
             ->assertSee('Primary Eight')
-            ->assertSee('Correct the phone on that row, or skip the row.')
+            ->assertSee('Learner ready, parent skipped.')
             ->call('skipFlags')
             ->assertSee('Create 1 term')
             ->assertSee('Use the term names and dates as written')
@@ -883,6 +974,30 @@ class ChecklistOnboardingPocTest extends TestCase
         putenv('DEMO_CHECKLIST_ADMIN_PASSWORD='.$password);
         $_ENV['DEMO_CHECKLIST_ADMIN_PASSWORD'] = $password;
         $_SERVER['DEMO_CHECKLIST_ADMIN_PASSWORD'] = $password;
+    }
+
+    /**
+     * @param  list<array{label: string, value: string|int}>  $stats
+     */
+    private function peopleTotal(array $stats): int
+    {
+        $byLabel = $this->statsByLabel($stats);
+
+        return ($byLabel['Teachers'] ?? 0) + ($byLabel['Learners'] ?? 0) + ($byLabel['Parents'] ?? 0);
+    }
+
+    /**
+     * @param  list<array{label: string, value: string|int}>  $stats
+     * @return array<string, int>
+     */
+    private function statsByLabel(array $stats): array
+    {
+        $byLabel = [];
+        foreach ($stats as $stat) {
+            $byLabel[$stat['label']] = (int) $stat['value'];
+        }
+
+        return $byLabel;
     }
 
     /**

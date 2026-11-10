@@ -55,13 +55,15 @@ The same counts, as a short list:
 | Classes and streams | 8 | 8 | 0 |
 | Subjects | 5 | 5 | 0 |
 | Teachers and teaching assignments | 8 | 8 | 0 |
-| Learners and parents | 122 | 121 | 2 |
+| Learners and parents | 122 | 120 | 2 |
+
+Read equals Ready plus Flagged on every row. The People total uses the same figures as Done, after the flagged rows are left out: 8 teachers, 120 learners and 120 parents, 248 people.
 
 Then the line under the list: class teachers listed 8, and this demo does not write class teachers.
 
 Say: "Two rows are wrong. Toshi names the tab and the row, and says how to fix each one."
 
-- Learners, row 123: parent phone `12345`. Correct the phone, or skip the row.
+- Learners, row 123: parent phone `12345`. Learner ready, parent skipped. The row stays in Flagged, so Ready is 120 and the create is 120 learners and 120 parents.
 - Learners, row 124: class name Primary Eight. Use a class name KlassApp already knows, or skip the row.
 
 Say: "We can skip those two rows, or stop and fix the file. Nothing is saved until we confirm a step."
@@ -75,7 +77,7 @@ If instead you click **Stop, I'll fix the workbook**, the card says nothing was 
 Each preview is one line saying why the sheet's own values are enough, then a primary button that names the outcome. **Change** keeps the sheet as written, or lets you type a note. A note does not write anything. **Skip step** leaves that step unwritten. Click the primary button every time. After each one, one line says what was created and links to the page. The next preview follows.
 
 1. **Academic terms.** "Use the term names and dates as written." Button: **Create 3 terms**. Result: Created 3 terms. Link: **Open academic terms**.
-2. **Classes and streams.** "Use the stream names as written, in the class order on the sheet." Button: **Create 8 classes and streams**. Result: Created 8 classes and streams. Link: **Open classes**.
+2. **Classes and streams.** "Use the stream names as written, in the class order on the sheet." Button: **Create 6 classes and 4 streams**. Result: Created 6 classes and 4 streams. Link: **Open classes**.
 3. **Subjects.** Button: **Create 5 subjects**. Result: Created 5 subjects. Link: **Open subjects**.
 4. **Teachers and teaching assignments.** Button: **Create 8 teachers**. Result: Created 8 teachers. Link: **Open teachers**.
 

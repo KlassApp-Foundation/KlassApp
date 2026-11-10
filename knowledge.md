@@ -2,6 +2,13 @@
 
 > **Canonical location**: `/Users/mac/projects/KlassApp/knowledge.md` (workspace root). Worktrees (e.g. `KlassApp-main-checkout`) should sync to that path when copies diverge — keep one body of truth; do not maintain parallel divergent session logs.
 
+### 2026-11-10: T-131 checklist figures and agreement links
+- **Work done**: On draft #1307 only, the agreement card no longer opens the legacy privacy page or the terms page. No KlassApp privacy draft was found under `docs/legal`, in the design handoff, or in a newer policy file. The card now says "Privacy Policy (draft)" and "Terms (draft)" and the links are placeholder anchors. Checklist figures reconcile: every step has Read = Ready + Flagged. A learner row whose only error is a parent phone is labelled "Learner ready, parent skipped" and stays flagged, so Ready and the created totals are 120 learners and 120 parents. The summary People total uses those same figures as Done (8 + 120 + 120 = 248). The classes button and the result both say 6 classes and 4 streams. A 1280 click-through confirmed the card, and the demo school was reset afterwards.
+- **Files modified**: `ChecklistOnboardingService`, `resources/views/livewire/checklist-onboarding.blade.php`, `tests/Feature/Onboarding/ChecklistOnboardingPocTest.php`, `docs/demo/poc-run-sheet.md`.
+- **Key decisions**: The phone-only row is not created. Creating that learner would make 121 learners, which would not match the 120 the demo writes. Public `/privacy` and `/terms` were not changed. Nothing was deployed.
+- **Status**: 🚧 Draft [#1307](https://github.com/KlassApp-Foundation/KlassApp/pull/1307) open on `poc/toshi-checklist-onboarding`. Not merged. Not deployed.
+- **Edge cases flagged**: The served privacy page is still the old Gegosoft template. The terms page is KlassApp wording and still names GegoSoft as the operator. Both stay off this card until a real draft exists.
+
 ### 2026-11-10: T-131 checklist panel handoff
 - **Work done**: The checklist panel on draft #1307 follows the handoff: every step, receipt rows, the step card, and lines that appear when the server reports an operation. A Northwind rehearsal was clicked through at 1280 and 375, in light and in dark. Skipping every step left terms, learners, teachers, parents and invites at 0.
 - **Files modified**: `ChecklistOnboarding`, `OnboardingEngine`, `public/css/toshi-checklist-panel.css`, the Toshi and checklist blades, `public/images/brand/google-drive.svg`.

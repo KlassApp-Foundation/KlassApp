@@ -31,9 +31,11 @@
                     <span>I agree on behalf of the school</span>
                 </label>
                 <p class="t-legal" id="checklist-agree-hint">
-                    <a href="{{ route('privacy') }}" target="_blank" rel="noopener">Privacy Policy</a>
-                    <a href="{{ route('terms') }}" target="_blank" rel="noopener">Terms</a>
+                    <a href="#checklist-privacy-draft">Privacy Policy (draft)</a>
+                    <a href="#checklist-terms-draft">Terms (draft)</a>
                 </p>
+                <span id="checklist-privacy-draft" hidden></span>
+                <span id="checklist-terms-draft" hidden></span>
                 <div class="t-actions">
                     <button type="button" class="t-btn" wire:click="confirmAgreement" data-testid="confirm-agreement" @disabled(! $agreed) @if(! $agreed) aria-describedby="checklist-agree-hint" @endif>Continue</button>
                 </div>

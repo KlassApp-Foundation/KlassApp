@@ -164,7 +164,7 @@ final class ChecklistOnboardingService
             'conflict' => $preview['conflict'],
             'skipped' => count($payload['skipped_flags'] ?? []),
             'proposal' => $this->proposalFor($key),
-            'approve_label' => $this->approveLabel($key, $preview['create']),
+            'approve_label' => $this->approveLabel($key, $preview['create'], $preview['creates'] ?? []),
             'question' => $this->questionFor($payload, $key, $preview),
             'examples' => array_slice($preview['examples'], 0, 8),
             'example_total' => $preview['create'] + $preview['exists'] + $preview['conflict'],
@@ -481,7 +481,12 @@ final class ChecklistOnboardingService
             'teachers' => $this->step('teachers', $teacherRows, $converted, 'Teachers'),
             'students' => $this->step('students', $studentRows, $converted, 'Learners'),
         ];
-        $steps['teachers']['counts']['flagged'] += $this->flagCount($converted['flags'] ?? [], 'Teaching Assignments');
+        $assignmentFlags = $this->flaggedRowCount($converted['flags'] ?? [], 'Teaching Assignments');
+        if ($assignmentFlags > 0) {
+            $steps['teachers']['counts']['read'] += $assignmentFlags;
+            $steps['teachers']['counts']['flagged'] += $assignmentFlags;
+            $steps['teachers']['counts']['accepted'] = $steps['teachers']['counts']['read'] - $steps['teachers']['counts']['flagged'];
+        }
 
         return [
             'schema' => self::SCHEMA,
@@ -531,28 +536,43 @@ final class ChecklistOnboardingService
      */
     private function step(string $key, array $rows, array $converted, string $tab): array
     {
-        $counts = $converted['counts'][$tab] ?? ['read' => 0, 'accepted' => 0];
+        $counts = $converted['counts'][$tab] ?? ['read' => 0];
+        $flagged = $this->flaggedRowCount($converted['flags'] ?? [], $tab);
+        $read = max((int) ($counts['read'] ?? 0), $flagged);
 
         return [
             'key' => $key,
             'rows' => $rows,
             'counts' => [
-                'read' => (int) ($counts['read'] ?? 0),
-                'accepted' => (int) ($counts['accepted'] ?? count($rows)),
-                'flagged' => $this->flagCount($converted['flags'] ?? [], $tab),
+                'read' => $read,
+                'accepted' => $read - $flagged,
+                'flagged' => $flagged,
             ],
         ];
     }
 
     /**
+     * Distinct error rows on one tab. A row with two errors counts once, so Read = Ready + Flagged.
+     *
      * @param  list<array<string, mixed>>  $flags
      */
-    private function flagCount(array $flags, string $tab): int
+    private function flaggedRowCount(array $flags, string $tab): int
     {
-        return count(array_filter(
-            $flags,
-            fn (array $flag): bool => ($flag['tab'] ?? '') === $tab && ($flag['severity'] ?? 'error') === 'error'
-        ));
+        $rows = [];
+        $withoutRow = false;
+        foreach ($flags as $flag) {
+            if (($flag['tab'] ?? '') !== $tab || ($flag['severity'] ?? 'error') !== 'error') {
+                continue;
+            }
+            if (($flag['row'] ?? null) === null) {
+                $withoutRow = true;
+
+                continue;
+            }
+            $rows[(int) $flag['row']] = true;
+        }
+
+        return count($rows) + ($withoutRow ? 1 : 0);
     }
 
     /**
@@ -577,9 +597,9 @@ final class ChecklistOnboardingService
             'kind' => 'summary',
             'school_name' => (string) ($payload['school']['name'] ?? ''),
             'steps' => $steps,
-            'stats' => $this->statTiles($payload),
-            'flags' => array_map(function (array $flag): array {
-                $flag['fix'] = $this->plainFix($flag);
+            'stats' => $this->statTiles($this->leavingFlaggedRowsOut($payload)),
+            'flags' => array_map(function (array $flag) use ($payload): array {
+                $flag['fix'] = $this->plainFix($flag, $payload);
 
                 return $flag;
             }, $payload['flags']),
@@ -977,7 +997,7 @@ final class ChecklistOnboardingService
             'title' => self::TITLES[$key],
             'created' => $preview['create'],
             'existed' => $preview['exists'],
-            'line' => $this->doneLine($key, $preview['create']),
+            'line' => $this->doneLine($key, $preview['create'], $preview['creates'] ?? []),
             'href' => $link['href'],
             'href_label' => $link['label'],
             'receipt' => $this->receipt($key, $preview, $payload, 'result'),
@@ -1200,15 +1220,21 @@ final class ChecklistOnboardingService
         };
     }
 
-    private function approveLabel(string $key, int $create): string
+    /**
+     * @param  list<array<string, mixed>>  $creates
+     */
+    private function approveLabel(string $key, int $create, array $creates = []): string
     {
         if ($create === 0) {
             return 'Approve, nothing new to create';
         }
 
+        if ($key === 'standards') {
+            return 'Create '.$this->classStreamPhrase($creates, $create);
+        }
+
         $noun = match ($key) {
             'terms' => $create === 1 ? 'term' : 'terms',
-            'standards' => $create === 1 ? 'class' : 'classes and streams',
             'subjects' => $create === 1 ? 'subject' : 'subjects',
             'teachers' => $create === 1 ? 'teacher' : 'teachers',
             'students' => $create === 1 ? 'learner' : 'learners',
@@ -1218,20 +1244,48 @@ final class ChecklistOnboardingService
         return 'Create '.$create.' '.$noun;
     }
 
-    private function doneLine(string $key, int $created): string
+    /**
+     * @param  list<array<string, mixed>>  $creates
+     */
+    private function doneLine(string $key, int $created, array $creates = []): string
     {
         if ($created === 0) {
             return 'Nothing new was created.';
         }
 
+        if ($key === 'standards') {
+            return 'Created '.$this->classStreamPhrase($creates, $created).'.';
+        }
+
         return match ($key) {
             'terms' => 'Created '.$created.' '.($created === 1 ? 'term' : 'terms').'.',
-            'standards' => 'Created '.$created.' '.($created === 1 ? 'class' : 'classes and streams').'.',
             'subjects' => 'Created '.$created.' '.($created === 1 ? 'subject' : 'subjects').'.',
             'teachers' => 'Created '.$created.' '.($created === 1 ? 'teacher' : 'teachers').'.',
             'students' => 'Created '.$created.' '.($created === 1 ? 'learner' : 'learners').'.',
             default => 'Created '.$created.'.',
         };
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $creates
+     */
+    private function classStreamPhrase(array $creates, int $fallback): string
+    {
+        $figures = $this->classStreamFigures($creates, $fallback);
+        if (count($figures) === 1) {
+            $value = (int) $figures[0]['value'];
+
+            return $value.' '.($value === 1 ? 'class' : 'classes and streams');
+        }
+
+        $classes = (int) $figures[0]['value'];
+        $streams = (int) $figures[1]['value'];
+        $classWord = $classes === 1 ? 'class' : 'classes';
+        if ($streams === 0) {
+            return $classes.' '.$classWord;
+        }
+
+        return $classes.' '.$classWord.' and '.$streams.' '.($streams === 1 ? 'stream' : 'streams');
     }
 
     /**
@@ -1342,10 +1396,15 @@ final class ChecklistOnboardingService
     }
 
     /**
-     * @param  array{field?: string}  $flag
+     * @param  array{field?: string, tab?: string, row?: int|null}  $flag
+     * @param  array<string, mixed>  $payload
      */
-    private function plainFix(array $flag): string
+    private function plainFix(array $flag, array $payload): string
     {
+        if ($this->parentPhoneOnly($flag, $payload)) {
+            return 'Learner ready, parent skipped.';
+        }
+
         $field = strtolower((string) ($flag['field'] ?? ''));
         if (str_contains($field, 'phone')) {
             return 'Correct the phone on that row, or skip the row.';
@@ -1355,6 +1414,62 @@ final class ChecklistOnboardingService
         }
 
         return 'Correct that cell, or skip the row.';
+    }
+
+    /**
+     * A learner row whose only errors are parent phones stays out of Ready.
+     * Skipping it leaves the learner and the parent uncreated, which is what Ready counts.
+     *
+     * @param  array{field?: string, tab?: string, row?: int|null}  $flag
+     * @param  array<string, mixed>  $payload
+     */
+    private function parentPhoneOnly(array $flag, array $payload): bool
+    {
+        if (($flag['tab'] ?? '') !== 'Learners' || ($flag['row'] ?? null) === null) {
+            return false;
+        }
+
+        $row = (int) $flag['row'];
+        $matched = false;
+        foreach ($payload['flags'] as $other) {
+            if (($other['tab'] ?? '') !== 'Learners' || (int) ($other['row'] ?? 0) !== $row) {
+                continue;
+            }
+            $matched = true;
+            if (! str_contains(strtolower((string) ($other['field'] ?? '')), 'phone')) {
+                return false;
+            }
+        }
+        if (! $matched) {
+            return false;
+        }
+
+        foreach ($payload['steps']['students']['rows'] as $student) {
+            if ((int) ($student['source']['row'] ?? 0) === $row) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * People figures after the flagged rows are left out, the same rows Done writes.
+     *
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    private function leavingFlaggedRowsOut(array $payload): array
+    {
+        $flags = $payload['flags'] ?? [];
+        foreach (self::WALK as $key) {
+            $payload['steps'][$key]['rows'] = array_values(array_filter(
+                $payload['steps'][$key]['rows'] ?? [],
+                fn (array $row): bool => ! $this->rowIsFlagged($flags, (string) $row['source']['tab'], (int) $row['source']['row'])
+            ));
+        }
+
+        return $payload;
     }
 
     /**
@@ -1658,7 +1773,7 @@ final class ChecklistOnboardingService
             $step = [
                 'title' => self::TITLES[$key] ?? $key,
                 'proposal' => $this->proposalFor($key),
-                'approve_label' => $this->approveLabel($key, $preview['create']),
+                'approve_label' => $this->approveLabel($key, $preview['create'], $preview['creates'] ?? []),
                 'create' => $preview['create'],
                 'exists' => $preview['exists'],
                 'conflict' => $preview['conflict'],
@@ -1719,7 +1834,7 @@ final class ChecklistOnboardingService
                 'tab' => (string) ($flag['tab'] ?? ''),
                 'row' => isset($flag['row']) ? (int) $flag['row'] : null,
                 'message' => (string) ($flag['message'] ?? ''),
-                'fix' => $this->plainFix($flag),
+                'fix' => $this->plainFix($flag, $payload),
             ];
         }
 
@@ -1729,7 +1844,7 @@ final class ChecklistOnboardingService
             'school' => (string) ($payload['school']['name'] ?? ''),
             'status' => $status,
             'active' => $step !== null && in_array($status, ['previewed', 'applying'], true),
-            'stats' => $this->statTiles($payload),
+            'stats' => $this->statTiles($this->leavingFlaggedRowsOut($payload)),
             'flags' => $flags,
             'step' => $step,
             'terms' => $terms,
