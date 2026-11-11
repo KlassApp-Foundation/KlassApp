@@ -50,7 +50,7 @@ class MarksImportService
     /** Stamped into every template's Exam info sheet; bump when the template shape changes. */
     public const TEMPLATE_VERSION = 'marks-import-v1';
 
-    private const ADMIN_USERGROUPS = [1, 3];
+    private const ADMIN_USERGROUPS = [1, 3, 4];
 
     private const TEACHER_USERGROUP = 5;
 

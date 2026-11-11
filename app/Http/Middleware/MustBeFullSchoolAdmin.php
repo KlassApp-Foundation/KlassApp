@@ -5,29 +5,19 @@ namespace App\Http\Middleware;
 use Closure;
 
 /**
- * Settings stay with a full school admin (usergroup 1, 2, 3).
+ * Settings stay with a full school admin.
  *
- * Exam type settings are the end-of-term report mix. A head teacher
- * (usergroup 4) may open and save that screen for the school they are
- * signed into. Every other settings screen stays closed to them.
+ * Usergroups 1, 3, and 4, and usergroup 2, may open them. A head teacher
+ * manages the school they are signed into. Scope stays on school_id.
  */
 class MustBeFullSchoolAdmin
 {
     public function handle($request, Closure $next)
     {
-        $ug = (int) \Auth::user()->usergroup_id;
+        $user = \Auth::user();
+        $ug = (int) $user->usergroup_id;
 
-        if (in_array($ug, [1, 2, 3], true)) {
-            return $next($request);
-        }
-
-        if ($ug === 4 && $request->routeIs(
-            'admin.settings.exam-types',
-            'admin.settings.exam-types.update',
-            'admin.settings.exam-types.store',
-            'admin.settings.exam-types.profile',
-            'admin.settings.exam-types.bands',
-        )) {
+        if ($ug === 2 || \App\Support\SchoolAdmin::is($user)) {
             return $next($request);
         }
 

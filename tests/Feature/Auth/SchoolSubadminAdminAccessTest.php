@@ -84,11 +84,11 @@ class SchoolSubadminAdminAccessTest extends TestCase
         $this->assertStringEndsWith('/teacher/dashboard', $response->headers->get('Location'));
     }
 
-    public function test_school_subadmin_is_blocked_from_full_school_admin_settings(): void
+    public function test_school_subadmin_passes_full_school_admin_settings(): void
     {
-        $this->expectException(NotFoundHttpException::class);
+        $response = $this->runFullSchoolAdmin($this->userWithGroup(4));
 
-        $this->runFullSchoolAdmin($this->userWithGroup(4));
+        $this->assertEquals(200, $response->getStatusCode());
     }
 
     public function test_school_admin_passes_full_school_admin_settings(): void
