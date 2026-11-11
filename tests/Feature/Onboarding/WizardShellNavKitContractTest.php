@@ -118,5 +118,16 @@ class WizardShellNavKitContractTest extends TestCase
         $this->assertStringContainsString('.manual-wizard-brand', $css);
         $this->assertStringContainsString('.manual-wizard-brand-name', $css);
         $this->assertMatchesRegularExpression('/\.manual-wizard-progress\s*\{[^}]*max-width:\s*420px/s', $css);
+        $this->assertMatchesRegularExpression('/\.manual-wizard-nav \.ds-btn\s*\{[^}]*white-space:\s*nowrap/s', $css);
+    }
+
+    public function test_manual_wizard_does_not_keep_the_dock_margin(): void
+    {
+        $css = file_get_contents(public_path('vendor/toshi-ui/toshi-ui.css'));
+
+        $this->assertMatchesRegularExpression(
+            '/body\.toshi-manual-wizard-active main,\s*body\.toshi-manual-wizard-active \.dashboard-content-area,\s*body\.toshi-manual-wizard-active \.superadmin-content\s*\{\s*margin-right:\s*0 !important;/s',
+            $css
+        );
     }
 }

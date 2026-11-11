@@ -4294,6 +4294,7 @@ body.toshi-manual-wizard-active #toshi-toggle-wrapper {
 /* Fix 2: primary/secondary labels were 12.48px on a 44px button. Keep the height. */
 .manual-wizard-nav .ds-btn {
     font-size: 14px;
+    white-space: nowrap;
 }
 /* Fix 5: the selected/hover green was the light #22C55E; the accent is #15803D. */
 .manual-wizard-plan-card:hover {

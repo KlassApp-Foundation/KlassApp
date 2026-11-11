@@ -156,6 +156,15 @@
         max-width: 100% !important;
     }
 
+    /* The manual wizard hides the panel. Do not keep the dock width. */
+    body.toshi-manual-wizard-active main,
+    body.toshi-manual-wizard-active .dashboard-content-area,
+    body.toshi-manual-wizard-active .superadmin-content {
+        margin-right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
     body.toshi-resizing main {
         transition: none !important;
     }
