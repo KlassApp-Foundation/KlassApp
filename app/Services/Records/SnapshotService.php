@@ -14,9 +14,8 @@ use App\Services\Results\ResultsService;
  * Verifiable records, step 1: a release writes one immutable snapshot per
  * learner per term.
  *
- * No hashing, signing or QR here. The point of this step is that a released
- * term record stops being a function of whatever the marks table says today:
- * it becomes a row that is never edited, and a correction is a new version.
+ * Each row stores a content hash of its payload. A correction is a new version.
+ * The hash shows whether this payload still matches the one that was written.
  *
  * A learner with no marks in the sitting is not snapshotted: an empty record is
  * not a record, and a release that messaged nobody must not create one.
@@ -216,6 +215,7 @@ class SnapshotService
                 'supersedes_id' => $current?->id,
                 'reason' => $version > 1 ? $reason : null,
                 'payload' => $payload,
+                'content_hash' => SnapshotHasher::hash($payload),
                 'released_at' => now(),
                 'released_by' => $release->created_by,
                 'release_id' => $release->id,

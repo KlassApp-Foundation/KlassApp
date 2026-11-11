@@ -467,6 +467,8 @@ final class MarksSubmissionService
                 'actor_id' => $actor ? (int) $actor->id : null,
                 'from_status' => $from,
                 'to_status' => $to,
+                'old_value' => $from,
+                'new_value' => $to,
                 'action' => $action,
                 'reason' => $reason,
                 'at' => now()->utc()->toIso8601String(),
