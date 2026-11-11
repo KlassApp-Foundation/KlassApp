@@ -49,6 +49,16 @@
                     @endunless
                 </div>
                 <div class="exam-set-types" data-testid="exam-set-types">
+                    @if($types->isEmpty())
+                        <p role="status" data-testid="exam-types-empty">
+                            No exam types yet.
+                            @if($isTeacher)
+                                A school admin needs to restore the standard list before you can create this set.
+                            @else
+                                <a href="{{ route('admin.settings.exam-types') }}" class="ds-btn ds-btn-outline" style="min-height:44px;display:inline-flex;align-items:center" data-testid="exam-types-restore">Restore the standard list</a>
+                            @endif
+                        </p>
+                    @endif
                     @foreach($types as $type)
                         <label class="exam-set-type">
                             <input type="checkbox" name="type_ids[]" value="{{ $type->id }}"
