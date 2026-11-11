@@ -99,6 +99,7 @@
                                                     <td>
                                                         @if($cell)
                                                             <span class="{{ $pill($cell['label']) }}">{{ $cell['label'] }}</span>
+                                                            <a href="{{ route('teacher.exam.marks.enter', $cell['id']) }}" class="ds-btn ds-btn-outline" style="min-height:44px;display:inline-flex;align-items:center" data-testid="exam-set-enter-{{ $cell['id'] }}">Enter marks</a>
                                                             <span data-testid="exam-set-teacher-{{ $cell['id'] }}" class="ka-sr">{{ $cell['teacher'] }}</span>
                                                             @if($canRemove && ! $cell['has_marks'])
                                                                 <button type="button" class="ds-btn ds-btn-ghost" style="min-height:36px;color:#B91C1C" data-ka-ask-remove="exam-set-remove-dialog-{{ $cell['id'] }}" aria-label="Remove {{ $row['subject'] }} {{ $typeName }}">Remove</button>

@@ -50,8 +50,6 @@ class MarksImportService
     /** Stamped into every template's Exam info sheet; bump when the template shape changes. */
     public const TEMPLATE_VERSION = 'marks-import-v1';
 
-    private const ADMIN_USERGROUPS = [1, 3];
-
     private const TEACHER_USERGROUP = 5;
 
     private const STUDENT_USERGROUP = 6;
@@ -93,7 +91,7 @@ class MarksImportService
             return false;
         }
 
-        if (in_array((int) $actor->usergroup_id, self::ADMIN_USERGROUPS, true)) {
+        if ($this->examAuthorization->managesMarksForSchool($actor, (int) $exam->school_id)) {
             return true;
         }
 

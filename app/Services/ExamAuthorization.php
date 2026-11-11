@@ -17,10 +17,29 @@ use App\Models\User;
  */
 class ExamAuthorization
 {
+    /**
+     * Site admin, school admin, and head teacher. Marks entry for these
+     * groups is limited to their own school by managesMarksForSchool().
+     *
+     * @var list<int>
+     */
+    public const MARKS_MANAGER_GROUPS = [1, 3, 4];
+
+    public function managesMarksForSchool(User $actor, int $schoolId): bool
+    {
+        return $schoolId > 0
+            && (int) $actor->school_id === $schoolId
+            && in_array((int) $actor->usergroup_id, self::MARKS_MANAGER_GROUPS, true);
+    }
+
     public function canActOnExam(User $actor, Exam $exam): bool
     {
         if ((int) $actor->school_id !== (int) $exam->school_id) {
             return false;
+        }
+
+        if ($this->managesMarksForSchool($actor, (int) $exam->school_id)) {
+            return true;
         }
 
         if ((int) $exam->teacher_id === (int) $actor->id) {

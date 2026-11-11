@@ -46,7 +46,7 @@ class BaseClassExamRoster
             abort(403, 'You are not authorized to enter marks for this exam.');
         }
 
-        if (in_array((int) $actor->usergroup_id, [3, 4], true)) {
+        if ($this->authorization->managesMarksForSchool($actor, (int) $exam->school_id)) {
             return;
         }
 
