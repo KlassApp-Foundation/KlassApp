@@ -3225,6 +3225,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-11-11: Shared exam types restore themselves
+
+- **Work done**: Continued draft [#1327](https://github.com/KlassApp-Foundation/KlassApp/pull/1327) on `feat/exam-type-catalog` at `80a1380f`. The set-page test keeps the exam type the school chose (a school-owned row), so the shared catalog sync no longer renames it. The reference seeder writes the shared catalog by code and a null school. Opening exam type settings does the same. An empty exam-set form tells an admin how to restore the list (44px link) and tells a teacher to ask an admin. `php artisan exam-types:sync` does the same write and is not hooked into deploy. Demo on port 8000 was not touched.
+- **Files touched**: `app/Console/Commands/SyncExamTypesCommand.php`, `app/Http/Controllers/Admin/Setting/ExamTypeController.php`, `database/seeders/result/ExamTypes.php`, `resources/views/admin/exams/exam-set-create.blade.php`, `resources/views/admin/settings/exam-types.blade.php`, `tests/Feature/Academics/ExamTypeCatalogTest.php`, `tests/Feature/Exams/ExamSetPageAndRosterTest.php`.
+- **Key decisions**: Do not seed the catalog from a migration. RefreshDatabase would insert the shared rows, then fixtures insert the same codes again, and the upsert throws because it will not guess. Deploy stays migrate-only. An existing school gets the list when an admin opens exam sets or exam type settings, or when someone runs the command or the reference seeder.
+- **Status**: Draft [#1327](https://github.com/KlassApp-Foundation/KlassApp/pull/1327) at `80a1380f`. Not merged. Production untouched. Local suites green. Full test-guard not run here. GitHub test-guard was still running. Browser click-through is still owed.
+- **Edge cases flagged**: On this branch only a school admin (usergroup 3) can open settings. Head teachers get that screen from #1325. Do not stack the two branches.
+
 ### 2026-11-11: Admins and head teachers can enter marks
 
 - **Work done**: Draft [#1329](https://github.com/KlassApp-Foundation/KlassApp/pull/1329) on `feat/admin-marks-entry` (`8717a426`). A school admin, a head teacher, and a site admin of that school can open the existing teacher marks screen, save, and submit for any class in their school. The mark row's `teacher_id` is the person who saved it. Another school, a subject teacher who does not own the exam, a learner, and a parent are refused. The rest of the teacher area stays closed. The exam set page links to that screen. Demo on port 8000 was not touched.
