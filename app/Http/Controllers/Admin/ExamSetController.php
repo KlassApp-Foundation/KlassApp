@@ -17,6 +17,7 @@ use App\Models\Standard;
 use App\Models\StandardLink;
 use App\Models\User;
 use App\Services\Academics\ExamSetService;
+use App\Services\Academics\ExamTypeCatalogSync;
 use App\Services\ExamAuthorization;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -41,6 +42,9 @@ class ExamSetController extends Controller
     {
         [$user, $school, $year, $isTeacher] = $this->context();
         $classes = $this->classes($user, $school, $year, $isTeacher);
+
+        // A school created before the catalog existed still gets a list to choose from.
+        app(ExamTypeCatalogSync::class)->syncShared();
 
         return view('admin.exams.exam-set-create', [
             'school' => $school,

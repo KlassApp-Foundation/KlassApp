@@ -53,7 +53,7 @@ public function sections(){
             ->where('usergroup_id', 5)
             ->get();
             // dd($teachers);
-    $examTypes =  ExamType::all();
+    $examTypes = ExamType::visibleToSchool($school_id)->orderBy('name')->get();
     $exam = null;
     return view('admin.exams.create', compact(
         'exams', "teachers", "sections", "academicYears", "terms", "subjects", "examTypes", "exam", "selectedClassId"
@@ -163,7 +163,7 @@ public function sections(){
         $sections = Section::where("school_id", $school_id)->get();
         $teachers = User::where('usergroup_id', 5)->where("school_id", $school_id)->get();
         $terms = AcademicTerm::where("school_id", $school_id)->get();
-        $examTypes =  ExamType::all();
+        $examTypes = ExamType::visibleToSchool($school_id)->orderBy('name')->get();
         // dd($subjects);
         return view("admin.exams.create", compact(
             "exam", "subjects", "standards", "academicYears", "sections", "teachers", "terms", "examTypes"
