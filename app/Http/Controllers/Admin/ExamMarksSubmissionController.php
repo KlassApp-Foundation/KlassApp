@@ -144,9 +144,11 @@ class ExamMarksSubmissionController extends Controller
             isset($validated['subject_id']) ? (int) $validated['subject_id'] : null,
         );
 
-        $message = $affected > 0
-            ? $affected.' submission(s) approved.'
-            : 'Those submissions were already approved.';
+        $message = match (true) {
+            $affected === 0 => 'Those marks were already approved.',
+            $affected === 1 => 'Marks approved.',
+            default => $affected.' sets of marks approved.',
+        };
 
         return redirect()->back()->with('successmessage', $message);
     }
