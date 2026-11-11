@@ -3225,6 +3225,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-11-11: One report per exam set, frozen end-of-term mix
+
+- **Work done**: Draft [#1330](https://github.com/KlassApp-Foundation/KlassApp/pull/1330) on `feat/report-per-exam-set` (`39c96432`), from `main`. Each exam set has its own results sheet. The end-of-term report uses `schools.report_composition`, defaulting to End of Term at weight 100. A save whose weights do not total 100 is refused. Admins and head teachers can save that screen for their own school; a teacher cannot, and a head teacher still cannot open the other settings screens. A release copies the mix onto `marks_releases.report_composition` and into the snapshot payload. The end-of-term sheet for that class keeps the copy after the school setting changes. Demo on port 8000 was not touched.
+- **Files touched**: `app/Services/Results/ReportComposition.php`, `app/Services/Results/ResultsService.php`, `app/Services/StudentReportCardService.php`, `app/Services/MarksRelease/MarksReleaseService.php`, `app/Services/Records/SnapshotService.php`, `app/Models/MarksRelease.php`, `app/Http/Controllers/Admin/Setting/ExamTypeController.php`, `app/Http/Middleware/MustBeFullSchoolAdmin.php`, `resources/views/admin/settings/exam-types.blade.php`, `database/migrations/2026_11_11_150000_add_report_composition_to_marks_releases_table.php`, and the results and exam-type settings tests.
+- **Key decisions**: The mix is the authority for which sets are on the end-of-term report. A set with a weight counts even if the older contributes flag is off. An included set with no weight still follows that flag. The snapshot stays one current row per learner per term; item 8 adds the hash. Do not stack this on #1327, which also edits the exam type settings page.
+- **Status**: Draft [#1330](https://github.com/KlassApp-Foundation/KlassApp/pull/1330) at `39c96432`. Not merged. Production untouched. Full test-guard not run here. Browser click-through at 375 and 1280 is still owed.
+- **Edge cases flagged**: A school with no End of Term type keeps the older contributes behaviour, because there is no default row to freeze. Head teachers get this settings screen only; the rest of admin parity remains #1325.
+
 ### 2026-11-11: Shared exam types restore themselves
 
 - **Work done**: Continued draft [#1327](https://github.com/KlassApp-Foundation/KlassApp/pull/1327) on `feat/exam-type-catalog` at `80a1380f`. The set-page test keeps the exam type the school chose (a school-owned row), so the shared catalog sync no longer renames it. The reference seeder writes the shared catalog by code and a null school. Opening exam type settings does the same. An empty exam-set form tells an admin how to restore the list (44px link) and tells a teacher to ask an admin. `php artisan exam-types:sync` does the same write and is not hooked into deploy. Demo on port 8000 was not touched.
