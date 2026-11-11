@@ -3225,6 +3225,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-11-11: Released marks lock, audit trail, and snapshot hash
+
+- **Work done**: Draft [#1331](https://github.com/KlassApp-Foundation/KlassApp/pull/1331) on `feat/marks-history-integrity` (`5322c6aa`), from `main`. Marks for one school list as year, term, exam set, class, subject. Each save logs who changed a mark and the old and new value. A released sitting is locked until an admin or head teacher of that school reopens it with a reason. Each snapshot stores a content hash. Demo on port 8000 was not touched.
+- **Files touched**: `app/Services/Marks/ReleasedMarksLock.php`, `app/Services/Marks/MarksHistory.php`, `app/Services/Marks/ExamMarkWriter.php`, `app/Services/Records/SnapshotHasher.php`, `app/Services/Records/SnapshotService.php`, `app/Services/MarksRelease/MarksReleaseService.php`, `app/Services/Marks/MarksSubmissionService.php`, `app/Models/MarksRelease.php`, `app/Models/Records/RecordSnapshot.php`, `database/migrations/2026_11_11_160000_add_content_hash_to_record_snapshots_table.php`, `tests/Feature/Marks/MarksHistoryIntegrityTest.php`.
+- **Key decisions**: Reopen of a release is separate from sending a submission back. Head teachers can reopen in their own school only; full admin parity stays in #1325. `marks.teacher_id` stays the exam's teacher on this branch. The hash is sha256 of the canonical payload, not a signature. Not stacked on #1329 or #1330.
+- **Status**: Draft [#1331](https://github.com/KlassApp-Foundation/KlassApp/pull/1331) at `5322c6aa`. Not merged. Production untouched. Full test-guard not run here. No reopen screen yet.
+- **Edge cases flagged**: A class release locks every subject in that class for the exam type and term, not only the subject on the release row. A school release locks every class. A deleted exam does not lock the sitting.
+
 ### 2026-11-11: One report per exam set, frozen end-of-term mix
 
 - **Work done**: Draft [#1330](https://github.com/KlassApp-Foundation/KlassApp/pull/1330) on `feat/report-per-exam-set` (`39c96432`), from `main`. Each exam set has its own results sheet. The end-of-term report uses `schools.report_composition`, defaulting to End of Term at weight 100. A save whose weights do not total 100 is refused. Admins and head teachers can save that screen for their own school; a teacher cannot, and a head teacher still cannot open the other settings screens. A release copies the mix onto `marks_releases.report_composition` and into the snapshot payload. The end-of-term sheet for that class keeps the copy after the school setting changes. Demo on port 8000 was not touched.
