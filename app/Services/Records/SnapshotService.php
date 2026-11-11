@@ -189,6 +189,7 @@ class SnapshotService
             'scoring_rule' => $release->scoring_rule,
             'progressive_rules' => app(\App\Services\Reports\ProgressiveRulesStamp::class)->standardRules($release, (int) $link->standard_id),
             'released_at' => now()->toIso8601String(),
+            'composition' => is_array($release->report_composition) ? $release->report_composition : [],
         ];
     }
 
