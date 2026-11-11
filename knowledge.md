@@ -3230,7 +3230,7 @@ Phase B: Mix→Vite + Vue 3 runtime
 - **Work done**: Rebuilt the marks picture from #1322 and the drafts opened the same day. Verified #1323's own release tests (30 passed, 191 assertions) in an isolated worktree. Did not rewrite that branch. Wrote `docs/dev/marks-progress.md` as the handover. Demo on port 8000 was not stopped or edited.
 - **Files touched**: `docs/dev/marks-progress.md`, `knowledge.md`.
 - **Key decisions**: Class-teacher approval (#1324) and ABS import (#1326) are usable. Head-teacher parity (#1325) and the exam-type catalog (#1327) are not, until their single new suite failures are fixed. Item 4 (admins enter marks) has no branch yet.
-- **Status**: Draft handover. Not merged. Production untouched.
+- **Status**: Draft handover [#1328](https://github.com/KlassApp-Foundation/KlassApp/pull/1328). Item 3 continued on [#1325](https://github.com/KlassApp-Foundation/KlassApp/pull/1325) at `c57bcc52`. Not merged. Production untouched.
 - **Edge cases flagged**: A demo release now queues one extra webhook job, so `MarksReleaseQueueTest` expects 50 jobs and sees 51. Left on #1323 on purpose.
 
 ### 2026-11-02: phone lookups do not cross countries or schools (#1251)
