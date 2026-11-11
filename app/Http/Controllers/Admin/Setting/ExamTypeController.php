@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Helpers\GradingHelper;
 use App\Models\Academics\ExamType;
 use App\Models\School;
+use App\Services\Academics\ExamTypeCatalogSync;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -19,6 +20,8 @@ class ExamTypeController extends Controller
 {
     public function index()
     {
+        app(ExamTypeCatalogSync::class)->syncShared();
+
         $schoolId = Auth::user()->school_id;
         $examTypes = ExamType::visibleToSchool($schoolId)->orderBy('id')->get();
 

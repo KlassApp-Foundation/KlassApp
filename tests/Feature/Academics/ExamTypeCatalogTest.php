@@ -72,6 +72,15 @@ class ExamTypeCatalogTest extends TestCase
         $this->assertSame('Mid Term', ExamType::query()->whereNull('school_id')->where('code', 'MID')->value('name'));
     }
 
+    public function test_the_sync_command_writes_the_catalog_once(): void
+    {
+        $this->artisan('exam-types:sync')->assertSuccessful();
+        $this->assertSame(count(ExamTypeCatalog::all()), ExamType::query()->count());
+
+        $this->artisan('exam-types:sync')->assertSuccessful();
+        $this->assertSame(count(ExamTypeCatalog::all()), ExamType::query()->count());
+    }
+
     public function test_a_school_created_by_signup_has_the_catalog_to_choose_from(): void
     {
         config(['klassapp.signup_enabled' => true]);
@@ -156,10 +165,67 @@ class ExamTypeCatalogTest extends TestCase
             'email' => 'admin@catalog.test', 'name' => 'Admin', 'status' => 'active',
         ]);
 
+        ExamType::query()->delete();
         $this->assertSame(0, ExamType::query()->count());
 
         $this->actingAs($admin)->get(route('admin.exam-sets.create'))->assertOk();
 
         $this->assertGreaterThan(0, ExamType::query()->count());
+    }
+
+    public function test_an_empty_exam_type_list_tells_the_admin_how_to_restore_it(): void
+    {
+        $school = $this->school('Empty Types', 'catalog-empty');
+        $year = AcademicYear::create([
+            'school_id' => $school->id, 'name' => '2026',
+            'start_date' => '2026-01-01', 'end_date' => '2026-12-31', 'status' => 1,
+        ]);
+        Standard::create(['school_id' => $school->id, 'name' => 'primary', 'order' => 1, 'status' => 1]);
+        \App\Models\AcademicTerm::create([
+            'school_id' => $school->id, 'academic_year_id' => $year->id,
+            'name' => 'Term 1', 'starts_on' => '2026-01-01', 'ends_on' => '2026-04-30', 'status' => 'current',
+        ]);
+        $admin = User::factory()->create([
+            'school_id' => $school->id, 'usergroup_id' => 3,
+            'email' => 'empty@catalog.test', 'name' => 'Empty Admin', 'status' => 'active',
+        ]);
+
+        ExamType::query()->delete();
+
+        $this->mock(ExamTypeCatalogSync::class, function ($mock) {
+            $mock->shouldReceive('syncShared')->andReturn(0);
+        });
+
+        $this->actingAs($admin)
+            ->get(route('admin.exam-sets.create'))
+            ->assertOk()
+            ->assertSee('data-testid="exam-types-empty"', false)
+            ->assertSee('data-testid="exam-types-restore"', false)
+            ->assertSee(route('admin.settings.exam-types'), false)
+            ->assertSee('min-height:44px', false);
+    }
+
+    public function test_opening_exam_type_settings_restores_the_shared_catalog(): void
+    {
+        $school = $this->school('Restore Types', 'catalog-restore');
+        AcademicYear::create([
+            'school_id' => $school->id, 'name' => '2026',
+            'start_date' => '2026-01-01', 'end_date' => '2026-12-31', 'status' => 1,
+        ]);
+        Standard::create(['school_id' => $school->id, 'name' => 'primary', 'order' => 1, 'status' => 1]);
+        $admin = User::factory()->create([
+            'school_id' => $school->id, 'usergroup_id' => 3,
+            'email' => 'restore@catalog.test', 'name' => 'Restore Admin', 'status' => 'active',
+        ]);
+
+        ExamType::query()->delete();
+        $this->assertSame(0, ExamType::query()->count());
+
+        $this->actingAs($admin)
+            ->get(route('admin.settings.exam-types'))
+            ->assertOk()
+            ->assertSee('End Of Term');
+
+        $this->assertSame(count(ExamTypeCatalog::all()), ExamType::query()->whereNull('school_id')->count());
     }
 }
