@@ -78,7 +78,7 @@ Legend: **✓ matches Rasta's rule**, **≠ differs**, **– not enforced / not 
 
 | Stage | Subject teacher | Class teacher | Head teacher (SchoolSubadmin, ug4) | Admin (ug3) | Parent | Student |
 | --- | --- | --- | --- | --- | --- | --- |
-| **Set up exams** | – (admin routes only; `MustBeSchoolAdmin.php:22`) | – (same) | **≠ can create sets** (ug4 passes `schooladmin`; `routes/admin.php:927-931`) | ✓ `routes/admin.php:927-931` | n/a | n/a |
+| **Set up exams** | – teacher routes exist but scope is class-teacher sections only, so a subject teacher gets no classes (`ExamSetController.php:370-381`) | **≠ can create sets for own class** (`routes/teacher.php:441-444`; `ExamSetController.php:370-381`) | **≠ can create sets for every class** (ug4 passes `schooladmin`; `routes/admin.php:927-931`) | ✓ `routes/admin.php:927-931` | n/a | n/a |
 | **Record and save** | ✓ own exams (`ExamAuthorization.php:26-28`) | ✓ any subject in own class (`:33-63`) | ≠ per-student add only, via the admin student profile (`routes/admin.php:280`); no class grid | ✓ per-student add (`routes/admin.php:280`); no class grid on admin screens | n/a | n/a |
 | **Submit** | ✓ (`MarksController.php:145`; `MarksSubmissionService.php:55`) | ✓ can submit any exam in the class (`ExamAuthorization` class-teacher branch) | – | n/a (admin does not submit) | n/a | n/a |
 | **Approve** | ≠ not allowed | **≠ not allowed** — admin groups only (`MarksSubmissionService.php:23`, `:418-425`) | **≠ not allowed** | ✓ (`:97-142`; `routes/admin.php:952-953`) | n/a | n/a |
@@ -92,7 +92,7 @@ Legend: **✓ matches Rasta's rule**, **≠ differs**, **– not enforced / not 
 1. **Class teacher approves own class.** In `MarksSubmissionService::approve()` and `returnToTeacher()`, accept a ug5 actor when `ExamAuthorization::isClassTeacherForExam()` is true for that exam's section/stream, and limit the affected rows to that section. Keep the admin path as is.
 2. **Class teacher releases own class.** Already works when the school switch is on. No code change; make the switch default explicit in the UI copy and keep the school setting.
 3. **Head teacher.** Decide first (section 5). If "admin for marks, no settings": add ug4 to the approve/return groups and to `links()` as a school-wide reader, but leave `routes/setting.php` behind `fullschooladmin` so Settings stay blocked. If "approve only": add ug4 to approve/return, not release.
-4. **Set up exams by head teacher.** If stage 1 stays admin-only, add a ug4 check in `ExamSetController::store()` (or move the routes behind `fullschooladmin`). This is the one place ug4 has more power than the target.
+4. **Set up exams by class teacher and head teacher.** Today both can create sets (teacher routes scoped to class-teacher sections; ug4 through the admin route). If the answer to 2.5 is admin-only, gate the teacher routes and add a ug4 check in `ExamSetController::store()`; if class teachers keep it, say so in the role copy and add a test that pins the scope.
 5. **Subject teacher approve/release.** No change: the rule says they should not.
 
 ### 2.4 "Send back" and a release confirmation
@@ -102,7 +102,7 @@ Legend: **✓ matches Rasta's rule**, **≠ differs**, **– not enforced / not 
 
 ### 2.5 Research question: who sets exams (not a decision)
 
-Design assumes **admin only** for stage 1 until the early adopter schools answer. Neutral questions for Rasta to put to them:
+Design assumes **admin only** for stage 1 until the early adopter schools answer — but note that the code already lets a **class teacher** create exam sets for their own class (teacher routes `routes/teacher.php:441-444`, scoped by `ExamSetController.php:370-381`). So the question is not only what schools want; it is also whether to remove what exists. Neutral questions for Rasta to put to them:
 
 1. Who creates the exams today — one person, or each teacher for their own subject?
 2. How often does that happen: once a term, or whenever a teacher adds a paper?
