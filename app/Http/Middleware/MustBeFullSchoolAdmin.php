@@ -2,20 +2,19 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\SchoolAdmin;
 use Closure;
 
 /**
- * Middleware that only allows full school admins (usergroup 1, 2, 3)
- * and blocks school subadmins (usergroup 4). Used for Settings routes
- * where owner-level access is required.
+ * Settings and the other owner screens. Site admin, school admin, and
+ * head teacher (usergroup 4). A head teacher is already limited to their
+ * own school by the controllers behind this middleware.
  */
 class MustBeFullSchoolAdmin
 {
     public function handle($request, Closure $next)
     {
-        $ug = \Auth::user()->usergroup_id;
-
-        if (in_array($ug, [1, 3, 4])) {
+        if (SchoolAdmin::is(\Auth::user())) {
             return $next($request);
         }
 

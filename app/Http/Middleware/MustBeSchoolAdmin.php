@@ -2,12 +2,12 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\SchoolAdmin;
 use Closure;
 
 /**
- * Allow SiteAdmin (1), SchoolAdmin (3), and SchoolSubadmin (4) through /admin/*
- * feature routes. SchoolSubadmin reuses the admin UI; Settings stay blocked by
- * MustBeFullSchoolAdmin (see routes/setting.php).
+ * Allow a site admin, school admin, or head teacher through /admin/*.
+ * The same people pass Settings via MustBeFullSchoolAdmin.
  */
 class MustBeSchoolAdmin
 {
@@ -22,8 +22,7 @@ class MustBeSchoolAdmin
     {
         $ug = (int) \Auth::user()->usergroup_id;
 
-        // SiteAdmin, SchoolAdmin, SchoolSubadmin — admin modules (minus Settings for ug4).
-        if (in_array($ug, [1, 3, 4], true)) {
+        if (SchoolAdmin::is(\Auth::user())) {
             return $next($request);
         }
 

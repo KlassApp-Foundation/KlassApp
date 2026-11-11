@@ -619,8 +619,8 @@ private function returnNotice(Exam $exam, User $viewer): ?string
     }
 
     $isExamTeacher = (int) $viewer->id === (int) $exam->teacher_id;
-    $isSchoolAdmin = in_array((int) $viewer->usergroup_id, [1, 3, 4], true)
-        && (int) $viewer->school_id === (int) $exam->school_id;
+    $isSchoolAdmin = \App\Support\SchoolAdmin::managesOwnSchool($viewer, $exam->school_id)
+        || ((int) $viewer->usergroup_id === 1 && (int) $viewer->school_id === (int) $exam->school_id);
 
     if (! $isExamTeacher && ! $isSchoolAdmin) {
         return null;

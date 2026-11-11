@@ -79,12 +79,12 @@ class IntegrationsSettingsTest extends TestCase
     }
 
     #[Test]
-    public function subadmin_and_teacher_are_blocked(): void
+    public function head_teacher_opens_integrations_and_a_teacher_does_not(): void
     {
-        $subadmin = User::factory()->create(['usergroup_id' => 4, 'school_id' => $this->schoolAId]);
+        $head = User::factory()->create(['usergroup_id' => 4, 'school_id' => $this->schoolAId]);
         $teacher = User::factory()->create(['usergroup_id' => 5, 'school_id' => $this->schoolAId]);
 
-        $this->actingAs($subadmin)->get('/admin/settings/integrations')->assertNotFound();
+        $this->actingAs($head)->get('/admin/settings/integrations')->assertOk();
         $this->actingAs($teacher)->get('/admin/settings/integrations')->assertNotFound();
     }
 
