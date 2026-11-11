@@ -535,20 +535,21 @@ class MarksReleaseTest extends TestCase
         return collect(Http::recorded())->filter(fn ($pair) => str_contains($pair[0]->url(), 'hooks.example.com'))->values()->all();
     }
 
-    private function configureWebhook(): void
+    private function configureWebhook(int $hookStatus = 200): void
     {
         config([
+            'klassapp.demo.release_webhook_enabled' => true,
             'klassapp.demo.release_webhook_url' => 'https://hooks.example.com/n8n/release',
             'klassapp.demo.release_webhook_secret' => 'test-only-webhook-secret',
         ]);
         Http::fake([
             'graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.out']]], 200),
-            'hooks.example.com/*' => Http::response(['ok' => true], 200),
+            'hooks.example.com/*' => Http::response($hookStatus === 200 ? ['ok' => true] : 'down', $hookStatus),
         ]);
         Http::preventStrayRequests();
     }
 
-    public function test_task9_demo_release_posts_a_signed_webhook_with_only_code_class_and_exam(): void
+    public function test_demo_release_posts_a_signed_webhook_with_counts_only(): void
     {
         $this->bind(self::BOUND);
         $this->configureWebhook();
@@ -560,14 +561,16 @@ class MarksReleaseTest extends TestCase
         $request = $calls[0][0];
         $body = $request->body();
         $this->assertSame('sha256=' . hash_hmac('sha256', $body, 'test-only-webhook-secret'), $request->header('X-KlassApp-Signature')[0]);
-        $students = $this->fx['demo']['students'];
-        $this->assertSame([
-            'event' => 'marks.released',
-            'release_id' => MarksRelease::sole()->id,
-            'exam' => 'End of Term Examination · Term III',
-            'students' => array_map(fn ($s) => ['code' => $s['code'], 'class' => 'P.7 A'], $students),
-        ], json_decode($body, true));
-        foreach (['Amina', 'Nakato', '256700', 'Mathematics', '78'] as $private) {
+
+        $payload = json_decode($body, true);
+        $this->assertSame(['event', 'release_id', 'exam', 'learners', 'classes'], array_keys($payload));
+        $this->assertSame('marks.released', $payload['event']);
+        $this->assertSame(MarksRelease::sole()->id, $payload['release_id']);
+        $this->assertIsInt($payload['learners']);
+        $this->assertIsInt($payload['classes']);
+        $this->assertArrayNotHasKey('students', $payload);
+
+        foreach (['code', 'KLS', 'Amina', 'Nakato', '256700', 'Mathematics', '78', 'P.7'] as $private) {
             $this->assertStringNotContainsString($private, $body);
         }
         $this->assertSame('sent', MarksRelease::sole()->result['webhook']);
@@ -590,6 +593,63 @@ class MarksReleaseTest extends TestCase
         $this->bind(self::BOUND);
         $this->configureWebhook();
         config(['klassapp.demo.release_webhook_secret' => '']);
+
+        $this->releaseNow($this->admin(), null)->assertRedirect();
+
+        $this->assertSame([], $this->webhookCalls());
+        $this->assertSame('not configured', MarksRelease::sole()->result['webhook']);
+    }
+
+    public function test_the_webhook_is_off_unless_the_flag_is_set(): void
+    {
+        $this->bind(self::BOUND);
+        $this->configureWebhook();
+        config(['klassapp.demo.release_webhook_enabled' => false]);
+
+        $this->releaseNow($this->admin(), null)->assertRedirect();
+
+        $this->assertSame([], $this->webhookCalls());
+        $this->assertSame('not sent: the demo webhook flag is off', MarksRelease::sole()->result['webhook']);
+    }
+
+    public function test_production_refuses_the_webhook_even_when_everything_else_is_on(): void
+    {
+        $this->bind(self::BOUND);
+        $this->configureWebhook();
+
+        $this->releaseNow($this->admin(), null)->assertRedirect();
+        $before = count($this->webhookCalls());
+        $release = MarksRelease::sole();
+
+        $this->app['env'] = 'production';
+        $status = app(\App\Services\MarksRelease\MarksReleaseService::class)
+            ->sendDemoWebhook((int) $release->id, 1, 1);
+
+        $this->assertSame('not sent: not a demo environment', $status);
+        $this->assertCount($before, $this->webhookCalls());
+    }
+
+    public function test_a_failing_webhook_does_not_fail_the_release(): void
+    {
+        $this->bind(self::BOUND);
+        $this->configureWebhook();
+        Http::fake([
+            'graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.out']]], 200),
+            'hooks.example.com/*' => fn () => throw new \Illuminate\Http\Client\ConnectionException('down'),
+        ]);
+
+        $this->releaseNow($this->admin(), null)->assertRedirect();
+
+        $release = MarksRelease::sole();
+        $this->assertSame(MarksRelease::STATUS_RELEASED, $release->status);
+        $this->assertSame('failed: no response', $release->result['webhook']);
+    }
+
+    public function test_the_webhook_needs_a_url_as_well_as_a_secret(): void
+    {
+        $this->bind(self::BOUND);
+        $this->configureWebhook();
+        config(['klassapp.demo.release_webhook_url' => '']);
 
         $this->releaseNow($this->admin(), null)->assertRedirect();
 
