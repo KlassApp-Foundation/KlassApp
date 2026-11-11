@@ -108,6 +108,57 @@ class ChecklistOnboarding extends Component
         return 'checklist.onboarding.'.$schoolId.'.'.$userId;
     }
 
+    /**
+     * Eight setup steps shared by the Toshi panel and the dashboard banner.
+     *
+     * @var array<string, string>
+     */
+    public const SHELL = [
+        'agreement' => 'Agreement',
+        'checklist' => 'Checklist',
+        'terms' => 'Terms',
+        'classes' => 'Classes and streams',
+        'subjects' => 'Subjects',
+        'teachers' => 'Teachers and assignments',
+        'learners' => 'Learners and parents',
+        'done' => 'Done',
+    ];
+
+    /**
+     * @return array{step: int, total: int, name: string, key: string, index: int}|null
+     */
+    public static function shellProgress(?string $shell): ?array
+    {
+        if ($shell === null || $shell === '' || $shell === 'welcome') {
+            return null;
+        }
+
+        $keys = array_keys(self::SHELL);
+        $index = array_search($shell, $keys, true);
+        if ($index === false) {
+            return null;
+        }
+
+        return [
+            'step' => $index + 1,
+            'total' => count(self::SHELL),
+            'name' => self::SHELL[$shell],
+            'key' => $shell,
+            'index' => $index,
+        ];
+    }
+
+    /**
+     * @return array{step: int, total: int, name: string, key: string, index: int}|null
+     */
+    public static function shellProgressFor(int $schoolId, int $userId): ?array
+    {
+        $saved = session()->get(self::sessionKey($schoolId, $userId));
+        $shell = is_array($saved) ? (string) ($saved['shell'] ?? '') : '';
+
+        return self::shellProgress($shell);
+    }
+
     #[On('checklist-onboarding-open')]
     public function start(): void
     {
@@ -989,8 +1040,7 @@ class ChecklistOnboarding extends Component
             'standards' => 'classes',
             'subjects' => 'subjects',
             'teachers', 'teacher_invites' => 'teachers',
-            'students' => 'learners',
-            'whatsapp' => 'checklist',
+            'students', 'whatsapp' => 'learners',
             default => 'checklist',
         };
     }

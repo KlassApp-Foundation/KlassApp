@@ -412,6 +412,8 @@ class ChecklistOnboardingPocTest extends TestCase
             'term_label',
             'profile_line',
             'sidebar' => ['students', 'teachers', 'parents', 'classes', 'subjects'],
+            'setup_progress',
+            'attendance_trend',
         ]);
         $real = $this->school(false, false, 'real-figures');
         $this->actingAs($this->admin($real))->get('/admin/dashboard/checklist-figures')->assertNotFound();
@@ -617,6 +619,23 @@ class ChecklistOnboardingPocTest extends TestCase
         $this->assertStringNotContainsString('data-testid="dashboard-v2-profile"', $html);
         $this->assertStringNotContainsString('data-testid="dashboard-v2-setup-ledger"', $html);
         $this->assertStringNotContainsString('data-testid="dashboard-v2-setup-summary"', $html);
+        $this->assertMatchesRegularExpression('/<div class="dv2-setup-progress" data-testid="dashboard-v2-setup-progress"[^>]*\bhidden\b/', $html);
+        $this->assertStringNotContainsString('Step 1 of 8', $html);
+
+        $during = $this->withSession([
+            ChecklistOnboarding::sessionKey($school->id, $admin->id) => ['shell' => 'terms'],
+        ])->get('/admin/dashboard')->assertOk()->getContent();
+        $this->assertStringContainsString('Step 3 of 8 · Terms', $during);
+        $this->assertMatchesRegularExpression('/<div class="dv2-setup-progress" data-testid="dashboard-v2-setup-progress"(?![^>]*\bhidden\b)[^>]*>/', $during);
+        $this->assertSame(1, preg_match('/data-testid="dashboard-v2-setup-progress".*?<div class="t-bars"[^>]*>(.*?)<\/div>/s', $during, $progressDots));
+        $this->assertSame(8, substr_count($progressDots[1], '<i'));
+        $figures = $this->withSession([
+            ChecklistOnboarding::sessionKey($school->id, $admin->id) => ['shell' => 'terms'],
+        ])->getJson('/admin/dashboard/checklist-figures')->assertOk();
+        $figures->assertJsonPath('setup_progress.step', 3);
+        $figures->assertJsonPath('setup_progress.total', 8);
+        $figures->assertJsonPath('setup_progress.name', 'Terms');
+        $figures->assertJsonPath('setup_progress.index', 2);
         $this->assertDoesNotMatchRegularExpression(
             '/data-testid="dashboard-v2-toshi-setup"[^>]*toshi-maximize/',
             $html,
@@ -1147,10 +1166,17 @@ class ChecklistOnboardingPocTest extends TestCase
             $component->call('openNext');
         }
 
+        $classLabel = (string) ($component->get('card')['teachers'][0]['class_label'] ?? '');
+        $this->assertNotSame('', $classLabel);
         $component
             ->assertSet('card.step_key', 'teacher_invites')
             ->assertSee('Send 1 invite')
             ->assertSee("I've checked these")
+            ->assertSee('Name')
+            ->assertSee('Email')
+            ->assertSee('Class')
+            ->assertSee($classLabel, false)
+            ->assertSee('data-testid="teacher-invite-row"', false)
             ->set('reviewed', false)
             ->call('confirmReviewed')
             ->assertSet('card.step_key', 'teacher_invites')
@@ -1165,7 +1191,9 @@ class ChecklistOnboardingPocTest extends TestCase
             ->call('confirmReviewed')
             ->call('openNext')
             ->assertSet('card.step_key', 'whatsapp')
-            ->assertSee('data-testid="checklist-wizard-form"', false)
+            ->assertSee('data-testid="checklist-wizard-form"', false);
+        $this->assertSame('learners', session(ChecklistOnboarding::sessionKey($school->id, $admin->id))['shell'] ?? null);
+        $component
             ->assertSee('data-embed-step="whatsapp_verify"', false)
             ->assertSee('data-testid="wizard-wa-phone"', false)
             ->assertSee('Get a code')
@@ -1190,6 +1218,37 @@ class ChecklistOnboardingPocTest extends TestCase
         Mail::assertNotSent(StudentParentSetupLinkMail::class);
         $this->assertSame(1, User::query()->where('school_id', $school->id)->where('usergroup_id', 5)->where('status', 'active')->count());
         $this->assertSame(2, User::query()->where('school_id', $school->id)->where('usergroup_id', 6)->where('status', 'active')->count());
+    }
+
+    public function test_a_missing_teacher_email_is_highlighted_in_its_cell(): void
+    {
+        [, $admin] = $this->demoAdmin();
+        $this->actingAs($admin);
+
+        Livewire::test(ChecklistOnboarding::class)
+            ->set('phase', 'review')
+            ->set('card', [
+                'kind' => 'preview',
+                'step_key' => 'teacher_invites',
+                'name' => 'Teacher invites',
+                'proposal' => 'Each teacher is listed with the email and the classes from the checklist.',
+                'statement' => true,
+                'approve_label' => 'Send 1 invite',
+                'emails_blocked' => true,
+                'teachers' => [[
+                    'name' => 'Amina Kato',
+                    'email' => '',
+                    'class_label' => 'Primary One East',
+                    'valid' => false,
+                ]],
+            ])
+            ->assertSee('No email')
+            ->assertSee('Primary One East')
+            ->assertSee('Save this email')
+            ->assertSee("I've checked these")
+            ->assertSee('Send 1 invite')
+            ->assertSeeHtml('class="is-invalid"')
+            ->assertSeeHtml('data-testid="wizard-teacher-email"');
     }
 
     public function test_back_returns_to_the_agreement_and_a_new_page_reopens_the_step(): void

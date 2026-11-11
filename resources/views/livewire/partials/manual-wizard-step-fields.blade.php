@@ -834,12 +834,22 @@
     @endif
     @if($whatsappOtpDisplay !== '' && ! $whatsappVerified)
         <div wire:poll.5s="pollWhatsAppVerification" data-testid="wizard-wa-poll" style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:12px 14px;margin-bottom:12px;">
-            <p class="text-xs" style="color:#64748B;">Your code</p>
-            <p class="font-bold" style="color:#0F172A;font-size:1.5rem;letter-spacing:0.2em;margin:4px 0 8px;" data-testid="wizard-wa-code">{{ $whatsappOtpDisplay }}</p>
-            <p class="text-sm mb-3" style="color:#0F172A;">Or send this message yourself: Verify KlassApp: {{ $whatsappOtpDisplay }}</p>
-            @if($whatsappVerifyUrl !== '')
-                <a href="{{ $whatsappVerifyUrl }}" target="_blank" rel="noopener noreferrer" class="ds-btn ds-btn-sm ds-btn-primary" data-testid="wizard-wa-open" style="background:#15803D;color:#FFFFFF;">Open WhatsApp</a>
-            @endif
+            <div style="display:flex;flex-wrap:nowrap;gap:12px;align-items:flex-start;">
+                <div style="flex:1 1 auto;min-width:0;">
+                    <p class="text-xs" style="color:#64748B;">Your code</p>
+                    <p class="font-bold" style="color:#0F172A;font-size:1.5rem;letter-spacing:0.2em;margin:4px 0 8px;" data-testid="wizard-wa-code">{{ $whatsappOtpDisplay }}</p>
+                    <p class="text-sm mb-3" style="color:#0F172A;">Or send this message yourself: Verify KlassApp: {{ $whatsappOtpDisplay }}</p>
+                    @if($whatsappVerifyUrl !== '')
+                        <a href="{{ $whatsappVerifyUrl }}" target="_blank" rel="noopener noreferrer" class="ds-btn ds-btn-sm ds-btn-primary" data-testid="wizard-wa-open" style="background:#15803D;color:#FFFFFF;">Open WhatsApp</a>
+                    @endif
+                </div>
+                @if($whatsappVerifyUrl !== '')
+                    <div data-testid="wizard-wa-qr" data-url="{{ $whatsappVerifyUrl }}" style="flex:0 0 120px;text-align:center;">
+                        <p class="text-xs" style="color:#64748B;margin:0 0 6px;">Scan with your phone</p>
+                        <canvas data-testid="wizard-wa-qr-canvas" width="120" height="120" aria-hidden="true"></canvas>
+                    </div>
+                @endif
+            </div>
         </div>
     @endif
     @if($whatsappVerified)

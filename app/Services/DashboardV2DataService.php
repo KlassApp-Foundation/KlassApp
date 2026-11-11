@@ -423,19 +423,26 @@ class DashboardV2DataService
             }
         }
 
-        // Attendance trend: weeks since the current term started, not a fixed 8.
+        // Weeks that overlap the current term, from its start through today
+        // or the term's last day, whichever is earlier.
         $weeks = [];
         $termStart = $term?->starts_on
-            ? \Carbon\Carbon::parse($term->starts_on)->startOfDay()
+            ? Carbon::parse($term->starts_on)->startOfDay()
             : now()->subWeeks(7)->startOfDay();
+        $windowEnd = now()->endOfDay();
+        if ($term?->ends_on) {
+            $termEnd = Carbon::parse($term->ends_on)->endOfDay();
+            if ($termEnd->lt($windowEnd)) {
+                $windowEnd = $termEnd;
+            }
+        }
         $cursor = $termStart->copy()->startOfWeek();
-        $today = now()->endOfDay();
         $n = 1;
-        while ($cursor->lte($today) && $n <= 20) {
+        while ($cursor->lte($windowEnd) && $n <= 60) {
             $start = $cursor->copy()->lt($termStart) ? $termStart->copy() : $cursor->copy();
             $end = $cursor->copy()->endOfWeek();
-            if ($end->gt($today)) {
-                $end = $today->copy();
+            if ($end->gt($windowEnd)) {
+                $end = $windowEnd->copy();
             }
             if ($start->lte($end)) {
                 $weeks[] = [
@@ -446,6 +453,7 @@ class DashboardV2DataService
             }
             $cursor->addWeek();
         }
+        $weekCount = max(1, count($weeks));
 
         // Gender split (missing gender counts as Not specified).
         $genderRow = DB::table('users')
@@ -503,6 +511,7 @@ class DashboardV2DataService
             'per_class' => $perClass,
             'exam' => $examLabel,
             'attendance_weeks' => $weeks,
+            'attendance_label' => 'This term, '.$weekCount.' '.\Illuminate\Support\Str::plural('week', $weekCount).' · whole school',
             'gender_classes' => $genderClasses,
             'gender' => [
                 'girls' => (int) ($genderRow->girls ?? 0),

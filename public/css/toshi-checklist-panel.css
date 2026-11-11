@@ -286,6 +286,14 @@ a.t-btn { display: inline-flex; align-items: center; justify-content: center; te
 }
 .t-statements { margin: 8px 0 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 8px; }
 .t-statements li.is-invalid { color: var(--t-warn-fg); }
+.t-invite-table { table-layout: fixed; }
+.t-invite-table th:nth-child(1), .t-invite-table td:nth-child(1) { width: 30%; }
+.t-invite-table th:nth-child(2), .t-invite-table td:nth-child(2) { width: 38%; }
+.t-invite-table th:nth-child(3), .t-invite-table td:nth-child(3) { width: 32%; }
+.t-invite-table th, .t-invite-table td { white-space: normal; vertical-align: top; overflow-wrap: break-word; word-break: normal; }
+.t-invite-table td.is-invalid { background: var(--t-warn-bg); color: var(--t-warn-fg); }
+.t-invite-table .t-inline { min-width: 0; }
+.t-invite-table .ds-form-input { width: 100%; max-width: 100%; box-sizing: border-box; }
 .t-inline { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
 .t-capture { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 240px; overflow: auto; font-size: 0.78rem; background: var(--t-panel); color: var(--t-text); border: 1px solid var(--t-border); border-radius: 8px; padding: 8px; }
 .t-later { overflow-wrap: anywhere; }
@@ -393,6 +401,13 @@ body.checklist-leaving:not(.toshi-collapsed) .toshi-root--checklist .toshi-panel
 .dv2-setup-copy { min-width: 0; flex: 1 1 auto; }
 .dv2-setup-card h2 { margin: 0; font-family: Sora, sans-serif; font-size: 1.05rem; line-height: 1.3; color: var(--t-text, #1E293B); overflow-wrap: normal; word-break: normal; }
 .dv2-setup-lead { margin: 2px 0 0; color: var(--t-text-2, #475569); font-size: 0.9rem; line-height: 1.4; overflow-wrap: anywhere; word-break: normal; }
+.dv2-setup-progress { display: flex; flex-direction: column; gap: 6px; }
+.dv2-setup-progress[hidden] { display: none !important; }
+.dv2-setup-progress p { margin: 0; font-size: 0.8rem; line-height: 1.3; font-weight: 600; color: var(--t-text, #1E293B); overflow-wrap: normal; word-break: normal; }
+.dv2-setup-progress .t-bars { display: flex; gap: 4px; }
+.dv2-setup-progress .t-bars i { flex: 1; height: 4px; border-radius: 999px; background: var(--t-border, #E2E8F0); }
+.dv2-setup-progress .t-bars i.is-on { background: var(--t-accent, #15803D); }
+.dv2-setup-progress .t-bars i.is-current { box-shadow: 0 0 0 1px var(--t-accent, #15803D); }
 .dv2-setup-actions { display: flex; flex-direction: row; align-items: stretch; gap: 8px; width: 100%; min-width: 0; }
 .dv2-setup-actions .dv2-btn { flex: 1 1 0; min-width: 0; width: auto; justify-content: center; white-space: nowrap; padding: 0 8px; font-size: 13px; }
 .dv2-setup-hide { min-height: 44px; padding: 0 2px; background: transparent; color: #475569; font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
@@ -440,7 +455,9 @@ html.checklist-setup-done [data-testid="dashboard-v2-setup-bar"] { display: none
 @media (prefers-color-scheme: dark) {
     .dv2-setup-card, .dv2-setup-option { background: #1E293B; color: #E2E8F0; border-color: #334155; }
     .dv2-setup-card h2, .dv2-setup-option h3 { color: #E2E8F0; }
-    .dv2-setup-lead, .dv2-setup-option p { color: #CBD5E1; }
+    .dv2-setup-lead, .dv2-setup-option p, .dv2-setup-progress p { color: #CBD5E1; }
+    .dv2-setup-progress .t-bars i { background: #334155; }
+    .dv2-setup-progress .t-bars i.is-on { background: #4ADE80; }
     .dv2-setup-option a.secondary, .dv2-setup-actions a.secondary { background: #0F172A; color: #E2E8F0; border-color: #64748B; }
     .dv2-setup-card .dv2-x, .dv2-setup-hide { color: #E2E8F0; }
     .dv2-setup-ico { background: none; color: #4ADE80; }

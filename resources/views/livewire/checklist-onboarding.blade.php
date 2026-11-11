@@ -253,20 +253,33 @@
                 @endif
                 <p data-testid="checklist-proposal">{{ $preview['proposal'] }}</p>
                 @if(($preview['step_key'] ?? '') === 'teacher_invites')
-                    <ul class="t-statements" data-testid="teacher-invites">
-                        @foreach($preview['teachers'] ?? [] as $person)
-                            <li data-testid="teacher-invite-row" @if(empty($person['valid'])) class="is-invalid" @endif>
-                                <p>{{ $person['line'] }}</p>
-                                @if(empty($person['valid']))
-                                    <label class="t-inline" for="wizard-teacher-email-{{ $loop->index }}">Email
-                                        <input id="wizard-teacher-email-{{ $loop->index }}" type="text" inputmode="email" autocomplete="email" class="ds-form-input w-full" wire:model="inviteEmails.{{ $loop->index }}" placeholder="teacher@school.ug" data-testid="wizard-teacher-email" />
-                                    </label>
-                                    @error('inviteEmails.'.$loop->index) <p class="t-note">{{ $message }}</p> @enderror
-                                    <button type="button" class="t-btn secondary" wire:click="saveInviteEmail({{ $loop->index }})" data-testid="save-teacher-email">Save this email</button>
-                                @endif
-                            </li>
-                        @endforeach
-                    </ul>
+                    <div class="t-table-wrap" data-testid="teacher-invites">
+                        <table class="t-table t-invite-table">
+                            <thead>
+                                <tr><th>Name</th><th>Email</th><th>Class</th></tr>
+                            </thead>
+                            <tbody>
+                                @foreach($preview['teachers'] ?? [] as $person)
+                                    <tr data-testid="teacher-invite-row">
+                                        <td>{{ $person['name'] ?? '' }}</td>
+                                        <td @if(empty($person['valid'])) class="is-invalid" @endif>
+                                            @if(! empty($person['valid']))
+                                                {{ $person['email'] ?? '' }}
+                                            @else
+                                                <span>{{ ($person['email'] ?? '') !== '' ? $person['email'] : 'No email' }}</span>
+                                                <label class="t-inline" for="wizard-teacher-email-{{ $loop->index }}">Email
+                                                    <input id="wizard-teacher-email-{{ $loop->index }}" type="text" inputmode="email" autocomplete="email" class="ds-form-input w-full" wire:model="inviteEmails.{{ $loop->index }}" placeholder="teacher@school.ug" data-testid="wizard-teacher-email" />
+                                                </label>
+                                                @error('inviteEmails.'.$loop->index) <p class="t-note">{{ $message }}</p> @enderror
+                                                <button type="button" class="t-btn secondary" wire:click="saveInviteEmail({{ $loop->index }})" data-testid="save-teacher-email">Save this email</button>
+                                            @endif
+                                        </td>
+                                        <td>{{ ($person['class_label'] ?? '') !== '' ? $person['class_label'] : '—' }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 @elseif(($preview['step_key'] ?? '') === 'whatsapp')
                     <livewire:manual-onboarding-wizard
                         :embedded="true"

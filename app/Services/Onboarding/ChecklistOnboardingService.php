@@ -1174,6 +1174,7 @@ final class ChecklistOnboardingService
                 'index' => (int) $index,
                 'name' => $name,
                 'email' => $email,
+                'class_label' => $classList,
                 'line' => $line,
                 'valid' => $valid,
             ];

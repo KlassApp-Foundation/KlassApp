@@ -236,6 +236,8 @@ class DashboardController extends Controller
             'term_label' => (string) ($data['termLabel'] ?? ''),
             'profile_line' => $this->checklistProfileLine($school),
             'sidebar' => \App\Support\SidebarCounts::roster((int) $school->id),
+            'setup_progress' => \App\Livewire\ChecklistOnboarding::shellProgressFor((int) $school->id, (int) $user->id),
+            'attendance_trend' => (string) ($data['charts']['attendance_label'] ?? ''),
         ]);
     }
 

@@ -41,6 +41,9 @@
     $checklistSetup = $school && app(\App\Services\Onboarding\ChecklistOnboardingGate::class)->enabledFor($school);
     $setupFinished = $school && $school->onboarding_finished_at !== null;
     $checklistBanner = $checklistSetup && ! $setupFinished && empty($setup['dismissed']);
+    $setupProgress = ($checklistBanner && $school && $v2User)
+        ? \App\Livewire\ChecklistOnboarding::shellProgressFor((int) $school->id, (int) $v2User->id)
+        : null;
 
     // Quick actions (kept from v2) — row in the data state, tiles otherwise.
     $quickActions = [
@@ -208,6 +211,14 @@
                             <button type="submit" class="dv2-x dv2-setup-hide" data-testid="dashboard-v2-setup-dismiss" aria-label="Hide setup bar. Progress stays in the sidebar.">Hide</button>
                         </form>
                     </div>
+                    <div class="dv2-setup-progress" data-testid="dashboard-v2-setup-progress" @unless($setupProgress) hidden @endunless>
+                        <p data-testid="dashboard-v2-setup-step">@if($setupProgress)Step {{ $setupProgress['step'] }} of {{ $setupProgress['total'] }} · {{ $setupProgress['name'] }}@endif</p>
+                        <div class="t-bars" aria-hidden="true">
+                            @for($dot = 0; $dot < 8; $dot++)
+                                <i @class(['is-on' => $setupProgress && $dot <= $setupProgress['index'], 'is-current' => $setupProgress && $dot === $setupProgress['index']])></i>
+                            @endfor
+                        </div>
+                    </div>
                     <div class="dv2-setup-actions">
                         <button type="button" class="dv2-btn" data-testid="dashboard-v2-toshi-setup" onclick="window.klassDashboardToshiSetup && window.klassDashboardToshiSetup()">Set up with Toshi</button>
                         <a class="dv2-btn secondary" href="{{ $nextHref }}" data-testid="dashboard-v2-setup-manual">Set up manually</a>
@@ -309,7 +320,7 @@
 
                 <div class="dv2-card" data-testid="dashboard-v2-chart-attendance">
                     <h2>Attendance trend</h2>
-                    <small>This term, {{ max(1, count($charts['attendance_weeks'] ?? [])) }} {{ \Illuminate\Support\Str::plural('week', max(1, count($charts['attendance_weeks'] ?? []))) }} · whole school</small>
+                    <small data-testid="dashboard-v2-attendance-caption">{{ $charts['attendance_label'] ?? 'This term, 1 week · whole school' }}</small>
                     @php
                         $aw = $charts['attendance_weeks'] ?? [];
                         $awHas = count(array_filter($aw, fn ($w) => $w['value'] !== null)) > 0;
@@ -320,7 +331,7 @@
                                  :labels="array_map(fn ($w) => $w['label'], $aw)"
                                  :datasets="[['data' => array_map(fn ($w) => $w['value'], $aw), 'borderColor' => '#15803D', 'backgroundColor' => 'rgba(21,128,61,0.08)', 'fill' => true, 'tension' => 0.3]]"
                                  :options="['scales' => ['y' => ['min' => 80, 'max' => 100]]]"
-                                 aria-label="Attendance trend, last 8 weeks: {{ $awAria }}"
+                                 aria-label="Attendance trend, this term: {{ $awAria }}"
                                  empty-message="No attendance recorded yet — it appears after the first register." />
                     @else
                         <div class="dv2-empty-in"><b>No register taken yet</b><p>Attendance appears after the class teacher takes the first register.</p></div>
@@ -525,6 +536,32 @@ window.klassDashboardToshiSetup = function () {
         setDetail('dashboard-v2-kpi-fees', payload.fees.detail || '');
         setText('dashboard-v2-kpi-reports', String(payload.reports.value));
         setDetail('dashboard-v2-kpi-reports', payload.reports.detail || '');
+        if (payload.attendance_trend) {
+            setText('dashboard-v2-attendance-caption', payload.attendance_trend);
+        }
+        var progress = payload.setup_progress || null;
+        var progressBox = document.querySelector('[data-testid="dashboard-v2-setup-progress"]');
+        if (progressBox) {
+            var progressLabel = progressBox.querySelector('[data-testid="dashboard-v2-setup-step"]');
+            var progressDots = progressBox.querySelectorAll('.t-bars i');
+            if (!progress || !progress.step) {
+                progressBox.hidden = true;
+                if (progressLabel) {
+                    progressLabel.textContent = '';
+                }
+                progressDots.forEach(function (dot) { dot.className = ''; });
+            } else {
+                progressBox.hidden = false;
+                var progressText = 'Step ' + progress.step + ' of ' + progress.total + ' · ' + progress.name;
+                if (progressLabel && progressLabel.textContent !== progressText) {
+                    progressLabel.textContent = progressText;
+                }
+                var progressIndex = progress.index != null ? progress.index : (progress.step - 1);
+                progressDots.forEach(function (dot, index) {
+                    dot.className = index < progressIndex ? 'is-on' : (index === progressIndex ? 'is-on is-current' : '');
+                });
+            }
+        }
         var whatsapp = document.querySelector('[data-testid="dashboard-whatsapp-waiting-count"], [data-testid="dashboard-connected-whatsapp-count"]');
         if (whatsapp) {
             whatsapp.textContent = String(payload.whatsapp.value);

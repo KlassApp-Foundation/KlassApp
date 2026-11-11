@@ -94,16 +94,7 @@
         </div>
         @if($checklistOnboarding && ! $checklistFinished)
             @php
-                $shellSteps = [
-                    'agreement' => 'Agreement',
-                    'checklist' => 'Checklist',
-                    'terms' => 'Terms',
-                    'classes' => 'Classes and streams',
-                    'subjects' => 'Subjects',
-                    'teachers' => 'Teachers and assignments',
-                    'learners' => 'Learners and parents',
-                    'done' => 'Done',
-                ];
+                $shellSteps = \App\Livewire\ChecklistOnboarding::SHELL;
                 $shellKeys = array_keys($shellSteps);
                 $shellIndex = array_search($checklistStep, $shellKeys, true);
                 $shellIndex = $shellIndex === false ? -1 : (int) $shellIndex;

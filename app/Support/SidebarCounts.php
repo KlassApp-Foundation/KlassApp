@@ -94,9 +94,10 @@ class SidebarCounts
             return $empty;
         }
 
-        $people = User::query()->where('school_id', $schoolId)->where('status', 'active');
+        $people = User::query()->where('school_id', $schoolId)->where('status', 'active')->whereNull('deleted_at');
         $empty['students'] = (clone $people)->where('usergroup_id', 6)->count();
-        $empty['teachers'] = (clone $people)->whereIn('usergroup_id', [5, 8])->count();
+        // Same people as the Staff card: teachers, school admins, and head teachers.
+        $empty['teachers'] = (clone $people)->whereIn('usergroup_id', [3, 4, 5])->count();
         $empty['parents'] = (clone $people)->where('usergroup_id', 7)->count();
 
         if (Schema::hasTable('sections')) {
