@@ -3225,6 +3225,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-11-11: Admins and head teachers can enter marks
+
+- **Work done**: Draft [#1329](https://github.com/KlassApp-Foundation/KlassApp/pull/1329) on `feat/admin-marks-entry` (`8717a426`). A school admin, a head teacher, and a site admin of that school can open the existing teacher marks screen, save, and submit for any class in their school. The mark row's `teacher_id` is the person who saved it. Another school, a subject teacher who does not own the exam, a learner, and a parent are refused. The rest of the teacher area stays closed. The exam set page links to that screen. Demo on port 8000 was not touched.
+- **Files touched**: `app/Http/Middleware/MustBeTeacher.php`, `app/Services/ExamAuthorization.php`, `app/Services/Academics/BaseClassExamRoster.php`, `app/Http/Controllers/Teacher/MarksController.php`, `app/Services/Marks/ExamMarkWriter.php`, `app/Services/MarksImport/MarksImportService.php`, `resources/views/admin/exams/exam-set-show.blade.php`, `tests/Feature/Marks/AdminMarksEntryTest.php`, plus three tests whose stamp expectation moved to the person who entered the mark.
+- **Key decisions**: Reused the teacher screen. Did not add a second marks page. Did not stack this on #1325. `marks.teacher_id` is the latest person who saved the mark; the exam row still names the subject teacher. Full history is item 8.
+- **Status**: Draft [#1329](https://github.com/KlassApp-Foundation/KlassApp/pull/1329). Not merged. Production untouched. Browser click-through at 375 and 1280 is still owed.
+- **Edge cases flagged**: #1325 and #1329 both touch marks authorization and will need a small merge. A head teacher can also open the existing spreadsheet import from that screen; it still only writes drafts.
+
 ### 2026-11-11: Marks recovery inventory
 
 - **Work done**: Rebuilt the marks picture from #1322 and the drafts opened the same day. Verified #1323's own release tests (30 passed, 191 assertions) in an isolated worktree. Did not rewrite that branch. Wrote `docs/dev/marks-progress.md` as the handover. Demo on port 8000 was not stopped or edited.
