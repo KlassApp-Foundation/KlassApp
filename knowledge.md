@@ -3225,6 +3225,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-11-11: Marks recovery inventory
+
+- **Work done**: Rebuilt the marks picture from #1322 and the drafts opened the same day. Verified #1323's own release tests (30 passed, 191 assertions) in an isolated worktree. Did not rewrite that branch. Wrote `docs/dev/marks-progress.md` as the handover. Demo on port 8000 was not stopped or edited.
+- **Files touched**: `docs/dev/marks-progress.md`, `knowledge.md`.
+- **Key decisions**: Class-teacher approval (#1324) and ABS import (#1326) are usable. Head-teacher parity (#1325) and the exam-type catalog (#1327) are not, until their single new suite failures are fixed. Item 4 (admins enter marks) has no branch yet.
+- **Status**: Draft handover. Not merged. Production untouched.
+- **Edge cases flagged**: A demo release now queues one extra webhook job, so `MarksReleaseQueueTest` expects 50 jobs and sees 51. Left on #1323 on purpose.
+
 ### 2026-11-02: phone lookups do not cross countries or schools (#1251)
 
 - **Work done**: Merged the updated #1246 head into this branch. A WhatsApp sender id without a plus (`254712345678`) is read as that country code, not as a Ugandan national number. Login, password reset, one-time code, and WhatsApp sender lookup tests each reject a bare local collision across countries and schools, and still match the same-country number. `PhoneCountry::keys` does not return `0712345678` for `+254712345678`. No production data and no deploy.
