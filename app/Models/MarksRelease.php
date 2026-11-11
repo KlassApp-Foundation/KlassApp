@@ -26,6 +26,7 @@ class MarksRelease extends Model
     protected $fillable = [
         'school_id', 'exam_id', 'scope', 'standard_link_id', 'scheduled_at', 'released_at',
         'status', 'created_by', 'timezone', 'result', 'whatsapp_send', 'release_reason',
+        'report_composition',
     ];
 
     protected $casts = [
@@ -33,6 +34,7 @@ class MarksRelease extends Model
         'released_at' => UtcDateTime::class,
         'result' => 'array',
         'whatsapp_send' => 'boolean',
+        'report_composition' => 'array',
     ];
 
     public function school(): BelongsTo

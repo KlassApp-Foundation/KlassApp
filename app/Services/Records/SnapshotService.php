@@ -180,6 +180,7 @@ class SnapshotService
             'position' => $row->classPosition,
             'of' => $row->classOutOf,
             'released_at' => now()->toIso8601String(),
+            'composition' => is_array($release->report_composition) ? $release->report_composition : [],
         ];
     }
 

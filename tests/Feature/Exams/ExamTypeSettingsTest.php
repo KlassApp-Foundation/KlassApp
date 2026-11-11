@@ -149,16 +149,79 @@ class ExamTypeSettingsTest extends TestCase
         $this->actingAs($this->admin)
             ->post('/admin/settings/exam-types', [
                 'contributes' => [$this->eot->id => '1', $this->bot->id => '0'],
-                'include' => [$this->eot->id => '0', $this->bot->id => '1'],
-                'weight' => [$this->eot->id => '', $this->bot->id => '40'],
+                'include' => [$this->eot->id => '1', $this->bot->id => '1'],
+                'weight' => [$this->eot->id => '60', $this->bot->id => '40'],
             ])
             ->assertRedirect(route('admin.settings.exam-types'));
 
         $composition = $this->riverside->fresh()->report_composition;
-        $this->assertFalse($composition[(string) $this->eot->id]['include']);
-        $this->assertNull($composition[(string) $this->eot->id]['weight']);
+        $this->assertTrue($composition[(string) $this->eot->id]['include']);
+        $this->assertEquals(60.0, $composition[(string) $this->eot->id]['weight']);
         $this->assertTrue($composition[(string) $this->bot->id]['include']);
         $this->assertEquals(40.0, $composition[(string) $this->bot->id]['weight']);
+    }
+
+    public function test_weights_that_do_not_total_100_are_refused(): void
+    {
+        $this->actingAs($this->admin)
+            ->from('/admin/settings/exam-types')
+            ->post('/admin/settings/exam-types', [
+                'contributes' => [$this->eot->id => '1', $this->bot->id => '0'],
+                'include' => [$this->eot->id => '0', $this->bot->id => '1'],
+                'weight' => [$this->eot->id => '', $this->bot->id => '40'],
+            ])
+            ->assertRedirect('/admin/settings/exam-types')
+            ->assertSessionHasErrors('weight');
+
+        $this->assertNull($this->riverside->fresh()->report_composition);
+        $this->assertNull($this->riverside->fresh()->exam_type_preferences);
+    }
+
+    public function test_the_unset_form_starts_at_end_of_term_only(): void
+    {
+        $html = preg_replace('/\s+/', ' ', $this->actingAs($this->admin)->get('/admin/settings/exam-types')->assertOk()->getContent());
+
+        $this->assertMatchesRegularExpression('/data-testid="exam-type-include-'.$this->eot->id.'" checked/', $html);
+        $this->assertDoesNotMatchRegularExpression('/data-testid="exam-type-include-'.$this->bot->id.'" checked/', $html);
+        $this->assertMatchesRegularExpression('/name="weight\['.$this->eot->id.'\]"[^>]*value="100"/', $html);
+        $this->assertStringContainsString('min-height:44px', $html);
+    }
+
+    public function test_a_head_teacher_sets_the_mix_for_their_own_school(): void
+    {
+        DB::table('usergroups')->upsert([
+            ['id' => 4, 'name' => 'head teacher', 'created_at' => now(), 'updated_at' => now()],
+        ], 'id');
+        $head = $this->makeUser($this->riverside, 4, 'Riverside Head');
+        $otherHead = $this->makeUser($this->other, 4, 'Other Head');
+        $teacher = $this->makeUser($this->riverside, 5, 'Riverside Teacher');
+
+        $this->actingAs($teacher)->get('/admin/settings/exam-types')->assertNotFound();
+        $this->actingAs($head)->get('/admin/settings/generalsettings')->assertNotFound();
+
+        $this->actingAs($head)
+            ->post('/admin/settings/exam-types', [
+                'contributes' => [$this->eot->id => '1', $this->bot->id => '0'],
+                'include' => [$this->eot->id => '1', $this->bot->id => '1'],
+                'weight' => [$this->eot->id => '70', $this->bot->id => '30'],
+            ])
+            ->assertRedirect(route('admin.settings.exam-types'));
+
+        $this->assertEquals(70.0, $this->riverside->fresh()->report_composition[(string) $this->eot->id]['weight']);
+        $this->assertEquals(30.0, $this->riverside->fresh()->report_composition[(string) $this->bot->id]['weight']);
+        $this->assertNull($this->other->fresh()->report_composition);
+
+        $this->actingAs($otherHead)
+            ->post('/admin/settings/exam-types', [
+                'include' => [$this->eot->id => '1', $this->bot->id => '0'],
+                'weight' => [$this->eot->id => '100', $this->bot->id => ''],
+            ])
+            ->assertRedirect(route('admin.settings.exam-types'));
+
+        $this->assertEquals(70.0, $this->riverside->fresh()->report_composition[(string) $this->eot->id]['weight']);
+        $this->assertTrue($this->other->fresh()->report_composition[(string) $this->eot->id]['include']);
+        $this->assertEquals(100.0, $this->other->fresh()->report_composition[(string) $this->eot->id]['weight']);
+        $this->assertFalse($this->other->fresh()->report_composition[(string) $this->bot->id]['include']);
     }
 
     public function test_another_schools_type_cannot_be_toggled(): void

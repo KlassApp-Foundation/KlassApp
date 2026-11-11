@@ -247,16 +247,10 @@ class ResultsServiceTest extends TestCase
         $this->assertSame(1, $row->subjectsCounted);
         $this->assertArrayNotHasKey($science->id, $row->cells);
 
-        $this->assertCount(2, $sheet->sittings);
-        $mid = $sheet->sittings[0];
-        $end = $sheet->sittings[1];
-        $this->assertSame('MID', $mid->code);
-        $this->assertFalse($mid->contributesToReport);
-        $this->assertSame(40.0, $mid->student($student->id)->cell($ctx['english']->id)->mark);
-        $this->assertSame(30.0, $mid->student($student->id)->cell($science->id)->mark);
-        $this->assertSame('EOT', $end->code);
-        $this->assertTrue($end->contributesToReport);
-        $this->assertSame(80.0, $end->student($student->id)->total);
+        $this->assertCount(1, $sheet->sittings);
+        $this->assertSame('EOT', $sheet->sittings[0]->code);
+        $this->assertTrue($sheet->sittings[0]->contributesToReport);
+        $this->assertSame(80.0, $sheet->sittings[0]->student($student->id)->total);
 
         $midSheet = $this->sheet($ctx, $term, examTypeId: 1);
         $this->assertSame(70.0, $midSheet->student($student->id)->total);
@@ -337,6 +331,12 @@ class ResultsServiceTest extends TestCase
         $this->bands($ctx, [
             ['grade' => '9', 'points' => 9, 'min' => 0, 'max' => 100],
         ]);
+        $ctx['school']->forceFill([
+            'report_composition' => [
+                '1' => ['include' => true, 'weight' => null],
+                '2' => ['include' => true, 'weight' => null],
+            ],
+        ])->save();
         $student = $this->student($ctx, 'Month Student');
         $june = $this->exam($ctx, $term, $ctx['english'], '2026-06-15', 1);
         $july = $this->exam($ctx, $term, $ctx['english'], '2026-07-15', 1);
@@ -415,8 +415,16 @@ class ResultsServiceTest extends TestCase
         $this->mark($ctx, $eot, $ctx['english'], $student, 80, 'C3');
 
         // The settings form stores the checkbox as the strings "0" and "1".
-        $ctx['school']->exam_type_preferences = ['1' => '1', '2' => '0'];
-        $ctx['school']->save();
+        // The end-of-term mix decides which sets are on that report. The
+        // preference still decides which of those sets add to the total
+        // when they have no weight.
+        $ctx['school']->forceFill([
+            'exam_type_preferences' => ['1' => '1', '2' => '0'],
+            'report_composition' => [
+                '1' => ['include' => true, 'weight' => null],
+                '2' => ['include' => true, 'weight' => null],
+            ],
+        ])->save();
 
         $sheet = $this->sheet($ctx, $term);
         $row = $sheet->student($student->id);

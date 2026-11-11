@@ -6,6 +6,7 @@ use App\Contracts\Results\DivisionRule;
 use App\Contracts\Results\GradingScale;
 use App\Contracts\Results\ReleaseGate;
 use App\Contracts\Results\ReportTemplates;
+use App\Services\Results\ReportComposition;
 use App\Services\Results\ResultSheet;
 use App\Services\Results\ResultStudent;
 use App\Services\Results\ResultsPolicy;
@@ -382,22 +383,26 @@ class StudentReportCardService
     }
 
     /**
-     * The school's report composition can hide an exam type's column from
-     * report cards entirely (schools.report_composition include flag).
+     * An End of Term card uses the school's mix (or the mix frozen at release).
+     * Any other exam set is its own report: that set's columns only.
+     *
+     * @param  Collection<int, Exam>  $exams
+     * @return Collection<int, Exam>
      */
-    private function typeIncluded(int $schoolId, $exam): bool
+    private function examsOnThisReport(int $schoolId, Exam $exam, Collection $exams): Collection
     {
-        $typeId = (int) ($exam->examType?->id ?? 0);
-        if ($typeId === 0) {
-            return false;
-        }
-        $composition = \App\Models\School::query()->find($schoolId)?->report_composition;
-        if (! is_array($composition)) {
-            return true;
-        }
-        $settings = $composition[(string) $typeId] ?? $composition[$typeId] ?? [];
+        $exam->loadMissing('examType');
+        $composition = app(ReportComposition::class);
 
-        return ($settings['include'] ?? true) !== false;
+        if ($composition->isEndOfTerm($exam->examType)) {
+            $mix = $composition->forTermReport($schoolId, (int) $exam->section_id, (int) $exam->academic_term_id);
+
+            return $exams->filter(fn (Exam $row): bool => $composition->includes($mix, (int) $row->exam_type_id))->values();
+        }
+
+        $ownTypeId = (int) $exam->exam_type_id;
+
+        return $exams->filter(fn (Exam $row): bool => (int) $row->exam_type_id === $ownTypeId)->values();
     }
 
     public function generatePdf(
@@ -416,7 +421,7 @@ class StudentReportCardService
         $subjects = $helper->subjects($schoolId, $stdLink->section_id, $learner, $exam);
         $subjects = \App\Models\Subject::sortByReportOrder($subjects);
         $exams = $helper->exam($schoolId, $exam);
-        $exams = $exams->filter(fn ($e) => $this->typeIncluded($schoolId, $e));
+        $exams = $this->examsOnThisReport($schoolId, $exam, $exams);
 
         $midExams = $exams->filter(fn ($e) => $e->examType->code === 'MID')->sortBy('scheduled_at')->values();
         $eotExams = $exams->filter(fn ($e) => $e->examType->code !== 'MID')->values();

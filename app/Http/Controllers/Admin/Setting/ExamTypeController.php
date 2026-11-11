@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Helpers\GradingHelper;
 use App\Models\Academics\ExamType;
 use App\Models\School;
+use App\Services\Results\ReportComposition;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -26,7 +27,10 @@ class ExamTypeController extends Controller
         // on the schools table, or falls back to the exam_types default.
         $school = School::find($schoolId);
         $prefs = $this->jsonColumn($school, 'exam_type_preferences');
-        $composition = $this->jsonColumn($school, 'report_composition');
+        $storedComposition = $this->jsonColumn($school, 'report_composition');
+        $composition = $storedComposition === []
+            ? app(ReportComposition::class)->resolved($school)
+            : $storedComposition;
         $profiles = config('curricula.profiles', []);
         $profileKey = GradingHelper::profileKeyForSchool($schoolId);
         $legacyBands = GradingHelper::legacyBandsForSchool($schoolId);
@@ -43,6 +47,15 @@ class ExamTypeController extends Controller
         $school = School::findOrFail($schoolId);
         $visibleIds = $this->visibleTypeIds((int) $schoolId);
 
+        $compositionSent = $request->exists('include') || $request->exists('weight');
+        $composition = $compositionSent
+            ? app(ReportComposition::class)->fromRequest(
+                (array) $request->input('include', []),
+                (array) $request->input('weight', []),
+                $visibleIds,
+            )
+            : $school->report_composition;
+
         // Only this school's types are toggles it may set: posting another
         // school's id leaves no trace in this school's preferences.
         $prefs = [];
@@ -53,35 +66,6 @@ class ExamTypeController extends Controller
             }
         }
         $school->exam_type_preferences = $prefs ?: null;
-
-        $composition = [];
-        foreach ((array) $request->input('include', []) as $typeId => $on) {
-            $typeId = (int) $typeId;
-            if (! in_array($typeId, $visibleIds, true)) {
-                continue;
-            }
-            $composition[(string) $typeId] = ['include' => (string) $on === '1', 'weight' => null];
-        }
-        foreach ((array) $request->input('weight', []) as $typeId => $weight) {
-            $typeId = (int) $typeId;
-            if (! in_array($typeId, $visibleIds, true)) {
-                continue;
-            }
-            $weight = trim((string) $weight);
-            if ($weight === '') {
-                continue;
-            }
-            if (! is_numeric($weight) || (float) $weight <= 0 || (float) $weight > 100) {
-                continue;
-            }
-            $key = (string) $typeId;
-            $composition[$key] = ($composition[$key] ?? ['include' => true, 'weight' => null]);
-            $composition[$key]['weight'] = (float) $weight;
-        }
-        foreach ($composition as $key => $settings) {
-            // Right-hand side fills gaps only: `+` keeps include/weight already set.
-            $composition[$key] = $settings + ['include' => true, 'weight' => null];
-        }
         $school->report_composition = $composition ?: null;
 
         $school->save();
