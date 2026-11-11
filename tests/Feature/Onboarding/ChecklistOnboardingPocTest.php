@@ -130,7 +130,7 @@ class ChecklistOnboardingPocTest extends TestCase
         $result = app(ChecklistOnboardingService::class)->ingest($school, $admin, $path, 'flags.xlsx');
 
         $this->assertTrue($result['ok']);
-        $this->assertSame('Northwind Harbour School', $result['card']['school_name']);
+        $this->assertSame('Datamellon X AWS POC Demo', $result['card']['school_name']);
         $flags = $result['card']['flags'];
         $this->assertCount(2, $flags);
         $joined = json_encode($flags);
@@ -264,7 +264,7 @@ class ChecklistOnboardingPocTest extends TestCase
         $errors = array_values(array_filter($converted['flags'], fn (array $flag): bool => ($flag['severity'] ?? 'error') === 'error'));
 
         $this->assertNull($converted['blocked']);
-        $this->assertSame('Northwind Harbour School', $converted['school']);
+        $this->assertSame('Datamellon X AWS POC Demo', $converted['school']);
         $this->assertCount(2, $errors);
         $this->assertCount(121, $converted['planRows']['students']);
         $this->assertCount(8, $converted['planRows']['teachers']);
@@ -509,14 +509,14 @@ class ChecklistOnboardingPocTest extends TestCase
             ->set('workbook', $upload)
             ->call('ingest')
             ->assertSet('phase', 'agreement')
-            ->assertDontSee('Northwind Harbour School');
+            ->assertDontSee('Datamellon X AWS POC Demo');
         $this->assertSame(0, OnboardingPlan::query()->where('school_id', $school->id)->count());
         $component
             ->set('agreed', true)
             ->call('confirmAgreement')
             ->set('workbook', $upload)
             ->call('ingest')
-            ->assertSee('Northwind Harbour School')
+            ->assertSee('Datamellon X AWS POC Demo')
             ->assertSee('Learners')
             ->assertSee('Continue')
             ->assertSee('Fix the workbook')
@@ -701,7 +701,7 @@ class ChecklistOnboardingPocTest extends TestCase
             ->call('rememberSheetAccess', $token)
             ->call('importPickedSheet', '1aBcDeFgHiJkLmNoPqRs');
 
-        $card->assertSee('Northwind Harbour School')
+        $card->assertSee('Datamellon X AWS POC Demo')
             ->assertDontSee($token);
         Http::assertSentCount(2);
         Http::assertSent(function (\Illuminate\Http\Client\Request $request) use ($token): bool {
@@ -774,7 +774,7 @@ class ChecklistOnboardingPocTest extends TestCase
             ->assertSee('https://www.googleapis.com/auth/drive.file')
             ->call('rememberSheetAccess', $token)
             ->call('importPickedSheet', '1aBcDeFgHiJkLmNoPqRs')
-            ->assertSee('Northwind Harbour School')
+            ->assertSee('Datamellon X AWS POC Demo')
             ->assertSee('Primary Eight')
             ->assertDontSee($token);
 

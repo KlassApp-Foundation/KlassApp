@@ -6,12 +6,14 @@ use App\Enums\ToshiMode;
 use App\Models\School;
 use App\Models\User;
 use App\Models\Userprofile;
+use Database\Seeders\result\ExamTypes;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 /**
- * Returns the fictional Northwind Harbour proof-of-concept school to
+ * Returns the fictional Datamellon proof-of-concept school to
  * "not yet onboarded". Refuses any school that is not flagged demo or test.
  * The admin password is read from the environment and is never printed.
  */
@@ -19,11 +21,15 @@ class DemoChecklistResetCommand extends Command
 {
     public const SLUG = 'northwind-harbour';
 
+    public const SCHOOL_NAME = 'Datamellon X AWS POC Demo';
+
     public const ADMIN_EMAIL = 'northwind.admin@example.test';
+
+    public const ADMIN_FIRST_NAME = 'Datamellon';
 
     protected $signature = 'demo:checklist-reset';
 
-    protected $description = 'Reset the fictional Northwind Harbour demo school to not yet onboarded';
+    protected $description = 'Reset the fictional Datamellon demo school to not yet onboarded';
 
     public function handle(): int
     {
@@ -52,6 +58,8 @@ class DemoChecklistResetCommand extends Command
                 ])->save();
             }
             $school->forceFill([
+                'name' => self::SCHOOL_NAME,
+                'email' => 'office@datamellon.example',
                 'toshi_mode' => ToshiMode::Preview,
                 'toshi_enabled' => 1,
                 'registration_country' => 'Kenya',
@@ -64,7 +72,9 @@ class DemoChecklistResetCommand extends Command
             $this->wipeImported($school, (int) $admin->id);
         });
 
-        $this->info('Northwind Harbour School is ready and not yet onboarded.');
+        (new ExamTypes)->run();
+
+        $this->info(self::SCHOOL_NAME.' is ready and not yet onboarded.');
         $this->line('Admin: '.self::ADMIN_EMAIL);
         $this->line('Password: read from DEMO_CHECKLIST_ADMIN_PASSWORD (not printed).');
         $this->line('Open http://localhost:8000');
@@ -76,8 +86,8 @@ class DemoChecklistResetCommand extends Command
     {
         $school = new School;
         $school->forceFill([
-            'name' => 'Northwind Harbour School',
-            'email' => 'office@northwind.example',
+            'name' => self::SCHOOL_NAME,
+            'email' => 'office@datamellon.example',
             'phone' => '+254712000099',
             'slug' => self::SLUG,
             'status' => 1,
@@ -107,7 +117,7 @@ class DemoChecklistResetCommand extends Command
         $attributes = [
             'school_id' => $school->id,
             'usergroup_id' => 3,
-            'name' => 'Northwind Admin',
+            'name' => self::ADMIN_FIRST_NAME.' Admin',
             'email' => self::ADMIN_EMAIL,
             'password' => Hash::make($password),
             'status' => 'active',
@@ -125,17 +135,15 @@ class DemoChecklistResetCommand extends Command
             $admin = User::query()->create($attributes);
         }
 
-        Userprofile::query()->firstOrCreate(
-            ['user_id' => $admin->id],
-            [
-                'school_id' => $school->id,
-                'usergroup_id' => 3,
-                'firstname' => 'Northwind',
-                'lastname' => 'Admin',
-                'profession' => 'admin',
-                'status' => 'active',
-            ]
-        );
+        $profile = Userprofile::query()->firstOrNew(['user_id' => $admin->id]);
+        $profile->forceFill([
+            'school_id' => $school->id,
+            'usergroup_id' => 3,
+            'firstname' => self::ADMIN_FIRST_NAME,
+            'lastname' => 'Admin',
+            'profession' => $profile->profession ?: 'admin',
+            'status' => 'active',
+        ])->save();
 
         return $admin;
     }
@@ -148,6 +156,11 @@ class DemoChecklistResetCommand extends Command
             ->where('id', '!=', $adminId)
             ->pluck('id');
 
+        foreach (['marks', 'exam_marks_submissions', 'marks_releases', 'exams', 'exam_sets'] as $table) {
+            if (Schema::hasTable($table) && Schema::hasColumn($table, 'school_id')) {
+                DB::table($table)->where('school_id', $schoolId)->delete();
+            }
+        }
         DB::table('onboarding_plans')->where('school_id', $schoolId)->delete();
         DB::table('user_preferences')->where('key', 'checklist.school_agreement.'.$schoolId)->delete();
         DB::table('school_details')->where('school_id', $schoolId)->where('meta_key', 'moto')->delete();

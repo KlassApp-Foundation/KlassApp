@@ -1,6 +1,6 @@
 # Checklist onboarding demo — 5 minutes
 
-Northwind Harbour School is fictional. The admin address is `northwind.admin@example.test`. The password is on the demo laptop, in `DEMO_CHECKLIST_ADMIN_PASSWORD`. It is not written in this file.
+Datamellon X AWS POC Demo is fictional. The admin address is `northwind.admin@example.test`. The password is on the demo laptop, in `DEMO_CHECKLIST_ADMIN_PASSWORD`. It is not written in this file.
 
 This script is the Wednesday demo. Speak the sentences in quotes. Click only the named buttons. The numbers below are what the cards showed when this script was clicked through on 9 November 2026. Read the numbers off the card on the day. Do not invent a count if a card disagrees with this sheet.
 
@@ -15,7 +15,7 @@ bash scripts/demo/poc-serve.sh
 
 Open `http://localhost:8000`. That is the address for this demo copy and for every later Google test. Type localhost in the browser. Google treats a numeric loopback host as a different origin. The reset command prints the same address. If port 8000 is already taken, the start command names the listener and leaves it running. The Riverside preview stays on port 8126. It does not use Google sign-in.
 
-The workbook with two deliberate problems is `docs/demo/poc-checklist-workbook.xlsx`. The all-correct twin is `docs/demo/poc-checklist-workbook-correct.xlsx`. The same files are on the desktop as `Northwind-template-2-flags.xlsx` and `Northwind-template-clean.xlsx`. Class tabs run from Baby Class to Primary Seven. All Learners has no example row, so the first learner is on row 2. Phones are written `07XX XXXXXX`. The school is Kenya and the curriculum is CBC. Have the problem file ready to choose.
+The main file is `Datamellon-AWS-POC-Demo-checklist.xlsx` in Downloads. The same clean workbook is `docs/demo/poc-checklist-workbook-correct.xlsx`. Every row is ready and none are flagged. The optional file that shows Toshi catching mistakes is `Datamellon-AWS-POC-Demo-checklist-with-2-flags.xlsx` in Downloads, also `docs/demo/poc-checklist-workbook.xlsx`. Class tabs run from Baby Class to Primary Seven. All Learners has no example row, so the first learner is on row 2. Phones are written `07XX XXXXXX`. The school is Kenya and the curriculum is CBC. Have the clean file ready to choose.
 
 Sign in. You land on the school dashboard. If you land on "Setting up without Toshi", you are on the manual wizard, which hides this panel. Go back to the dashboard. Do not finish that wizard.
 
@@ -39,13 +39,13 @@ Say: "Same request, either as a button or in a sentence."
 
 Toshi shows **Data agreement** first, with short summaries and links to the privacy and terms pages this app already serves. Click **I agree, continue**. Toshi does not read the file before that.
 
-Toshi then shows **Upload the checklist**. Choose `poc-checklist-workbook.xlsx`. Click **Read this checklist**.
+Toshi then shows **Upload the checklist**. Choose `Datamellon-AWS-POC-Demo-checklist.xlsx`. Click **Read this checklist**.
 
 If you paste a Google Sheets link instead, Toshi says to download the sheet as .xlsx and upload that file. This demo has no Google account that can read a shared sheet. Do not make the sheet public.
 
 ## 0:50 — Summary card
 
-The card title is **Northwind Harbour School**. The numbers sit in tiles: learners, classes, streams, teachers, parents, subjects, and terms with their dates. Say: "Every number on this card was counted from the file. The model does not invent them."
+The card title is **Datamellon X AWS POC Demo**. The numbers sit in tiles: learners, classes, streams, teachers, parents, subjects, and terms with their dates. Say: "Every number on this card was counted from the file. The model does not invent them."
 
 The same counts, as a short list:
 
@@ -55,22 +55,15 @@ The same counts, as a short list:
 | Classes and streams | 8 | 8 | 0 |
 | Subjects | 5 | 5 | 0 |
 | Teachers and teaching assignments | 8 | 8 | 0 |
-| Learners and parents | 122 | 120 | 2 |
+| Learners and parents | 120 | 120 | 0 |
 
-Read equals Ready plus Flagged on every row. The People total uses the same figures as Done, after the flagged rows are left out: 8 teachers, 120 learners and 120 parents, 248 people.
+Read equals Ready on every row, and Flagged is 0. There is no flags step. The People total is 8 teachers, 120 learners and 120 parents, 248 people.
 
 Then the line under the list: class teachers listed 8, and this demo does not write class teachers.
 
-Say: "Two rows are wrong. Toshi names the tab and the row, and says how to fix each one."
+Tick **I've checked these**. Click **Next: Terms**.
 
-- Learners, row 123: parent phone `12345`. Learner ready, parent skipped. The row stays in Flagged, so Ready is 120 and the create is 120 learners and 120 parents.
-- Learners, row 124: class name Primary Eight. Use a class name KlassApp already knows, or skip the row.
-
-Say: "We can skip those two rows, or stop and fix the file. Nothing is saved until we confirm a step."
-
-Click **Skip these rows**.
-
-If instead you click **Stop, I'll fix the workbook**, the card says nothing was written. Fix the file and click **Onboard from checklist** again. Use that only if someone asks. It ends this run.
+To show Toshi catching mistakes, start again from `demo:checklist-reset` and choose `Datamellon-AWS-POC-Demo-checklist-with-2-flags.xlsx` instead. That file reads 122 learners: 120 ready and 2 flagged. Learners row 123 has parent phone `12345` (learner ready, parent skipped). Learners row 124 has class name Primary Eight. Click **Skip these rows**. Do not use that file for the main run.
 
 ## 1:30 — Confirm each step
 
@@ -159,7 +152,7 @@ Wait. Do not send the message again. This script does not call a model, so that 
 - It does not send email or WhatsApp.
 - It does not create exams, fees, or SchoolPay records.
 - It does not assign homeroom class teachers. Teaching assignments for the eight teachers are written in the teachers step.
-- The approval buttons do not call a model. A free-text question does, once, and falls back to the saved plan if that call cannot finish. A venue with no internet can still run the button script. `demo:checklist-reset` leaves the assistant switched on for Northwind Harbour School only. No other school is changed.
+- The approval buttons do not call a model. A free-text question does, once, and falls back to the saved plan if that call cannot finish. A venue with no internet can still run the button script. `demo:checklist-reset` leaves the assistant switched on for Datamellon X AWS POC Demo only. No other school is changed.
 
 ## The free Gemini key
 

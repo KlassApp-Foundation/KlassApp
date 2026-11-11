@@ -9,7 +9,7 @@ class DemoChecklistWorkbookCommand extends Command
 {
     protected $signature = 'demo:checklist-workbook {--out=docs/demo : Directory for the two fictional workbooks}';
 
-    protected $description = 'Write the fictional Northwind Harbour checklist and its all-correct twin';
+    protected $description = 'Write the fictional Datamellon checklist and its all-correct twin';
 
     public function handle(DemoChecklistWorkbook $workbook): int
     {

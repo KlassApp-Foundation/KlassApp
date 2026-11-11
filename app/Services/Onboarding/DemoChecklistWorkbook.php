@@ -12,7 +12,9 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
  */
 final class DemoChecklistWorkbook
 {
-    public const SCHOOL = 'Northwind Harbour School';
+    public const SCHOOL = 'Datamellon X AWS POC Demo';
+
+    private const MAIL_DOMAIN = 'datamellon.example';
 
     /** Class tabs in the checklist template, Baby Class through Primary Seven. */
     private const CLASS_TABS = [
@@ -56,8 +58,8 @@ final class DemoChecklistWorkbook
         ], true);
         $this->sheet($book, 'Admin & Contacts', [
             ['Role *', 'Full name *', 'Email', 'Phone', 'WhatsApp on this number?', 'Notes'],
-            ['Example', 'Example Person', 'person@northwind.example', '0712 000098', 'Yes', ''],
-            ['Head teacher', 'Nia Example', 'nia@northwind.example', '0712 000099', 'Yes', ''],
+            ['Example', 'Example Person', 'person@'.self::MAIL_DOMAIN, '0712 000098', 'Yes', ''],
+            ['Head teacher', 'Nia Example', 'nia@'.self::MAIL_DOMAIN, '0712 000099', 'Yes', ''],
         ]);
         $termRows = [['Academic year *', 'Term *', 'Start date *', 'End date *', 'Notes'], ['2026', 'Term 1', '02/02/2026', '30/04/2026', '']];
         foreach ($terms as $term) {
@@ -79,7 +81,7 @@ final class DemoChecklistWorkbook
         }
         $this->sheet($book, 'Subjects', $subjectRows);
 
-        $teacherRows = [['Full name *', 'Email *', 'Phone', 'Gender', 'Role', 'Notes'], ['Example Teacher', 'example.teacher@northwind.example', '0713 000099', 'Female', 'Teacher', '']];
+        $teacherRows = [['Full name *', 'Email *', 'Phone', 'Gender', 'Role', 'Notes'], ['Example Teacher', 'example.teacher@'.self::MAIL_DOMAIN, '0713 000099', 'Female', 'Teacher', '']];
         foreach ($teachers as $teacher) {
             $teacherRows[] = [$teacher['name'], $teacher['email'], $teacher['phone'], $teacher['gender'], 'Teacher', ''];
         }
@@ -192,7 +194,7 @@ final class DemoChecklistWorkbook
             $n = $index + 1;
             $teachers[] = [
                 'name' => $name,
-                'email' => 'teacher'.$n.'@northwind.example',
+                'email' => 'teacher'.$n.'@'.self::MAIL_DOMAIN,
                 'phone' => $this->phone(713, $n),
                 'gender' => $n % 2 === 0 ? 'Male' : 'Female',
             ];
@@ -219,7 +221,7 @@ final class DemoChecklistWorkbook
             sprintf('Parent %04d Example', $number),
             $phone,
             'Parent',
-            sprintf('parent%04d@northwind.example', $number),
+            sprintf('parent%04d@%s', $number, self::MAIL_DOMAIN),
             '',
             '',
             $id,
