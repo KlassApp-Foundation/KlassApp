@@ -281,7 +281,13 @@ class WhatsAppUserInitiatedVerificationTest extends TestCase
         $code = (string) $component->get('whatsappOtpDisplay');
         $this->assertMatchesRegularExpression('/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/', $code);
         $component->assertSee($code, false);
-        $component->assertSee('https://wa.me/256793844906?text='.rawurlencode('Verify KlassApp: '.$code), false);
+        $link = 'https://wa.me/256793844906?text='.rawurlencode('Verify KlassApp: '.$code);
+        $component->assertSee($link, false);
+        $component->assertSee('Scan with your phone', false);
+        $component->assertSeeHtml('data-testid="wizard-wa-qr"');
+        $component->assertSeeHtml('data-url="'.$link.'"');
+        $component->assertSee('Get a code', false);
+        $component->assertSee('Open WhatsApp', false);
         Http::assertNothingSent();
 
         $this->postMetaWhatsAppText(self::PHONE, 'Verify KlassApp: '.$code)->assertOk();

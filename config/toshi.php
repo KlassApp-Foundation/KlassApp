@@ -47,6 +47,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Checklist onboarding proof of concept
+    |--------------------------------------------------------------------------
+    |
+    | Off unless TOSHI_CHECKLIST_ONBOARDING_POC is true. Even then, only a
+    | school with is_demo or is_test sees the checklist cards. A real school
+    | stays on the existing Toshi panel.
+    |
+    */
+    'checklist_onboarding_poc' => (bool) env('TOSHI_CHECKLIST_ONBOARDING_POC', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Default mode for newly created schools
     |--------------------------------------------------------------------------
     |

@@ -632,7 +632,7 @@ final class StepIssueCatalog
             'school_name.placeholder' => 'Replace the placeholder with the school\'s real name.',
             'student_size.choice' => 'Choose Up to 500, Up to 1,000, or More than 1,000.',
             'country.required' => 'Enter the country name, at least 2 characters.',
-            'curriculum.choice' => 'Choose UNEB, Cambridge, Montessori, or Other.',
+            'curriculum.choice' => 'Choose UNEB, Cambridge, Montessori, CBC, or Other.',
             'school_category.choice' => 'Choose the kind of school from the list.',
             'emis.required' => 'Enter the EMIS or ministry code for this school.',
             'emis.max' => 'Shorten the code to 20 characters or fewer.',

@@ -157,14 +157,14 @@ class SidebarPolishCountsTest extends TestCase
         $this->assertSame(1, $counts['whatsapp']);
 
         $html = view('layouts.partials.sidebar-menu', ['role' => 'admin'])->render();
-        $this->assertSame(4, substr_count($html, 'sidebar-v3-count'));
+        $this->assertSame(10, substr_count($html, 'sidebar-v3-count'));
         $this->assertMatchesRegularExpression('/data-sidebar-count="whatsapp"[^>]*>1</', $html);
         $this->assertStringContainsString('>Marks Release</span>', $html);
         $this->assertStringContainsString('>Admissions</span>', $html);
         $this->assertStringContainsString('>Unmatched payments</span>', $html);
         $this->assertStringContainsString('>Approvals</span>', $html);
-        $this->assertDoesNotMatchRegularExpression(
-            '/aria-label="Students"[\s\S]{0,180}sidebar-v3-count/',
+        $this->assertMatchesRegularExpression(
+            '/data-sidebar-count="students"(?![^>]*hidden)[^>]*>\s*1</',
             $html
         );
     }

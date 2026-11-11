@@ -12,6 +12,7 @@ use App\Models\Academics\ExamType;
 use App\Models\Academics\Marks;
 use App\Services\DashboardV2DataService;
 use App\Support\DashboardGreeting;
+use App\Support\SidebarCounts;
 use App\Models\CurrentPlan;
 use App\Models\FeesCategories;
 use App\Models\Plan;
@@ -27,6 +28,7 @@ use App\Models\UserPreference;
 use App\Models\Userprofile;
 use App\Models\WhatsAppUser;
 use App\Services\OnboardingStepsService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -222,6 +224,51 @@ class DashboardV2Test extends TestCase
         $this->render($admin->fresh())->assertOk()->assertSee('This term,', false);
     }
 
+    public function test_attendance_weeks_stop_when_the_term_has_ended(): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-11-11 08:00:00'));
+        try {
+            $school = $this->makeSchool();
+            $admin = $this->makeAdmin($school);
+            $year = AcademicYear::create([
+                'school_id' => $school->id, 'name' => '2026', 'description' => 'y',
+                'start_date' => '2026-01-01', 'end_date' => '2026-12-31', 'status' => 1,
+            ]);
+            AcademicTerm::create([
+                'school_id' => $school->id, 'academic_year_id' => $year->id, 'name' => 'Term 1',
+                'status' => 'current', 'starts_on' => '2026-02-02', 'ends_on' => '2026-04-30',
+            ]);
+            User::factory()->create(['school_id' => $school->id, 'usergroup_id' => 6, 'status' => 'active']);
+
+            $charts = app(DashboardV2DataService::class)->build($school->fresh(), $admin->fresh())['charts'];
+            $this->assertCount(13, $charts['attendance_weeks']);
+            $this->assertSame('W1', $charts['attendance_weeks'][0]['label']);
+            $this->assertSame('W13', $charts['attendance_weeks'][12]['label']);
+            $this->assertSame('This term, 13 weeks · whole school', $charts['attendance_label']);
+
+            $this->render($admin->fresh())->assertOk()->assertSee('This term, 13 weeks', false);
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+
+    public function test_teachers_and_staff_chip_matches_the_staff_card(): void
+    {
+        $school = $this->makeSchool();
+        $admin = $this->makeAdmin($school);
+        DB::table('usergroups')->upsert([
+            ['id' => 4, 'name' => 'headteacher', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 8, 'name' => 'librarian', 'created_at' => now(), 'updated_at' => now()],
+        ], 'id');
+        User::factory()->create(['school_id' => $school->id, 'usergroup_id' => 5, 'status' => 'active']);
+        User::factory()->create(['school_id' => $school->id, 'usergroup_id' => 4, 'status' => 'active']);
+        User::factory()->create(['school_id' => $school->id, 'usergroup_id' => 8, 'status' => 'active']);
+
+        $staff = app(DashboardV2DataService::class)->build($school->fresh(), $admin->fresh())['kpis']['staff']['value'];
+        $this->assertSame(3, $staff);
+        $this->assertSame($staff, SidebarCounts::roster($school->id)['teachers']);
+    }
+
     public function test_dismissal_is_saved_per_user_and_chip_carries_the_same_count(): void
     {
         $school = $this->makeSchool(['name' => 'Dismiss School']);
@@ -281,7 +328,10 @@ class DashboardV2Test extends TestCase
         $this->assertStringContainsString('class="help missing"', $html);
         $this->assertStringContainsString('Structure &amp; Class Teachers', $html);
         $this->assertStringContainsString('in setup first.', $html);
-        $this->assertStringContainsString('/admin/standard/create', $html);
+        $this->assertMatchesRegularExpression(
+            '/href="[^"]*\/admin\/onboarding\/wizard[^"]*"[^>]*data-testid="dashboard-v2-tile-1"/',
+            $html,
+        );
     }
 
     public function test_snapshot_empty_state_for_a_school_with_no_students(): void

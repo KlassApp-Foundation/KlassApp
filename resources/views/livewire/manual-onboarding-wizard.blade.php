@@ -1,5 +1,29 @@
 {{-- SPDX-License-Identifier: MIT --}}
 {{-- Piece 3: manual onboarding wizard shell — kit chrome, real OnboardingStepsService steps --}}
+<div>
+@if($embedded)
+    <div class="checklist-wizard-embed" data-testid="checklist-wizard-form" data-embed-step="{{ $embedStep }}">
+        @include('livewire.partials.manual-wizard-step-fields', [
+            'stepKey' => $embedStep,
+            'countries' => $countries,
+            'plans' => $this->plans,
+            'selectedPlanId' => $selectedPlanId,
+            'reviewSummary' => $reviewSummary,
+            'phoneExample' => $this->phoneExample(),
+            'whatsappHint' => $this->phoneFormatHint(true),
+            'teacherPhoneHint' => $this->phoneFormatHint(false, "Teacher's phone number"),
+            'parentPhoneHint' => $this->phoneFormatHint(false, "Parent's phone number"),
+            'classTeacherPhoneHint' => $this->phoneFormatHint(false, "Class teacher's phone number"),
+            'embedField' => $embedField,
+        ])
+        @if($errorMessage)
+            <p class="t-note" role="alert" data-testid="checklist-wizard-error">{{ $errorMessage }}</p>
+        @endif
+        <div class="t-actions">
+            <button type="button" class="t-btn" wire:click="saveEmbedded" data-testid="checklist-wizard-save">Save</button>
+        </div>
+    </div>
+@else
 <div class="manual-wizard" wire:key="manual-wizard-root" data-testid="manual-wizard-shell">
     <div class="manual-wizard-brand" data-testid="wizard-brand">
         <div class="manual-wizard-brand-mark">
@@ -213,6 +237,8 @@
         </details>
     </aside>
     </div>
+</div>
+@endif
 </div>
 
 @script

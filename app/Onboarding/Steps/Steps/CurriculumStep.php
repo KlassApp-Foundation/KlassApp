@@ -7,11 +7,12 @@ use App\Onboarding\Steps\AbstractOnboardingStep;
 
 class CurriculumStep extends AbstractOnboardingStep
 {
-    // FLAGGED(product-decision): the step offers UNEB, Cambridge, Montessori, and Other only. see docs/onboarding-engine-plan.md
+    // FLAGGED(product-decision): the step offers UNEB, Cambridge, Montessori, CBC, and Other. see docs/onboarding-engine-plan.md
     private const OPTIONS = [
         'uneb' => 'UNEB',
         'cambridge' => 'Cambridge',
         'montessori' => 'Montessori',
+        'cbc' => 'CBC',
         'other' => 'Other',
     ];
 

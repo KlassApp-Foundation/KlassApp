@@ -90,6 +90,30 @@ class ManualOnboardingWizard extends Component
     // Form fields (bound per step)
     public string $schoolName = '';
 
+    public string $schoolPhone = '';
+
+    public string $schoolEmail = '';
+
+    public string $schoolMotto = '';
+
+    /** Render only one wizard form inside the checklist panel. */
+    public bool $embedded = false;
+
+    public string $embedStep = '';
+
+    /** school writes through the engine. plan updates the checklist only. */
+    public string $embedPersist = 'school';
+
+    /** When set, the school contact form shows this one field. */
+    public string $embedField = '';
+
+    /**
+     * Term rows to show when the checklist opens the terms form.
+     *
+     * @var list<array{name: string, start: string, end: string}>
+     */
+    public array $embedTerms = [];
+
     public string $studentSize = '';
 
     // FLAGGED(product-decision): the wizard opens on uneb. see docs/onboarding-engine-plan.md
@@ -392,6 +416,33 @@ class ManualOnboardingWizard extends Component
         $this->teacherEmail = $this->freshTeacherEmail($school);
         $this->prefillDefaultTerms();
 
+        if ($this->embedded) {
+            $this->finished = false;
+            if ($this->embedTerms !== []) {
+                $this->termDrafts = array_values($this->embedTerms);
+                $this->currentTermName = trim((string) ($this->termDrafts[0]['name'] ?? ''));
+            } elseif ($this->embedPersist === 'school' && $this->embedStep === 'terms') {
+                $savedTerms = AcademicTerm::query()->where('school_id', $school->id)->orderBy('id')->get();
+                if ($savedTerms->isNotEmpty()) {
+                    $this->termDrafts = $savedTerms->map(fn (AcademicTerm $term): array => [
+                        'name' => (string) $term->name,
+                        'start' => optional($term->starts_on)->toDateString() ?? '',
+                        'end' => optional($term->ends_on)->toDateString() ?? '',
+                    ])->all();
+                    $current = AcademicTerm::query()
+                        ->where('school_id', $school->id)
+                        ->where('status', 'current')
+                        ->value('name');
+                    $this->currentTermName = (string) ($current ?: ($this->termDrafts[0]['name'] ?? ''));
+                }
+            }
+            if ($this->embedStep !== '') {
+                $this->stepKey = $this->embedStep;
+            }
+
+            return;
+        }
+
         $school = $school->fresh();
 
         // Persist finish across reloads (A4: "is ready" then remount landed on Teachers).
@@ -594,6 +645,10 @@ class ManualOnboardingWizard extends Component
      */
     public function createMissingStreamsAndRetry(string $upload): void
     {
+        if ($this->planEditHoldsWrites()) {
+            return;
+        }
+
         if (! in_array($upload, ['class_teachers', 'students', 'teachers'], true)) {
             return;
         }
@@ -755,7 +810,7 @@ class ManualOnboardingWizard extends Component
      */
     private function queueUpload(string $kind, $file): void
     {
-        if (! $file) {
+        if (! $file || $this->planEditHoldsWrites()) {
             return;
         }
 
@@ -1563,6 +1618,10 @@ class ManualOnboardingWizard extends Component
      */
     public function addSubjects(): void
     {
+        if ($this->planEditHoldsWrites()) {
+            return;
+        }
+
         $this->errorMessage = '';
         $this->subjectFlash = '';
 
@@ -1581,6 +1640,10 @@ class ManualOnboardingWizard extends Component
 
     public function removeSubject(int $index): void
     {
+        if ($this->planEditHoldsWrites()) {
+            return;
+        }
+
         $this->errorMessage = '';
         $this->subjectFlash = '';
 
@@ -1970,6 +2033,9 @@ class ManualOnboardingWizard extends Component
         $this->countryName = OnboardingStepsService::countryOrDefault($school->registration_country);
         $this->ministryCode = (string) ($school->ministry_code ?: '');
         $this->unebCenterNumber = (string) ($school->uneb_center_number ?: '');
+        $this->schoolPhone = (string) ($school->phone ?: '');
+        $this->schoolEmail = (string) ($school->email ?: '');
+        $this->schoolMotto = (string) ($school->mottoText() ?? '');
     }
 
     private function persistCurrentStep(string $key): void
@@ -1990,6 +2056,7 @@ class ManualOnboardingWizard extends Component
             'teachers' => $this->saveTeachers($school),
             'students' => $this->saveStudents($school),
             'terms' => $this->saveTerm($school),
+            'school_contact' => $this->saveSchoolContactFields($school),
             'fees' => $this->saveFee($school),
             'whatsapp_verify' => $this->saveWhatsApp($school),
             'plan_selection' => $this->savePlan($school),
@@ -2004,6 +2071,69 @@ class ManualOnboardingWizard extends Component
         } catch (ValidationException $e) {
             throw ValidationException::withMessages(['schoolName' => $e->getMessage()]);
         }
+
+        $this->saveSchoolContactFields($school);
+    }
+
+    private function saveSchoolContactFields(School $school): void
+    {
+        app(OnboardingEngine::class)->saveSchoolContact(
+            $school,
+            $this->schoolPhone,
+            $this->schoolEmail,
+            $this->schoolMotto
+        );
+    }
+
+    /**
+     * Plan edits must not call the engine until the admin approves the step.
+     * Terms are the plan list this form can rewrite. Other lists stay in the workbook.
+     */
+    private function planEditHoldsWrites(): bool
+    {
+        if (! $this->embedded || $this->embedPersist !== 'plan') {
+            return false;
+        }
+
+        $this->errorMessage = 'This part of the plan cannot be edited here yet.';
+
+        return true;
+    }
+
+    /**
+     * The checklist panel uses the same form. Plan mode does not write the school.
+     */
+    public function saveEmbedded(): void
+    {
+        if (! $this->embedded) {
+            return;
+        }
+
+        $step = $this->embedStep !== '' ? $this->embedStep : (string) $this->stepKey;
+        if ($this->embedPersist === 'plan') {
+            if ($step !== 'terms') {
+                $this->errorMessage = 'This part of the plan cannot be edited here yet.';
+
+                return;
+            }
+            if (trim($this->termName) !== '') {
+                $this->addTermDraft();
+                if ($this->errorMessage !== '') {
+                    return;
+                }
+            }
+            if ($this->termDrafts === []) {
+                $this->errorMessage = 'Add at least one academic term.';
+
+                return;
+            }
+            $this->dispatch('checklist-plan-fields', step: 'terms', terms: $this->termDrafts)->to(ChecklistOnboarding::class);
+
+            return;
+        }
+
+        $this->persistCurrentStep($step);
+        $this->dispatch('checklist-school-saved', step: $step)->to(ChecklistOnboarding::class);
     }
 
     private function saveStudentSize(School $school): void
@@ -2090,6 +2220,10 @@ class ManualOnboardingWizard extends Component
 
     public function addStructureStream(int $sectionId): void
     {
+        if ($this->planEditHoldsWrites()) {
+            return;
+        }
+
         $this->errorMessage = '';
         $this->structureFlash = '';
 
@@ -2148,6 +2282,10 @@ class ManualOnboardingWizard extends Component
 
     public function inviteStructureClassTeacher(int $sectionId): void
     {
+        if ($this->planEditHoldsWrites()) {
+            return;
+        }
+
         $this->errorMessage = '';
         $this->structureFlash = '';
 
@@ -2228,6 +2366,10 @@ class ManualOnboardingWizard extends Component
      */
     public function confirmSuggestedStructure(): void
     {
+        if ($this->planEditHoldsWrites()) {
+            return;
+        }
+
         $this->errorMessage = '';
         $this->structureFlash = '';
         if ($this->structurePresetPreview === []) {

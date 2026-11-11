@@ -139,6 +139,10 @@ class TeacherInviteLinkService
      */
     public static function sendEmail(TeacherInvite $invite, string $token, School $school, ?string $className = null): void
     {
+        if (\App\Services\Onboarding\ChecklistInviteHold::active()) {
+            return;
+        }
+
         $url = self::inviteUrl($token);
 
         try {
@@ -162,6 +166,10 @@ class TeacherInviteLinkService
      */
     public static function sendWhatsApp(TeacherInvite $invite, string $token, School $school, ?string $className = null): void
     {
+        if (\App\Services\Onboarding\ChecklistInviteHold::active()) {
+            return;
+        }
+
         // staff_invite is waiting on Meta. Do not send, and do not log the token.
         if (! config('invites.staff_whatsapp_enabled')) {
             return;

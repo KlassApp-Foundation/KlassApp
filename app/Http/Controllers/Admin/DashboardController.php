@@ -179,6 +179,104 @@ class DashboardController extends Controller
     }
 
     /**
+     * Live figures for a checklist proof-of-concept school. Real rows only,
+     * and only for the signed-in admin's own school.
+     */
+    public function checklistFigures(Request $request)
+    {
+        $user = $request->user();
+        $school = $user?->school;
+        if (! $user || ! $school || (int) $user->school_id !== (int) $school->id) {
+            abort(404);
+        }
+        if (! app(\App\Services\Onboarding\ChecklistOnboardingGate::class)->enabledFor($school)) {
+            abort(404);
+        }
+
+        $data = app(\App\Services\DashboardV2DataService::class)->build($school, $user);
+        $kpis = $data['kpis'] ?? [];
+        $board = app(\App\Services\WhatsApp\LinkRequestBoard::class);
+        $pending = $board->pendingCount((int) $school->id);
+        $linked = $board->linkedNumberCount((int) $school->id);
+        $fees = $kpis['fees'] ?? [];
+        $feesOk = ($fees['state'] ?? '') === 'ok';
+        $reports = $kpis['report_cards'] ?? [];
+        $setup = $data['setup'] ?? ['done' => 0, 'total' => 0];
+
+        return response()->json([
+            'students' => [
+                'value' => (string) ($kpis['students']['value'] ?? 0),
+                'detail' => (string) ($kpis['students']['detail'] ?? ''),
+            ],
+            'staff' => [
+                'value' => (string) ($kpis['staff']['value'] ?? 0),
+                'detail' => (string) ($kpis['staff']['detail'] ?? ''),
+            ],
+            'attendance' => [
+                'value' => (string) ($kpis['attendance']['value'] ?? '–'),
+                'detail' => (string) ($kpis['attendance']['detail'] ?? ''),
+            ],
+            'fees' => [
+                'value' => $feesOk ? ((string) ($fees['percent'] ?? 0).'%') : '–',
+                'detail' => $feesOk
+                    ? trim((string) ($fees['collected_label'] ?? '').' of '.(string) ($fees['expected_label'] ?? ''))
+                    : 'Set up fees first',
+            ],
+            'reports' => [
+                'value' => (string) ($reports['ready'] ?? 0),
+                'detail' => 'of '.(string) ($reports['students'] ?? 0).((($reports['state'] ?? '') === 'no_exam') ? ' · No exam closed yet' : ''),
+            ],
+            'whatsapp' => [
+                'value' => (string) ($pending > 0 ? $pending : $linked),
+            ],
+            'ledger' => \App\Onboarding\OnboardingProgress::checklistRows($school, (int) $user->id),
+            'setup_complete' => (int) ($setup['total'] ?? 0) > 0 && (int) ($setup['done'] ?? 0) >= (int) ($setup['total'] ?? 0),
+            'hide_options' => $school->onboarding_finished_at !== null,
+            'academic_year' => $this->checklistAcademicYear($school),
+            'term_label' => (string) ($data['termLabel'] ?? ''),
+            'profile_line' => $this->checklistProfileLine($school),
+            'sidebar' => \App\Support\SidebarCounts::roster((int) $school->id),
+            'setup_progress' => \App\Livewire\ChecklistOnboarding::shellProgressFor((int) $school->id, (int) $user->id),
+            'attendance_trend' => (string) ($data['charts']['attendance_label'] ?? ''),
+        ]);
+    }
+
+    /**
+     * @return array{id: int|null, label: string}
+     */
+    private function checklistAcademicYear(\App\Models\School $school): array
+    {
+        $year = \App\Models\AcademicYear::query()
+            ->where('school_id', $school->id)
+            ->orderByRaw('CASE WHEN status = 1 THEN 0 ELSE 1 END')
+            ->orderByDesc('start_date')
+            ->first();
+
+        if ($year === null) {
+            return ['id' => null, 'label' => ''];
+        }
+
+        $name = trim((string) $year->name);
+
+        return [
+            'id' => (int) $year->id,
+            'label' => $name.((int) $year->status === 1 ? ' (current)' : ''),
+        ];
+    }
+
+    private function checklistProfileLine(\App\Models\School $school): string
+    {
+        $profile = \App\Onboarding\OnboardingProgress::profile($school);
+
+        return collect([
+            $profile['country'],
+            $profile['curriculum'],
+            $profile['year'],
+            $profile['term'] !== '' ? $profile['term'] : null,
+        ])->filter()->implode(' · ');
+    }
+
+    /**
      * Kit home shell: time-of-day greeting + first name.
      *
      * @return array{phrase: string, name: string}

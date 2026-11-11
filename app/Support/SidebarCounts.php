@@ -6,6 +6,9 @@ use App\Helpers\SiteHelper;
 use App\Models\Admission;
 use App\Models\Approval;
 use App\Models\SchoolPayTransaction;
+use App\Models\Section;
+use App\Models\Subject;
+use App\Models\User;
 use App\Services\Marks\MarksSubmissionService;
 use App\Services\WhatsApp\LinkRequestBoard;
 use App\States\Approval\Pending;
@@ -76,5 +79,39 @@ class SidebarCounts
             'whatsapp' => $whatsapp,
             'mark_submissions' => $markSubmissions,
         ];
+    }
+
+    /**
+     * People and class totals for the admin sidebar. Real rows for this school
+     * only. Pending badges stay in forSchool() and are not included here.
+     *
+     * @return array{students: int, teachers: int, parents: int, classes: int, subjects: int}
+     */
+    public static function roster(?int $schoolId): array
+    {
+        $empty = ['students' => 0, 'teachers' => 0, 'parents' => 0, 'classes' => 0, 'subjects' => 0];
+        if (! $schoolId || ! Schema::hasTable('users')) {
+            return $empty;
+        }
+
+        $people = User::query()->where('school_id', $schoolId)->where('status', 'active')->whereNull('deleted_at');
+        $empty['students'] = (clone $people)->where('usergroup_id', 6)->count();
+        // Same people as the Staff card: teachers, school admins, and head teachers.
+        $empty['teachers'] = (clone $people)->whereIn('usergroup_id', [3, 4, 5])->count();
+        $empty['parents'] = (clone $people)->where('usergroup_id', 7)->count();
+
+        if (Schema::hasTable('sections')) {
+            $empty['classes'] = Section::query()
+                ->where('school_id', $schoolId)
+                ->where(function ($query) {
+                    $query->where('status', 1)->orWhere('status', '1');
+                })
+                ->count();
+        }
+        if (Schema::hasTable('subjects')) {
+            $empty['subjects'] = Subject::query()->where('school_id', $schoolId)->count();
+        }
+
+        return $empty;
     }
 }

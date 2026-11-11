@@ -4,9 +4,9 @@
     school-admin dashboard.
 
     One count: the setup bar and the sidebar chip read OnboardingStepsService
-    (neutral step names via displayLabel — K25). The setup bar's "What's set up"
-    list is OnboardingProgress, one line per finished step. No promo carousel,
-    no Toshi slide, no Connected tools card.
+    (neutral step names via displayLabel — K25). A checklist school's receipt
+    and step log stay in the Toshi panel. No promo carousel, no Toshi slide,
+    no Connected tools card.
 --}}
 @extends('layouts.admin.layout')
 
@@ -38,6 +38,12 @@
     $toshiSwitch = app(\App\Services\Toshi\ToshiUiSwitch::class);
     $toshiMode = $school ? $toshiSwitch->mode($v2User) : \App\Enums\ToshiMode::Preview;
     $toshiPathOpen = $school && app(\App\Services\Toshi\ToshiOnboardingPath::class)->openFor($school);
+    $checklistSetup = $school && app(\App\Services\Onboarding\ChecklistOnboardingGate::class)->enabledFor($school);
+    $setupFinished = $school && $school->onboarding_finished_at !== null;
+    $checklistBanner = $checklistSetup && ! $setupFinished && empty($setup['dismissed']);
+    $setupProgress = ($checklistBanner && $school && $v2User)
+        ? \App\Livewire\ChecklistOnboarding::shellProgressFor((int) $school->id, (int) $v2User->id)
+        : null;
 
     // Quick actions (kept from v2) — row in the data state, tiles otherwise.
     $quickActions = [
@@ -58,6 +64,12 @@
     };
 @endphp
 <link rel="stylesheet" href="{{ asset('css/dashboard-v2.css') }}?v={{ filemtime(public_path('css/dashboard-v2.css')) }}">
+@if($checklistSetup)
+    <link rel="stylesheet" href="{{ asset('css/toshi-checklist-panel.css') }}?v={{ @filemtime(public_path('css/toshi-checklist-panel.css')) }}">
+@endif
+@if($checklistSetup && $setupFinished)
+<script>document.documentElement.classList.add('checklist-setup-done');</script>
+@endif
 <div class="dv2-shell" data-testid="dashboard-v2-shell">
     <div class="dv2-panel" data-testid="dashboard-v2-panel">
         @include('partials.message')
@@ -85,8 +97,7 @@
             </div>
         </div>
 
-        {{-- 2 · Setup bar (only while incomplete) --}}
-        @if($setupShown)
+        @if($setupShown && ! $checklistSetup)
             <div class="dv2-setup" data-testid="dashboard-v2-setup-bar" role="region" aria-label="School setup">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#14532D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8M13 12h8M13 18h8"/></svg>
                 <b data-testid="dashboard-v2-setup-count">Setup {{ $setup['done'] }} of {{ $setup['total'] }} done</b>
@@ -97,34 +108,41 @@
                     <span class="dv2-setup-next" data-testid="dashboard-v2-setup-next">Next: {{ $setup['next']['label'] }}</span>
                 @endif
                 <a href="{{ $nextHref }}" class="dv2-btn" data-testid="dashboard-v2-setup-continue">Continue setup</a>
-                @if($toshiMode === \App\Enums\ToshiMode::Onboarding)
-                    @if($toshiPathOpen)
-                    <button type="button" class="dv2-btn dv2-btn--ghost" data-testid="dashboard-v2-toshi-setup"
-                            onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(false); window.dispatchEvent(new CustomEvent('toshi-maximize'));">
-                        Set up with Toshi
-                    </button>
-                    @else
-                    <button type="button" disabled class="dv2-btn dv2-btn--ghost" data-testid="dashboard-v2-toshi-setup" aria-disabled="true">
-                        Set up with Toshi
-                        <span data-testid="dashboard-v2-toshi-soon">Coming soon</span>
-                    </button>
+                    @if($toshiMode === \App\Enums\ToshiMode::Onboarding)
+                        @if($toshiPathOpen)
+                        <button type="button" class="dv2-btn dv2-btn--ghost" data-testid="dashboard-v2-toshi-setup"
+                                onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(false); window.dispatchEvent(new CustomEvent('toshi-maximize'));">
+                            Set up with Toshi
+                        </button>
+                        @else
+                        <button type="button" disabled class="dv2-btn dv2-btn--ghost" data-testid="dashboard-v2-toshi-setup" aria-disabled="true">
+                            Set up with Toshi
+                            <span data-testid="dashboard-v2-toshi-soon">Coming soon</span>
+                        </button>
+                        @endif
                     @endif
-                @endif
-                @php $setupLines = array_values($setup['labels'] ?? []); @endphp
-                @if($setupLines !== [])
-                    <details class="dv2-setup-summary" data-testid="dashboard-v2-setup-summary">
-                        <summary>What's set up</summary>
+                <form method="POST" action="{{ $dismissUrl }}" class="dv2-setup-dismiss" onsubmit="return confirm('Hide the setup bar? Your progress stays in the sidebar.');">
+                    @csrf
+                    <button type="submit" class="dv2-x" data-testid="dashboard-v2-setup-dismiss" aria-label="Hide setup bar. Progress stays in the sidebar.">Hide</button>
+                </form>
+                @php
+                    $setupLines = array_values(array_filter(
+                        is_array($setup['summary'] ?? null) ? $setup['summary'] : [],
+                        fn ($line) => is_string($line) && trim($line) !== ''
+                    ));
+                @endphp
+                <details class="dv2-setup-summary" data-testid="dashboard-v2-setup-summary" open>
+                    <summary>What's set up</summary>
+                    @if($setupLines !== [])
                         <ul>
                             @foreach($setupLines as $line)
                                 <li>{{ $line }}</li>
                             @endforeach
                         </ul>
-                    </details>
-                @endif
-                <form method="POST" action="{{ $dismissUrl }}" class="inline" onsubmit="return confirm('Hide the setup bar? Your progress stays in the sidebar.');">
-                    @csrf
-                    <button type="submit" class="dv2-x" data-testid="dashboard-v2-setup-dismiss" aria-label="Hide setup bar. Progress stays in the sidebar.">✕</button>
-                </form>
+                    @else
+                        <p class="dv2-setup-empty" data-testid="dashboard-v2-setup-empty">Nothing is set up yet.</p>
+                    @endif
+                </details>
             </div>
         @endif
 
@@ -133,18 +151,33 @@
             <livewire:admin.whatsapp-dashboard-card />
         @endif
 
-        @if($state === 'new')
+        @if($state === 'new' && ! $checklistSetup)
             {{-- Brand new: quick-action tiles + zeroed tiles + one empty state --}}
             <div class="dv2-qat" data-testid="dashboard-v2-actions">
                 @foreach($quickActions as $i => $action)
                     @php $missing = $missingFor($action); @endphp
-                    <a class="dv2-qt" href="{{ $missing ? (($setup['routes'][$action['prereqs'][0]] ?? null) ?: ($setup['destination'] ?? $wizardUrl)) : $action['href'] }}" data-testid="dashboard-v2-tile-{{ $i + 1 }}" data-icon="{{ $action['icon'] }}">
-                        <span class="dv2-ico" aria-hidden="true"><x-ka-icon :name="$action['icon']" :size="18" tone="default" /></span>
-                        <span>
-                            <b>{{ $action['title'] }}</b>
-                            <span class="help {{ $missing ? 'missing' : '' }}">{{ $missing ? 'Finish “'.$missing.'” in setup first.' : $action['helper'] }}</span>
-                        </span>
-                    </a>
+                    @if($missing && $checklistSetup)
+                        <div class="dv2-qt" data-testid="dashboard-v2-tile-{{ $i + 1 }}" data-icon="{{ $action['icon'] }}">
+                            <span class="dv2-ico" aria-hidden="true"><x-ka-icon :name="$action['icon']" :size="18" tone="default" /></span>
+                            <span>
+                                <b>{{ $action['title'] }}</b>
+                                <span class="help missing">Finish “{{ $missing }}” in setup first.</span>
+                                <span class="dv2-qt-actions">
+                                    <button type="button" class="dv2-btn" data-testid="dashboard-v2-tile-toshi-{{ $i + 1 }}"
+                                            onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(false);">Set up with Toshi</button>
+                                    <a class="dv2-btn" href="{{ $nextHref }}" data-testid="dashboard-v2-tile-manual-{{ $i + 1 }}">Set up manually</a>
+                                </span>
+                            </span>
+                        </div>
+                    @else
+                        <a class="dv2-qt" href="{{ $missing ? $nextHref : $action['href'] }}" data-testid="dashboard-v2-tile-{{ $i + 1 }}" data-icon="{{ $action['icon'] }}">
+                            <span class="dv2-ico" aria-hidden="true"><x-ka-icon :name="$action['icon']" :size="18" tone="default" /></span>
+                            <span>
+                                <b>{{ $action['title'] }}</b>
+                                <span class="help {{ $missing ? 'missing' : '' }}">{{ $missing ? 'Finish “'.$missing.'” in setup first.' : $action['helper'] }}</span>
+                            </span>
+                        </a>
+                    @endif
                 @endforeach
             </div>
 
@@ -166,8 +199,35 @@
                 </span>
             </div>
         @else
+            @if($checklistBanner)
+                <section class="dv2-setup-card" data-testid="dashboard-v2-setup-bar" role="region" aria-label="School setup">
+                    <div class="dv2-setup-top">
+                        <div class="dv2-setup-copy">
+                            <h2>Set up {{ $schoolLabel }}</h2>
+                            <p class="dv2-setup-lead">Pick one. You can switch at any time, and nothing is saved until you approve it.</p>
+                        </div>
+                        <form method="POST" action="{{ $dismissUrl }}" class="dv2-setup-dismiss" onsubmit="return confirm('Hide the setup bar? Your progress stays in the sidebar.');">
+                            @csrf
+                            <button type="submit" class="dv2-x dv2-setup-hide" data-testid="dashboard-v2-setup-dismiss" aria-label="Hide setup bar. Progress stays in the sidebar.">Hide</button>
+                        </form>
+                    </div>
+                    <div class="dv2-setup-progress" data-testid="dashboard-v2-setup-progress" @unless($setupProgress) hidden @endunless>
+                        <p data-testid="dashboard-v2-setup-step">@if($setupProgress)Step {{ $setupProgress['step'] }} of {{ $setupProgress['total'] }} · {{ $setupProgress['name'] }}@endif</p>
+                        <div class="t-bars" aria-hidden="true">
+                            @for($dot = 0; $dot < 8; $dot++)
+                                <i @class(['is-on' => $setupProgress && $dot <= $setupProgress['index'], 'is-current' => $setupProgress && $dot === $setupProgress['index']])></i>
+                            @endfor
+                        </div>
+                    </div>
+                    <div class="dv2-setup-actions">
+                        <button type="button" class="dv2-btn" data-testid="dashboard-v2-toshi-setup" onclick="window.klassDashboardToshiSetup && window.klassDashboardToshiSetup()">Set up with Toshi</button>
+                        <a class="dv2-btn secondary" href="{{ $nextHref }}" data-testid="dashboard-v2-setup-manual">Set up manually</a>
+                    </div>
+                </section>
+            @endif
+
             {{-- 4 · KPI tiles. The old quick-action row is gone; each tile links to its list. --}}
-            <div class="dv2-kpis" data-testid="dashboard-v2-kpis">
+            <div class="dv2-kpis" data-testid="dashboard-v2-kpis" @if($checklistSetup) data-checklist-live data-figures-url="{{ url('/admin/dashboard/checklist-figures') }}" @endif>
                 @include('admin.dashboard._whatsapp_stat')
                 <div class="dv2-kpi">
                     <a class="dv2-kpi-link" href="{{ url('/admin/students') }}" aria-label="Students, open the students list">
@@ -198,7 +258,7 @@
                         <span class="dv2-meter" role="img" aria-label="{{ $kpis['fees']['percent'] }}% collected"><i style="width:{{ $kpis['fees']['percent'] }}%"></i></span>
                         <p class="dv2-kpi-sub">{{ $kpis['fees']['collected_label'] }} of {{ $kpis['fees']['expected_label'] }}</p>
                     @else
-                        <span class="dv2-kpi-value">–</span>
+                        <span class="dv2-kpi-value" data-testid="dashboard-v2-kpi-fees">–</span>
                         <p class="dv2-kpi-sub warn">Set up fees first</p>
                     @endif
                     @if($currency === null && ($kpis['fees']['state'] ?? 'ok') === 'ok')
@@ -260,7 +320,7 @@
 
                 <div class="dv2-card" data-testid="dashboard-v2-chart-attendance">
                     <h2>Attendance trend</h2>
-                    <small>This term, {{ max(1, count($charts['attendance_weeks'] ?? [])) }} {{ \Illuminate\Support\Str::plural('week', max(1, count($charts['attendance_weeks'] ?? []))) }} · whole school</small>
+                    <small data-testid="dashboard-v2-attendance-caption">{{ $charts['attendance_label'] ?? 'This term, 1 week · whole school' }}</small>
                     @php
                         $aw = $charts['attendance_weeks'] ?? [];
                         $awHas = count(array_filter($aw, fn ($w) => $w['value'] !== null)) > 0;
@@ -271,7 +331,7 @@
                                  :labels="array_map(fn ($w) => $w['label'], $aw)"
                                  :datasets="[['data' => array_map(fn ($w) => $w['value'], $aw), 'borderColor' => '#15803D', 'backgroundColor' => 'rgba(21,128,61,0.08)', 'fill' => true, 'tension' => 0.3]]"
                                  :options="['scales' => ['y' => ['min' => 80, 'max' => 100]]]"
-                                 aria-label="Attendance trend, last 8 weeks: {{ $awAria }}"
+                                 aria-label="Attendance trend, this term: {{ $awAria }}"
                                  empty-message="No attendance recorded yet — it appears after the first register." />
                     @else
                         <div class="dv2-empty-in"><b>No register taken yet</b><p>Attendance appears after the class teacher takes the first register.</p></div>
@@ -422,4 +482,187 @@
         @endif
     </div>
 </div>
+@if($checklistSetup)
+<script>
+window.klassDashboardToshiSetup = function () {
+    var collapsed = document.body.classList.contains('toshi-collapsed')
+        || document.documentElement.classList.contains('toshi-collapsed');
+    var welcome = document.querySelector('[data-testid="checklist-card-welcome"]');
+    var start = document.querySelector('[data-testid="onboard-from-checklist"]');
+    if (!collapsed && welcome && start) {
+        start.focus();
+        return;
+    }
+    if (window.toshiSetCollapsed) {
+        window.toshiSetCollapsed(false);
+    }
+};
+(function () {
+    if (window.klassChecklistFigures) {
+        return;
+    }
+    window.klassChecklistFigures = true;
+    var root = document.querySelector('[data-checklist-live]');
+    if (!root) {
+        return;
+    }
+    var url = root.getAttribute('data-figures-url');
+    var busy = false;
+    function setText(id, value) {
+        var node = document.querySelector('[data-testid="' + id + '"]');
+        if (node && node.textContent !== value) {
+            node.textContent = value;
+        }
+    }
+    function setDetail(id, value) {
+        var node = document.querySelector('[data-testid="' + id + '"]');
+        if (!node) {
+            return;
+        }
+        var card = node.closest('.dv2-kpi');
+        var detail = card ? card.querySelector('.dv2-kpi-sub') : null;
+        if (detail && value !== '' && detail.textContent !== value) {
+            detail.textContent = value;
+        }
+    }
+    function paint(payload) {
+        setText('dashboard-v2-kpi-students', String(payload.students.value));
+        setDetail('dashboard-v2-kpi-students', payload.students.detail || '');
+        setText('dashboard-v2-kpi-staff', String(payload.staff.value));
+        setDetail('dashboard-v2-kpi-staff', payload.staff.detail || '');
+        setText('dashboard-v2-kpi-attendance', String(payload.attendance.value));
+        setDetail('dashboard-v2-kpi-attendance', payload.attendance.detail || '');
+        setText('dashboard-v2-kpi-fees', String(payload.fees.value));
+        setDetail('dashboard-v2-kpi-fees', payload.fees.detail || '');
+        setText('dashboard-v2-kpi-reports', String(payload.reports.value));
+        setDetail('dashboard-v2-kpi-reports', payload.reports.detail || '');
+        if (payload.attendance_trend) {
+            setText('dashboard-v2-attendance-caption', payload.attendance_trend);
+        }
+        var progress = payload.setup_progress || null;
+        var progressBox = document.querySelector('[data-testid="dashboard-v2-setup-progress"]');
+        if (progressBox) {
+            var progressLabel = progressBox.querySelector('[data-testid="dashboard-v2-setup-step"]');
+            var progressDots = progressBox.querySelectorAll('.t-bars i');
+            if (!progress || !progress.step) {
+                progressBox.hidden = true;
+                if (progressLabel) {
+                    progressLabel.textContent = '';
+                }
+                progressDots.forEach(function (dot) { dot.className = ''; });
+            } else {
+                progressBox.hidden = false;
+                var progressText = 'Step ' + progress.step + ' of ' + progress.total + ' · ' + progress.name;
+                if (progressLabel && progressLabel.textContent !== progressText) {
+                    progressLabel.textContent = progressText;
+                }
+                var progressIndex = progress.index != null ? progress.index : (progress.step - 1);
+                progressDots.forEach(function (dot, index) {
+                    dot.className = index < progressIndex ? 'is-on' : (index === progressIndex ? 'is-on is-current' : '');
+                });
+            }
+        }
+        var whatsapp = document.querySelector('[data-testid="dashboard-whatsapp-waiting-count"], [data-testid="dashboard-connected-whatsapp-count"]');
+        if (whatsapp) {
+            whatsapp.textContent = String(payload.whatsapp.value);
+        }
+        function retireSetupChrome() {
+            document.documentElement.classList.add('checklist-setup-done');
+            ['dashboard-v2-setup-bar', 'dashboard-v2-profile', 'dashboard-v2-setup-summary'].forEach(function (id) {
+                var node = document.querySelector('[data-testid="' + id + '"]');
+                if (node && node.parentNode) {
+                    node.parentNode.removeChild(node);
+                }
+            });
+        }
+        if (payload.hide_options) {
+            retireSetupChrome();
+        }
+        var yearBox = document.querySelector('[data-testid="dashboard-v2-year"]');
+        var year = payload.academic_year || {};
+        var yearLabel = year.label || '';
+        if (yearBox && yearLabel !== '') {
+            var select = yearBox.querySelector('[data-testid="dashboard-v2-year-select"]');
+            if (!select) {
+                yearBox.replaceChildren();
+                var caption = document.createElement('label');
+                caption.className = 'dv2-year-label';
+                caption.setAttribute('for', 'dv2-year-select');
+                caption.textContent = 'Academic year';
+                select = document.createElement('select');
+                select.id = 'dv2-year-select';
+                select.setAttribute('aria-label', 'Academic year');
+                select.setAttribute('data-testid', 'dashboard-v2-year-select');
+                var option = document.createElement('option');
+                option.value = year.id ? String(year.id) : '';
+                option.selected = true;
+                option.textContent = yearLabel;
+                select.appendChild(option);
+                yearBox.appendChild(caption);
+                yearBox.appendChild(select);
+            } else {
+                var chosen = select.options[select.selectedIndex] || select.options[0];
+                if (chosen && chosen.textContent !== yearLabel) {
+                    chosen.textContent = yearLabel;
+                }
+            }
+        }
+        if (payload.term_label) {
+            setText('dashboard-v2-title', payload.term_label);
+            var termNode = document.querySelector('.nav-school-term');
+            if (!termNode) {
+                var schoolLine = document.querySelector('.nav-school-line');
+                if (schoolLine) {
+                    termNode = document.createElement('span');
+                    termNode.className = 'nav-school-term';
+                    schoolLine.appendChild(termNode);
+                }
+            }
+            if (termNode && termNode.textContent !== payload.term_label) {
+                termNode.textContent = payload.term_label;
+            }
+        }
+        var sidebar = payload.sidebar || {};
+        Object.keys(sidebar).forEach(function (key) {
+            var count = parseInt(sidebar[key], 10) || 0;
+            document.querySelectorAll('[data-sidebar-count="' + key + '"]').forEach(function (chip) {
+                chip.textContent = count > 0 ? String(count) : '';
+                chip.hidden = count < 1;
+            });
+        });
+    }
+    function tick() {
+        if (busy || !url) {
+            return;
+        }
+        busy = true;
+        fetch(url, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+            .then(function (response) { return response.ok ? response.json() : null; })
+            .then(function (payload) { if (payload) { paint(payload); } })
+            .catch(function () {})
+            .finally(function () { busy = false; });
+    }
+    document.addEventListener('livewire:init', function () {
+        if (!window.Livewire || !window.Livewire.hook) {
+            return;
+        }
+        window.Livewire.hook('commit', function (payload) {
+            payload.succeed(function () { tick(); });
+        });
+        if (window.Livewire.on) {
+            window.Livewire.on('checklist-setup-finished', function () {
+                document.documentElement.classList.add('checklist-setup-done');
+                ['dashboard-v2-setup-bar', 'dashboard-v2-profile', 'dashboard-v2-setup-summary'].forEach(function (id) {
+                    var node = document.querySelector('[data-testid="' + id + '"]');
+                    if (node && node.parentNode) {
+                        node.parentNode.removeChild(node);
+                    }
+                });
+            });
+        }
+    });
+    setInterval(tick, 3000);
+})();
+</script>
+@endif
 @endsection

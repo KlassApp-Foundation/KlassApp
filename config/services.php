@@ -108,6 +108,9 @@ return [
             : (rtrim((string) env('APP_URL', 'http://localhost'), '/') . '/auth/google/callback'),
         // Browser Maps/Places key — set via env; never commit a literal. Restrict by HTTP referrer in GCP.
         'maps_api_key' => env('GOOGLE_MAPS_API_KEY'),
+        // Picker browser key and Cloud project number. Both stay in env. The picker requests drive.file only.
+        'picker_key' => env('GOOGLE_PICKER_API_KEY'),
+        'project_number' => env('GOOGLE_CLOUD_PROJECT_NUMBER'),
     ],
 
     /*

@@ -86,6 +86,7 @@
         @stack('scripts')
 
         <livewire:scripts>
+        <script src="{{ asset('js/wa-qr.js') }}?v={{ @filemtime(public_path('js/wa-qr.js')) }}"></script>
 
         <script>
    function klassShowToast(event) {

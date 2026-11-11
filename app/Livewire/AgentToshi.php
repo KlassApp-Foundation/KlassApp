@@ -39,7 +39,10 @@ class AgentToshi extends Component
     /** @var array<string, string> */
     protected $listeners = [
         'manual-onboarding-finished' => 'syncOnboardingAfterManualWizard',
+        'checklist-shell' => 'checklistShell',
     ];
+
+    public string $checklistStep = 'welcome';
 
     /**
      * Map of tool name (as stored in pendingToolConfirm) to Tool class FQCN.
@@ -116,6 +119,10 @@ class AgentToshi extends Component
     public $messages = [];
     public $input = '';
     public $schoolId = null;
+
+    public bool $checklistOnboarding = false;
+
+    public bool $checklistFinished = false;
     public $preview = [];
     /** Public-demo actor: preview card shows the WhatsApp follow-along line. */
     public $publicDemo = false;
@@ -370,10 +377,35 @@ class AgentToshi extends Component
         $user = auth()->user();
         if (!$user) return;
 
+        $checklistSchool = $user->school_id ? School::query()->find($user->school_id) : null;
+        $this->checklistOnboarding = app(\App\Services\Onboarding\ChecklistOnboardingGate::class)
+            ->enabledFor($checklistSchool);
+        $this->checklistFinished = $checklistSchool !== null && $checklistSchool->onboarding_finished_at !== null;
+
         // Panel visibility (preview / onboarding / assistant). Scripted setup and
         // the model are gated separately via onboardingEnabled / assistantEnabled.
         $switch = app(\App\Services\Toshi\ToshiUiSwitch::class);
         if (! $switch->enabled($user)) {
+            return;
+        }
+
+        // The checklist demo is the conversation. Do not resume the 13-step
+        // setup script, and do not restore a session that would.
+        if ($this->checklistOnboarding && $user->school_id) {
+            $saved = session()->get(ChecklistOnboarding::sessionKey((int) $user->school_id, (int) $user->id));
+            if (is_array($saved) && is_string($saved['shell'] ?? null)) {
+                $this->checklistShell($saved['shell']);
+            }
+            $this->capabilities = ToshiActionService::getRoleCapabilities($user->usergroup_id);
+            $this->scope = $this->capabilities['scope'] ?? 'school';
+            $this->schoolId = $user->school_id;
+            $this->mode = 'assistant';
+            $this->step = 99;
+            $this->messages = [];
+            $this->visible = false;
+            $this->maximized = false;
+            $this->publicDemo = (bool) $user->isPublicDemo();
+
             return;
         }
 
@@ -1229,9 +1261,26 @@ class AgentToshi extends Component
         $this->persistState();
     }
 
+    public function checklistShell(string $step = 'welcome'): void
+    {
+        $allowed = ['welcome', 'agreement', 'checklist', 'terms', 'classes', 'subjects', 'teachers', 'learners', 'done'];
+        $this->checklistStep = in_array($step, $allowed, true) ? $step : 'welcome';
+    }
+
     public function show() { $this->visible = true; $this->maximized = false; }
     public function hide() { $this->visible = false; $this->maximized = false; }
-    public function maximize() { $this->maximized = true; $this->visible = false; }
+    public function maximize()
+    {
+        if ($this->checklistOnboarding) {
+            $this->maximized = false;
+            $this->visible = true;
+
+            return;
+        }
+
+        $this->maximized = true;
+        $this->visible = false;
+    }
     public function restore() { $this->maximized = false; $this->visible = true; }
 
     public function resetSchoolOnboarding()
@@ -3451,6 +3500,12 @@ class AgentToshi extends Component
                     }
                 }
             } catch (\Throwable $e) {
+                if (\App\Services\Toshi\ToshiRateLimit::isLimited($e)) {
+                    $this->botSay(\App\Services\Toshi\ToshiRateLimit::adminMessage());
+
+                    return;
+                }
+
                 \Log::warning('SDK v2 failed', [
                     'user_id' => $user->id,
                     'error' => $e->getMessage(),
@@ -4236,6 +4291,66 @@ class AgentToshi extends Component
     // ── Handle user input ──
     public function send()
     {
+        $text = trim((string) $this->input);
+        if ($this->checklistOnboarding && $text !== '' && preg_match('#https?://docs\.google\.com/spreadsheets/#i', $text) === 1) {
+            $this->input = '';
+            $this->dispatch('checklist-sheet-link', url: $text);
+
+            return;
+        }
+
+        if ($this->checklistOnboarding && $this->checklistFinished && $text !== '') {
+            $school = $this->schoolId ? \App\Models\School::query()->find($this->schoolId) : null;
+            $reply = \App\Services\Onboarding\ChecklistAssistantPrompts::reply($school, $text);
+            $this->userSay($text);
+            $this->input = '';
+            $this->botSay($reply ?? 'Ask about a class, a teacher, or a term.');
+
+            return;
+        }
+
+        if ($this->checklistOnboarding && $text !== '') {
+            $school = $this->schoolId ? \App\Models\School::query()->find($this->schoolId) : null;
+            $plan = $school
+                ? \App\Models\OnboardingPlan::query()->where('school_id', $school->id)->latest('id')->first()
+                : null;
+            $conversation = app(\App\Services\Onboarding\ChecklistConversation::class);
+            $heard = $conversation->hear($text, $plan, (string) ($school->name ?? ''));
+            if ($heard !== null) {
+                if ($plan instanceof \App\Models\OnboardingPlan && $conversation->wantsNarration($text, $plan)) {
+                    $spoken = app(\App\Services\Onboarding\ChecklistNarrator::class)->speak($text, $plan);
+                    if (is_string($spoken) && $spoken !== '') {
+                        $heard['say'] = $spoken;
+                    }
+                }
+                $this->userSay($text);
+                $this->input = '';
+                if ($heard['open']) {
+                    $this->dispatch('checklist-onboarding-open');
+                }
+                if ($heard['say'] !== '') {
+                    $this->botSay($heard['say']);
+                }
+
+                return;
+            }
+
+            $this->userSay($text);
+            $this->input = '';
+            $this->botSay("I don't know that from this checklist. Say “set up my school”, or use the button.");
+
+            return;
+        }
+
+        if ($this->checklistOnboarding && $this->mode === 'preview') {
+            $this->input = '';
+            if ($text !== '') {
+                $this->dispatch('checklist-onboarding-hint');
+            }
+
+            return;
+        }
+
         if ($this->mode === 'preview') {
             $this->input = '';
 

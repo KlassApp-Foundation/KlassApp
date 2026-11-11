@@ -4,6 +4,7 @@ namespace App\Helpers;
 
 use App\Models\School;
 use App\Models\User;
+use App\Services\Onboarding\ChecklistOnboardingGate;
 use App\Services\OnboardingEngine;
 
 /**
@@ -13,6 +14,9 @@ use App\Services\OnboardingEngine;
  * A school admin (usergroup 3) whose setup is unfinished goes to the earliest
  * wizard step. Every other role, and a school admin whose setup is finished,
  * still goes to that role's dashboard.
+ *
+ * A demo or test school with the checklist proof of concept on lands on the
+ * dashboard, where Toshi is visible. The manual wizard hides that panel.
  */
 class AuthRedirectHelper
 {
@@ -30,6 +34,10 @@ class AuthRedirectHelper
 
         $school = $user->school;
         if (! $school instanceof School) {
+            return $home;
+        }
+
+        if (app(ChecklistOnboardingGate::class)->enabledFor($school)) {
             return $home;
         }
 

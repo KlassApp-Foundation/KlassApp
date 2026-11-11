@@ -131,7 +131,10 @@
     };
 
     $navCounts = ($nav['layout'] ?? '') === 'v3'
-        ? \App\Support\SidebarCounts::forSchool((int) optional(auth()->user())->school_id)
+        ? array_merge(
+            \App\Support\SidebarCounts::forSchool((int) optional(auth()->user())->school_id),
+            \App\Support\SidebarCounts::roster((int) optional(auth()->user())->school_id),
+        )
         : [];
 @endphp
 <ul class="list-reset text-sm{{ ($nav['layout'] ?? '') === 'v3' ? ' sidebar-v3-list' : '' }}" @if(($nav['layout'] ?? '') === 'v3') data-sidebar-v3 @endif>

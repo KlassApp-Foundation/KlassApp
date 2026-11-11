@@ -38,6 +38,26 @@ use Illuminate\Validation\ValidationException;
 
 class OnboardingEngine
 {
+    private $createListener = null;
+
+    public function listenForCreates(?callable $listener): void
+    {
+        $this->createListener = $listener;
+    }
+
+    private function reportCreated(string $line, string $step, string $label): void
+    {
+        if ($this->createListener) {
+            ($this->createListener)([
+                'step' => $step,
+                'line' => $line,
+                'label' => $label,
+                'status' => 'running',
+                'result' => null,
+            ]);
+        }
+    }
+
     /**
      * Earliest setup step that is not finished, in playbook order.
      * Null when every applicable step is finished.
@@ -165,7 +185,7 @@ class OnboardingEngine
         }
 
         // FLAGGED(product-decision): curriculum is a fixed list headed by uneb, not the country profile. see docs/onboarding-engine-plan.md
-        if (! in_array($curriculum, ['uneb', 'cambridge', 'montessori', 'other'], true)) {
+        if (! in_array($curriculum, ['uneb', 'cambridge', 'montessori', 'cbc', 'other'], true)) {
             throw ValidationException::withMessages(['curriculum' => 'Choose a valid curriculum.']);
         }
 
@@ -224,6 +244,43 @@ class OnboardingEngine
         }
 
         $school->ministry_code = $ministryCode;
+        $school->save();
+    }
+
+    /**
+     * Phone, email, and motto. Empty values are left as they are.
+     *
+     * @throws ValidationException
+     */
+    public function saveSchoolContact(School $school, string $phone, string $email, string $motto): void
+    {
+        $phone = trim($phone);
+        $email = trim($email);
+        $motto = trim($motto);
+
+        Validator::make(
+            ['phone' => $phone, 'email' => $email, 'motto' => $motto],
+            [
+                'phone' => ['nullable', 'string', 'max:30'],
+                'email' => ['nullable', 'email', 'max:255'],
+                'motto' => ['nullable', 'string', 'max:100'],
+            ],
+            [
+                'email.email' => 'Enter a valid school email.',
+                'motto.max' => 'The motto can be at most 100 characters.',
+                'phone.max' => 'The phone number can be at most 30 characters.',
+            ]
+        )->validate();
+
+        if ($phone !== '') {
+            $school->phone = $phone;
+        }
+        if ($email !== '') {
+            $school->email = $email;
+        }
+        if ($motto !== '') {
+            $school->motto = $motto;
+        }
         $school->save();
     }
 
@@ -1340,7 +1397,7 @@ class OnboardingEngine
                 foreach ($subjectNames as $subjectName) {
                     $subjectName = trim((string) $subjectName);
 
-                    Subject::firstOrCreate([
+                    $subject = Subject::firstOrCreate([
                         'school_id' => $school->id,
                         'academic_year_id' => $year->id,
                         'standard_id' => $link->standard_id,
@@ -1351,6 +1408,9 @@ class OnboardingEngine
                         'type' => 'core',
                         'status' => 1,
                     ]);
+                    if ($subject->wasRecentlyCreated) {
+                        $this->reportCreated('subject-classes', 'subjects', 'Adding subjects to classes');
+                    }
                 }
             }
         }
@@ -1427,10 +1487,28 @@ class OnboardingEngine
                 $createAttrs['ends_on'] = Carbon::parse(trim((string) $end))->endOfDay();
             }
 
-            AcademicTerm::firstOrCreate(
-                ['school_id' => $school->id, 'name' => $name],
-                $createAttrs,
-            );
+            $existing = AcademicTerm::query()
+                ->where('school_id', $school->id)
+                ->where('name', $name)
+                ->first();
+            if ($existing instanceof AcademicTerm) {
+                if ($hasStart) {
+                    $existing->starts_on = Carbon::parse(trim((string) $start))->startOfDay();
+                }
+                if ($hasEnd) {
+                    $existing->ends_on = Carbon::parse(trim((string) $end))->endOfDay();
+                }
+                $existing->academic_year_id = $year->id;
+                $existing->save();
+
+                continue;
+            }
+
+            AcademicTerm::query()->create(array_merge($createAttrs, [
+                'school_id' => $school->id,
+                'name' => $name,
+            ]));
+            $this->reportCreated('terms', 'terms', 'Creating terms');
         }
 
         $this->normalizeAcademicTermCurrentStatus($school, $terms);
@@ -2001,17 +2079,21 @@ class OnboardingEngine
                     }
 
                     foreach ($links as $linkRow) {
-                        Teacherlink::firstOrCreate([
+                        $assignment = Teacherlink::firstOrCreate([
                             'school_id'        => $school->id,
                             'academic_year_id'  => $year->id,
                             'standardLink_id'  => $linkRow['standardLink_id'],
                             'subject_id'       => $linkRow['subject_id'],
                             'teacher_id'       => $teacher->id,
                         ]);
+                        if ($assignment->wasRecentlyCreated) {
+                            $this->reportCreated('assignments', 'teachers', 'Assigning subjects');
+                        }
                     }
 
                     $createdCount++;
                     $created[] = ['name' => $name, 'email' => $email, 'user_id' => $teacher->id];
+                    $this->reportCreated('teachers', 'teachers', 'Creating teacher accounts');
                 }
 
                 DashboardCache::forgetRosterCounts((int) $school->id);
@@ -2336,6 +2418,7 @@ class OnboardingEngine
                     $newParent = $this->linkImportedParent($school, $student, $draft, $parentsByPhone);
                     if ($newParent instanceof User) {
                         $createdParents[] = $newParent;
+                        $this->reportCreated('parents', 'students', 'Creating parents');
                     }
 
                     $created[] = [
@@ -2346,6 +2429,7 @@ class OnboardingEngine
                         'class'        => $link?->section?->name,
                         'standardLink_id' => $link?->id,
                     ];
+                    $this->reportCreated('learners', 'students', 'Creating learners');
                 }
 
                 $result = [

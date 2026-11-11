@@ -142,6 +142,164 @@ final class OnboardingProgress
         ];
     }
 
+    /**
+     * Completed steps only, as label and value pairs from saved rows.
+     *
+     * @return list<array{label: string, value: string}>
+     */
+    public static function ledger(School $school, ?int $userId = null): array
+    {
+        $school = $school->fresh() ?? $school;
+        if ($userId !== null && $userId < 1) {
+            $userId = null;
+        }
+
+        $rows = [];
+        foreach (OnboardingStepsService::steps($school, $userId) as $step) {
+            if (empty($step['is_complete'])) {
+                continue;
+            }
+            $key = (string) $step['key'];
+            $values = self::values($key, $school, $userId);
+            $value = $key === 'curriculum'
+                ? self::curriculumName((string) ($values['curriculum'] ?? ''))
+                : implode(' · ', array_map(static fn ($part): string => trim((string) $part), $values));
+            if ($value === '') {
+                continue;
+            }
+            $rows[] = [
+                'label' => OnboardingStepsService::displayLabel($key, $step, $school),
+                'value' => $value,
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Checklist dashboard ledger. Grouped, and the terms line is a count.
+     * The playbook summary still uses terms() unchanged.
+     *
+     * @return list<array{group: string, label: string, value: string}>
+     */
+    public static function checklistRows(School $school, ?int $userId = null): array
+    {
+        $school = $school->fresh() ?? $school;
+        if ($userId !== null && $userId < 1) {
+            $userId = null;
+        }
+
+        $done = [];
+        foreach (OnboardingStepsService::steps($school, $userId) as $step) {
+            $done[(string) $step['key']] = ! empty($step['is_complete']);
+        }
+
+        $rows = [];
+        $push = function (string $group, string $key, string $label) use (&$rows, $done, $school, $userId): void {
+            if (empty($done[$key])) {
+                return;
+            }
+            $values = self::values($key, $school, $userId);
+            $value = match ($key) {
+                'curriculum' => self::curriculumName((string) ($values['curriculum'] ?? '')),
+                'terms' => self::termFigure($values),
+                'students' => self::countPhrase(
+                    User::query()->where('school_id', $school->id)->where('usergroup_id', 6)->ByActive()->count(),
+                    'learner',
+                    'learners'
+                ),
+                default => implode(' · ', array_map(static fn ($part): string => trim((string) $part), $values)),
+            };
+            if (trim($value) === '') {
+                return;
+            }
+            $rows[] = ['group' => $group, 'label' => $label, 'value' => $value];
+        };
+
+        $push('School', 'school_name', 'School name');
+        $push('School', 'student_size', 'Size');
+        $push('School', 'country', 'Country');
+        $push('School', 'curriculum', 'Curriculum');
+        $push('School', 'school_category', 'Category');
+        $push('School', 'academic_year', 'Academic year');
+        $push('Structure', 'terms', 'Terms');
+        $push('Structure', 'standards', 'Classes and streams');
+        $push('Structure', 'subjects', 'Subjects');
+        $push('People', 'teachers', 'Teachers');
+        $push('People', 'students', 'Learners');
+
+        $parents = User::query()
+            ->where('school_id', $school->id)
+            ->where('usergroup_id', 7)
+            ->where('status', 'active')
+            ->count();
+        if ($parents > 0 || ! empty($done['students'])) {
+            $rows[] = [
+                'group' => 'People',
+                'label' => 'Parents',
+                'value' => self::countPhrase($parents, 'parent', 'parents'),
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * @return array{name: string, country: string, curriculum: string, year: string, term: string}
+     */
+    public static function profile(School $school): array
+    {
+        $school = $school->fresh() ?? $school;
+        $year = AcademicYear::query()
+            ->where('school_id', $school->id)
+            ->where('status', 1)
+            ->orderByDesc('id')
+            ->first();
+        $term = AcademicTerm::query()
+            ->where('school_id', $school->id)
+            ->where('status', 'current')
+            ->orderBy('id')
+            ->first();
+
+        return [
+            'name' => (string) $school->name,
+            'country' => trim((string) ($school->registration_country ?? '')),
+            'curriculum' => self::curriculumName((string) ($school->curriculum ?? '')),
+            'year' => $year ? trim((string) $year->name) : '',
+            'term' => $term ? trim((string) $term->name) : '',
+        ];
+    }
+
+    /**
+     * @param  array<string, string>  $values
+     */
+    private static function termFigure(array $values): string
+    {
+        $names = array_values(array_filter(array_map(
+            static fn ($name): string => trim((string) $name),
+            explode(',', (string) ($values['terms'] ?? ''))
+        )));
+        $count = count($names);
+        $current = trim((string) ($values['current'] ?? ''));
+        if ($current === '') {
+            $current = 'none';
+        }
+
+        return $count.' '.($count === 1 ? 'term' : 'terms').' · current: '.$current;
+    }
+
+    private static function curriculumName(string $code): string
+    {
+        return match (strtolower(trim($code))) {
+            'uneb' => 'UNEB',
+            'cambridge' => 'Cambridge',
+            'montessori' => 'Montessori',
+            'cbc' => 'CBC',
+            'other' => 'Other',
+            default => $code,
+        };
+    }
+
     private static function line(string $key, School $school, ?int $userId): string
     {
         $tokens = self::summaryTokens()[$key] ?? null;

@@ -26,10 +26,16 @@
                 $isGroup = count($children) > 0;
                 $ancestor = $isGroup && ($rowActive || $childActive);
                 $selfActive = $rowActive && ! $childActive && ! $isGroup;
-                $rowCount = count($children) === 0 ? (int) ($navCounts[$row['count'] ?? ''] ?? 0) : 0;
+                $hasOwnCount = ($row['count'] ?? '') !== '' && ! in_array($row['count'], ['classes', 'subjects'], true);
+                $rowCount = ($hasOwnCount || count($children) === 0)
+                    ? (int) ($navCounts[$row['count'] ?? ''] ?? 0)
+                    : 0;
                 $childCounts = [];
                 foreach ($children as $child) {
-                    $childCounts[] = (int) ($navCounts[$child['count'] ?? ''] ?? 0);
+                    $childKey = (string) ($child['count'] ?? '');
+                    $childCounts[] = in_array($childKey, ['classes', 'subjects'], true)
+                        ? 0
+                        : (int) ($navCounts[$childKey] ?? 0);
                 }
                 $hasChildCount = array_sum($childCounts) > 0;
                 // A parent that shares its URL with a child the current user cannot
@@ -60,7 +66,7 @@
                             <x-icons.sidebar name="{{ $row['icon'] }}"/>
                         @endif
                         <span>{{ $row['label'] }}</span>
-                        @if(!empty($row['count'] ?? null))
+                        @if($hasOwnCount)
                             {{-- Count rows keep a (hidden) chip so the live poll can reveal it without a reload. --}}
                             <span class="sidebar-v3-count" data-sidebar-count="{{ $row['count'] }}" @if($rowCount < 1) hidden @endif>{{ $rowCount > 0 ? $rowCount : '' }}</span>
                         @elseif($rowCount > 0)
@@ -91,7 +97,9 @@
                                    tabindex="0"
                                    @if($isChild) aria-current="page" @endif>
                                     <span>{{ $child['label'] }}</span>
-                                    @if($childCount > 0)
+                                    @if(!empty($child['count']) && ! in_array($child['count'], ['classes', 'subjects'], true))
+                                        <span class="sidebar-v3-count" data-sidebar-count="{{ $child['count'] }}" @if($childCount < 1) hidden @endif>{{ $childCount > 0 ? $childCount : '' }}</span>
+                                    @elseif($childCount > 0)
                                         <span class="sidebar-v3-count">{{ $childCount }}</span>
                                     @endif
                                 </a>

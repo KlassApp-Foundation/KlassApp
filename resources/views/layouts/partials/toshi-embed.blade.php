@@ -25,14 +25,17 @@
         @livewire('agent-toshi')
         @php
             $toshiMode = app(\App\Services\Toshi\ToshiUiSwitch::class)->mode()->value;
-            $toshiPillLabel = match ($toshiMode) {
-                'preview' => 'Meet Toshi',
-                'assistant' => 'Talk',
-                default => 'Setup guide',
-            };
             $toshiSetupDone = 0;
             $toshiSetupTotal = 0;
             $toshiSchool = auth()->user()->school;
+            $toshiChecklistOn = $toshiSchool
+                && app(\App\Services\Onboarding\ChecklistOnboardingGate::class)->enabledFor($toshiSchool);
+            $toshiPillLabel = match (true) {
+                $toshiChecklistOn => 'Toshi',
+                $toshiMode === 'preview' => 'Meet Toshi',
+                $toshiMode === 'assistant' => 'Talk',
+                default => 'Setup guide',
+            };
             if ($toshiSchool) {
                 $toshiSetup = \App\Services\OnboardingStepsService::progress($toshiSchool, (int) auth()->id());
                 $toshiSetupDone = (int) $toshiSetup['done'];
@@ -51,8 +54,9 @@
              data-setup-done="{{ $toshiSetupDone }}" data-setup-total="{{ $toshiSetupTotal }}"
              data-pill-page="{{ $toshiPillPage ? '1' : '0' }}">
             <button type="button" id="toshi-toggle" class="toshi-toggle" data-testid="toshi-toggle"
+                data-checklist-on="{{ $toshiChecklistOn ? '1' : '0' }}"
                 aria-label="Open Toshi"
-                title="{{ $toshiMode === 'preview' ? 'Toshi, coming soon' : 'Toshi' }}">
+                title="{{ ($toshiMode === 'preview' && ! $toshiChecklistOn) ? 'Toshi, coming soon' : 'Toshi' }}">
                 <span class="toshi-handle-mark" aria-hidden="true">K</span>
             </button>
             <button type="button" id="toshi-entry-pill" class="toshi-entry-pill" data-testid="toshi-entry-pill"
@@ -218,6 +222,17 @@
             document.addEventListener('DOMContentLoaded', function () { bindToggle(); bindResize(); });
             if (document.readyState !== 'loading') { bindToggle(); bindResize(); }
             window.addEventListener('livewire:navigated', function () { bindToggle(); bindResize(); });
+
+            if (window.visualViewport) {
+                var liftComposer = function () {
+                    var composer = document.querySelector('[data-toshi-root] .toshi-composer');
+                    if (!composer) return;
+                    var inset = Math.max(0, window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop);
+                    composer.style.paddingBottom = inset > 0 ? Math.round(inset + 12) + 'px' : '';
+                };
+                window.visualViewport.addEventListener('resize', liftComposer);
+                window.visualViewport.addEventListener('scroll', liftComposer);
+            }
         })();
         </script>
     @endif
