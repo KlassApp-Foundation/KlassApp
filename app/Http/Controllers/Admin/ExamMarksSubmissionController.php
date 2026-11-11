@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Academics\Exam;
 use App\Models\Academics\ExamMarksSubmission;
 use App\Models\User;
+use App\Helpers\SiteHelper;
+use App\Services\ExamAuthorization;
 use App\Services\Marks\MarksSubmissionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,20 +19,49 @@ class ExamMarksSubmissionController extends Controller
 
     public function index(Request $request)
     {
-        $schoolId = (int) Auth::user()->school_id;
+        $actor = $this->actor();
+        $schoolId = (int) $actor->school_id;
+        $sections = $this->reviewSections($actor, $schoolId);
 
-        $submissions = $this->submissions->awaitingReview($schoolId)
+        $submissions = $this->submissions->awaitingReview($schoolId, $sections)
             ->with(['exam.examType', 'exam.academicTerm', 'exam.section', 'class', 'subject', 'teacher'])
             ->paginate(20);
 
-        $pendingCount = $this->submissions->pendingCount($schoolId);
+        $pendingCount = $this->submissions->pendingCount($schoolId, $sections);
 
-        return view('admin.marks.submissions', compact('submissions', 'pendingCount'));
+        $view = (int) $actor->usergroup_id === 5 ? 'teacher.marks.approvals' : 'admin.marks.submissions';
+
+        return view($view, compact('submissions', 'pendingCount'));
+    }
+
+    /**
+     * null for a full admin (all classes), a list of section ids for a class
+     * teacher, 403 for anyone else.
+     */
+    private function reviewSections(User $actor, int $schoolId): ?array
+    {
+        if (in_array((int) $actor->usergroup_id, [1, 2, 3], true)) {
+            return null;
+        }
+
+        if ((int) $actor->usergroup_id !== 5) {
+            abort(403);
+        }
+
+        $year = SiteHelper::getAcademicYear($schoolId);
+
+        return app(ExamAuthorization::class)->sectionIdsForClassTeacher($actor, $schoolId, (int) ($year?->id ?? 0));
     }
 
     public function show(Exam $exam)
     {
+        $actor = $this->actor();
         $this->assertExamSchool($exam);
+
+        if ((int) $actor->usergroup_id === 5
+            && ! app(ExamAuthorization::class)->isClassTeacherForExam($actor, $exam)) {
+            abort(403, 'You can only review marks for the class you head.');
+        }
 
         $exam->load(['section', 'subject', 'standard']);
 
