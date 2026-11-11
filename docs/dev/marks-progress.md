@@ -2,6 +2,8 @@
 
 Handover for any later session. Updated after each numbered item. Draft only: no merges, no deploys.
 
+This file is [#1328](https://github.com/KlassApp-Foundation/KlassApp/pull/1328) on `marks/progress`.
+
 **Decisions (final, 2026-11-11).** Class teachers keep creating exam sets for their own class, and can approve or return marks for that class. Head teachers have the same powers as a school admin inside their own school, never across schools. Admins and head teachers can enter, save, submit, approve, return and release for any class. Subject teachers enter, save and submit their own subjects. Each exam set has its own report. The end-of-term report's composition is a per-school setting (weights total 100; default is End of Term only) and never rewrites a report already released. Parents and learners see marks and report cards only after release.
 
 **Where this work lives.** New work goes in its own worktree from `origin/main` (`2aaf327b`), with its own database and a port other than 8000 or 8126. The demo on `poc/toshi-checklist-onboarding` at tag `demo-final-2026-11-11d` (`http://localhost:8000`) stays untouched. Part B screens wait for `~/Downloads/marks-handoff/`, which is not on this machine yet. Item 4 may reuse the existing teacher marks screen before that handoff arrives.
