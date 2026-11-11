@@ -79,21 +79,25 @@ public function teacherExamMarksList()
 {
     $teacher = Auth::user();
     $schoolId = $teacher->school_id;
+    $managesSchool = $teacher instanceof User
+        && $this->examAuthorization->managesMarksForSchool($teacher, (int) $schoolId);
 
     $yrId = AcademicYear::where('school_id', $schoolId)->where('status', 1)->value('id')
         ?? AcademicYear::where('school_id', $schoolId)->where('name', (string) now()->year)->value('id');
-    $ctSectionIds = $yrId
+    $ctSectionIds = $yrId && $teacher instanceof User
         ? $this->examAuthorization->sectionIdsForClassTeacher($teacher, (int) $schoolId, (int) $yrId)
         : [];
 
     $exams = Exam::with(['standard', 'subject', 'teacher', 'academicYear', 'section', 'examType', 'academicTerm'])
         ->where('school_id', $schoolId)
         ->when($yrId, fn ($q) => $q->where('academic_year_id', $yrId))
-        ->where(function ($q) use ($teacher, $ctSectionIds) {
-            $q->where('teacher_id', $teacher->id);
-            if ($ctSectionIds !== []) {
-                $q->orWhereIn('section_id', $ctSectionIds);
-            }
+        ->when(! $managesSchool, function ($q) use ($teacher, $ctSectionIds) {
+            $q->where(function ($q) use ($teacher, $ctSectionIds) {
+                $q->where('teacher_id', $teacher->id);
+                if ($ctSectionIds !== []) {
+                    $q->orWhereIn('section_id', $ctSectionIds);
+                }
+            });
         })
         ->orderBy('created_at', 'desc')
         ->get();

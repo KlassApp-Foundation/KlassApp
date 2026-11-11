@@ -295,8 +295,8 @@ class ClassTeacherExamCustodianTest extends TestCase
             'exam_id' => $this->subjectOwnedExam->id,
             'student_id' => $this->student->id,
             'marks' => 88,
-            // Stamp stays the assigned subject teacher (saveExamMarks behaviour)
-            'teacher_id' => $this->subjectTeacher->id,
+            // The row records who entered it. The exam still names the subject teacher.
+            'teacher_id' => $this->classTeacher->id,
         ]);
     }
 

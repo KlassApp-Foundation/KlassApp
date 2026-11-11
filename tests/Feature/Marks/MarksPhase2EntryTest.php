@@ -169,7 +169,7 @@ class MarksPhase2EntryTest extends TestCase
         $this->assertNotNull($mark);
         $this->assertSame(81, (int) $mark->marks);
         $this->assertSame('A', $mark->grade);
-        $this->assertSame((int) $this->subjectTeacher->id, (int) $mark->teacher_id);
+        $this->assertSame((int) $this->classTeacher->id, (int) $mark->teacher_id);
         $this->assertSame((int) $this->school->id, (int) $mark->school_id);
     }
 
