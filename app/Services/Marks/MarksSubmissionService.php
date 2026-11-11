@@ -12,6 +12,7 @@ use App\Models\Subject;
 use App\Models\User;
 use App\Notifications\MarksSubmissionNotification;
 use App\Services\ExamAuthorization;
+use App\Support\SchoolAdmin;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
@@ -23,10 +24,10 @@ use Illuminate\Validation\ValidationException;
  */
 final class MarksSubmissionService
 {
-    /** @var list<int> */
-    private const SCHOOL_ADMIN_GROUPS = [1, 3, 4];
+    /** @var list<int> Site admin, co-admin, school admin, and head teacher. */
+    private const SCHOOL_ADMIN_GROUPS = [1, 2, 3, 4];
 
-    /** Admins and head teachers. Approve and return stay with school admins. */
+    /** Admins and head teachers. */
     private const REOPEN_GROUPS = [1, 3, 4];
 
     /**
@@ -468,7 +469,7 @@ final class MarksSubmissionService
     {
         $this->assertSameSchool($actor, $exam);
 
-        if (! in_array((int) $actor->usergroup_id, self::SCHOOL_ADMIN_GROUPS, true)) {
+        if ((int) $actor->usergroup_id !== 2 && ! SchoolAdmin::is($actor)) {
             abort(403, 'Only a school admin can review marks.');
         }
     }

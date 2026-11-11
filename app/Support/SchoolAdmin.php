@@ -21,4 +21,34 @@ final class SchoolAdmin
     {
         return $user !== null && in_array((int) $user->usergroup_id, self::GROUPS, true);
     }
+
+    /**
+     * A school admin or head teacher, and only for the school on their account.
+     */
+    public static function managesOwnSchool(?User $user, int|string|null $schoolId): bool
+    {
+        if ($user === null || $schoolId === null || (int) $schoolId === 0) {
+            return false;
+        }
+
+        return in_array((int) $user->usergroup_id, [3, 4], true)
+            && (int) $user->school_id === (int) $schoolId;
+    }
+
+    /**
+     * Site admin may act in any school. A school admin or head teacher may
+     * act only in their own school.
+     */
+    public static function managesSchool(?User $user, int|string|null $schoolId): bool
+    {
+        if ($user === null) {
+            return false;
+        }
+
+        if ((int) $user->usergroup_id === 1) {
+            return true;
+        }
+
+        return self::managesOwnSchool($user, $schoolId);
+    }
 }

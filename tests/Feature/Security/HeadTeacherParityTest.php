@@ -122,6 +122,23 @@ class HeadTeacherParityTest extends TestCase
         $this->assertTrue(SchoolAdmin::is(User::factory()->make(['usergroup_id' => 3])));
         $this->assertFalse(SchoolAdmin::is($this->teacher));
         $this->assertFalse(SchoolAdmin::is(null));
+        $this->assertTrue(SchoolAdmin::managesOwnSchool($this->headA, $this->schoolA->id));
+        $this->assertFalse(SchoolAdmin::managesOwnSchool($this->headA, $this->schoolB->id));
+        $this->assertFalse(SchoolAdmin::managesOwnSchool($this->teacher, $this->schoolA->id));
+        $this->assertTrue(SchoolAdmin::managesSchool(User::factory()->make(['usergroup_id' => 1]), $this->schoolB->id));
+        $this->assertFalse(SchoolAdmin::managesSchool($this->headA, $this->schoolB->id));
+    }
+
+    public function test_admin_gates_allow_a_head_teacher_in_their_school_only(): void
+    {
+        $own = (object) ['school_id' => $this->schoolA->id, 'created_by' => 0];
+        $other = (object) ['school_id' => $this->schoolB->id, 'created_by' => 0];
+
+        foreach (['event-destroy', 'homework-manage', 'post-destroy', 'teacher-leave-manage', 'parent-link-request-manage'] as $gate) {
+            $this->assertTrue(Gate::forUser($this->headA)->allows($gate, $own), $gate);
+            $this->assertFalse(Gate::forUser($this->headA)->allows($gate, $other), $gate);
+            $this->assertFalse(Gate::forUser($this->teacher)->allows($gate, $own), $gate);
+        }
     }
 
     public function test_a_head_teacher_passes_the_full_school_admin_gate(): void

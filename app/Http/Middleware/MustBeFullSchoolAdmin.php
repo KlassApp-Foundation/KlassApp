@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\SchoolAdmin;
 use Closure;
 
 /**
@@ -15,9 +16,8 @@ class MustBeFullSchoolAdmin
     public function handle($request, Closure $next)
     {
         $user = \Auth::user();
-        $ug = (int) $user->usergroup_id;
 
-        if ($ug === 2 || \App\Support\SchoolAdmin::is($user)) {
+        if ((int) $user->usergroup_id === 2 || SchoolAdmin::is($user)) {
             return $next($request);
         }
 
