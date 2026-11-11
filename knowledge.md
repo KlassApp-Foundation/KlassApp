@@ -3225,6 +3225,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-11-11: KLS filler writes a number only on an exact class match
+
+- **Work done**: Draft [#1332](https://github.com/KlassApp-Foundation/KlassApp/pull/1332) on `feat/kls-filler` (`baed13be`), from `main`. A marks workbook gets a KLS number in column A only when one active learner in that class matches the name. Near-misses, duplicates, a missing number, a different number already in the cell, and another school's class are listed and left blank. A teacher cannot run it. Demo on port 8000 was not touched.
+- **Files touched**: `app/Services/Marks/KlsFiller.php`, `tests/Feature/Marks/KlsFillerTest.php`.
+- **Key decisions**: The class tab matches the school's own class name. It does not translate a country list, and "Primary Four" is not guessed as "P.4". Head teachers of that school can run it, with admins. The filler does not mint a new KLS number. Not stacked on #1331.
+- **Status**: Draft [#1332](https://github.com/KlassApp-Foundation/KlassApp/pull/1332) at `baed13be`. Not merged. Production untouched. Full test-guard not run here. No screen yet.
+- **Edge cases flagged**: Two current academic years, or none, write nothing. A learner with no profile name is matched on the user name.
+
 ### 2026-11-11: Released marks lock, audit trail, and snapshot hash
 
 - **Work done**: Draft [#1331](https://github.com/KlassApp-Foundation/KlassApp/pull/1331) on `feat/marks-history-integrity` (`5322c6aa`), from `main`. Marks for one school list as year, term, exam set, class, subject. Each save logs who changed a mark and the old and new value. A released sitting is locked until an admin or head teacher of that school reopens it with a reason. Each snapshot stores a content hash. Demo on port 8000 was not touched.
