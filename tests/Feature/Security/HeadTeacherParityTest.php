@@ -152,6 +152,28 @@ class HeadTeacherParityTest extends TestCase
         $this->actingAs($this->headA)->get('/admin/settings')->assertOk();
     }
 
+    public function test_a_head_teacher_can_open_the_approvals_page_and_settings(): void
+    {
+        $this->actingAs($this->headA)->get(route('admin.marks.submissions'))->assertOk();
+        $this->actingAs($this->headA)->get('/admin/settings')->assertOk();
+    }
+
+    public function test_a_subject_teacher_cannot_open_the_admin_approvals_page(): void
+    {
+        $response = $this->actingAs($this->teacher)->get(route('admin.marks.submissions'));
+
+        $this->assertContains($response->getStatusCode(), [302, 403], 'a teacher must not reach the school-wide approvals page');
+    }
+
+    public function test_the_admin_sidebar_offers_marks_and_settings_to_a_head_teacher(): void
+    {
+        $this->actingAs($this->headA)
+            ->get(route('subadmin.dashboard'))
+            ->assertOk()
+            ->assertSee('Mark submissions')
+            ->assertSee('Settings');
+    }
+
     public function test_a_head_teacher_can_approve_marks_in_their_school_only(): void
     {
         ExamMarksSubmission::create([

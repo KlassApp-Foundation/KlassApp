@@ -108,13 +108,12 @@
     $showItem = function (array $item) use ($ctLinks, $ctSectionIds): bool {
         $condition = $item['condition'] ?? null;
 
-        // 'school_admin' — items only the full SchoolAdmin (ug3) may use.
-        // SchoolSubadmin (ug4) reuses this nav, but the routes themselves exclude
-        // it (Settings: fullschooladmin; school details, academic years and terms,
-        // the data exports index, and the classes URLs: the full-school-admin gate; the
-        // classes roster also refuses groups outside [3, 5]), so hide the links for them.
+        // 'school_admin' — items for whoever manages this school: SchoolAdmin
+        // and head teacher (SchoolSubadmin, ug4) inside their own school, plus
+        // the site admin. The routes behind them use the same allow-list and
+        // stay school_id-scoped, so the link and the check cannot drift.
         if ($condition === 'school_admin') {
-            return (int) optional(auth()->user())->usergroup_id === 3;
+            return \App\Support\SchoolAdmin::is(auth()->user());
         }
 
         // Report Cards keeps the homeroom rule because ReportCardsController::authorizeClassTeacher()
