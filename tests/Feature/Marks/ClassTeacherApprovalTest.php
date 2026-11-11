@@ -225,6 +225,19 @@ class ClassTeacherApprovalTest extends TestCase
         $this->assertSame('approved', $row->fresh()->approval_status);
     }
 
+    public function test_the_sidebar_offers_review_marks_to_a_class_teacher_only(): void
+    {
+        $this->actingAs($this->classTeacher)
+            ->get(route('teacher.dashboard'))
+            ->assertOk()
+            ->assertSee('Review marks');
+
+        $this->actingAs($this->subjectTeacher)
+            ->get(route('teacher.dashboard'))
+            ->assertOk()
+            ->assertDontSee('Review marks');
+    }
+
     public function test_the_teacher_approvals_page_lists_only_their_class(): void
     {
         $this->submittedFor($this->exam, $this->section->id);

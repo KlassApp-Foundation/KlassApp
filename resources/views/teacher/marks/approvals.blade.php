@@ -5,7 +5,7 @@
 <div class="dashboard-shell dashboard-shell--teacher px-4 md:px-6 py-4" data-testid="teacher-approvals">
     @include('layouts.partials.page-header', [
         'title' => 'Marks to review',
-        'subtitle' => 'Marks your class teachers submitted. Approve them, or send them back with a reason.',
+        'subtitle' => 'Marks submitted for the classes you head. Approve them, or send them back with a reason.',
     ])
 
     @include('partials.message')
