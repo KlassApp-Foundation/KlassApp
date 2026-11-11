@@ -67,7 +67,7 @@ class Show extends Component
 
     public function isAdmin(): bool
     {
-        return in_array((int) $this->actor()->usergroup_id, [1, 3], true);
+        return in_array((int) $this->actor()->usergroup_id, [1, 3, 4], true);
     }
 
     public function render(RosterScopeService $rosterScope): View

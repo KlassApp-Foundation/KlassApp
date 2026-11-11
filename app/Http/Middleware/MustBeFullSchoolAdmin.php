@@ -15,7 +15,7 @@ class MustBeFullSchoolAdmin
     {
         $ug = \Auth::user()->usergroup_id;
 
-        if (in_array($ug, [1, 2, 3])) {
+        if (in_array($ug, [1, 3, 4])) {
             return $next($request);
         }
 

@@ -619,7 +619,7 @@ private function returnNotice(Exam $exam, User $viewer): ?string
     }
 
     $isExamTeacher = (int) $viewer->id === (int) $exam->teacher_id;
-    $isSchoolAdmin = in_array((int) $viewer->usergroup_id, [1, 2, 3], true)
+    $isSchoolAdmin = in_array((int) $viewer->usergroup_id, [1, 3, 4], true)
         && (int) $viewer->school_id === (int) $exam->school_id;
 
     if (! $isExamTeacher && ! $isSchoolAdmin) {

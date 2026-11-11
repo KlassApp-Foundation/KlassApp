@@ -430,7 +430,7 @@ class RosterScopeService
 
     private function isAdmin(User $actor): bool
     {
-        return in_array((int) $actor->usergroup_id, [1, 3], true);
+        return in_array((int) $actor->usergroup_id, [1, 3, 4], true);
     }
 
     private function isSuperAdmin(User $actor): bool

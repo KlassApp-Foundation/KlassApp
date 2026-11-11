@@ -24,7 +24,7 @@ use Illuminate\Validation\ValidationException;
 final class MarksSubmissionService
 {
     /** @var list<int> */
-    private const SCHOOL_ADMIN_GROUPS = [1, 2, 3];
+    private const SCHOOL_ADMIN_GROUPS = [1, 3, 4];
 
     /**
      * Submit for review needs a saved numeric mark, or a nursery rating.

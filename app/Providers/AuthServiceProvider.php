@@ -66,7 +66,7 @@ class AuthServiceProvider extends ServiceProvider
       // Fee and parent CSV downloads are linked from Fees and Parents, which
       // stay in the head-teacher menu, so those two URLs are not on this gate.
       Gate::define('full-school-admin', function ($user) {
-        return in_array((int) $user->usergroup_id, [1, 2, 3], true);
+        return in_array((int) $user->usergroup_id, [1, 3, 4], true);
       });
 
       Gate::define('event', function ($user, $event) {
