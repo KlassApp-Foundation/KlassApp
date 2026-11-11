@@ -62,6 +62,10 @@ return [
         // An empty value (as in .env.example) means the default, not 0.
         'page_throttle_per_minute' => max(1, is_numeric(env('DEMO_PAGE_THROTTLE_PER_MINUTE')) ? (int) env('DEMO_PAGE_THROTTLE_PER_MINUTE') : 60),
         'bind_requires_approval' => filter_var(env('DEMO_BIND_REQUIRES_APPROVAL', false), FILTER_VALIDATE_BOOLEAN),
+        // Hard gate for the demo release webhook. Off by default; it also
+        // requires a demo school and a local or staging environment (see
+        // MarksReleaseService::sendDemoWebhook()). Never enable on production.
+        'release_webhook_enabled' => filter_var(env('DEMO_RELEASE_WEBHOOK_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
         'release_webhook_url' => env('DEMO_RELEASE_WEBHOOK_URL'),
         'release_webhook_secret' => env('DEMO_RELEASE_WEBHOOK_SECRET'),
         'links' => [
