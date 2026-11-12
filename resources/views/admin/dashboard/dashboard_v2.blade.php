@@ -133,6 +133,38 @@
             <livewire:admin.whatsapp-dashboard-card />
         @endif
 
+        @php
+            $marksDesk = $v2['marks'] ?? [
+                'waiting' => null,
+                'waiting_note' => 'This count is not available for this school.',
+                'ready' => null,
+                'ready_note' => 'This count is not available for this school.',
+            ];
+        @endphp
+        <section class="ka-marks-desk" data-testid="admin-marks-desk" aria-label="Marks to approve and release">
+            <h2>Marks</h2>
+            <div class="ka-marks-desk-cards">
+                <a class="ka-marks-desk-card" href="{{ route('admin.marks.submissions') }}" data-testid="admin-marks-waiting">
+                    @if($marksDesk['waiting'] === null)
+                        <strong>Submissions waiting for approval</strong>
+                        <span>{{ $marksDesk['waiting_note'] }}</span>
+                    @else
+                        <strong data-testid="admin-marks-waiting-count">{{ $marksDesk['waiting'] }}</strong>
+                        <span>{{ (int) $marksDesk['waiting'] === 1 ? 'submission waiting for approval' : 'submissions waiting for approval' }}</span>
+                    @endif
+                </a>
+                <a class="ka-marks-desk-card" href="{{ route('admin.marks.releases.create') }}" data-testid="admin-marks-ready">
+                    @if($marksDesk['ready'] === null)
+                        <strong>Classes ready to release</strong>
+                        <span>{{ $marksDesk['ready_note'] }}</span>
+                    @else
+                        <strong data-testid="admin-marks-ready-count">{{ $marksDesk['ready'] }}</strong>
+                        <span>{{ (int) $marksDesk['ready'] === 1 ? 'class ready to release' : 'classes ready to release' }}</span>
+                    @endif
+                </a>
+            </div>
+        </section>
+
         @if($state === 'new')
             {{-- Brand new: quick-action tiles + zeroed tiles + one empty state --}}
             <div class="dv2-qat" data-testid="dashboard-v2-actions">
