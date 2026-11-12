@@ -187,6 +187,8 @@ class ReportCardsController extends Controller
 
     public function downloadClass(StandardLink $stdLink)
     {
+        $this->abortUnlessOwnSchool($stdLink->school_id);
+
         return $this->dispatchGeneration($stdLink, 'zip');
     }
 
@@ -376,6 +378,16 @@ class ReportCardsController extends Controller
     private function resolveExam(int $schoolId, StandardLink $stdLink, ?int $academicTermId = null): ?Exam
     {
         return app(StudentReportCardService::class)->resolveExam($schoolId, $stdLink, $academicTermId);
+    }
+
+    /**
+     * Another school's class or learner is the same response as a missing id.
+     */
+    private function abortUnlessOwnSchool(int|string|null $ownerSchoolId): void
+    {
+        if ((int) $ownerSchoolId !== (int) Auth::user()?->school_id) {
+            abort(404);
+        }
     }
 
     /**
