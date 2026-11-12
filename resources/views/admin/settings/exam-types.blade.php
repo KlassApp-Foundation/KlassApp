@@ -12,6 +12,10 @@
 
 @include('partials.message')
 
+@if($examTypes->isEmpty())
+    <p role="status" data-testid="exam-types-empty" class="mt-4">The standard exam types are missing. Reload this page to restore them.</p>
+@endif
+
 <div class="relative mt-4">
 <div class="w-full main-content">
     <form method="POST" action="{{ route('admin.settings.exam-types.update') }}">

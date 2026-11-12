@@ -7,6 +7,7 @@ use App\Models\School;
 use App\Models\Subscription;
 use App\Models\User;
 use App\Models\Usergroup;
+use App\Services\Academics\ExamTypeCatalogSync;
 use App\Models\Userprofile;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -82,6 +83,9 @@ class SchoolSignupBootstrapService
                 $data['registration_country'] ?? null,
                 $isTest,
             );
+            // Every school needs the shared exam types before it can build an exam set.
+            app(ExamTypeCatalogSync::class)->syncShared();
+
             $user = $this->createSchoolAdmin($school, $data, $phone);
             $this->createUserProfile($user, $adminName, $phone);
             $this->createPendingSubscription($user);
