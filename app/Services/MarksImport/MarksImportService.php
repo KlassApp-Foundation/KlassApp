@@ -50,8 +50,6 @@ class MarksImportService
     /** Stamped into every template's Exam info sheet; bump when the template shape changes. */
     public const TEMPLATE_VERSION = 'marks-import-v1';
 
-    private const ADMIN_USERGROUPS = [1, 3];
-
     private const TEACHER_USERGROUP = 5;
 
     private const STUDENT_USERGROUP = 6;
@@ -93,7 +91,7 @@ class MarksImportService
             return false;
         }
 
-        if (in_array((int) $actor->usergroup_id, self::ADMIN_USERGROUPS, true)) {
+        if ($this->examAuthorization->managesMarksForSchool($actor, (int) $exam->school_id)) {
             return true;
         }
 
@@ -118,7 +116,7 @@ class MarksImportService
      */
     public function templateHeadings(): array
     {
-        return ['KLS number', 'student_name', 'Mark (out of '.(int) self::MAX_MARK.')'];
+        return ['KLS number', 'student_name', 'Mark (out of '.(int) self::MAX_MARK.', or ABS)'];
     }
 
     /**
@@ -608,10 +606,29 @@ class MarksImportService
         $row['student_id'] = $student->id;
         $row['student_name'] = $student->name;
 
-        // 2. What is the mark?
+        // 2. What is the mark? A number, or ABS for a learner who did not sit it.
         if ($in['mark'] === null) {
             return $this->skip($row, 'blank_mark');
         }
+
+        if ($this->isAbsentMark($in['mark'])) {
+            $row['mark'] = 'ABS';
+
+            $saved = $existing->get($student->id);
+            if ($saved && $saved->count() > 1) {
+                return $this->skip($row, 'duplicate_existing');
+            }
+            if ($saved) {
+                $wasAbsent = (bool) $saved->first()->absent || strcasecmp((string) $saved->first()->grade, 'AB') === 0;
+                $row['existing'] = $wasAbsent ? 'ABS' : $this->formatMark((float) $saved->first()->marks);
+                $row['outcome'] = $wasAbsent ? 'unchanged' : 'update';
+            } else {
+                $row['outcome'] = 'new';
+            }
+
+            return $row;
+        }
+
         $text = preg_match('/^\d+,\d{1,2}$/', $in['mark']) ? str_replace(',', '.', $in['mark']) : $in['mark'];
         if (! is_numeric($text) || ! is_finite((float) $text)) {
             return $this->skip($row, 'not_a_number');
@@ -640,6 +657,12 @@ class MarksImportService
         }
 
         return $row;
+    }
+
+    /** ABS in a marks sheet means the learner did not sit the exam. */
+    private function isAbsentMark(?string $mark): bool
+    {
+        return in_array(strtoupper(trim((string) $mark)), ['ABS', 'AB'], true);
     }
 
     /** @param  array<string,mixed>  $row */

@@ -122,6 +122,7 @@ class ExamSetPageAndRosterTest extends TestCase
         $this->enroll($this->brian, $this->west);
 
         $this->eot = ExamType::create([
+            'school_id' => $this->school->id,
             'name' => 'End of Term Examination', 'code' => 'EOT', 'contributes_to_report_total' => true,
         ]);
 

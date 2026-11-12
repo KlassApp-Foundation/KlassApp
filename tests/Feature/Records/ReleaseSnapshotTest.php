@@ -7,6 +7,7 @@ use App\Models\AcademicYear;
 use App\Models\Academics\Exam;
 use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\Marks;
+use App\Models\ActivityLog;
 use App\Models\MarksRelease;
 use App\Models\Records\RecordSnapshot;
 use App\Models\School;
@@ -149,6 +150,19 @@ class ReleaseSnapshotTest extends TestCase
         $this->assertSame(2, count($first->payload['subjects']));
         $this->assertSame((int) $ctx['term']->id, (int) $first->academic_term_id);
         $this->assertSame((int) $release->id, (int) $first->release_id);
+        $this->assertNotSame('', (string) $first->content_hash);
+        $this->assertTrue($first->contentMatches());
+        $payload = $first->payload;
+        $payload['class'] = 'Not the released class';
+        $first->payload = $payload;
+        $this->assertFalse($first->contentMatches());
+
+        $log = ActivityLog::query()->where('description', 'Marks released')->where('subject_id', $release->id)->first();
+        $this->assertNotNull($log);
+        $this->assertSame('released', $log->properties['action']);
+        $this->assertSame(MarksRelease::STATUS_SCHEDULED, $log->properties['old_value']);
+        $this->assertSame(MarksRelease::STATUS_RELEASED, $log->properties['new_value']);
+        $this->assertArrayNotHasKey('student_id', $log->properties);
     }
 
     public function test_releasing_the_same_term_again_adds_a_version_and_supersedes_the_old_one(): void

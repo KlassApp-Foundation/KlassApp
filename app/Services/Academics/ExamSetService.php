@@ -25,6 +25,8 @@ class ExamSetService
      */
     public function create(School $school, AcademicTerm $term, array $typeIds, ?array $standardIds, User $actor): array
     {
+        app(ExamTypeCatalogSync::class)->syncShared();
+
         $typeIds = array_values(array_unique(array_map('intval', $typeIds)));
         // null = the whole school: base classes only, never their streams.
         $sectionIds = $standardIds === null ? $this->baseSectionIds($school) : $standardIds;

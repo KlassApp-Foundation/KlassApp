@@ -82,7 +82,7 @@ final class CombinedSheetPage
             ->get();
 
         $terms = AcademicTerm::query()->where('school_id', $schoolId)->orderBy('id')->get();
-        $examTypes = ExamType::query()->orderBy('name')->get();
+        $examTypes = ExamType::visibleToSchool($schoolId)->orderBy('name')->get();
 
         $base = [
             'classes' => $classes,

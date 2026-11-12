@@ -100,7 +100,7 @@ class ExamController extends Controller
             'currentYearId' => $year->id,
             'terms' => $terms,
             'defaultTermId' => $defaultTermId,
-            'examTypes' => ExamType::query()->orderBy('name')->get(),
+            'examTypes' => ExamType::visibleToSchool($schoolId)->orderBy('name')->get(),
             'teachers' => $this->schoolTeachers($schoolId),
             'defaultTeacherId' => $defaultTeacherId ?? $teacher->id,
         ]);
@@ -196,7 +196,7 @@ class ExamController extends Controller
             'academicYears' => AcademicYear::where('school_id', $schoolId)->orderByDesc('id')->get(),
             'currentYearId' => $yearId,
             'terms' => AcademicTerm::where('school_id', $schoolId)->where('academic_year_id', $yearId)->get(),
-            'examTypes' => ExamType::query()->orderBy('name')->get(),
+            'examTypes' => ExamType::visibleToSchool($schoolId)->orderBy('name')->get(),
             'teachers' => $this->schoolTeachers($schoolId),
             'defaultTeacherId' => $exam->teacher_id,
         ]);

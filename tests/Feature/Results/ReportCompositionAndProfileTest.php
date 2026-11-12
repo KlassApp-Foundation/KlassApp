@@ -8,6 +8,7 @@ use App\Models\Academics\Marks;
 use App\Models\Academics\Exam;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
+use App\Models\MarksRelease;
 use App\Models\School;
 use App\Models\Section;
 use App\Models\Standard;
@@ -74,7 +75,13 @@ class ReportCompositionAndProfileTest extends TestCase
         $ctx = $this->school();
         $term = $this->term($ctx);
         $this->bands($ctx, [['grade' => 'C', 'points' => null, 'min' => 50, 'max' => 100]]);
-        $ctx['school']->forceFill(['exam_type_preferences' => ['1' => '1', '2' => '1']])->save();
+        $ctx['school']->forceFill([
+            'exam_type_preferences' => ['1' => '1', '2' => '1'],
+            'report_composition' => [
+                '1' => ['include' => true, 'weight' => null],
+                '2' => ['include' => true, 'weight' => null],
+            ],
+        ])->save();
 
         $student = $this->student($ctx, 'Plain Student');
         $mid = $this->exam($ctx, $term, $ctx['maths'], '2026-03-01', 1);
@@ -111,6 +118,12 @@ class ReportCompositionAndProfileTest extends TestCase
         $ctx = $this->school();
         $term = $this->term($ctx);
         $this->bands($ctx, [['grade' => 'C', 'points' => null, 'min' => 50, 'max' => 100]]);
+        $ctx['school']->forceFill([
+            'report_composition' => [
+                '1' => ['include' => true, 'weight' => 30.0],
+                '2' => ['include' => true, 'weight' => 70.0],
+            ],
+        ])->save();
 
         $student = $this->student($ctx, 'Visible Type Student');
         $mid = $this->exam($ctx, $term, $ctx['maths'], '2026-03-01', 1);
@@ -120,6 +133,79 @@ class ReportCompositionAndProfileTest extends TestCase
 
         $sheet = $this->sheet($ctx, $term);
         $this->assertSame([1, 2], array_map(fn ($sitting) => $sitting->examTypeId, $sheet->sittings));
+    }
+
+    public function test_an_unset_composition_uses_end_of_term_only(): void
+    {
+        $ctx = $this->school();
+        $term = $this->term($ctx);
+        $this->bands($ctx, [['grade' => 'C', 'points' => null, 'min' => 50, 'max' => 100]]);
+
+        $student = $this->student($ctx, 'Default Mix Student');
+        $mid = $this->exam($ctx, $term, $ctx['maths'], '2026-03-01', 1);
+        $eot = $this->exam($ctx, $term, $ctx['maths'], '2026-04-20', 2);
+        $this->mark($ctx, $mid, $ctx['maths'], $student, 90, '');
+        $this->mark($ctx, $eot, $ctx['maths'], $student, 50, '');
+
+        $sheet = $this->sheet($ctx, $term);
+        $this->assertSame([2], array_map(fn ($sitting) => $sitting->examTypeId, $sheet->sittings));
+        $this->assertSame(50.0, $sheet->student($student->id)?->cell($ctx['maths']->id)?->mark);
+
+        $ownSet = app(ResultsService::class)->sheet(new ResultsQuery(
+            schoolId: $ctx['school']->id,
+            sectionId: $ctx['section']->id,
+            academicTermId: $term->id,
+            examTypeId: 1,
+        ));
+        $this->assertSame(90.0, $ownSet->student($student->id)?->cell($ctx['maths']->id)?->mark);
+    }
+
+    public function test_a_released_end_of_term_report_keeps_its_mix(): void
+    {
+        $ctx = $this->school();
+        $term = $this->term($ctx);
+        $this->bands($ctx, [['grade' => 'C', 'points' => null, 'min' => 50, 'max' => 100]]);
+        $ctx['school']->forceFill([
+            'report_composition' => [
+                '1' => ['include' => true, 'weight' => 30.0],
+                '2' => ['include' => true, 'weight' => 70.0],
+            ],
+        ])->save();
+
+        $student = $this->student($ctx, 'Frozen Mix Student');
+        $mid = $this->exam($ctx, $term, $ctx['maths'], '2026-03-01', 1);
+        $eot = $this->exam($ctx, $term, $ctx['maths'], '2026-04-20', 2);
+        $this->mark($ctx, $mid, $ctx['maths'], $student, 60, '');
+        $this->mark($ctx, $eot, $ctx['maths'], $student, 80, '');
+
+        MarksRelease::create([
+            'school_id' => $ctx['school']->id,
+            'exam_id' => $eot->id,
+            'scope' => 'school',
+            'scheduled_at' => '2026-04-21 08:00:00',
+            'released_at' => '2026-04-21 08:00:00',
+            'status' => MarksRelease::STATUS_RELEASED,
+            'report_composition' => [
+                '1' => ['include' => true, 'weight' => 30.0],
+                '2' => ['include' => true, 'weight' => 70.0],
+            ],
+        ]);
+
+        $ctx['school']->forceFill(['report_composition' => null])->save();
+
+        $sheet = $this->sheet($ctx, $term);
+        $this->assertSame(74.0, $sheet->student($student->id)?->cell($ctx['maths']->id)?->mark);
+
+        $other = $this->school('Other Composition School');
+        $otherTerm = $this->term($other);
+        $this->bands($other, [['grade' => 'C', 'points' => null, 'min' => 50, 'max' => 100]]);
+        $otherStudent = $this->student($other, 'Other School Student');
+        $otherMid = $this->exam($other, $otherTerm, $other['maths'], '2026-03-01', 1);
+        $otherEot = $this->exam($other, $otherTerm, $other['maths'], '2026-04-20', 2);
+        $this->mark($other, $otherMid, $other['maths'], $otherStudent, 60, '');
+        $this->mark($other, $otherEot, $other['maths'], $otherStudent, 80, '');
+        $otherSheet = $this->sheet($other, $otherTerm);
+        $this->assertSame(80.0, $otherSheet->student($otherStudent->id)?->cell($other['maths']->id)?->mark);
     }
 
     public function test_the_default_profile_seeds_nlsc_o_level_bands(): void

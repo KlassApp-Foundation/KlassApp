@@ -262,7 +262,7 @@ class MarksTemplateDownloadTest extends TestCase
 
         $this->assertContains('KLS number', $headings);
         $this->assertContains('student_name', $headings);
-        $this->assertContains('Mark (out of 100)', $headings);
+        $this->assertContains('Mark (out of 100, or ABS)', $headings);
 
         $regIndex = array_search('KLS number', $headings, true);
         $dataRows = array_slice($rows, 1);
@@ -272,7 +272,7 @@ class MarksTemplateDownloadTest extends TestCase
         sort($registrationNumbers);
         $this->assertSame(['KLS0000001', 'KLS0000002'], $registrationNumbers);
 
-        $markIndex = array_search('Mark (out of 100)', $headings, true);
+        $markIndex = array_search('Mark (out of 100, or ABS)', $headings, true);
         foreach ($dataRows as $row) {
             $this->assertTrue($row[$markIndex] === null || $row[$markIndex] === '', 'mark cell should be empty');
         }

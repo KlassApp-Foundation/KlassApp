@@ -1244,9 +1244,9 @@ class ToshiActionService
         // Resolve the same way createExam would
         $examTypeName = $data['type'] ?? $data['exam_type'] ?? '';
         $examType = $examTypeName
-            ? ExamType::whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($examTypeName) . '%'])->first()
+            ? ExamType::visibleToSchool($schoolId)->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($examTypeName) . '%'])->first()
             : null;
-        $typeName = $examType?->name ?? ExamType::first()?->name ?? 'Exam';
+        $typeName = $examType?->name ?? ExamType::visibleToSchool($schoolId)->orderBy('id')->first()?->name ?? 'Exam';
 
         $className = $data['class'] ?? $data['section'] ?? '';
         $section = $className
@@ -1284,12 +1284,15 @@ class ToshiActionService
         $examTypeName = $data['type'] ?? $data['exam_type'] ?? '';
         $examType = null;
         if ($examTypeName) {
-            $examType = ExamType::whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($examTypeName) . '%'])
-                ->orWhereRaw('LOWER(code) = ?', [strtolower($examTypeName)])
+            $examType = ExamType::visibleToSchool($schoolId)
+                ->where(function ($query) use ($examTypeName) {
+                    $query->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($examTypeName) . '%'])
+                        ->orWhereRaw('LOWER(code) = ?', [strtolower($examTypeName)]);
+                })
                 ->first();
         }
         if (!$examType) {
-            $examType = ExamType::first();
+            $examType = ExamType::visibleToSchool($schoolId)->orderBy('id')->first();
         }
 
         // Resolve term from parameter

@@ -69,6 +69,8 @@ final class MarksReleaseService
 
     public const USERGROUP_TEACHER = 5;
 
+    public const USERGROUP_HEAD_TEACHER = 4;
+
     /** @var array<int, true> release ids whose demo webhook was already posted */
     private array $demoWebhookRecorded = [];
 
@@ -83,7 +85,8 @@ final class MarksReleaseService
 
     public function isSchoolAdmin(User $user): bool
     {
-        return (int) $user->usergroup_id === self::USERGROUP_SCHOOL_ADMIN && $user->school_id !== null;
+        return in_array((int) $user->usergroup_id, [self::USERGROUP_SCHOOL_ADMIN, self::USERGROUP_HEAD_TEACHER], true)
+            && $user->school_id !== null;
     }
 
     /**
@@ -721,6 +724,8 @@ final class MarksReleaseService
      */
     public function run(int $releaseId): bool
     {
+        $previousStatus = MarksRelease::query()->whereKey($releaseId)->value('status');
+
         $claimed = MarksRelease::query()
             ->whereKey($releaseId)
             ->whereIn('status', [MarksRelease::STATUS_SCHEDULED, MarksRelease::STATUS_FAILED])
@@ -739,10 +744,12 @@ final class MarksReleaseService
         // DB::afterCommit drops it if this transaction rolls back.
         try {
             DB::transaction(function () use ($release, $result, $webhookStudents): void {
+                app(\App\Services\Results\ReportComposition::class)->freezeOn($release);
                 $release->forceFill([
                     'status' => MarksRelease::STATUS_RELEASED,
                     'released_at' => CarbonImmutable::now('UTC'),
                     'result' => $result,
+                    'report_composition' => $release->report_composition,
                 ])->save();
 
                 app(\App\Services\Records\SnapshotService::class)->capture($release, $release->release_reason);
@@ -770,7 +777,15 @@ final class MarksReleaseService
         }
 
         activity('marks_release')->performedOn($release)->causedBy($release->creator)
-            ->withProperties(['queued' => $result['queued'], 'skipped' => $result['skipped'], 'reasons' => $result['reasons']])
+            ->withProperties([
+                'queued' => $result['queued'],
+                'skipped' => $result['skipped'],
+                'reasons' => $result['reasons'],
+                'action' => 'released',
+                'old_value' => $previousStatus,
+                'new_value' => MarksRelease::STATUS_RELEASED,
+                'at' => now()->utc()->toIso8601String(),
+            ])
             ->log('Marks released');
 
         // Dispatched only after the result (with every "queued" entry) is saved.

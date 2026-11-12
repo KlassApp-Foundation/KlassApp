@@ -105,7 +105,7 @@ class StudentProfileActionsTest extends TestCase
         ]);
 
         $this->assertSame(2, $result['saved']);
-        $this->assertDatabaseHas('marks', ['student_id' => $this->student->id, 'exam_id' => $this->exams['English']->id, 'marks' => 88, 'grade' => 'A', 'section_id' => $this->section->id, 'teacher_id' => $this->teacher->id]);
+        $this->assertDatabaseHas('marks', ['student_id' => $this->student->id, 'exam_id' => $this->exams['English']->id, 'marks' => 88, 'grade' => 'A', 'section_id' => $this->section->id, 'teacher_id' => $this->admin->id]);
         $this->assertDatabaseHas('marks', ['student_id' => $this->student->id, 'exam_id' => $this->exams['Mathematics']->id, 'marks' => 93.5]);
 
         $this->assertSame(0, ExamMarksSubmission::count(), 'no submission row is created: Submit stays the teacher\'s step');
