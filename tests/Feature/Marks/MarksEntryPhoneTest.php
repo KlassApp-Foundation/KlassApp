@@ -123,14 +123,16 @@ class MarksEntryPhoneTest extends TestCase
         $this->assertStringContainsString('data-testid="mark-input-', $html);
         $this->assertStringContainsString('data-testid="abs-toggle"', $html);
         $this->assertStringContainsString('data-testid="marks-progress"', $html);
+        $this->assertStringContainsString('data-testid="marks-next"', $html);
+        $this->assertStringContainsString('data-testid="marks-previous"', $html);
         $this->assertStringContainsString('Save draft', $html);
         $this->assertStringContainsString('KLS0091111', $html);
-        $this->assertMatchesRegularExpression('/0 of 2<\/strong>\s*entered · 0 to fix · 2 blank/', $html);
-        $this->assertStringContainsString('Type ABS when a learner was absent.', $html);
+        $this->assertStringContainsString('Not entered', $html);
+        $this->assertMatchesRegularExpression('/0 of 2<\/strong>\s*entered · 0 to fix · 0 not saved yet/', $html);
+        $this->assertStringContainsString('Submit is ready when every learner has a mark or ABS, and every mark is saved.', $html);
+        $this->assertStringContainsString("You're offline.", $html);
         $this->assertStringContainsString('enterkeyhint="next"', $html);
-        $this->assertStringContainsString('inputmode="decimal"', $html);
-        $this->assertStringContainsString('<!-- design review: saved check -->', $html);
-        $this->assertStringContainsString('<!-- design review: offline save -->', $html);
+        $this->assertStringContainsString('inputmode="numeric"', $html);
         $this->assertMatchesRegularExpression(
             '/class="[^"]*ka-marks-sheet[^"]*"[^>]*data-testid="marks-card-list"/',
             $html
@@ -142,7 +144,7 @@ class MarksEntryPhoneTest extends TestCase
         preg_match('/class="([^"]*)"[^>]*data-testid="marks-card-list"/', $html, $class);
         $this->assertArrayHasKey(1, $class);
         $this->assertStringNotContainsString('overflow-x', $class[1]);
-        $this->assertStringNotContainsString('data-testid="marks-submit-button"', $html);
+        $this->assertMatchesRegularExpression('/data-testid="marks-submit-button"[^>]*disabled/', $html);
     }
 
     public function test_abs_typed_in_any_case_stores_the_absent_flag_and_grade_ab(): void
@@ -165,8 +167,8 @@ class MarksEntryPhoneTest extends TestCase
             ->assertOk()
             ->getContent();
         $this->assertStringContainsString('value="ABS"', $html);
-        $this->assertStringContainsString('Draft saved', $html);
-        $this->assertStringNotContainsString('2 min ago', $html);
+        $this->assertStringContainsString('Saved · absent', $html);
+        $this->assertStringContainsString('1 saved', $html);
     }
 
     public function test_a_mark_above_100_is_shown_as_above_100(): void
