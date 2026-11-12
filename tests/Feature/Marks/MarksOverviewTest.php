@@ -8,6 +8,7 @@ use App\Models\Academics\Exam;
 use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\ExamType;
 use App\Models\Academics\Marks;
+use App\Models\MarksRelease;
 use App\Models\School;
 use App\Models\Section;
 use App\Models\Standard;
@@ -196,6 +197,15 @@ class MarksOverviewTest extends TestCase
         ]);
 
         $englishBot = $this->exam($standard, $this->english, $this->beginning, '2026-09-08');
+        MarksRelease::create([
+            'school_id' => $this->school->id,
+            'exam_id' => $englishBot->id,
+            'scope' => 'school',
+            'scheduled_at' => now()->subHour(),
+            'released_at' => now(),
+            'status' => MarksRelease::STATUS_RELEASED,
+            'timezone' => 'UTC',
+        ]);
         $this->englishMid = $this->exam($standard, $this->english, $this->mid, '2026-10-08');
         $this->exam($standard, $this->reading, $this->mid, '2026-10-09');
         $scienceMid = $this->exam($standard, $this->science, $this->mid, '2026-10-10');
@@ -237,6 +247,26 @@ class MarksOverviewTest extends TestCase
             $html
         );
         $this->assertStringNotContainsString('data-exam-set="quiz"', $html);
+        $this->assertMatchesRegularExpression('/data-exam-set="beginning of term"[^>]*data-tab-status="released"/', $html);
+        $this->assertMatchesRegularExpression('/data-exam-set="mid term"[^>]*data-tab-status="approving"/', $html);
+        $this->assertMatchesRegularExpression('/data-exam-set="end of term"[^>]*data-tab-status="coming"/', $html);
+        $this->assertStringContainsString('>Released<', $html);
+        $this->assertStringContainsString('>Approving<', $html);
+        $this->assertStringContainsString('>Marks coming in<', $html);
+        $this->assertStringContainsString('>Coming in<', $html);
+        $this->assertStringContainsString('aria-label="Locked"', $html);
+        $this->assertStringContainsString('Term 3 · current', $html);
+        $this->assertStringContainsString('P.5 · all streams', $html);
+        $this->assertStringContainsString('KLS number', $html);
+        $this->assertStringContainsString('KLS0010001', $html);
+        $this->assertStringContainsString('Totals and positions count approved subjects', $html);
+        $this->assertStringContainsString($this->science->name.' is saved but not submitted.', $html);
+        $this->assertStringNotContainsString('Social Studies', $html);
+        $this->assertStringNotContainsString('Further down', $html);
+        $this->assertStringContainsString('/admin/marks/history?', $html);
+        $this->assertStringContainsString('section='.$this->section->id, $html);
+        $this->assertStringContainsString('ka-tile-abs', $html);
+        $this->assertStringContainsString('>ABS<', $html);
         preg_match('/<select name="examType" id="examType".*?<\/select>/s', $html, $otherExam);
         $this->assertStringContainsString('Quiz', $otherExam[0]);
         $this->assertStringNotContainsString('MID TERM', $otherExam[0]);
@@ -305,10 +335,13 @@ class MarksOverviewTest extends TestCase
         $card = substr($html, $start, $end - $start);
 
         $this->assertStringContainsString('KLS0010001', $card);
+        $this->assertStringContainsString('KLS0010001 · East', $card);
+        $this->assertStringContainsString('ka-learner-pos', $card);
         $this->assertStringContainsString($this->english->name, $card);
         $this->assertStringContainsString($this->reading->name, $card);
         $this->assertStringContainsString($this->science->name, $card);
         $this->assertStringContainsString('data-testid="marks-kls"', $card);
+        $this->assertStringContainsString('data-testid="marks-phone-card"', $card);
         $this->assertStringNotContainsString('overflow-x:auto', $card);
     }
 

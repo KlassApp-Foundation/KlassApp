@@ -2,22 +2,21 @@
     <table class="ds-grid-marks" data-testid="ds-grid-marks">
         <thead>
             <tr>
-                <th>#</th>
-                <th>Student</th>
-                <th>Stream</th>
+                <th class="ka-th" scope="col">Position</th>
+                <th class="ka-th" scope="col">Learner</th>
+                <th class="ka-th" scope="col">KLS number</th>
+                <th class="ka-th" scope="col">Stream</th>
                 @foreach ($subjects as $subject)
-                    <th>
-                        {{ str($subject['name'])->limit(4, '') }}
+                    <th class="ka-th ka-num" scope="col">
+                        {{ $subject['name'] }}
                         <span class="gm-subject-code">/100</span>
-                        <span class="gm-subject-code" data-testid="marks-subject-state">{{ $subject['submission'] ?? 'Not started' }}</span>
                     </th>
                 @endforeach
-                <th>Total</th>
-                <th>Average</th>
-                <th>Agg</th>
-                <th>Division</th>
-                <th>Pos</th>
-                <th>Actions</th>
+                <th class="ka-th ka-num" scope="col">Total</th>
+                <th class="ka-th ka-num" scope="col">Average</th>
+                <th class="ka-th ka-num" scope="col">Agg</th>
+                <th class="ka-th" scope="col">Division</th>
+                <th class="ka-th" scope="col">Report</th>
             </tr>
         </thead>
         <tbody>
@@ -28,23 +27,33 @@
                         : [];
                 @endphp
                 <tr data-testid="marks-sheet-row">
-                    <td>{{ ($students->currentPage() - 1) * $students->perPage() + $loop->iteration }}</td>
-                    <td>{{ $student->name }}@if ($incompleteNames !== [])<div data-kind="incomplete">Incomplete: {{ implode(', ', $incompleteNames) }}.</div>@endif
-                        @if($student->registrationNumber !== '')
-                            <div class="ka-learner-meta">{{ $student->registrationNumber }}</div>
+                    <td class="gm-pos" data-testid="marks-position">{{ $student->placeLabel($streamFiltered) }}</td>
+                    <th scope="row" class="ka-learner-name">
+                        @if($showReportLink && $exam && $class)
+                            <a class="ka-learner-name" href="{{ route('admin.marks.student.class', ['user' => $student->studentId, 'class' => $class->id, 'exam' => $exam->id]) }}">{{ $student->name }}</a>
+                        @else
+                            {{ $student->name }}
                         @endif
-                    </td>
+                        @if ($incompleteNames !== [])
+                            <div data-kind="incomplete">Incomplete: {{ implode(', ', $incompleteNames) }}.</div>
+                        @endif
+                        <span class="gm-agg ka-sr">{{ $student->aggregate ?? '' }}</span>
+                    </th>
+                    <td data-testid="marks-kls-col">{{ $student->registrationNumber !== '' ? $student->registrationNumber : '—' }}</td>
                     <td data-testid="marks-stream">{{ $student->stream !== '' ? $student->stream : '—' }}</td>
                     @foreach ($subjects as $subject)
-                        <td data-testid="marks-cell" data-subject="{{ $subject['id'] }}">
-                            @include('admin.marks.sheet-cell', ['cell' => $student->cell((int) $subject['id'])])
+                        @php
+                            $cell = $student->cell((int) $subject['id']);
+                            $absent = $cell && $cell->status === \App\Services\Results\ResultCell::ABSENT;
+                        @endphp
+                        <td class="ka-num {{ $absent ? 'ka-cell-abs' : '' }}" data-testid="marks-cell" data-subject="{{ $subject['id'] }}">
+                            @include('admin.marks.sheet-cell', ['cell' => $cell])
                         </td>
                     @endforeach
-                    <td class="gm-total" data-testid="marks-total">{{ $student->displayTotal ?? '—' }}</td>
-                    <td data-testid="marks-average">{{ $student->displayAverage ?? '—' }}</td>
+                    <td class="gm-total ka-num" data-testid="marks-total">{{ $student->displayTotal ?? '—' }}</td>
+                    <td class="ka-num" data-testid="marks-average">{{ $student->displayAverage ?? '—' }}</td>
                     <td class="gm-agg">{{ $student->aggregate ?? '—' }}</td>
                     <td data-testid="marks-division">{{ $student->division ?? '—' }}</td>
-                    <td class="gm-pos" data-testid="marks-position">{{ $student->placeLabel($streamFiltered) }}</td>
                     <td>
                         @if($showReportLink && $exam && $class)
                             <a href="{{ route('admin.marks.student.class', ['user' => $student->studentId, 'class' => $class->id, 'exam' => $exam->id]) }}" class="dt-name-link text-xs" target="_blank" rel="noopener">Report</a>
@@ -68,19 +77,28 @@
             <div class="ka-learner-head">
                 <span class="ka-learner-pos">{{ ($streamFiltered ? $student->streamPosition : $student->classPosition) ?? '—' }}</span>
                 <span class="ka-learner-meta" data-testid="marks-phone-position">{{ $student->placeLabel($streamFiltered) }}</span>
-                <strong>{{ $student->name }}</strong>
-                <span class="ka-learner-meta" data-testid="marks-kls">{{ $student->registrationNumber !== '' ? $student->registrationNumber : '—' }}</span>
-                <span class="ka-learner-meta">{{ $student->stream !== '' ? $student->stream : '—' }}</span>
+                <strong>
+                    @if($showReportLink && $exam && $class)
+                        <a class="ka-learner-name" href="{{ route('admin.marks.student.class', ['user' => $student->studentId, 'class' => $class->id, 'exam' => $exam->id]) }}">{{ $student->name }}</a>
+                    @else
+                        {{ $student->name }}
+                    @endif
+                </strong>
             </div>
             @if ($incompleteNames !== [])
                 <span data-kind="incomplete">Incomplete: {{ implode(', ', $incompleteNames) }}.</span>
             @endif
+            <div class="ka-kls-line" data-testid="marks-kls">{{ $student->registrationNumber !== '' ? $student->registrationNumber : '—' }} · {{ $student->stream !== '' ? $student->stream : '—' }}</div>
             <dl class="ka-learner-subjects">
                 @foreach ($subjects as $subject)
-                    <div>
+                    @php
+                        $cell = $student->cell((int) $subject['id']);
+                        $absent = $cell && $cell->status === \App\Services\Results\ResultCell::ABSENT;
+                    @endphp
+                    <div @class(['ka-tile-abs' => $absent])>
                         <dt>{{ $subject['name'] }}</dt>
                         <dd data-testid="marks-cell" data-subject="{{ $subject['id'] }}">
-                            @include('admin.marks.sheet-cell', ['cell' => $student->cell((int) $subject['id'])])
+                            @include('admin.marks.sheet-cell', ['cell' => $cell])
                         </dd>
                     </div>
                 @endforeach

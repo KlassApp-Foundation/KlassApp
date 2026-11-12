@@ -21,4 +21,10 @@ document.addEventListener('click', function (event) {
         if (dialog && dialog.showModal) dialog.showModal();
     }
 });
+document.addEventListener('change', function (event) {
+    var field = event.target;
+    if (field && field.form && field.tagName === 'SELECT' && field.form.classList.contains('ka-sheet-filters')) {
+        field.form.submit();
+    }
+});
 </script>
