@@ -8,6 +8,10 @@
         'subtitle' => 'Class: ' . ($exam->section->name ?? '-') . ' | Subject: ' . ($exam->subject->name ?? '-'),
     ])
 
+    @if($errors->any())
+        <div class="ka-alert ka-alert-error" role="alert" data-testid="approval-error">{{ $errors->first() }}</div>
+    @endif
+
     <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div>
             <a href="{{ route('admin.marks.submissions') }}"
@@ -34,9 +38,9 @@
         @endif
     </div>
 
-    <div class="bg-white rounded-lg shadow overflow-hidden">
+    <div class="bg-white rounded-lg shadow ka-detail-table">
         <table class="ds-table w-full">
-            <thead>
+            <thead class="ka-colhead">
                 <tr>
                     <th>Class</th>
                     <th>Subject</th>
@@ -115,6 +119,9 @@
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $colorClass }}" data-testid="marks-row-state">
                                 {{ $statusLabel }}
                             </span>
+                            @if(!empty($releaseLocks[$submission->id]))
+                                <div style="margin-top:8px">@include('partials.ka-released-lock', ['lock' => $releaseLocks[$submission->id]])</div>
+                            @endif
                         </td>
                         <td>
                             @php
@@ -159,7 +166,7 @@
                             @endif
                         </td>
                         <td class="align-top">
-                            <div class="flex flex-wrap items-start gap-1">
+                            <div class="ka-action-row flex flex-wrap items-start gap-1">
                                 @if($submission->isApprovable())
                                     <form action="{{ route('admin.marks.submissions.approve', $exam->id) }}"
                                           method="POST"
@@ -196,9 +203,11 @@
                                     </form>
                                 @endif
 
-                                @if($submission->isLocked() || $submission->isApproved())
+                                @if($canReopen && ($submission->isLocked() || $submission->isApproved()))
+                                    {{-- design review: head teachers (usergroup 4) see Reopen; MarksSubmissionService still allows only usergroups 1, 2 and 3 --}}
                                     <button type="button"
                                             class="ds-btn ds-btn-sm ds-btn-warning"
+                                            style="min-height:44px"
                                             onclick="document.getElementById('reopen-{{ $submission->id }}').classList.toggle('hidden')">
                                         Reopen
                                     </button>
@@ -209,7 +218,8 @@
                                 <form id="return-{{ $submission->id }}"
                                       action="{{ route('admin.marks.submissions.reject', $exam->id) }}"
                                       method="POST"
-                                      class="hidden mt-2 p-3 bg-gray-50 rounded border min-w-[250px]"
+                                      class="hidden mt-2 p-3 bg-gray-50 rounded border"
+                                      style="width:100%;max-width:100%"
                                       data-testid="marks-return-form">
                                     @csrf
                                     <input type="hidden" name="class_id" value="{{ $submission->class_id }}">
@@ -230,11 +240,12 @@
                                 </form>
                             @endif
 
-                            @if($submission->isLocked() || $submission->isApproved())
+                            @if($canReopen && ($submission->isLocked() || $submission->isApproved()))
                                 <form id="reopen-{{ $submission->id }}"
                                       action="{{ route('admin.marks.submissions.reopen', $exam->id) }}"
                                       method="POST"
-                                      class="hidden mt-2 p-3 bg-gray-50 rounded border min-w-[250px]"
+                                      class="hidden mt-2 p-3 bg-gray-50 rounded border"
+                                      style="width:100%;max-width:100%"
                                       data-testid="marks-reopen-form">
                                     @csrf
                                     <input type="hidden" name="class_id" value="{{ $submission->class_id }}">

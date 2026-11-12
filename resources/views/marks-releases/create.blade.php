@@ -22,6 +22,11 @@
     @endif
     <h1>Marks Release</h1>
     <p class="mr-sub">Choose the exam and who receives it. The sheet shows the marks that will be sent.</p>
+    @if($errors->any())
+        <div class="ka-alert ka-alert-error" role="alert" data-testid="release-error">{{ $errors->first() }}</div>
+    @endif
+    <!-- design review: class choice stays the existing class and stream selects, not a second checkbox release flow -->
+    <!-- design review: loading stays a normal page load; there is no fake progress spinner -->
     @if(!empty($exams) && $exams->isNotEmpty())
         <ol class="ka-life" data-testid="release-steps" aria-label="Release steps">
             <li class="{{ ($subjectsApproved ?? false) ? 'is-done' : 'is-now' }}"><span>1</span><span><strong>All subjects approved</strong><br><span style="font-size:.75rem;color:#475569">{{ collect($approvals ?? [])->where('state', 'approved')->count() }} of {{ count($approvals ?? []) }} approved</span></span></li>
@@ -89,7 +94,7 @@
                     </label>
                     <p class="mr-sub" style="margin:8px 0 0">Required. Families get a short note that results were updated. Your reason is kept in the release history, not sent to families.</p>
                 @endif
-                @error('release_reason')<p class="mr-error" data-testid="release-reason-error">{{ $message }}</p>@enderror
+                @error('release_reason')<p class="mr-error ka-alert ka-alert-error" role="alert" data-testid="release-reason-error">{{ $message }}</p>@enderror
             </div>
 
             <aside class="mr-aside" data-testid="release-aside">
@@ -128,12 +133,33 @@
                     <span><input type="checkbox" name="whatsapp_send" value="1" @checked(old('whatsapp_send', $old['whatsapp_send'] ?? false))> Send these results on WhatsApp</span>
                 </label>
                 <p class="mr-sub" style="margin:0">Off by default. With it off, the release still happens and opens the portal, Toshi and the report cards, and nothing is sent. A send also waits until <code>results_released</code> is approved by Meta.</p>
-                <button type="submit" class="mr-btn" data-testid="release-marks-confirm" data-release-to="{{ $releaseTo }}">{{ $confirming ? ($when === 'schedule' ? 'Confirm schedule' : 'Confirm and release') : $buttonLabel }}</button>
-                @error('scheduled_for')<p class="mr-error">{{ $message }}</p>@enderror
+                @error('scheduled_for')<p class="mr-error ka-alert ka-alert-error" role="alert">{{ $message }}</p>@enderror
                 @error('exam_id')<p class="mr-error">{{ $message }}</p>@enderror
                 @error('standard_link_id')<p class="mr-error">{{ $message }}</p>@enderror
-                @error('approval')<p class="mr-error" data-testid="release-approval-error">{{ $message }}</p>@enderror
-                @error('confirm_past')<p class="mr-error" data-testid="release-confirm-past-error">{{ $message }}</p>@enderror
+                @error('approval')<p class="mr-error ka-alert ka-alert-error" role="alert" data-testid="release-approval-error">{{ $message }}</p>@enderror
+                @error('confirm_past')<p class="mr-error ka-alert ka-alert-error" role="alert" data-testid="release-confirm-past-error">{{ $message }}</p>@enderror
+                @if(!empty($releasedLock))
+                    @include('partials.ka-released-lock', ['lock' => $releasedLock])
+                @endif
+                <div class="ka-release-go">
+                <button type="submit" class="mr-btn" data-testid="release-marks-confirm" data-exam-name="{{ $examName }}" data-class-count="{{ $classCount }}" data-release-to="{{ $releaseTo }}">{{ $confirming ? ($when === 'schedule' ? 'Confirm schedule' : 'Confirm and release') : $buttonLabel }}</button>
+                </div>
+                @if(($releaseHistory ?? collect())->isNotEmpty())
+                    <div data-testid="release-history">
+                        <div style="font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#64748B">Release history</div>
+                        @foreach($releaseHistory as $past)
+                            <div style="font-size:.82rem;color:#334155">
+                                {{ $past->released_at?->timezone($past->timezone ?: 'Africa/Kampala')->format('j M Y') ?? '—' }}
+                                · {{ $past->exam?->examType?->name ?? 'Exam' }}
+                                · {{ $past->scope === 'school' ? 'All classes' : trim(($past->standardLink?->section?->name ?? '').' '.($past->standardLink?->stream ?? '')) }}
+                                · {{ $releaserNames[(int) $past->created_by] ?? 'Unknown' }}
+                                @if(filled($past->release_reason))
+                                    <div data-testid="release-history-reason">{{ $past->release_reason }}</div>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             </aside>
         </form>
 
@@ -221,8 +247,10 @@
             var keep = document.getElementById('mr-when-keep');
             if (keep) { keep.value = input.value; }
             var button = document.querySelector('[data-testid="release-marks-confirm"]');
-            if (button && button.getAttribute('data-release-to') && !button.textContent.startsWith('Confirm')) {
-                button.textContent = (schedule ? 'Schedule for ' : 'Release to ') + button.getAttribute('data-release-to');
+            if (button && button.getAttribute('data-exam-name') && !button.textContent.startsWith('Confirm')) {
+                var total = button.getAttribute('data-class-count') || '0';
+                var noun = total === '1' ? 'class' : 'classes';
+                button.textContent = (schedule ? 'Schedule ' : 'Release ') + button.getAttribute('data-exam-name') + ' marks to ' + total + ' ' + noun;
             }
         }
         if (input.matches('label.mr-when-at input')) {

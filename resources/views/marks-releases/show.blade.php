@@ -7,6 +7,7 @@
 @endsection
 
 @section('content')
+@include('partials.ka-screen')
 @php
     $tz = $release->timezone ?: 'Africa/Kampala';
     $fmt = fn ($t) => $t ? $t->setTimezone($tz)->format('D j M Y, H:i') : '–';
@@ -16,6 +17,24 @@
     <p class="mr-sub">Times in {{ $tz }}.</p>
     @if(session('status'))
         <div class="mr-card" role="status" data-testid="release-flash">{{ session('status') }}</div>
+    @endif
+    @if($release->status === 'failed' || (int) ($release->result['failed'] ?? 0) > 0)
+        <div class="ka-alert ka-alert-error" role="alert" data-testid="release-error">
+            @if($release->status === 'failed')
+                Release failed. {{ (int) ($release->result['failed'] ?? 0) }} failed.
+            @else
+                {{ (int) $release->result['failed'] }} failed.
+            @endif
+        </div>
+    @endif
+    @if($release->status === \App\Models\MarksRelease::STATUS_RELEASED && $release->released_at)
+        <div class="mr-card">
+            @include('partials.ka-released-lock', ['lock' => [
+                'at' => $release->released_at,
+                'timezone' => $tz,
+                'name' => $releasedBy ?: 'Unknown',
+            ]])
+        </div>
     @endif
     @if(($release->result['queued'] ?? 0) > 0)
         <p class="mr-sub" data-testid="release-in-progress">{{ $release->result['queued'] }} still sending. Refresh this page to update.</p>
@@ -27,7 +46,10 @@
             <dt>Status</dt><dd data-testid="release-status">{{ ucfirst($release->status) }}</dd>
             <dt>Scheduled</dt><dd>{{ $fmt($release->scheduled_at) }}</dd>
             <dt>Released</dt><dd>{{ $fmt($release->released_at) }}</dd>
-            <dt>By</dt><dd>{{ $release->creator?->name ?? '–' }}</dd>
+            <dt>By</dt><dd>{{ $releasedBy ?: '–' }}</dd>
+            @if(filled($release->release_reason))
+            <dt>Reason</dt><dd data-testid="release-history-reason">{{ $release->release_reason }}</dd>
+            @endif
             <dt>WhatsApp</dt><dd data-testid="release-whatsapp">{{ $release->whatsapp_send ? 'On' : 'Off' }}</dd>
             <dt>Sent</dt><dd data-testid="release-sent">{{ $release->result['sent'] ?? '–' }}</dd>
             <dt>Skipped</dt><dd data-testid="release-skipped">{{ $release->result['skipped'] ?? '–' }}</dd>

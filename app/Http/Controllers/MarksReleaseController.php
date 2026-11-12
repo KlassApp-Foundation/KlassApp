@@ -35,7 +35,10 @@ class MarksReleaseController extends Controller
             ->limit(50)
             ->get();
 
-        return view('marks-releases.index', $this->shared($request) + ['list' => $list]);
+        return view('marks-releases.index', $this->shared($request) + [
+            'list' => $list,
+            'releaserNames' => $this->releaserNames($user, $list->pluck('created_by')),
+        ]);
     }
 
     public function create(Request $request): View
@@ -134,7 +137,18 @@ class MarksReleaseController extends Controller
             abort(404);
         }
 
-        return view('marks-releases.show', $this->shared($request) + ['release' => $row]);
+        $releasedBy = null;
+        if ($row->created_by) {
+            $releasedBy = User::query()
+                ->where('school_id', $user->school_id)
+                ->where('id', (int) $row->created_by)
+                ->value('name');
+        }
+
+        return view('marks-releases.show', $this->shared($request) + [
+            'release' => $row,
+            'releasedBy' => $releasedBy,
+        ]);
     }
 
     /** @return array{exam_id:int, standard_link_id:int|null, class:string, stream:string, when:string, scheduled_for:string|null, timezone:string|null, confirm_past:bool, whatsapp_send:bool} */
@@ -220,8 +234,26 @@ class MarksReleaseController extends Controller
             : '';
         $count = (int) array_sum(array_column($sheet['groups'], 'count'));
         $who = $this->audience($examLinks, $class, $stream, $targets);
-        $noun = $count === 1 ? 'student' : 'students';
-        $verb = ($old['when'] ?? 'now') === 'schedule' ? 'Schedule for' : 'Release to';
+        $selectedLinks = $targets === null
+            ? $examLinks
+            : $examLinks->whereIn('id', $targets)->values();
+        $classCount = $selectedLinks
+            ->map(fn ($link) => (int) $link->section_id)
+            ->unique()
+            ->filter(fn (int $id) => $id > 0)
+            ->count();
+        $examName = 'this exam';
+        if ($known) {
+            $label = (string) ($exams->firstWhere('id', $examId)['label'] ?? '');
+            $typeName = trim(explode('·', $label)[0]);
+            if ($typeName !== '') {
+                $examName = $typeName;
+            }
+        }
+        $classNoun = $classCount === 1 ? 'class' : 'classes';
+        $action = ($old['when'] ?? 'now') === 'schedule' ? 'Schedule' : 'Release';
+        $history = $this->releaseHistory($user, $known ? $examId : 0);
+        $releaserNames = $this->releaserNames($user, $history->pluck('created_by'));
         $old['class'] = $class;
         $old['stream'] = $stream;
 
@@ -245,8 +277,13 @@ class MarksReleaseController extends Controller
                 : ['classes' => [], 'parents' => 0, 'whatsapp' => 0],
             'subjectsApproved' => $approvals !== [] && collect($approvals)->every(fn (array $row) => $row['state'] === 'approved'),
             'wide' => count($sheet['subjects']) > 6,
-            'buttonLabel' => $verb . ' ' . $who . ' (' . $count . ' ' . $noun . ')',
-            'releaseTo' => $who . ' (' . $count . ' ' . $noun . ')',
+            'examName' => $examName,
+            'classCount' => $classCount,
+            'buttonLabel' => $action.' '.$examName.' marks to '.$classCount.' '.$classNoun,
+            'releaseTo' => $who . ' (' . $count . ' ' . ($count === 1 ? 'student' : 'students') . ')',
+            'releaseHistory' => $history,
+            'releaserNames' => $releaserNames,
+            'releasedLock' => $this->lockFromHistory($history, $known ? $targets : [], $releaserNames),
         ];
     }
 
@@ -481,6 +518,90 @@ class MarksReleaseController extends Controller
         $classes = ClassLevelOrder::sort(collect($classes), fn (string $name) => $name)->all();
 
         return $whole ? array_merge(['The whole school'], $classes) : $classes;
+    }
+
+    /**
+     * Released rows for this sitting, newest first. A class teacher only sees their own classes.
+     *
+     * @return Collection<int, MarksRelease>
+     */
+    private function releaseHistory(User $user, int $examId): Collection
+    {
+        if ($examId <= 0) {
+            return collect();
+        }
+
+        $anchor = Exam::query()->where('school_id', $user->school_id)->find($examId);
+        if ($anchor === null) {
+            return collect();
+        }
+
+        $linkIds = $this->releases->links($user)->pluck('id')->all();
+
+        return MarksRelease::query()
+            ->with(['exam.examType', 'exam.academicTerm', 'standardLink.section'])
+            ->where('school_id', $user->school_id)
+            ->where('status', MarksRelease::STATUS_RELEASED)
+            ->whereHas('exam', fn ($query) => $query
+                ->where('school_id', $user->school_id)
+                ->where('exam_type_id', $anchor->exam_type_id)
+                ->where('academic_term_id', $anchor->academic_term_id))
+            ->when(! $this->releases->isSchoolAdmin($user), fn ($query) => $query->where('scope', 'class')->whereIn('standard_link_id', $linkIds))
+            ->orderByDesc('released_at')
+            ->orderByDesc('id')
+            ->limit(8)
+            ->get();
+    }
+
+    /**
+     * @param  Collection<int, mixed>  $ids
+     * @return Collection<int|string, string>
+     */
+    private function releaserNames(User $user, $ids): Collection
+    {
+        $idList = collect($ids)->filter()->map(fn ($id) => (int) $id)->unique()->values()->all();
+        if ($idList === []) {
+            return collect();
+        }
+
+        return User::query()
+            ->where('school_id', $user->school_id)
+            ->whereIn('id', $idList)
+            ->pluck('name', 'id');
+    }
+
+    /**
+     * @param  Collection<int, MarksRelease>  $history
+     * @param  array<int, int>|null  $targets
+     * @param  Collection<int|string, string>  $names
+     * @return array{at:mixed, timezone:string, name:string, release_id:int}|null
+     */
+    private function lockFromHistory(Collection $history, ?array $targets, Collection $names): ?array
+    {
+        if ($targets === []) {
+            return null;
+        }
+
+        $match = $history->first(function (MarksRelease $release) use ($targets) {
+            if ($release->released_at === null) {
+                return false;
+            }
+            if ($targets === null || $release->scope === 'school') {
+                return true;
+            }
+
+            return in_array((int) $release->standard_link_id, $targets, true);
+        });
+        if ($match === null) {
+            return null;
+        }
+
+        return [
+            'at' => $match->released_at,
+            'timezone' => $match->timezone ?: 'Africa/Kampala',
+            'name' => (string) ($names[(int) $match->created_by] ?? 'Unknown'),
+            'release_id' => (int) $match->id,
+        ];
     }
 
     /** @param  list<string>  $names */
