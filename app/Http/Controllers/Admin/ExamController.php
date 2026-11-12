@@ -154,6 +154,8 @@ public function sections(){
     // To add edit/update/destroy later...
 
     public function edit(Exam $exam){
+        // A missing id and another school's id are the same 404. Do not render the form first.
+        $this->examInSchool($exam->getKey());
 
         $school_id = Auth::user()->school_id;
         // $exam_types = ExamType::all();
@@ -170,17 +172,28 @@ public function sections(){
             ));
     }
     public function update(UpdateExamsRequest $request, string $exam){
-            // dd($request);
+        $row = $this->examInSchool($exam);
+        Exam::query()->whereKey($row->id)->where('school_id', $row->school_id)->update($request->validated());
 
-    $school_id = Auth::user()->school_id;
-    $validated = $request->validated();
-    Exam::where("id", $exam)->where("school_id", $school_id)->update($validated);
-    return redirect()->route("admin.exams")->with("successmessage", "Exam updated successfully!");
+        return redirect()->route("admin.exams")->with("successmessage", "Exam updated successfully!");
     }
 
     public function archive(string $exam){
-        $school_id = Auth::user()->school_id;
-        Exam::where("id", $exam)->where("school_id", $school_id)->delete();
+        $row = $this->examInSchool($exam);
+        Exam::query()->whereKey($row->id)->where('school_id', $row->school_id)->delete();
+
         return redirect()->route("admin.exams")->with("successmessage", "Exam deleted successfully!");
+    }
+
+    /**
+     * The exam for this request, only when it belongs to the signed-in school.
+     * Another school and a missing id both raise the same not-found response.
+     */
+    private function examInSchool(int|string $examId): Exam
+    {
+        return Exam::query()
+            ->where('school_id', (int) Auth::user()->school_id)
+            ->whereKey($examId)
+            ->firstOrFail();
     }
 }

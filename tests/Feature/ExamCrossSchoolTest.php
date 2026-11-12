@@ -115,10 +115,8 @@ class ExamCrossSchoolTest extends TestCase
                 'name' => 'Hacked Exam',
             ]);
 
-        // The controller returns a redirect on "success" (0 rows matched is
-        // indistinguishable from a successful update of 0 fields), but the
-        // school_id scope means the School B exam is untouched.
-        $response->assertRedirect();
+        // Another school's exam is the same not-found as a missing id.
+        $response->assertNotFound();
 
         $this->assertDatabaseHas('exams', [
             'id' => $this->examBId,

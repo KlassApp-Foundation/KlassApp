@@ -511,6 +511,14 @@ public function editMark(Exam $exam, User $student, Marks $marks)
     $teacher = Auth::user();
     $this->examAuthorization->authorizeOrAbort($teacher, $exam);
 
+    // The mark in the URL must be this exam's row. Another school's mark is not found.
+    if ((int) $student->school_id !== (int) $exam->school_id
+        || (int) $marks->school_id !== (int) $exam->school_id
+        || (int) $marks->exam_id !== (int) $exam->id
+        || (int) $marks->student_id !== (int) $student->id) {
+        abort(404);
+    }
+
     $this->checkSubmissionLocked($exam);
 
     // Find the existing mark (or create a new one if allowed)
