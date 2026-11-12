@@ -3225,6 +3225,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-11-12: Phone marks entry is draft #1335
+
+- **Work done**: Draft [#1335](https://github.com/KlassApp-Foundation/KlassApp/pull/1335) on `feat/marks-entry-phone` (`4681d034`), from `main`. The enter-marks screen uses phone cards, a 76 by 48 field, and an ABS control. A saved absence displays ABS. The stored grade stays AB. Pressing ABS again clears the field. Local tests: 17 tests, 134 assertions. Browser click-through is not done. Items 12, 14, 15 and 16 are being built on their own branches from `main`. Demo ports were not in use and were not started.
+- **Files touched**: `resources/views/teacher/marks/enter.blade.php`, `public/css/ka-screen.css`, `app/Http/Controllers/Teacher/MarksController.php`, `app/Services/Marks/ExamMarkWriter.php`, `tests/Feature/Marks/MarksEntryPhoneTest.php`, `tests/Feature/Marks/MarksFollowUpTest.php`.
+- **Key decisions**: Display ABS. Store the existing absent flag and grade AB. Accept AB and ABS in any case. Saved check, offline banner and the ABS control are flagged for design review.
+- **Status**: Draft [#1335](https://github.com/KlassApp-Foundation/KlassApp/pull/1335) at `4681d034`. Not merged. Production untouched.
+- **Edge cases flagged**: Click-through at 375 and 1280 is still owed. Full test-guard not run.
+
 ### 2026-11-12: Items 2 to 9 are combined for the proof
 
 - **Work done**: Draft [#1334](https://github.com/KlassApp-Foundation/KlassApp/pull/1334) on `proof/marks-items-2-to-9` (`bc6dcab9`). It merges the class-teacher, head-teacher, ABS import, exam-type, admin entry, report mix, history, and KLS filler drafts. A head teacher can open approvals for their own school. The mark row names who saved it, and the log still keeps the old and new value. Local suites passed. Browser click-through is not done. Not for merge.
