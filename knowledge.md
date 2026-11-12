@@ -3225,6 +3225,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-11-12: Another school's exam is not found (T-144)
+
+- **Work done**: Draft [#1340](https://github.com/KlassApp-Foundation/KlassApp/pull/1340) on `feat/exam-school-not-found` (`338b03c0`), from `main`. The admin exam form, its save, and its archive now 404 when the exam is missing or belongs to another school. A class or learner report for another school 404s. A mark edit 404s unless the mark belongs to that exam and school. The mobile upcoming and past exam lists 404 a learner from another school. Routes that already returned 403 after a school check were left as 403. The sweep table is in the pull request. Local tests passed (14 tests, 156 assertions). Not merged. Production untouched.
+- **Files touched**: `app/Http/Controllers/Admin/ExamController.php`, `app/Http/Controllers/Admin/ReportCardsController.php`, `app/Http/Controllers/Api/ExamController.php`, `app/Http/Controllers/Teacher/MarksController.php`, `tests/Feature/ExamCrossSchoolTest.php`, `tests/Feature/Marks/ExamSchoolNotFoundTest.php`.
+- **Key decisions**: Wrong-school and missing are the same 404. An existing 403 that already checks the school stays 403. The fix is not on the proof branch.
+- **Status**: Draft [#1340](https://github.com/KlassApp-Foundation/KlassApp/pull/1340) at `338b03c0`. Not merged. Production untouched.
+- **Edge cases flagged**: A teacher who opens an admin exam URL is sent to the teacher dashboard by the admin gate. A missing id can 404 from route binding before that redirect, so those two responses differ. The form is not shown either way. Full test-guard is not run on this branch yet.
+
 ### 2026-11-12: Mark sheet, release, and report cards have phone drafts
 
 - **Work done**: Draft [#1337](https://github.com/KlassApp-Foundation/KlassApp/pull/1337) on `feat/marks-overview` (`bb8ab0df`) shows the sheet by year, term, and Beginning / Mid / End tabs. A draft subject is a dash. Totals count approved subjects. Draft [#1338](https://github.com/KlassApp-Foundation/KlassApp/pull/1338) on `feat/marks-approve-release` (`98681051`) is the phone approvals and release screen. The button states the outcome. Reopen of a released sitting stays on #1331. Draft [#1339](https://github.com/KlassApp-Foundation/KlassApp/pull/1339) on `feat/marks-report-phone` (`9e0d97bb`) adds the end-of-term composition line and phone cards. The line reads the school's current mix because the freeze column is on #1330. Local tests passed. Browser click-through is not done. The proof server for #1334 was started on port 8142 only.

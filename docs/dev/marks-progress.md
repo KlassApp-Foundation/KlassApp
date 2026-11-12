@@ -44,7 +44,11 @@ Clicked through on 12 November 2026 against a local fictional school, at 375 and
 - Release showed who would be told, a message preview, and a button that named the outcome. Re-release asked for a reason and refused an empty reason. Pass.
 - A parent saw no marks before release. Pass.
 
-Found while clicking: the exam edit page does not check that the exam belongs to the signed-in school, so another school's head teacher can open the form. The update query is school-scoped and was not submitted. Not fixed on this branch.
+Found while clicking: the exam edit page did not check that the exam belongs to the signed-in school, so another school's head teacher could open the form. Fixed on its own draft, not on this proof branch.
+
+## T-144 school check
+
+Draft [#1340](https://github.com/KlassApp-Foundation/KlassApp/pull/1340) on `feat/exam-school-not-found` (`338b03c0`), from `main`. Edit, save, and archive of an exam return the same not found as a missing exam when the exam belongs to another school. The same pull request 404s a class report, a learner report, a mark id that is not that exam's row, and the mobile upcoming and past exam lists. Routes that already returned 403 after a school check were left as 403. The sweep table is in the pull request. Local tests: 14 tests, 156 assertions, exit 0, including the existing report-card files. Full test-guard not run on this branch. Merge after #1323 and before the other marks drafts.
 
 ## Recovered work (2026-11-11)
 
