@@ -742,10 +742,12 @@ final class MarksReleaseService
         // DB::afterCommit drops it if this transaction rolls back.
         try {
             DB::transaction(function () use ($release, $result, $webhookStudents): void {
+                app(\App\Services\Results\ReportComposition::class)->freezeOn($release);
                 $release->forceFill([
                     'status' => MarksRelease::STATUS_RELEASED,
                     'released_at' => CarbonImmutable::now('UTC'),
                     'result' => $result,
+                    'report_composition' => $release->report_composition,
                 ])->save();
 
                 app(\App\Services\Records\SnapshotService::class)->capture($release, $release->release_reason);

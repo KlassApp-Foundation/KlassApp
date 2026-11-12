@@ -5,7 +5,7 @@
 
 @include('layouts.partials.page-header', [
     'title' => 'Exam Type Settings',
-    'subtitle' => 'Shared exam types sit next to the ones your school adds. Toggle which types count towards term/report-card totals; changes apply to future report generation only.',
+    'subtitle' => 'Each exam set has its own report. The end-of-term report starts as End of Term only. Weights must total 100, and a report already released keeps the mix it was released with.',
 ])
 
 @include('layouts.partials.settings-nav')
@@ -20,68 +20,58 @@
 <div class="w-full main-content">
     <form method="POST" action="{{ route('admin.settings.exam-types.update') }}">
         @csrf
-        <div class="overflow-x-auto">
-            <table class="w-full text-left" data-testid="exam-type-table">
-                <thead>
-                    <tr class="border-b">
-                        <th class="py-3 px-4 font-semibold text-sm">Exam Type</th>
-                        <th class="py-3 px-4 font-semibold text-sm">Code</th>
-                        <th class="py-3 px-4 font-semibold text-sm">Contributes to Report Total</th>
-                        <th class="py-3 px-4 font-semibold text-sm">Show on Report Cards</th>
-                        <th class="py-3 px-4 font-semibold text-sm">Weight %</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($examTypes as $type)
-                        @php
-                            $checked = $prefs[$type->id] ?? $type->contributes_to_report_total;
-                            $settings = $composition[(string) $type->id] ?? $composition[$type->id] ?? [];
-                            $included = ($settings['include'] ?? true) !== false;
-                            $weight = $settings['weight'] ?? null;
-                        @endphp
-                        <tr class="border-b hover:bg-gray-50" data-testid="exam-type-row-{{ $type->id }}">
-                            <td class="py-3 px-4">
-                                {{ $type->name }}
-                                <span class="ml-2 text-xs" data-testid="exam-type-owner-{{ $type->id }}"
-                                      style="color: {{ $type->isShared() ? 'var(--d-text-secondary)' : 'var(--d-accent)' }};">
-                                    {{ $type->isShared() ? '(shared)' : '(your school)' }}
-                                </span>
-                            </td>
-                            <td class="py-3 px-4 text-gray-500">{{ $type->code }}</td>
-                            <td class="py-3 px-4">
-                                <label class="inline-flex items-center cursor-pointer">
-                                    <input type="hidden" name="contributes[{{ $type->id }}]" value="0">
-                                    <input type="checkbox" name="contributes[{{ $type->id }}]" value="1"
-                                        class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500"
-                                        {{ $checked ? 'checked' : '' }}>
-                                    <span class="ml-2 text-sm {{ $checked ? 'text-green-700 font-medium' : 'text-gray-400' }}">
-                                        {{ $checked ? 'Yes' : 'No' }}
-                                    </span>
-                                </label>
-                            </td>
-                            <td class="py-3 px-4">
-                                <label class="inline-flex items-center cursor-pointer">
-                                    <input type="hidden" name="include[{{ $type->id }}]" value="0">
-                                    <input type="checkbox" name="include[{{ $type->id }}]" value="1"
-                                        class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500"
-                                        {{ $included ? 'checked' : '' }}>
-                                    <span class="ml-2 text-sm {{ $included ? 'text-green-700 font-medium' : 'text-gray-400' }}">
-                                        {{ $included ? 'Shown' : 'Hidden' }}
-                                    </span>
-                                </label>
-                            </td>
-                            <td class="py-3 px-4">
-                                <input type="number" name="weight[{{ $type->id }}]" min="1" max="100" step="any"
-                                    value="{{ $weight !== null ? $weight : '' }}" placeholder="—"
-                                    class="ds-form-input" style="width: 84px;">
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
+        <p data-testid="end-of-term-composition" style="margin:0 0 12px;max-width:40rem;">
+            Tick the exam sets that count on the end-of-term report and give them weights that total 100.
+            Each other set still has its own report. Changing this does not alter a report that is already released.
+        </p>
+        @error('weight') <p class="text-xs text-red-600 mb-2" data-testid="composition-weight-error">{{ $message }}</p> @enderror
+        @error('include') <p class="text-xs text-red-600 mb-2">{{ $message }}</p> @enderror
+        <div data-testid="exam-type-table" style="display:flex;flex-direction:column;gap:12px;max-width:40rem;">
+            @foreach($examTypes as $type)
+                @php
+                    $checked = $prefs[$type->id] ?? $type->contributes_to_report_total;
+                    $settings = $composition[(string) $type->id] ?? $composition[$type->id] ?? [];
+                    $included = is_array($settings) && array_key_exists('include', $settings)
+                        ? ($settings['include'] === true || $settings['include'] === 1 || $settings['include'] === '1')
+                        : true;
+                    $weight = is_array($settings) ? ($settings['weight'] ?? null) : null;
+                @endphp
+                <div data-testid="exam-type-row-{{ $type->id }}" style="border:1px solid var(--d-border, #e5e7eb);border-radius:12px;padding:12px;">
+                    <div style="font-weight:600;">
+                        {{ $type->name }}
+                        <span class="text-xs" data-testid="exam-type-owner-{{ $type->id }}"
+                              style="color: {{ $type->isShared() ? 'var(--d-text-secondary)' : 'var(--d-accent)' }};">
+                            {{ $type->code }} · {{ $type->isShared() ? '(shared)' : '(your school)' }}
+                        </span>
+                    </div>
+                    <label class="inline-flex items-center" style="min-height:44px;gap:8px;">
+                        <input type="hidden" name="contributes[{{ $type->id }}]" value="0">
+                        <input type="checkbox" name="contributes[{{ $type->id }}]" value="1"
+                            style="width:20px;height:20px;"
+                            {{ $checked ? 'checked' : '' }}>
+                        <span>Counts on its own</span>
+                    </label>
+                    <label class="inline-flex items-center" style="min-height:44px;gap:8px;">
+                        <input type="hidden" name="include[{{ $type->id }}]" value="0">
+                        <input type="checkbox" name="include[{{ $type->id }}]" value="1"
+                            style="width:20px;height:20px;"
+                            data-testid="exam-type-include-{{ $type->id }}"
+                            {{ $included ? 'checked' : '' }}>
+                        <span>Counts on the end-of-term report</span>
+                    </label>
+                    <label style="display:block;margin-top:4px;">
+                        <span class="text-sm">Weight</span>
+                        <input type="number" name="weight[{{ $type->id }}]" min="1" max="100" step="any"
+                            value="{{ $weight !== null ? $weight : '' }}" placeholder="—"
+                            inputmode="decimal"
+                            data-testid="exam-type-weight-{{ $type->id }}"
+                            class="ds-form-input" style="min-height:44px;width:100%;max-width:8rem;">
+                    </label>
+                </div>
+            @endforeach
         </div>
         <div class="mt-6">
-            <button type="submit" class="ds-btn ds-btn-primary">
+            <button type="submit" class="ds-btn ds-btn-primary" style="min-height:44px;" data-testid="exam-type-save">
                 Save Preferences
             </button>
         </div>

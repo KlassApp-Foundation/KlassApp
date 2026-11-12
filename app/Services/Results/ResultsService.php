@@ -32,6 +32,7 @@ final class ResultsService
         private readonly GradingScale $gradingScale,
         private readonly DivisionRule $divisionRule,
         private readonly ExamTypeContribution $examTypeContribution,
+        private readonly ReportComposition $reportComposition,
     ) {
     }
 
@@ -58,26 +59,47 @@ final class ResultsService
 
         $school = School::query()->find($query->schoolId);
         $preferences = $school?->exam_type_preferences;
-        $composition = $school?->report_composition;
+        // One exam set is that set's own report. A term query is the
+        // end-of-term report, and a released End of Term set keeps the mix
+        // it was released with.
+        $composition = $query->examTypeId === null
+            ? $this->reportComposition->forTermReport($query->schoolId, $query->sectionId, (int) $term->id)
+            : null;
         $typeMeta = $this->typeMeta($exams, $preferences, $composition);
         $marks = $this->marksFor($query->schoolId, $exams);
         $chosen = $this->choose($exams, $marks);
         $roster = $this->roster($query, (int) $term->academic_year_id, $exams);
 
+        $useComposition = is_array($composition) && $composition !== [];
+        // A weight means the set counts. An included set with no weight still
+        // follows the older contributes flag. A set left out of the mix does not.
+        $countsTowardTerm = function (array $type) use ($useComposition): bool {
+            if (! $useComposition) {
+                return $type['contributes'];
+            }
+            if (! $type['included']) {
+                return false;
+            }
+            if ($type['weight'] !== null) {
+                return true;
+            }
+
+            return $type['contributes'];
+        };
         $mainTypeIds = $query->examTypeId !== null
             ? (isset($typeMeta[$query->examTypeId]) ? [$query->examTypeId] : [])
             : array_values(array_map(
                 fn (array $type) => $type['id'],
-                array_filter($typeMeta, fn (array $type) => $type['contributes'])
+                array_filter($typeMeta, $countsTowardTerm)
             ));
 
-        // Weights only apply on the term report: a weighted mean across the
-        // contributing types that carry a weight; types without one keep the
-        // latest-mark behaviour for the merge below.
+        // Weights only apply on the end-of-term report: a weighted mean across
+        // the sets that carry a weight. One weight, or none, keeps a single
+        // set's own mark.
         $weights = $query->examTypeId === null
             ? array_filter(array_map(
                 fn (array $type) => $type['weight'],
-                array_filter($typeMeta, fn (array $type) => $type['contributes'] && $type['weight'] !== null)
+                array_filter($typeMeta, fn (array $type) => $countsTowardTerm($type) && $type['weight'] !== null)
             ), fn ($weight) => $weight !== null)
             : [];
         if (count($weights) < 2) {
