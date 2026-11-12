@@ -5,6 +5,18 @@
     <form method="GET" action="{{ route($filterRoute) }}" class="ka-filter-panel flex flex-wrap items-end gap-3" data-testid="exams-filter-form">
         <h2 class="ka-h2 ka-filter-launch">Filters</h2>
         <div class="w-full sm:w-40">
+            <label for="year" class="ds-label">Year</label>
+            <select name="year" id="year" class="ds-form-select">
+                <option value="">All years</option>
+                @foreach ($years as $yearOption)
+                    <option value="{{ $yearOption->id }}" @selected((string) ($selectedYearId ?? '') === (string) $yearOption->id)>
+                        {{ $yearOption->name }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        <div class="w-full sm:w-40">
             <label for="term" class="ds-label">Term</label>
             <select name="term" id="term" class="ds-form-select">
                 <option value="">All terms</option>
@@ -28,17 +40,9 @@
             </select>
         </div>
 
-        <div class="w-full sm:w-48">
-            <label for="examType" class="ds-label">Exam type</label>
-            <select name="examType" id="examType" class="ds-form-select">
-                <option value="">All exam types</option>
-                @foreach ($examTypes as $examType)
-                    <option value="{{ $examType->id }}" @selected((string) request('examType') === (string) $examType->id)>
-                        {{ $examType->name }}
-                    </option>
-                @endforeach
-            </select>
-        </div>
+        @if(request()->filled('examType'))
+            <input type="hidden" name="examType" value="{{ request('examType') }}">
+        @endif
 
         <div class="w-full sm:w-40">
             <label for="stream" class="ds-label">Stream</label>
@@ -54,7 +58,7 @@
 
         <div class="flex items-center gap-2 pb-px">
             <button type="submit" class="ds-btn ds-btn-primary text-sm" style="min-height:44px">Apply filter</button>
-            @if(request()->hasAny(['term', 'class', 'examType', 'stream']))
+            @if(request()->hasAny(['year', 'term', 'class', 'examType', 'stream']))
                 <a href="{{ route($filterRoute) }}" class="ds-btn ds-btn-ghost text-sm">Clear</a>
             @endif
         </div>

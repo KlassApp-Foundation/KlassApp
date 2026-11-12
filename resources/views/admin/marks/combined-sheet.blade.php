@@ -9,7 +9,7 @@
             <h1 class="ds-page-head-title">{{ ($type?->name ?? null) ? (($type->name === 'End of Term' || str_contains(strtolower($type->name), 'end')) ? 'End of term marks' : ($type->name.' marks')) : 'Marks' }}</h1>
             <p class="ds-page-head-sub" data-testid="exams-page-sub">{{ $marksSubtitle }}</p>
         </div>
-        <div class="flex items-center gap-2 flex-wrap">
+        <div class="flex items-center gap-2 flex-wrap ka-sheet-actions">
             @if($filtered && $students->isNotEmpty() && $missingSubjects->isEmpty())
                 <span class="ds-save-indicator ds-save-indicator--saved" data-testid="exams-save-indicator">
                     <span class="ds-save-indicator__dot" aria-hidden="true"></span>
@@ -17,8 +17,9 @@
                 </span>
             @endif
             @if($filtered && $students->isNotEmpty())
-                <a href="{{ route($downloadRoute, request()->query()) }}" class="ds-btn ds-btn-ghost text-sm" data-testid="marks-sheet-download">Download sheet</a>
+                <a href="{{ route($downloadRoute, request()->query()) }}" class="ds-btn ds-btn-ghost text-sm" data-testid="marks-sheet-download">Download mark sheet</a>
             @endif
+            <a href="{{ route($releaseRoute) }}" class="ds-btn ds-btn-primary text-sm" data-testid="marks-go-release">Go to Marks Release</a>
         </div>
     </div>
 
@@ -34,6 +35,50 @@
     <div data-testid="exams-filter-card" class="mb-4">
         @include('admin.marks.filter-form')
     </div>
+
+    @if($examSetTabs !== [])
+        <nav class="ka-tabs ka-exam-tabs" aria-label="Exam set" data-testid="marks-exam-tabs">
+            @foreach ($examSetTabs as $tab)
+                @php
+                    $tabQuery = array_filter([
+                        'year' => request('year'),
+                        'term' => request('term'),
+                        'class' => request('class'),
+                        'stream' => request('stream'),
+                        'examType' => $tab->id,
+                    ], fn ($value) => $value !== null && $value !== '');
+                @endphp
+                <a href="{{ route($filterRoute, $tabQuery) }}"
+                   data-testid="marks-exam-tab"
+                   data-exam-set="{{ mb_strtolower(trim($tab->name)) }}"
+                   @if((string) request('examType') === (string) $tab->id) aria-current="page" @endif>{{ $tab->name }}</a>
+            @endforeach
+        </nav>
+    @endif
+
+    <form method="GET" action="{{ route($filterRoute) }}" class="ka-other-exam" data-testid="marks-other-exam">
+        <input type="hidden" name="year" value="{{ request('year') }}">
+        <input type="hidden" name="term" value="{{ request('term') }}">
+        <input type="hidden" name="class" value="{{ request('class') }}">
+        <input type="hidden" name="stream" value="{{ request('stream') }}">
+        <label for="examType" class="ds-label">Other exam</label>
+        <select name="examType" id="examType" class="ds-form-select">
+            <option value="">Other exam</option>
+            @foreach ($otherExamTypes as $otherType)
+                <option value="{{ $otherType->id }}" @selected((string) request('examType') === (string) $otherType->id)>
+                    {{ $otherType->name }}
+                </option>
+            @endforeach
+        </select>
+        <button type="submit" class="ds-btn ds-btn-outline">Show exam</button>
+    </form>
+
+    {{-- design review: invalid year and term uses the shared error alert; no mark-sheet error screen was drawn --}}
+    @if($marksError)
+        <div class="ka-alert ka-alert-error ka-marks-error" role="alert" data-testid="marks-sheet-error">
+            {{ $marksError }}
+        </div>
+    @endif
 
     @if($filtered)
         <div class="dashboard-kpi-grid mb-4" data-testid="exams-kpi-grid">
@@ -64,7 +109,9 @@
 
     <div data-testid="exams-grid-card">
         <x-card padding="none">
-            @if(! $filtered)
+            @if($marksError)
+                {{-- The alert above is the error. A missing class, term or exam set stays the empty state. --}}
+            @elseif(! $filtered)
                 <div class="ds-table-empty ds-empty-state" data-testid="exams-empty">
                     <p class="ds-empty-state-title">Ready when you are</p>
                     <p class="ds-empty-state-desc">Select class, term and exam type above to view the marks grid.</p>
@@ -89,7 +136,7 @@
                         @endif
                     </div>
                 @endif
-                <div class="dt-pagination px-4">
+                <div class="dt-pagination px-4 ka-sheet-pages">
                     {{ $students->withQueryString()->links() }}
                 </div>
             @endif
