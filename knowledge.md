@@ -3225,6 +3225,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-11-12: Items 2 to 9 are combined for the proof
+
+- **Work done**: Draft [#1334](https://github.com/KlassApp-Foundation/KlassApp/pull/1334) on `proof/marks-items-2-to-9` (`bc6dcab9`). It merges the class-teacher, head-teacher, ABS import, exam-type, admin entry, report mix, history, and KLS filler drafts. A head teacher can open approvals for their own school. The mark row names who saved it, and the log still keeps the old and new value. Local suites passed. Browser click-through is not done. Not for merge.
+- **Files touched**: merge resolutions in `MarksSubmissionService`, `MarksImportService`, `ExamTypeController`, `MustBeFullSchoolAdmin`, `ExamMarkWriter`, `ExamMarksSubmissionController`, and two tests.
+- **Key decisions**: Item 3 wins on settings access for head teachers. Item 10 stays on #1333 and is not in this branch.
+- **Status**: Draft [#1334](https://github.com/KlassApp-Foundation/KlassApp/pull/1334) at `bc6dcab9`. Not merged. Production untouched.
+- **Edge cases flagged**: Click-through at 375 and 1280 is still owed. Full test-guard not run.
+
 ### 2026-11-12: Term workbook importer saves drafts and never submits
 
 - **Work done**: Draft [#1333](https://github.com/KlassApp-Foundation/KlassApp/pull/1333) on `feat/term-workbook-importer` (`fdd68a3e`), from `main`. A term workbook creates missing exams and saves draft marks. The same file again changes nothing. A changed mark updates and reports the old and new value. A removed row leaves the saved draft. Unknown classes and subjects are reported. A subject teacher and another school are refused. A class teacher writes only their class. Local tests: 4 tests, 51 assertions. Full test-guard not run. Demo ports were not in use and were not started.

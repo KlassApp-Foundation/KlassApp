@@ -31,9 +31,9 @@ This file is [#1328](https://github.com/KlassApp-Foundation/KlassApp/pull/1328) 
 | 15 | Reports: per set and end-of-term, open, download, send | Handoff is in. Data rules are item 7. | — | Composition line on the card is still owed. | Own branch from main. |
 | 16 | Dashboard and navigation: marks one tap away, clear empty states | Handoff is in. Not started as code. | — | Do not invent attendance behaviour. | Own branch from main. |
 
-## Proof after items 2–6
+## Proof after items 2–9
 
-Not started. On an isolated copy, by clicking: an admin creates an exam set; a subject teacher enters marks at 375px and submits; the class teacher approves and releases; the admin opens the per-set report card. Screenshots at 375 and 1280.
+Draft [#1334](https://github.com/KlassApp-Foundation/KlassApp/pull/1334) on `proof/marks-items-2-to-9` (`bc6dcab9`). It merges #1324, #1325, #1326, #1327, #1329, #1330, #1331 and #1332. Item 10 stays on #1333. Not for merge. Local marks suites on that branch passed after a head teacher was allowed onto the approvals queue (32 tests, 187 assertions in the last run). Full test-guard not run. Browser click-through at 375 then 1280 has not been done. Do not use ports 8000 or 8126.
 
 ## Recovered work (2026-11-11)
 
