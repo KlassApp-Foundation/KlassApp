@@ -153,7 +153,7 @@ class MarksPhase4SheetTest extends TestCase
             'subject_id' => $this->english->id,
             'teacher_id' => $this->teacher->id,
             'status' => 'submitted',
-            'approval_status' => 'pending',
+            'approval_status' => 'approved',
         ]);
 
         $otherYear = AcademicYear::create([
@@ -264,7 +264,7 @@ class MarksPhase4SheetTest extends TestCase
         $this->assertStringContainsString('Ada East', $html);
         $this->assertStringNotContainsString('Bea West', $html);
         $this->assertStringContainsString('1 of 1', $html);
-        $this->assertStringContainsString('Submitted', $html);
+        $this->assertStringContainsString('Approved', $html);
 
         $this->actingAs($this->teacher)->get(route('teacher.marks.sheet.download', [
             'class' => $this->section->id,

@@ -4,6 +4,7 @@ namespace App\Services\Results;
 
 use App\Exports\SittingSheetExport;
 use App\Models\AcademicTerm;
+use App\Models\AcademicYear;
 use App\Models\Academics\Exam;
 use App\Models\Academics\ExamType;
 use App\Models\Section;
@@ -11,6 +12,7 @@ use App\Models\StandardLink;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
@@ -21,6 +23,11 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
  */
 final class CombinedSheetPage
 {
+    private const PAGE_SIZE = 20;
+
+    /** @var list<string> */
+    private const EXAM_SET_NAMES = ['beginning of term', 'mid term', 'end of term'];
+
     public function __construct(private readonly ResultsService $results)
     {
     }
@@ -81,16 +88,60 @@ final class CombinedSheetPage
             ->orderBy('name')
             ->get();
 
-        $terms = AcademicTerm::query()->where('school_id', $schoolId)->orderBy('id')->get();
-        $examTypes = ExamType::query()->orderBy('name')->get();
+        $years = AcademicYear::query()
+            ->where('school_id', $schoolId)
+            ->orderByRaw('start_date is null')
+            ->orderByDesc('start_date')
+            ->orderByDesc('id')
+            ->get();
+
+        $yearId = $request->filled('year') ? (int) $request->input('year') : null;
+        $year = null;
+        if ($yearId !== null) {
+            $year = $years->firstWhere('id', $yearId);
+            abort_if($year === null, 404);
+        }
+
+        $terms = AcademicTerm::query()
+            ->where('school_id', $schoolId)
+            ->when($year !== null, fn ($query) => $query->where('academic_year_id', $year->id))
+            ->orderByRaw('starts_on is null')
+            ->orderByDesc('starts_on')
+            ->orderByDesc('id')
+            ->get();
+
+        $examTypes = ExamType::query()
+            ->visibleToSchool($schoolId)
+            ->orderBy('name')
+            ->orderBy('id')
+            ->get();
+        [$examSetTabs, $otherExamTypes] = $this->examSets($examTypes, $schoolId);
+
+        $sectionId = $request->filled('class') ? (int) $request->input('class') : null;
+        $termId = $request->filled('term') ? (int) $request->input('term') : null;
+        $examTypeId = $request->filled('examType') ? (int) $request->input('examType') : null;
+        $streamId = $request->filled('stream') ? (int) $request->input('stream') : null;
+
+        $requestedTerm = null;
+        if ($termId !== null) {
+            $requestedTerm = AcademicTerm::query()->where('school_id', $schoolId)->whereKey($termId)->first();
+        }
+        $selectedYearId = $year?->id;
+        if ($selectedYearId === null && $requestedTerm !== null) {
+            $selectedYearId = (int) $requestedTerm->academic_year_id;
+        }
 
         $base = [
             'classes' => $classes,
+            'years' => $years,
             'terms' => $terms,
             'examTypes' => $examTypes,
+            'examSetTabs' => $examSetTabs,
+            'otherExamTypes' => $otherExamTypes,
+            'selectedYearId' => $selectedYearId,
             'streams' => collect(),
             'subjects' => collect(),
-            'students' => new LengthAwarePaginator([], 0, 6),
+            'students' => new LengthAwarePaginator([], 0, self::PAGE_SIZE),
             'missingSubjects' => collect(),
             'subjectsCovered' => 0,
             'class' => null,
@@ -99,17 +150,16 @@ final class CombinedSheetPage
             'termName' => null,
             'filtered' => false,
             'streamFiltered' => false,
+            'marksError' => null,
             'marksSubtitle' => 'Select class, term and exam type to open the marks grid.',
             'filterRoute' => $filterRoute,
             'downloadRoute' => $downloadRoute,
+            'releaseRoute' => $filterRoute === 'teacher.marks.sheet'
+                ? 'teacher.marks.releases.create'
+                : 'admin.marks.releases.create',
             'showReportLink' => $showReportLink,
             'sheet' => null,
         ];
-
-        $sectionId = $request->filled('class') ? (int) $request->input('class') : null;
-        $termId = $request->filled('term') ? (int) $request->input('term') : null;
-        $examTypeId = $request->filled('examType') ? (int) $request->input('examType') : null;
-        $streamId = $request->filled('stream') ? (int) $request->input('stream') : null;
 
         $section = null;
         if ($sectionId !== null) {
@@ -131,9 +181,14 @@ final class CombinedSheetPage
             return $base;
         }
 
-        $term = AcademicTerm::query()->where('school_id', $schoolId)->whereKey($termId)->first();
+        $term = $requestedTerm;
         abort_if($term === null, 404);
-        $type = ExamType::query()->find($examTypeId);
+        if ($year !== null && (int) $term->academic_year_id !== (int) $year->id) {
+            $base['marksError'] = 'That term is not in the chosen year.';
+
+            return $base;
+        }
+        $type = ExamType::query()->visibleToSchool($schoolId)->whereKey($examTypeId)->first();
         abort_if($type === null, 404);
 
         if ($streamId !== null) {
@@ -151,6 +206,7 @@ final class CombinedSheetPage
             academicTermId: (int) $term->id,
             standardLinkId: $streamId,
             examTypeId: (int) $type->id,
+            countApprovedSubjects: true,
         ));
 
         $subjects = collect($sheet->subjects);
@@ -162,7 +218,7 @@ final class CombinedSheetPage
             ->count();
 
         $page = max(1, (int) $request->input('page', 1));
-        $perPage = 6;
+        $perPage = self::PAGE_SIZE;
         $students = new LengthAwarePaginator(
             array_slice($sheet->students, ($page - 1) * $perPage, $perPage),
             count($sheet->students),
@@ -207,6 +263,51 @@ final class CombinedSheetPage
             'marksSubtitle' => $marksSubtitle !== '' ? $marksSubtitle : 'Marks grid',
             'sheet' => $sheet,
         ]);
+    }
+
+    /**
+     * The three term sittings, in workbook order. Any other type stays
+     * in the extra control. A school's own type wins over a shared name.
+     *
+     * @param Collection<int, ExamType> $types
+     * @return array{0: list<ExamType>, 1: Collection<int, ExamType>}
+     */
+    private function examSets(Collection $types, int $schoolId): array
+    {
+        $tabs = [];
+        foreach (self::EXAM_SET_NAMES as $name) {
+            $tabs[$name] = null;
+        }
+        $others = collect();
+        foreach ($types as $type) {
+            $key = mb_strtolower(trim((string) $type->name));
+            if (! array_key_exists($key, $tabs)) {
+                $others->push($type);
+                continue;
+            }
+            $current = $tabs[$key];
+            if (! $current instanceof ExamType || $this->preferExamType($type, $current, $schoolId)) {
+                if ($current instanceof ExamType) {
+                    $others->push($current);
+                }
+                $tabs[$key] = $type;
+                continue;
+            }
+            $others->push($type);
+        }
+
+        return [array_values(array_filter($tabs)), $others->values()];
+    }
+
+    private function preferExamType(ExamType $candidate, ExamType $current, int $schoolId): bool
+    {
+        $candidateOwn = (int) $candidate->school_id === $schoolId;
+        $currentOwn = (int) $current->school_id === $schoolId;
+        if ($candidateOwn !== $currentOwn) {
+            return $candidateOwn;
+        }
+
+        return (int) $candidate->id < (int) $current->id;
     }
 
     /**

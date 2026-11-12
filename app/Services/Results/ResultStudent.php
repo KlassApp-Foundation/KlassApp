@@ -25,6 +25,7 @@ final class ResultStudent
         public readonly int $streamOutOf,
         public readonly ?float $displayTotal,
         public readonly ?float $displayAverage,
+        public readonly string $registrationNumber = '',
     ) {
     }
 
