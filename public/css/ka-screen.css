@@ -180,6 +180,7 @@
   .ka-exam-types form .flex > div { width: 100%; max-width: 100%; }
   .ka-exam-types table { display: block; max-width: 100%; overflow-x: auto; }
   .ka-exam-types .ml-3 { margin-left: 0 !important; margin-top: 8px; }
+}
 
 .ka-marks-form{order:1}
 .ka-marks-bar{order:2}
