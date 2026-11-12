@@ -135,9 +135,13 @@ class ExamMarkWriter
         return 100.0;
     }
 
+    /**
+     * Absent is a state, not a zero. The entry screen and older sheets say AB;
+     * the marks workbook says ABS. Both mean the same row.
+     */
     public function isAbsent(mixed $mark): bool
     {
-        return strcasecmp(trim((string) $mark), 'AB') === 0;
+        return in_array(strtoupper(trim((string) $mark)), ['AB', 'ABS'], true);
     }
 
     public function exceedsMaximum(Exam $exam, mixed $mark): bool

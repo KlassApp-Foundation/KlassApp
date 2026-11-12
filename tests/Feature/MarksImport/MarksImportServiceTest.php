@@ -77,6 +77,60 @@ class MarksImportServiceTest extends TestCase
         $this->assertCount(5, $plan->rows, 'every input row is reported');
     }
 
+    public function test_abs_marks_a_learner_absent_not_zero(): void
+    {
+        $plan = $this->service->preview($this->exam, $this->owner, $this->sheet([
+            ['KLS0000001', 'Amina Nakato', 'ABS'],
+            ['KLS0000002', 'Brian Okello', 'abs'],
+        ]));
+
+        $this->assertSame(['new', 'new'], $this->outcomes($plan));
+        $this->assertSame(['ABS', 'ABS'], array_column($plan->rows, 'mark'));
+
+        $result = $this->service->commit($plan, $this->owner);
+        $this->assertSame([2, 0, 0, 0], [$result->saved, $result->updated, $result->unchanged, $result->skipped]);
+
+        $row = Marks::where('student_id', $this->students[1]->id)->firstOrFail();
+        $this->assertNull($row->marks, 'absent is not a zero');
+        $this->assertTrue((bool) $row->absent);
+        $this->assertSame('AB', $row->grade);
+        $this->assertTrue($row->isAbsent());
+    }
+
+    public function test_abs_converts_a_saved_number_only_when_overwrite_is_confirmed(): void
+    {
+        $this->saveMark($this->students[1], 50);
+        $sheet = $this->sheet([['KLS0000001', '', 'ABS']]);
+
+        $plan = $this->service->preview($this->exam, $this->owner, $sheet);
+        $this->assertSame(['update'], $this->outcomes($plan));
+        $this->assertSame('50', $plan->rows[0]['existing']);
+
+        $kept = $this->service->commit($plan, $this->owner);
+        $this->assertSame(1, $kept->skipped);
+        $this->assertEquals(50, Marks::where('student_id', $this->students[1]->id)->value('marks'));
+
+        $changed = $this->service->commit($plan, $this->owner, overwrite: true);
+        $this->assertSame(1, $changed->updated);
+        $row = Marks::where('student_id', $this->students[1]->id)->firstOrFail();
+        $this->assertNull($row->marks);
+        $this->assertTrue($row->isAbsent());
+    }
+
+    public function test_abs_on_an_already_absent_learner_is_unchanged_and_abs_is_not_a_number_error(): void
+    {
+        Marks::create([
+            'student_id' => $this->students[1]->id, 'exam_id' => $this->exam->id, 'school_id' => $this->exam->school_id,
+            'subject_id' => $this->exam->subject_id, 'teacher_id' => $this->exam->teacher_id,
+            'section_id' => $this->exam->section_id, 'marks' => null, 'grade' => 'AB', 'absent' => true,
+        ]);
+
+        $plan = $this->service->preview($this->exam, $this->owner, $this->sheet([['KLS0000001', '', 'ABS']]));
+
+        $this->assertSame(['unchanged'], $this->outcomes($plan));
+        $this->assertSame('ABS', $plan->rows[0]['existing']);
+    }
+
     public function test_marks_accept_decimals_and_boundary_values(): void
     {
         $plan = $this->service->preview($this->exam, $this->owner, $this->sheet([
@@ -298,7 +352,7 @@ class MarksImportServiceTest extends TestCase
     {
         $rows = $this->service->templateRows($this->exam, $this->owner);
 
-        $this->assertSame(['KLS number', 'student_name', 'Mark (out of 100)'], $this->service->templateHeadings());
+        $this->assertSame(['KLS number', 'student_name', 'Mark (out of 100, or ABS)'], $this->service->templateHeadings());
         $this->assertSame(
             [['KLS0000001', 'AMINA NAKATO', null], ['KLS0000002', 'BRIAN OKELLO', null], ['KLS0000003', 'CHLOE MWESIGWA', null]],
             $rows,
@@ -355,7 +409,7 @@ class MarksImportServiceTest extends TestCase
     {
         foreach (['KLS number', 'KLS No', 'Reg No', 'registration number'] as $header) {
             $plan = $this->service->preview($this->exam, $this->owner, [
-                [$header, 'student_name', 'Mark (out of 100)'],
+                [$header, 'student_name', 'Mark (out of 100, or ABS)'],
                 ['KLS0000001', 'Amina Nakato', '80'],
             ]);
             $this->assertSame(['new'], $this->outcomes($plan), $header.' must be accepted');
