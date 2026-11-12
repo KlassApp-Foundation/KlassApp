@@ -132,6 +132,9 @@ class ExamMarksSubmission extends Model
         if ($this->status === 'submitted') {
             return 'Submitted';
         }
+        if ($this->status === 'draft') {
+            return 'Saved, not submitted';
+        }
 
         return 'Not started';
     }

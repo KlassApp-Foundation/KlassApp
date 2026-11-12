@@ -6,7 +6,9 @@ use App\Exports\SittingSheetExport;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\Academics\Exam;
+use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\ExamType;
+use App\Models\MarksRelease;
 use App\Models\Section;
 use App\Models\StandardLink;
 use App\Models\User;
@@ -159,6 +161,7 @@ final class CombinedSheetPage
                 : 'admin.marks.releases.create',
             'showReportLink' => $showReportLink,
             'sheet' => null,
+            'filterLaunch' => 'All classes · all streams',
         ];
 
         $section = null;
@@ -176,6 +179,16 @@ final class CombinedSheetPage
                 ->orderBy('id')
                 ->get();
         }
+
+        $streamName = null;
+        if ($streamId !== null) {
+            $chosenStream = $base['streams']->firstWhere('id', $streamId);
+            if ($chosenStream !== null && (string) $chosenStream->stream !== '') {
+                $streamName = (string) $chosenStream->stream;
+            }
+        }
+        $base['filterLaunch'] = $this->filterLaunch($section, $streamName);
+        $base['examSetTabs'] = $this->withStatus($schoolId, $examSetTabs, $requestedTerm, $section);
 
         if ($sectionId === null || $termId === null || $examTypeId === null) {
             return $base;
@@ -236,8 +249,7 @@ final class CombinedSheetPage
             ->orderBy('id')
             ->first();
 
-        $streamName = null;
-        if ($streamId !== null) {
+        if ($streamName === null && $streamId !== null) {
             $streamName = (string) ($base['streams']->firstWhere('id', $streamId)?->stream ?? '');
         }
 
@@ -308,6 +320,180 @@ final class CombinedSheetPage
         }
 
         return (int) $candidate->id < (int) $current->id;
+    }
+
+    private function filterLaunch(?Section $section, ?string $streamName): string
+    {
+        $className = trim((string) ($section->name ?? ''));
+        if ($className === '') {
+            $className = 'All classes';
+        }
+        if ($streamName !== null && $streamName !== '') {
+            return $className.' · '.$streamName;
+        }
+
+        return $className.' · all streams';
+    }
+
+    /**
+     * One status per exam-set tab for this term and class.
+     * Released beats review. Anything else is still coming in.
+     *
+     * @param list<ExamType> $tabs
+     * @return list<array{type: ExamType, key: string, desktop: string, phone: string, locked: bool, note: string, short: string}>
+     */
+    private function withStatus(int $schoolId, array $tabs, ?AcademicTerm $term, ?Section $section): array
+    {
+        if ($tabs === [] || $term === null) {
+            return array_map(fn (ExamType $type) => $this->presentTab($type, 'coming', ''), $tabs);
+        }
+
+        $typeIds = array_map(fn (ExamType $type) => (int) $type->id, $tabs);
+        $exams = Exam::query()
+            ->where('school_id', $schoolId)
+            ->where('academic_term_id', $term->id)
+            ->when($section !== null, fn ($query) => $query->where('section_id', $section->id))
+            ->whereIn('exam_type_id', $typeIds)
+            ->whereNull('deleted_at')
+            ->get(['id', 'exam_type_id', 'subject_id']);
+
+        $examIds = $exams->map(fn ($exam) => (int) $exam->id)->all();
+        $submissions = $examIds === []
+            ? collect()
+            : ExamMarksSubmission::query()
+                ->where('school_id', $schoolId)
+                ->whereIn('exam_id', $examIds)
+                ->orderBy('id')
+                ->get(['id', 'exam_id', 'subject_id', 'status', 'approval_status']);
+
+        $released = array_fill_keys($this->releasedExamIds($schoolId, $examIds, $section), true);
+        $byType = [];
+        foreach ($typeIds as $typeId) {
+            $byType[$typeId] = ['exams' => [], 'subjects' => []];
+        }
+        foreach ($exams as $exam) {
+            $typeId = (int) $exam->exam_type_id;
+            $byType[$typeId]['exams'][] = (int) $exam->id;
+            $byType[$typeId]['subjects'][(int) $exam->subject_id] = true;
+        }
+        $subsByExam = [];
+        foreach ($submissions as $row) {
+            $subsByExam[(int) $row->exam_id][] = $row;
+        }
+
+        $tabsWithStatus = [];
+        foreach ($tabs as $type) {
+            $bucket = $byType[(int) $type->id];
+            $approved = [];
+            $started = [];
+            $inReview = false;
+            $isReleased = false;
+            foreach ($bucket['exams'] as $examId) {
+                if (isset($released[$examId])) {
+                    $isReleased = true;
+                }
+                foreach ($subsByExam[$examId] ?? [] as $row) {
+                    $subjectId = (int) $row->subject_id;
+                    $started[$subjectId] = true;
+                    if ($row->approval_status === 'approved') {
+                        $approved[$subjectId] = true;
+                    }
+                    $pending = $row->approval_status === 'pending' || $row->approval_status === null;
+                    if ($pending && ($row->status === 'submitted' || $row->status === 'locked')) {
+                        $inReview = true;
+                    }
+                }
+            }
+            $total = count($bucket['subjects']);
+            if ($isReleased) {
+                $key = 'released';
+            } elseif ($inReview) {
+                $key = 'approving';
+            } else {
+                $key = 'coming';
+            }
+            $note = '';
+            if ($total > 0) {
+                $note = $key === 'coming'
+                    ? count($started).' of '.$total.' subjects started'
+                    : count($approved).' of '.$total.' subjects approved';
+            }
+            $tabsWithStatus[] = $this->presentTab($type, $key, $note);
+        }
+
+        return $tabsWithStatus;
+    }
+
+    /**
+     * @return array{type: ExamType, key: string, desktop: string, phone: string, locked: bool, note: string, short: string}
+     */
+    private function presentTab(ExamType $type, string $key, string $note): array
+    {
+        $labels = [
+            'released' => ['Released', 'Released', true],
+            'approving' => ['Approving', 'Approving', false],
+            'coming' => ['Marks coming in', 'Coming in', false],
+        ];
+        [$desktop, $phone, $locked] = $labels[$key];
+        $nameKey = mb_strtolower(trim((string) $type->name));
+        $short = match ($nameKey) {
+            'beginning of term' => 'Beginning',
+            'mid term' => 'Mid',
+            'end of term' => 'End',
+            default => trim((string) $type->name),
+        };
+
+        return [
+            'type' => $type,
+            'key' => $key,
+            'desktop' => $desktop,
+            'phone' => $phone,
+            'locked' => $locked,
+            'note' => $note,
+            'short' => $short,
+        ];
+    }
+
+    /**
+     * Released exams for this class: a school-wide release, or a class
+     * release whose stream belongs to the section.
+     *
+     * @param list<int> $examIds
+     * @return list<int>
+     */
+    private function releasedExamIds(int $schoolId, array $examIds, ?Section $section): array
+    {
+        if ($examIds === []) {
+            return [];
+        }
+
+        $releases = MarksRelease::query()
+            ->where('school_id', $schoolId)
+            ->where('status', MarksRelease::STATUS_RELEASED)
+            ->whereIn('exam_id', $examIds)
+            ->get(['exam_id', 'scope', 'standard_link_id']);
+
+        if ($section === null) {
+            return $releases->map(fn ($release) => (int) $release->exam_id)->unique()->values()->all();
+        }
+
+        $linkIds = array_fill_keys(
+            StandardLink::query()
+                ->where('school_id', $schoolId)
+                ->where('section_id', $section->id)
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->all(),
+            true
+        );
+
+        return $releases->filter(function ($release) use ($linkIds) {
+            if ($release->scope === 'school') {
+                return true;
+            }
+
+            return $release->scope === 'class' && isset($linkIds[(int) $release->standard_link_id]);
+        })->map(fn ($release) => (int) $release->exam_id)->unique()->values()->all();
     }
 
     /**
