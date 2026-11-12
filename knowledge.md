@@ -3225,6 +3225,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-11-12: Mark sheet, release, and report cards have phone drafts
+
+- **Work done**: Draft [#1337](https://github.com/KlassApp-Foundation/KlassApp/pull/1337) on `feat/marks-overview` (`bb8ab0df`) shows the sheet by year, term, and Beginning / Mid / End tabs. A draft subject is a dash. Totals count approved subjects. Draft [#1338](https://github.com/KlassApp-Foundation/KlassApp/pull/1338) on `feat/marks-approve-release` (`98681051`) is the phone approvals and release screen. The button states the outcome. Reopen of a released sitting stays on #1331. Draft [#1339](https://github.com/KlassApp-Foundation/KlassApp/pull/1339) on `feat/marks-report-phone` (`9e0d97bb`) adds the end-of-term composition line and phone cards. The line reads the school's current mix because the freeze column is on #1330. Local tests passed. Browser click-through is not done. The proof server for #1334 was started on port 8142 only.
+- **Files touched**: mark sheet services and views; approvals and release views; report card line and parent marks. Each item is its own branch from `main`.
+- **Key decisions**: Do not stack these on each other or on the proof. Display ABS. Do not copy #1324, #1325, or #1331 onto the release screen.
+- **Status**: Drafts #1337, #1338, and #1339. Not merged. Production untouched.
+- **Edge cases flagged**: A head teacher who can see Reopen is still refused by the submission service. Changing the school mix still changes the printed line until #1330 is in. The proof click-through of #1334 passed the six role checks at 375 and 1280. The exam edit page does not check the exam's school, so another school's head teacher can open the form. The update query is school-scoped. Not fixed here.
+
 ### 2026-11-12: Dashboards show marks one tap away
 
 - **Work done**: Draft [#1336](https://github.com/KlassApp-Foundation/KlassApp/pull/1336) on `feat/marks-dashboard-phone` (`2a6ad73e`), from `main`. Enter marks still opens the exams list. The teacher dashboard groups Returned, In progress, and Not started from the existing board. The admin dashboard counts this school's waiting submissions and classes ready to release. Local tests passed. Browser click-through is not done.
