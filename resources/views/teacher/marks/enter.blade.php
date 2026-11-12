@@ -374,8 +374,11 @@
         var row = button.closest('tr');
         var input = row && row.querySelector('input[name^="marks["]');
         if (!input) return;
-        input.value = 'ABS';
-        button.setAttribute('aria-pressed', 'true');
+        if (isAbs(input.value)) {
+            input.value = '';
+        } else {
+            input.value = 'ABS';
+        }
         paint();
     });
 
