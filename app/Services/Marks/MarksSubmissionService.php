@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Notifications\MarksSubmissionNotification;
 use App\Services\Academics\BaseClassExamRoster;
 use App\Services\ExamAuthorization;
+use App\Support\SchoolAdmin;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
@@ -25,7 +26,7 @@ use Illuminate\Validation\ValidationException;
 final class MarksSubmissionService
 {
     /** @var list<int> */
-    private const SCHOOL_ADMIN_GROUPS = [1, 2, 3];
+    private const SCHOOL_ADMIN_GROUPS = SchoolAdmin::GROUPS;
 
     /**
      * Submit for review needs a saved numeric mark, or a nursery rating.
