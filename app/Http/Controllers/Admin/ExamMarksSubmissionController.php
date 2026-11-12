@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Helpers\SiteHelper;
 use App\Services\ExamAuthorization;
 use App\Services\Marks\MarksSubmissionService;
+use App\Support\SchoolAdmin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -40,7 +41,7 @@ class ExamMarksSubmissionController extends Controller
      */
     private function reviewSections(User $actor, int $schoolId): ?array
     {
-        if (in_array((int) $actor->usergroup_id, [1, 2, 3], true)) {
+        if ((int) $actor->school_id > 0 && in_array((int) $actor->usergroup_id, SchoolAdmin::GROUPS, true)) {
             return null;
         }
 
