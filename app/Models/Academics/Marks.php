@@ -23,7 +23,24 @@ class Marks extends Model
 
     public function isAbsent(): bool
     {
-        return (bool) $this->absent || strcasecmp(trim((string) $this->grade), 'AB') === 0;
+        $grade = strtoupper(trim((string) $this->grade));
+
+        return (bool) $this->absent || in_array($grade, ['AB', 'ABS'], true);
+    }
+
+    /**
+     * What a report shows. The stored grade stays AB (or ABS). The screen says ABS.
+     */
+    public function displayMark(): string
+    {
+        if ($this->isAbsent()) {
+            return 'ABS';
+        }
+        if ($this->marks === null) {
+            return '-';
+        }
+
+        return (string) (int) floor((float) $this->marks);
     }
     public function student(){
         return $this->belongsTo(User::class, "student_id");

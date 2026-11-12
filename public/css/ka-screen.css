@@ -62,3 +62,10 @@
   .ka-sheet-table{display:none}
   .ka-phone-cards{display:flex;flex-direction:column;gap:10px}
 }
+.ka-mark-row{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:44px;padding:8px 0;border-top:1px solid #E2E8F0;font-size:.9rem}
+.ka-hit{min-height:44px;display:inline-flex;align-items:center}
+.ka-compose{margin:0;font-size:.9rem;color:#334155}
+@media (max-width:767px){
+  .family-page,.rc{overflow-x:hidden;max-width:100%}
+  a.ka-report-download{display:flex;width:100%;min-height:48px;justify-content:center}
+}

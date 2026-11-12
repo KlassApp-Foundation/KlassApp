@@ -270,7 +270,8 @@ final class ResultsService
             if ($exam === null || $exam->exam_type_id === null) {
                 continue;
             }
-            $absent = (bool) ($mark->absent ?? false) || strcasecmp(trim((string) $mark->grade), 'AB') === 0;
+            $label = strtoupper(trim((string) $mark->grade));
+            $absent = (bool) ($mark->absent ?? false) || in_array($label, ['AB', 'ABS'], true);
             $candidate = [
                 'mark' => ($absent || $mark->marks === null) ? null : (float) $mark->marks,
                 'grade' => $absent ? 'AB' : trim((string) $mark->grade),

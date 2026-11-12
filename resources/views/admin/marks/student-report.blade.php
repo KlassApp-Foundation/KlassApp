@@ -161,6 +161,10 @@
     <div class="header-divider"></div>
 
     <div class="report-title">PROGRESSIVE REPORT</div>
+    @if (!empty($compositionLine ?? null))
+    {{-- design review: the end-of-term mix line is specified in the handoff, not drawn on the A4 cards. --}}
+    <div data-testid="eot-composition">{{ $compositionLine }}</div>
+    @endif
 
     {{-- ═══ STUDENT INFO CARD ═══ --}}
     <table class="info-table">
@@ -222,7 +226,7 @@
                                     $midGrade = $g ? 'D' . $g->points : '-';
                                 }
                             @endphp
-                            <td>@if($midMark && $midMark->isAbsent()) AB @elseif($midMark && $midMark->marks !== null) {{ floor($midMark->marks) }} @else &mdash; @endif</td>
+                            <td>@if($midMark){{ $midMark->displayMark() }}@else &mdash; @endif</td>
                             <td>{{ $midGrade }}</td>
                         @endif
                     @endforeach
@@ -274,7 +278,7 @@
                 <tr>
                     <td class="left strong">{{ $subject->name }}</td>
                     <td>100</td>
-                    <td>@if($eotMark && $eotMark->isAbsent()) AB @elseif($eotMark && $eotMark->marks !== null) {{ floor($eotMark->marks) }} @else &mdash; @endif</td>
+                    <td>@if($eotMark){{ $eotMark->displayMark() }}@else &mdash; @endif</td>
                     <td>{{ $eotGrade }}</td>
                     <td>{{ $eotComment }}</td>
                     <td>{{ $teacherName }}</td>

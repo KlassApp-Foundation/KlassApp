@@ -6,6 +6,7 @@ use App\Contracts\Results\DivisionRule;
 use App\Contracts\Results\GradingScale;
 use App\Contracts\Results\ReleaseGate;
 use App\Contracts\Results\ReportTemplates;
+use App\Services\ReportCards\EndOfTermCompositionLine;
 use App\Services\Results\ResultSheet;
 use App\Services\Results\ResultStudent;
 use App\Services\Results\ResultsPolicy;
@@ -510,6 +511,7 @@ class StudentReportCardService
             ->filter(fn ($row) => (int) $row->examType->contributes_to_report_total === 1)
             ->values();
         $eotMarkBySubject = $this->chosenMarksBySubject($learner->marks, $contributing);
+        $eotDisplayBySubject = $this->displayMarksBySubject($eotMarkBySubject, $learner->marks, $contributing);
         $eotPoints = $this->sumPoints($eotMarkBySubject, $schoolId, (int) $stdLink->standard_id);
         $eotDivision = $divisionLabel($eotPoints);
 
@@ -584,6 +586,11 @@ class StudentReportCardService
 
         $school = School::find($schoolId);
         $view = app(ReportTemplates::class)->resolve($templateKey, $school?->report_template);
+        $endOfTerm = $eotExams->contains(fn ($row) => EndOfTermCompositionLine::isEndOfTerm(
+            $row->examType?->name,
+            $row->examType?->code,
+        )) || EndOfTermCompositionLine::isEndOfTerm($exam->examType?->name, $exam->examType?->code);
+        $compositionLine = app(EndOfTermCompositionLine::class)->lineFor($schoolId, $endOfTerm, (int) $exam->id);
         $logoPath = $this->resolveLogoPath($schoolId);
         $schoolIdentity = $this->resolveSchoolIdentity($school);
 
@@ -624,11 +631,13 @@ class StudentReportCardService
             'midStats' => $midStats,
             'eotDivision' => $eotDivision,
             'eotMarkBySubject' => $eotMarkBySubject,
+            'eotDisplayBySubject' => $eotDisplayBySubject,
             'streamName' => $streamName,
             'streamPos' => $streamPos,
             'streamTotal' => $streamTotal,
             'midSittings' => $midSittings,
             'logoPath' => $logoPath,
+            'compositionLine' => $compositionLine,
         ]);
         $pdf->setPaper('a4', 'portrait');
 
@@ -728,6 +737,32 @@ class StudentReportCardService
         }
 
         return $chosen;
+    }
+
+    /**
+     * Marks the card prints. Absent rows stay out of the total (a null mark
+     * would become 0) and are added here only so the cell can say ABS.
+     *
+     * @param  array<int, Marks>  $chosen
+     * @param  Collection<int, Marks>  $marks
+     * @param  Collection<int, Exam>  $exams
+     * @return array<int, Marks>
+     */
+    private function displayMarksBySubject(array $chosen, Collection $marks, Collection $exams): array
+    {
+        $byId = $exams->keyBy('id');
+        $display = $chosen;
+        foreach ($marks as $mark) {
+            if (! $mark->isAbsent() || ! $byId->has($mark->exam_id)) {
+                continue;
+            }
+            $subjectId = (int) $mark->subject_id;
+            if (! isset($display[$subjectId])) {
+                $display[$subjectId] = $mark;
+            }
+        }
+
+        return $display;
     }
 
     private function markIsLater(Marks $candidate, Marks $current, Collection $exams): bool

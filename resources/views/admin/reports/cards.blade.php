@@ -27,6 +27,9 @@
         <div>
             <h1>Report cards</h1>
             <p style="margin:6px 0 0;font-size:.9rem;color:#475569;">Built from released marks only</p>
+            @if(!empty($data['composition_line'] ?? null))
+                <p class="ka-compose" data-testid="eot-composition">{{ $data['composition_line'] }}</p>
+            @endif
         </div>
         @if($class && $sitting)
         <form method="GET" action="{{ url('/admin/reports/cards') }}" class="rc-filters" data-testid="desktop-filters">
@@ -134,13 +137,13 @@
                 @foreach($rows as $r)
                     <tr data-testid="rc-row">
                         <td><strong>{{ $r['position'] ?? '—' }}</strong> <span style="color:#475569;">of {{ $r['out_of'] }}</span></td>
-                        <th scope="row">{{ $r['name'] }}</th>
+                        <th scope="row">{{ $r['name'] }}@if(($r['kls'] ?? '') !== '')<div data-testid="rc-kls">{{ $r['kls'] }}</div>@endif</th>
                         <td>{{ $r['stream'] !== '' ? $r['stream'] : '—' }}</td>
                         @foreach($r['marks'] as $m)<td class="rc-r">{{ $m }}</td>@endforeach
                         <td class="rc-r" style="font-weight:700;">{{ $r['total'] }}</td>
                         <td class="rc-r">{{ $r['aggregate'] }}</td>
                         <td><span class="rc-pill">{{ $r['division'] }}</span></td>
-                        <td><a href="{{ $r['download_url'] }}" class="ds-btn ds-btn-ghost ds-btn-sm" style="min-height:40px;text-decoration:none;" aria-label="Download report card for {{ $r['name'] }}">PDF</a></td>
+                        <td><a href="{{ $r['download_url'] }}" class="ds-btn ds-btn-ghost ds-btn-sm ka-hit" style="min-height:44px;text-decoration:none;" aria-label="Download report card for {{ $r['name'] }}">PDF</a></td>
                     </tr>
                 @endforeach
                 </tbody>
@@ -149,10 +152,17 @@
 
         <div class="rc-phone" data-testid="rc-phone-list">
             @foreach($rows as $r)
-                <div>
+                <div data-testid="rc-phone-card">
                     <span class="rc-pos">{{ $r['position'] ?? '—' }}</span>
-                    <div style="flex:1;min-width:0;"><div style="font-weight:600;">{{ $r['name'] }}</div><div style="font-size:.75rem;color:#475569;">{{ $class['label'] }}{{ $r['stream'] !== '' ? ' '.$r['stream'] : '' }} · total {{ $r['total'] }} · agg {{ $r['aggregate'] }} · Div {{ $r['division'] }}</div></div>
-                    <a href="{{ $r['download_url'] }}" class="rc-dl" aria-label="Download report card for {{ $r['name'] }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg></a>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-weight:600;">{{ $r['name'] }}</div>
+                        <div style="font-size:.75rem;color:#475569;">@if(($r['kls'] ?? '') !== '')<span data-testid="rc-phone-kls">{{ $r['kls'] }}</span> · @endif{{ $class['label'] }}{{ $r['stream'] !== '' ? ' '.$r['stream'] : '' }} · total {{ $r['total'] }} · agg {{ $r['aggregate'] }} · Div {{ $r['division'] }}</div>
+                        {{-- design review: ReportPhone.dc.html shows only the summary line. Subject rows are listed here so a mark or ABS stays on the card and the phone does not scroll sideways. --}}
+                        @foreach($subjects as $i => $sub)
+                            <div class="ka-mark-row"><span>{{ $sub['name'] }}</span><strong>{{ $r['marks'][$i] ?? '—' }}</strong></div>
+                        @endforeach
+                    </div>
+                    <a href="{{ $r['download_url'] }}" class="rc-dl ka-hit" aria-label="Download report card for {{ $r['name'] }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg></a>
                 </div>
             @endforeach
         </div>

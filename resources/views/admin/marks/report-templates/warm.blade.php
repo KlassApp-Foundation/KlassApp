@@ -245,6 +245,10 @@
         </tr>
     </table>
     <div class="ribbon">PROGRESSIVE REPORT</div>
+    @if (!empty($compositionLine ?? null))
+    {{-- design review: the end-of-term mix line is specified in the handoff, not drawn on the A4 cards. --}}
+    <div class="h-meta" data-testid="eot-composition" style="text-align:center;margin-top:6px;">{{ $compositionLine }}</div>
+    @endif
 </div>
 
 <div class="page">
@@ -321,7 +325,7 @@
                                     $midGrade = \App\Helpers\GradingHelper::formatAggLabel($g) ?? '-';
                                 }
                             @endphp
-                            <td>{{ $markValue !== null ? floor($markValue) : '-' }}</td>
+                            <td>@include('admin.marks.report-templates.mark-text', ['mark' => $cell ?? null])</td>
                             @if ($showAgg) <td>@if($midGrade !== '-')<span class="chip {{ $chipClass($midGrade) }}">{{ $midGrade }}</span>@else - @endif</td> @endif
                         @endif
                     @endforeach
@@ -347,7 +351,7 @@
                                     $midGrade = \App\Helpers\GradingHelper::formatAggLabel($g) ?? '-';
                                 }
                             @endphp
-                            <td>{{ $midMark && $midMark->marks !== null ? floor($midMark->marks) : '-' }}</td>
+                            <td>@include('admin.marks.report-templates.mark-text', ['mark' => $midMark ?? null])</td>
                             @if ($showAgg) <td>@if($midGrade !== '-')<span class="chip {{ $chipClass($midGrade) }}">{{ $midGrade }}</span>@else - @endif</td> @endif
                         @endif
                     @endforeach
@@ -372,7 +376,10 @@
                 <th class="eot-th" style="width:10%">TR Initials</th>
             </tr>
             @foreach ($subjects as $subject)
-                @php $eotMark = ($eotMarkBySubject[$subject->id] ?? null); @endphp
+                @php
+                    $shownMarks = $eotDisplayBySubject ?? $eotMarkBySubject ?? [];
+                    $eotMark = $shownMarks[$subject->id] ?? null;
+                @endphp
                 @if (!$eotMark) @continue @endif
                 @php
                     $hasEotMarks = $eotMark->marks !== null;
@@ -397,7 +404,7 @@
                 <tr>
                     <td class="left">{{ $subject->name }}</td>
                     <td>100</td>
-                    <td>{{ $eotMark && $eotMark->marks !== null ? floor($eotMark->marks) : '-' }}</td>
+                    <td>@include('admin.marks.report-templates.mark-text', ['mark' => $eotMark])</td>
                     @if ($showAgg) <td>@if($eotGrade !== '-')<span class="chip {{ $chipClass($eotGrade) }}">{{ $eotGrade }}</span>@else - @endif</td> @endif
                     <td>{{ $eotComment }}</td>
                     <td>{{ $teacherName }}</td>
