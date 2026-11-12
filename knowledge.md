@@ -3225,6 +3225,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-11-12: Term workbook importer saves drafts and never submits
+
+- **Work done**: Draft [#1333](https://github.com/KlassApp-Foundation/KlassApp/pull/1333) on `feat/term-workbook-importer` (`fdd68a3e`), from `main`. A term workbook creates missing exams and saves draft marks. The same file again changes nothing. A changed mark updates and reports the old and new value. A removed row leaves the saved draft. Unknown classes and subjects are reported. A subject teacher and another school are refused. A class teacher writes only their class. Local tests: 4 tests, 51 assertions. Full test-guard not run. Demo ports were not in use and were not started.
+- **Files touched**: `app/Services/Marks/TermWorkbookImporter.php`, `tests/Feature/Marks/TermWorkbookImporterTest.php`.
+- **Key decisions**: Not stacked on #1326, #1327, or #1332. `ABS` is stored with the existing absent flag. Setup report-card flags and weights are not applied to the school mix. The class tab must already be the school's class name. No upload screen.
+- **Status**: Draft [#1333](https://github.com/KlassApp-Foundation/KlassApp/pull/1333) at `fdd68a3e`. Not merged. Production untouched.
+- **Edge cases flagged**: Two sections with the same name, or two exam types with the same name, write nothing for that sheet or block. Nursery learning-area remarks are not in this file shape.
+
 ### 2026-11-11: KLS filler writes a number only on an exact class match
 
 - **Work done**: Draft [#1332](https://github.com/KlassApp-Foundation/KlassApp/pull/1332) on `feat/kls-filler` (`baed13be`), from `main`. A marks workbook gets a KLS number in column A only when one active learner in that class matches the name. Near-misses, duplicates, a missing number, a different number already in the cell, and another school's class are listed and left blank. A teacher cannot run it. Demo on port 8000 was not touched.
