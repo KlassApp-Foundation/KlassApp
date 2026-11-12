@@ -17,7 +17,7 @@
         <section class="family-state" data-testid="family-empty" aria-label="Empty">
             <div class="family-empty">
                 <h2>No results yet this term</h2>
-                <p>Results appear here when the school releases them. You'll also get a WhatsApp message.</p>
+                <p>No report card has been released yet. Results appear here when the school releases them. You'll also get a WhatsApp message.</p>
             </div>
         </section>
     @endif

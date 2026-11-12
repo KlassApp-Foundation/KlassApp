@@ -5,6 +5,7 @@ namespace App\Services\ReportCards;
 use App\Contracts\Results\ReleaseGate;
 use App\Models\AcademicYear;
 use App\Models\Academics\Exam;
+use App\Models\Academics\ExamType;
 use App\Models\ReportGeneration;
 use App\Models\Section;
 use App\Models\StandardLink;
@@ -111,6 +112,7 @@ class ClassReportScreen
         $streams = array_column($links, 'stream', 'id');
         $exam = $this->examForSitting($schoolId, (int) $class['id'], $sitting);
         $releasedLinks = $this->releasedLinks($schoolId, $class, $sitting, $links, $exam);
+        $type = ExamType::query()->whereKey((int) $sitting['exam_type_id'])->first();
 
         $base = [
             'class' => $class['label'],
@@ -118,6 +120,11 @@ class ClassReportScreen
             'term_id' => $sitting['term_id'],
             'streams' => array_filter($streams, fn ($s) => $s !== ''),
             'released_links' => $releasedLinks,
+            'composition_line' => app(EndOfTermCompositionLine::class)->lineFor(
+                $schoolId,
+                EndOfTermCompositionLine::isEndOfTerm($type?->name, $type?->code),
+                $exam?->id,
+            ),
         ];
 
         if ($releasedLinks === []) {
@@ -173,23 +180,25 @@ class ClassReportScreen
             ? fn ($a, $b) => strcasecmp($a->name, $b->name)
             : fn ($a, $b) => ($a->classPosition ?? PHP_INT_MAX) <=> ($b->classPosition ?? PHP_INT_MAX) ?: strcasecmp($a->name, $b->name));
 
-        $rows = array_map(function ($s) use ($subjects, $streams, $class, $sitting, $linkOf, $sheet) {
+        $studentIds = array_map(fn ($s) => (int) $s->studentId, $shown);
+        $klsById = $studentIds === [] ? [] : User::query()
+            ->where('school_id', $schoolId)
+            ->where('status', 'active')
+            ->whereIn('id', $studentIds)
+            ->pluck('registration_number', 'id')
+            ->all();
+
+        $rows = array_map(function ($s) use ($subjects, $streams, $class, $sitting, $linkOf, $sheet, $klsById) {
             $linkId = $linkOf($s);
 
             return [
                 'student_id' => $s->studentId,
                 'name' => $s->name,
+                'kls' => trim((string) ($klsById[(int) $s->studentId] ?? '')),
                 'position' => $s->classPosition,
                 'out_of' => $s->classOutOf,
                 'stream' => $streams[$linkId] ?? '',
-                'marks' => array_map(function (array $sub) use ($s) {
-                    $cell = $s->cell($sub['id']);
-                    if ($cell !== null && $cell->status === ResultCell::ABSENT) {
-                        return 'ABS';
-                    }
-
-                    return ($cell !== null && $cell->mark !== null) ? $this->number($cell->mark) : '—';
-                }, $subjects),
+                'marks' => array_map(fn (array $sub) => $this->displayCell($s->cell($sub['id'])), $subjects),
                 'total' => $s->displayTotal !== null ? $this->number($s->displayTotal) : '—',
                 'aggregate' => $s->aggregate ?? '—',
                 'division' => $s->division !== null ? (self::DIVISION_LABELS[$s->division] ?? $s->division) : '—',
@@ -384,6 +393,22 @@ class ClassReportScreen
                 'error' => $g->status === 'failed' ? 'The class PDF did not finish.' : null,
             ]])
             ->all();
+    }
+
+    private function displayCell(?ResultCell $cell): string
+    {
+        if ($cell === null) {
+            return '—';
+        }
+        $grade = strtoupper(trim((string) $cell->grade));
+        if ($cell->status === ResultCell::ABSENT || in_array($grade, ['AB', 'ABS'], true)) {
+            return 'ABS';
+        }
+        if ($cell->mark !== null) {
+            return $this->number($cell->mark);
+        }
+
+        return 'Missing';
     }
 
     private function number(float $value): string

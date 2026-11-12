@@ -487,6 +487,7 @@ class ParentPortalService
             'student_name' => $name,
             'school_id' => $schoolId > 0 ? $schoolId : null,
             'exam_groups' => [],
+            'registration_number' => trim((string) ($student->registration_number ?? '')),
             'years' => $yearRows,
             'selected_year' => $selected,
             'current_year_id' => $currentId,
@@ -536,21 +537,18 @@ class ParentPortalService
             $subjects = [];
             foreach ($typeExams as $exam) {
                 foreach ($exam->marks as $mark) {
-                    $subjects[] = $mark->isAbsent()
-                        ? [
-                            'name' => $mark->subject?->name ?? $exam->subject?->name ?? 'Subject',
-                            'score' => 0.0,
-                            'total' => 100,
-                            'grade' => '—',
-                            'shown' => 'ABS',
-                        ]
-                        : [
-                            'name' => $mark->subject?->name ?? $exam->subject?->name ?? 'Subject',
-                            'score' => (float) ($mark->marks ?? 0),
-                            'total' => 100,
-                            'grade' => $mark->grade ?? '-',
-                            'shown' => null,
-                        ];
+                    $absent = $mark->isAbsent();
+                    $blank = ! $absent && $mark->marks === null;
+                    $score = ($absent || $blank) ? 0.0 : (float) $mark->marks;
+                    $label = $absent ? 'ABS' : ($blank ? 'Missing' : null);
+                    $subjects[] = [
+                        'name' => $mark->subject?->name ?? $exam->subject?->name ?? 'Subject',
+                        'score' => $score,
+                        'total' => 100,
+                        'grade' => $label !== null ? '—' : ($mark->grade ?? '-'),
+                        'shown' => $label,
+                        'display' => $label ?? (string) (int) round($score),
+                    ];
                 }
             }
 
@@ -560,9 +558,10 @@ class ParentPortalService
                 $first->examType?->name ?? 'Exam',
             ], fn ($part) => $part !== null && $part !== ''));
 
-            $average = $subjects === []
+            $counted = array_values(array_filter($subjects, fn (array $row) => $row['score'] !== null));
+            $average = $counted === []
                 ? 0.0
-                : round(array_sum(array_column($subjects, 'score')) / count($subjects), 1);
+                : round(array_sum(array_column($counted, 'score')) / count($counted), 1);
 
             $termKey = ((int) ($first->academic_term_id ?? 0)).'|'.((int) ($first->section_id ?? 0));
             $examGroups[] = [

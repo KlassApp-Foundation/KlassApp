@@ -161,6 +161,10 @@
     <div class="header-divider"></div>
 
     <div class="report-title">PROGRESSIVE REPORT</div>
+    @if (!empty($compositionLine ?? null))
+    {{-- design review: the end-of-term mix line is specified in the handoff, not drawn on the A4 cards. --}}
+    <div data-testid="eot-composition">{{ $compositionLine }}</div>
+    @endif
 
     @php
         $reportDivision = $division ?? null;

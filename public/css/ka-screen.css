@@ -410,3 +410,9 @@
   .ka-release-reopen-bar .ds-btn{min-height:48px;justify-content:center}
   .ka-release-reopen-bar span{text-align:center;font-size:.75rem;color:#475569}
 }
+.ka-mark-row{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:44px;padding:8px 0;border-top:1px solid #E2E8F0;font-size:.9rem}
+.ka-hit{min-height:44px;display:inline-flex;align-items:center}
+@media (max-width:767px){
+  .family-page,.rc{overflow-x:hidden;max-width:100%}
+  a.ka-report-download{display:flex;width:100%;min-height:48px;justify-content:center}
+}
