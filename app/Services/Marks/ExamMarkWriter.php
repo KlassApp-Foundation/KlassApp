@@ -46,6 +46,8 @@ class ExamMarkWriter
         $this->assertWritable($exam);
         $this->assertCorrectionReason($exam, $correctionReason);
 
+        $enteredBy = (int) $actor->id;
+
         if ($this->isAbsent($mark)) {
             return Marks::updateOrCreate(
                 [
@@ -55,7 +57,7 @@ class ExamMarkWriter
                     'subject_id' => $exam->subject_id,
                 ],
                 [
-                    'teacher_id' => $exam->teacher_id ?: $actor->id,
+                    'teacher_id' => $enteredBy,
                     'marks' => null,
                     'grade' => 'AB',
                     'absent' => true,
@@ -72,7 +74,7 @@ class ExamMarkWriter
                 'subject_id' => $exam->subject_id,
             ],
             [
-                'teacher_id' => $exam->teacher_id ?: $actor->id,
+                'teacher_id' => $enteredBy,
                 'marks' => $mark,
                 'grade' => $this->letter($exam, $mark),
                 'absent' => false,
