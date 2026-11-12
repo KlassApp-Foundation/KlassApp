@@ -6,8 +6,10 @@ use App\Helpers\SiteHelper;
 use App\Onboarding\OnboardingProgress;
 use App\Models\AcademicTerm;
 use App\Models\Academics\Exam as ExamModel;
+use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\ExamType;
 use App\Models\Academics\Marks;
+use App\Services\Marks\MarksSubmissionService;
 use App\Models\Attendance;
 use App\Models\FeePayment;
 use App\Models\FeesCategories;
@@ -56,7 +58,100 @@ class DashboardV2DataService
             'charts' => $this->charts($sid, $students, $term, $feeMonths),
             'activity' => $this->activity($sid),
             'currency' => $this->currencyFor($sid),
+            'marks' => $this->marksDesk($sid),
         ];
+    }
+
+    /**
+     * Submissions waiting for approval, and classes with every subject approved
+     * for at least one sitting this year. Both counts are this school only.
+     *
+     * @return array{waiting: int|null, waiting_note: string|null, ready: int|null, ready_note: string|null}
+     */
+    public function marksDesk(int $schoolId): array
+    {
+        if ($schoolId <= 0) {
+            return [
+                'waiting' => null,
+                'waiting_note' => 'This count is not available for this school.',
+                'ready' => null,
+                'ready_note' => 'This count is not available for this school.',
+            ];
+        }
+
+        return [
+            'waiting' => app(MarksSubmissionService::class)->pendingCount($schoolId),
+            'waiting_note' => null,
+            'ready' => $this->classesReadyToRelease($schoolId),
+            'ready_note' => null,
+        ];
+    }
+
+    /**
+     * Distinct classes (section id) in the current year where one sitting has
+     * every subject approved. A class with a subject still open is not ready.
+     */
+    private function classesReadyToRelease(int $schoolId): int
+    {
+        $year = SiteHelper::getAcademicYear($schoolId);
+        if ($year === null) {
+            return 0;
+        }
+
+        $exams = ExamModel::query()
+            ->where('school_id', $schoolId)
+            ->where('academic_year_id', (int) $year->id)
+            ->whereNull('deleted_at')
+            ->whereNotNull('subject_id')
+            ->whereNotNull('section_id')
+            ->get(['id', 'section_id', 'subject_id', 'exam_type_id', 'academic_term_id']);
+
+        if ($exams->isEmpty()) {
+            return 0;
+        }
+
+        $sectionIds = Section::query()
+            ->where('school_id', $schoolId)
+            ->whereIn('id', $exams->pluck('section_id')->map(fn ($id) => (int) $id)->unique()->values()->all())
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+        $allowed = array_fill_keys($sectionIds, true);
+
+        $approvedKeys = [];
+        $approved = ExamMarksSubmission::query()
+            ->where('school_id', $schoolId)
+            ->whereIn('exam_id', $exams->pluck('id')->map(fn ($id) => (int) $id)->all())
+            ->where('approval_status', 'approved')
+            ->get(['exam_id', 'class_id', 'subject_id']);
+        foreach ($approved as $row) {
+            $approvedKeys[(int) $row->exam_id.'|'.(int) $row->class_id.'|'.(int) $row->subject_id] = true;
+        }
+
+        $groups = [];
+        foreach ($exams as $exam) {
+            $sectionId = (int) $exam->section_id;
+            if (! isset($allowed[$sectionId])) {
+                continue;
+            }
+            $key = $sectionId.'|'.(int) $exam->exam_type_id.'|'.(int) $exam->academic_term_id;
+            if (! isset($groups[$key])) {
+                $groups[$key] = ['section_id' => $sectionId, 'ready' => true];
+            }
+            $match = (int) $exam->id.'|'.$sectionId.'|'.(int) $exam->subject_id;
+            if (! isset($approvedKeys[$match])) {
+                $groups[$key]['ready'] = false;
+            }
+        }
+
+        $readySections = [];
+        foreach ($groups as $group) {
+            if ($group['ready']) {
+                $readySections[$group['section_id']] = true;
+            }
+        }
+
+        return count($readySections);
     }
 
     // ─────────────────────────────── shared ────────────────────────────────

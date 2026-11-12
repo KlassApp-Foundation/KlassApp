@@ -62,3 +62,23 @@
   .ka-sheet-table{display:none}
   .ka-phone-cards{display:flex;flex-direction:column;gap:10px}
 }
+
+/* Marks on the teacher and admin dashboards. Phone layout is the default. */
+.ka-marks-groups{display:flex;flex-direction:column;gap:10px;min-width:0;max-width:100%;overflow-x:hidden}
+.ka-marks-row{display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:12px 14px;border:1px solid #E2E8F0;border-radius:14px;background:#FFFFFF;min-width:0;max-width:100%}
+.ka-marks-copy{min-width:0;flex:1 1 auto}
+.ka-marks-copy h3{margin:0;font-size:.95rem;color:#1E293B;overflow-wrap:anywhere}
+.ka-marks-detail{margin:4px 0 0;font-size:.8rem;color:#475569}
+.ka-marks-note{margin:4px 0 0;font-size:.8rem;color:#7F1D1D}
+.ka-marks-row a{min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:0 14px;border-radius:10px;text-decoration:none;font-weight:600;box-sizing:border-box;width:100%}
+.ka-marks-desk{display:flex;flex-direction:column;gap:10px;min-width:0;max-width:100%;overflow-x:hidden;margin:0 0 16px}
+.ka-marks-desk h2{margin:0;font:600 1rem 'Sora',system-ui,sans-serif;color:#1E293B}
+.ka-marks-desk-cards{display:flex;flex-direction:column;gap:10px;min-width:0}
+.ka-marks-desk-card{display:flex;flex-direction:column;justify-content:center;gap:4px;min-height:44px;padding:12px 14px;border:1px solid #E2E8F0;border-radius:14px;background:#FFFFFF;color:#1E293B;text-decoration:none;box-sizing:border-box;width:100%}
+.ka-marks-desk-card strong{font:700 1.3rem 'Sora',system-ui,sans-serif;color:#1E293B}
+.ka-marks-desk-card span{font-size:.8rem;color:#475569}
+@media (min-width:768px){
+  .ka-marks-row{flex-direction:row;flex-wrap:wrap;align-items:center}
+  .ka-marks-row a{width:auto}
+  .ka-marks-desk-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+}
