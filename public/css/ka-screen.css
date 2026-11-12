@@ -101,3 +101,32 @@
 @media (min-width:768px){
   .ka-marks-sheet{overflow-x:auto}
 }
+.ka-entry-list{display:flex;flex-direction:column;background:#fff;border:1px solid #E2E8F0;border-radius:14px;overflow:hidden}
+.ka-entry-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #E2E8F0;background:#fff}
+.ka-entry-row[data-state="pending"]{background:#FFFBEB}
+.ka-entry-row[data-state="error"]{background:#FEF2F2}
+.ka-entry-row[data-state="typing"]{background:#EFF6FF}
+.ka-entry-who{flex:1;min-width:0}
+.ka-entry-meta{font-size:.75rem;color:#475569}
+.ka-entry-status{display:flex;align-items:center;gap:4px;margin-top:2px;font-size:.75rem;font-weight:700}
+.ka-entry-row[data-state="saved"] .ka-entry-status,.ka-entry-row[data-state="absent"] .ka-entry-status{color:#166534}
+.ka-entry-row[data-state="pending"] .ka-entry-status{color:#92400E}
+.ka-entry-row[data-state="error"] .ka-entry-status{color:#B91C1C}
+.ka-entry-row[data-state="typing"] .ka-entry-status{color:#1D4ED8}
+.ka-entry-row[data-state="blank"] .ka-entry-status{color:#475569}
+.ka-entry-list .ka-mark{width:76px;height:48px;min-height:48px;max-width:76px;border-radius:10px;text-align:center;font-weight:700;font-size:1.05rem;color:#1E293B;background:#fff;box-sizing:border-box}
+.ka-entry-row[data-state="saved"] .ka-mark{border:1px solid #64748B;background:#fff}
+.ka-entry-row[data-state="absent"] .ka-mark{border:1px solid #94A3B8;background:#F1F5F9;color:#334155}
+.ka-entry-row[data-state="pending"] .ka-mark{border:2px solid #B45309;background:#fff}
+.ka-entry-row[data-state="error"] .ka-mark{border:2px solid #B91C1C;background:#fff}
+.ka-entry-row[data-state="typing"] .ka-mark{border:2px solid #1D4ED8;box-shadow:0 0 0 3px #BFDBFE;background:#fff}
+.ka-entry-row[data-state="blank"] .ka-mark{border:1px dashed #64748B;background:#FAFAF5}
+.ka-entry-list .ka-abs{min-width:52px;width:52px;height:48px;min-height:48px;padding:0 8px;border-radius:10px;border:1px solid #64748B;background:#fff;color:#334155;font:700 .78rem 'DM Sans',sans-serif}
+.ka-entry-list .ka-abs[aria-pressed="true"]{border:1px solid #0F172A;background:#0F172A;color:#fff}
+.ka-offline{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;background:#FFFBEB;border:1px solid #FDE68A;color:#92400E;font-size:.85rem;line-height:1.4}
+.ka-next{flex:1;min-height:48px;border-radius:10px;border:1px solid #0F172A;background:#0F172A;color:#fff;font:700 .92rem 'DM Sans',sans-serif}
+.ka-prev{width:52px;min-height:48px;border-radius:10px;border:1px solid #64748B;background:#fff;color:#1E293B;display:inline-flex;align-items:center;justify-content:center}
+.ka-entry-help{margin:0;font-size:.75rem;color:#475569}
+.ka-entry-tally{font-size:.8rem;color:#475569}
+.ka-marks-sheet.ka-entry-list{overflow:hidden}
+.ka-marks-page{padding-bottom:240px}

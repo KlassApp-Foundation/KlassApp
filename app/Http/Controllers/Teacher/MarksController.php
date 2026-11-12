@@ -225,8 +225,13 @@ public function enterExamMarks(Exam $exam)
      $enteredCount = 0;
      $fixCount = 0;
      $blankCount = 0;
+     $unsavedCount = 0;
      foreach ($allStudents as $student) {
-         $current = request()->old('marks.'.$student->id, $savedMarks[(int) $student->id] ?? '');
+         $stored = (string) ($savedMarks[(int) $student->id] ?? '');
+         $current = (string) request()->old('marks.'.$student->id, $stored);
+         if (trim($current) !== '' && strcasecmp(trim($current), trim($stored)) !== 0) {
+             $unsavedCount++;
+         }
          $kind = $this->markEntryKind($exam, $current);
          if ($kind === 'entered') {
              $enteredCount++;
@@ -237,7 +242,20 @@ public function enterExamMarks(Exam $exam)
          }
      }
 
-    $exam = $exam->load("academicTerm", "section", "subject", "teacher", "standard");
+    $exam = $exam->load("academicTerm", "section", "subject", "teacher", "standard", "examType");
+    $streamCounts = [];
+    $rosterTotal = $total;
+    if ($coversStreams) {
+        $everyone = $streamId === null ? $allStudents : $this->roster->students($exam, $teacher, null);
+        $rosterTotal = $everyone->count();
+        foreach ($everyone as $person) {
+            $label = (string) ($person->stream_label ?? '');
+            if ($label === '') {
+                continue;
+            }
+            $streamCounts[$label] = ($streamCounts[$label] ?? 0) + 1;
+        }
+    }
 
     // Detect nursery level for conditional rendering
     $isNursery = false;
@@ -276,9 +294,13 @@ public function enterExamMarks(Exam $exam)
         'enteredCount' => $enteredCount,
         'fixCount' => $fixCount,
         'blankCount' => $blankCount,
+        'unsavedCount' => $unsavedCount,
+        'rosterTotal' => $rosterTotal,
+        'streamCounts' => $streamCounts,
         'missingMarkCount' => $missingMarkCount,
         'canSubmit' => app(MarksSubmissionService::class)->hasWorkToSubmit($exam)
             && ! app(ExamMarkWriter::class)->writesAreRefused($exam),
+        'writesOpen' => ! app(ExamMarkWriter::class)->writesAreRefused($exam),
         'returnNotice' => $this->returnNotice($exam, $teacher),
         'submissionState' => $this->submissionStateLabel($exam),
         'showStreamColumn' => $coversStreams,
