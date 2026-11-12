@@ -3,73 +3,135 @@
 @section('content')
 <div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4">
 
-@include('layouts.partials.page-header', [
-    'title' => 'Exam Type Settings',
-    'subtitle' => 'Each exam set has its own report. The end-of-term report starts as End of Term only. Weights must total 100, and a report already released keeps the mix it was released with.',
-])
-
 @include('layouts.partials.settings-nav')
 
 @include('partials.message')
 
-<div class="relative mt-4">
-<div class="w-full main-content">
-    <form method="POST" action="{{ route('admin.settings.exam-types.update') }}">
+@php
+    $mixTotal = rtrim(rtrim(number_format((float) ($mix['total'] ?? 0), 2, '.', ''), '0'), '.');
+    $mixAdds = (bool) ($mix['adds_up'] ?? false);
+@endphp
+
+<div class="ka-compose">
+    <nav class="ka-crumb" aria-label="Breadcrumb"><a href="{{ route('admin.reports.cards.index') }}">Report cards</a> <span aria-hidden="true">/</span> Report settings</nav>
+    <div>
+        <h1 class="ka-h1">End-of-term report</h1>
+        <p class="ka-compose-lead">Choose which exam sets count on the end-of-term report, and by how much. Every exam set still gets its own report when its marks are released.</p>
+    </div>
+
+    <form method="POST" action="{{ route('admin.settings.exam-types.update') }}" data-testid="report-composition-form">
         @csrf
-        <p data-testid="end-of-term-composition" style="margin:0 0 12px;max-width:40rem;">
-            Tick the exam sets that count on the end-of-term report and give them weights that total 100.
-            Each other set still has its own report. Changing this does not alter a report that is already released.
-        </p>
-        @error('weight') <p class="text-xs text-red-600 mb-2" data-testid="composition-weight-error">{{ $message }}</p> @enderror
-        @error('include') <p class="text-xs text-red-600 mb-2">{{ $message }}</p> @enderror
-        <div data-testid="exam-type-table" style="display:flex;flex-direction:column;gap:12px;max-width:40rem;">
-            @foreach($examTypes as $type)
-                @php
-                    $checked = $prefs[$type->id] ?? $type->contributes_to_report_total;
-                    $settings = $composition[(string) $type->id] ?? $composition[$type->id] ?? [];
-                    $included = is_array($settings) && array_key_exists('include', $settings)
-                        ? ($settings['include'] === true || $settings['include'] === 1 || $settings['include'] === '1')
-                        : true;
-                    $weight = is_array($settings) ? ($settings['weight'] ?? null) : null;
-                @endphp
-                <div data-testid="exam-type-row-{{ $type->id }}" style="border:1px solid var(--d-border, #e5e7eb);border-radius:12px;padding:12px;">
-                    <div style="font-weight:600;">
-                        {{ $type->name }}
-                        <span class="text-xs" data-testid="exam-type-owner-{{ $type->id }}"
-                              style="color: {{ $type->isShared() ? 'var(--d-text-secondary)' : 'var(--d-accent)' }};">
-                            {{ $type->code }} · {{ $type->isShared() ? '(shared)' : '(your school)' }}
-                        </span>
+        @error('weight') <p class="ka-compose-error" data-testid="composition-weight-error">{{ $message }}</p> @enderror
+        @error('include') <p class="ka-compose-error">{{ $message }}</p> @enderror
+
+        <div class="ka-compose-layout">
+            <section class="ka-card ka-card-pad ka-compose-main" aria-labelledby="h-mix">
+                <h2 id="h-mix" class="ka-h2">What counts on the end-of-term report</h2>
+
+                <div class="ka-quick-wrap">
+                    <span class="ka-lbl">Quick choices</span>
+                    <div class="ka-quick" role="group" aria-label="Quick choices">
+                        <button type="button" class="ka-choice" data-choice="end" aria-pressed="{{ $preset === 'end' ? 'true' : 'false' }}">End of Term only</button>
+                        <button type="button" class="ka-choice" data-choice="mid70" aria-pressed="{{ $preset === 'mid70' ? 'true' : 'false' }}">
+                            <span class="ka-choice-long">Mid Term 30 · End of Term 70</span>
+                            <span class="ka-choice-short">Mid 30 · End 70</span>
+                        </button>
+                        <button type="button" class="ka-choice" data-choice="equal" aria-pressed="{{ $preset === 'equal' ? 'true' : 'false' }}">All three equally</button>
                     </div>
-                    <label class="inline-flex items-center" style="min-height:44px;gap:8px;">
-                        <input type="hidden" name="contributes[{{ $type->id }}]" value="0">
-                        <input type="checkbox" name="contributes[{{ $type->id }}]" value="1"
-                            style="width:20px;height:20px;"
-                            {{ $checked ? 'checked' : '' }}>
-                        <span>Counts on its own</span>
-                    </label>
-                    <label class="inline-flex items-center" style="min-height:44px;gap:8px;">
-                        <input type="hidden" name="include[{{ $type->id }}]" value="0">
-                        <input type="checkbox" name="include[{{ $type->id }}]" value="1"
-                            style="width:20px;height:20px;"
-                            data-testid="exam-type-include-{{ $type->id }}"
-                            {{ $included ? 'checked' : '' }}>
-                        <span>Counts on the end-of-term report</span>
-                    </label>
-                    <label style="display:block;margin-top:4px;">
-                        <span class="text-sm">Weight</span>
-                        <input type="number" name="weight[{{ $type->id }}]" min="1" max="100" step="any"
-                            value="{{ $weight !== null ? $weight : '' }}" placeholder="—"
-                            inputmode="decimal"
-                            data-testid="exam-type-weight-{{ $type->id }}"
-                            class="ds-form-input" style="min-height:44px;width:100%;max-width:8rem;">
-                    </label>
                 </div>
-            @endforeach
-        </div>
-        <div class="mt-6">
-            <button type="submit" class="ds-btn ds-btn-primary" style="min-height:44px;" data-testid="exam-type-save">
-                Save Preferences
-            </button>
+
+                <div class="ka-mix-list" data-testid="exam-type-table">
+                    @foreach($examTypes as $type)
+                        @php
+                            $checked = $prefs[$type->id] ?? $type->contributes_to_report_total;
+                            $settings = $composition[(string) $type->id] ?? $composition[$type->id] ?? [];
+                            $included = is_array($settings) && array_key_exists('include', $settings)
+                                ? ($settings['include'] === true || $settings['include'] === 1 || $settings['include'] === '1')
+                                : true;
+                            $weight = is_array($settings) ? ($settings['weight'] ?? null) : null;
+                            $weightNumber = is_numeric($weight) ? (float) $weight : null;
+                            $weightValue = $weightNumber === null
+                                ? ($included ? '' : '0')
+                                : rtrim(rtrim(number_format($weightNumber, 2, '.', ''), '0'), '.');
+                            $role = app(\App\Services\Results\ReportComposition::class)->sittingRole($type->name, $type->code) ?? '';
+                        @endphp
+                        <div class="ka-mix-row{{ $included ? '' : ' is-off' }}" data-mix-row data-role="{{ $role }}" data-name="{{ $type->name }}" data-testid="exam-type-row-{{ $type->id }}">
+                            <input type="hidden" name="contributes[{{ $type->id }}]" value="{{ $checked ? '1' : '0' }}">
+                            <input type="hidden" name="include[{{ $type->id }}]" value="0">
+                            <label class="ka-mix-label">
+                                <input type="checkbox" class="ka-switch" name="include[{{ $type->id }}]" value="1"
+                                    data-testid="exam-type-include-{{ $type->id }}" @checked($included)>
+                                <span class="ka-mix-name">
+                                    <strong>{{ $type->name }}</strong>
+                                    <span data-mix-detail>{{ $included ? 'Counts on the report' : 'Not on the end-of-term report' }}</span>
+                                    <span class="ka-sr" data-testid="exam-type-owner-{{ $type->id }}">{{ $type->code }} · {{ $type->isShared() ? '(shared)' : '(your school)' }}</span>
+                                </span>
+                            </label>
+                            <span class="ka-hide-sm ka-weight-label">Weight</span>
+                            <input class="ds-input ka-weight" type="text" inputmode="numeric" name="weight[{{ $type->id }}]"
+                                value="{{ $weightValue }}" @disabled(! $included)
+                                aria-label="Weight for {{ $type->name }}, percent"
+                                data-testid="exam-type-weight-{{ $type->id }}">
+                            <span class="ka-weight-unit">%</span>
+                        </div>
+                    @endforeach
+                    <div class="ka-mix-total" aria-live="polite">
+                        <strong>Total</strong>
+                        <span class="ka-adds{{ $mixAdds ? ' is-ok' : '' }}" data-mix-state>
+                            <svg data-mix-tick width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
+                            <span data-mix-state-text>{{ $mixAdds ? 'Adds up' : 'Does not add up' }}</span>
+                        </span>
+                        <strong class="ka-mix-sum" data-mix-total>{{ $mixTotal }}%</strong>
+                    </div>
+                </div>
+
+                <div class="ka-mix-bar" role="img" aria-label="{{ $mix['aria'] ?? 'No exam sets count on the end-of-term report' }}" data-mix-bar>
+                    @foreach(($mix['parts'] ?? []) as $index => $part)
+                        <div class="{{ $index === count($mix['parts']) - 1 ? 'is-last' : 'is-part' }}" style="flex: {{ $part['weight'] }} 1 0;">{{ $part['name'] }} {{ rtrim(rtrim(number_format($part['weight'], 2, '.', ''), '0'), '.') }}%</div>
+                    @endforeach
+                </div>
+
+                <div class="ka-note">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5"></path><path d="M12 7.5h.01"></path></svg>
+                    <div><strong>Applies from the next release.</strong> Reports already released keep the mix they were released with.</div>
+                </div>
+
+                <div class="ka-compose-foot">
+                    <p class="ka-compose-who">Admins and head teachers can change this.</p>
+                    <div class="ka-compose-actions">
+                        <a class="ds-btn ds-btn-outline ka-hit" href="{{ route('admin.settings.exam-types') }}">Cancel</a>
+                        <button type="submit" class="ds-btn ds-btn-primary ka-hit" style="min-height:44px;" data-testid="exam-type-save">Save report settings</button>
+                    </div>
+                </div>
+            </section>
+
+            <div class="ka-compose-side">
+                <section class="ka-card ka-card-pad" aria-labelledby="h-prev">
+                    <h2 id="h-prev" class="ka-h2">How it appears on the report</h2>
+                    @if($madeUpOf !== '')
+                        <p class="ka-made" data-testid="made-up-of">{{ $madeUpOf }}</p>
+                    @endif
+                    @if($showMarksLater)
+                        <p class="ka-made-wait">Report marks appear here after the counted exam sets are released.</p>
+                    @endif
+                </section>
+
+                <section class="ka-card ka-card-pad" aria-labelledby="h-own">
+                    <h2 id="h-own" class="ka-h2">Each exam set has its own report</h2>
+                    @foreach($ownReports as $own)
+                        <div class="ka-own-row" data-testid="own-report-{{ $own['id'] }}">
+                            <strong>{{ $own['name'] }}</strong>
+                            <span class="ka-pill {{ $own['released'] ? 'ka-pill-green' : 'ka-pill-muted' }}">{{ $own['status'] }}</span>
+                        </div>
+                    @endforeach
+                    <p class="ka-own-note">These aren't affected by the weights above.</p>
+                </section>
+
+                <section class="ka-card ka-card-pad" aria-labelledby="h-log">
+                    <h2 id="h-log" class="ka-h2">Changes to this setting</h2>
+                    <p class="ka-log" data-testid="composition-log">The current mix was saved with the school.</p>
+                </section>
+            </div>
         </div>
     </form>
 
@@ -163,5 +225,134 @@
     </form>
 </div>
 </div>
-</div>
 @endsection
+
+@push('scripts')
+<script>
+(function () {
+    var form = document.querySelector('[data-testid="report-composition-form"]');
+    if (!form) return;
+
+    function rows() {
+        return Array.prototype.slice.call(form.querySelectorAll('[data-mix-row]'));
+    }
+
+    function trimNum(value) {
+        var text = String(Math.round(value * 100) / 100);
+        return text;
+    }
+
+    function group(role) {
+        return rows().filter(function (row) { return row.getAttribute('data-role') === role; });
+    }
+
+    function setRow(row, on, weight) {
+        var sw = row.querySelector('.ka-switch');
+        var input = row.querySelector('.ka-weight');
+        sw.checked = !!on;
+        input.disabled = !on;
+        input.value = on ? String(weight) : '0';
+        row.classList.toggle('is-off', !on);
+    }
+
+    function split(list, total) {
+        if (!list.length || total <= 0) {
+            list.forEach(function (row) { setRow(row, false, 0); });
+            return;
+        }
+        var base = Math.floor(total / list.length);
+        var extra = total - (base * list.length);
+        list.forEach(function (row, index) {
+            setRow(row, true, base + (index < extra ? 1 : 0));
+        });
+    }
+
+    function paint() {
+        var parts = [];
+        var sum = 0;
+        rows().forEach(function (row) {
+            var sw = row.querySelector('.ka-switch');
+            var input = row.querySelector('.ka-weight');
+            var on = sw.checked;
+            input.disabled = !on;
+            row.classList.toggle('is-off', !on);
+            var detail = row.querySelector('[data-mix-detail]');
+            if (detail) detail.textContent = on ? 'Counts on the report' : 'Not on the end-of-term report';
+            var weight = parseFloat(input.value);
+            if (on && isFinite(weight) && weight > 0) {
+                sum += weight;
+                parts.push({ name: row.getAttribute('data-name') || '', weight: weight });
+            }
+        });
+        var adds = parts.length > 0 && Math.abs(sum - 100) < 0.011;
+        var state = form.querySelector('[data-mix-state]');
+        var text = form.querySelector('[data-mix-state-text]');
+        var total = form.querySelector('[data-mix-total]');
+        if (state) state.classList.toggle('is-ok', adds);
+        if (text) text.textContent = adds ? 'Adds up' : 'Does not add up';
+        if (total) total.textContent = trimNum(sum) + '%';
+        var bar = form.querySelector('[data-mix-bar]');
+        if (!bar) return;
+        var label = parts.length
+            ? parts.map(function (part) { return part.name + ' ' + trimNum(part.weight) + ' percent'; }).join(', ')
+            : 'No exam sets count on the end-of-term report';
+        bar.setAttribute('aria-label', label);
+        bar.textContent = '';
+        parts.forEach(function (part, index) {
+            var el = document.createElement('div');
+            el.className = index === parts.length - 1 ? 'is-last' : 'is-part';
+            el.style.flex = String(part.weight) + ' 1 0';
+            el.textContent = part.name + ' ' + trimNum(part.weight) + '%';
+            bar.appendChild(el);
+        });
+    }
+
+    function apply(choice) {
+        var begin = group('begin');
+        var mid = group('mid');
+        var end = group('end');
+        var named = begin.concat(mid, end);
+        rows().forEach(function (row) {
+            if (named.indexOf(row) === -1) setRow(row, false, 0);
+        });
+        if (choice === 'end') {
+            begin.concat(mid).forEach(function (row) { setRow(row, false, 0); });
+            split(end, 100);
+        } else if (choice === 'mid70') {
+            begin.forEach(function (row) { setRow(row, false, 0); });
+            split(mid, 30);
+            split(end, 70);
+        } else if (choice === 'equal') {
+            split(named, 100);
+        }
+        form.querySelectorAll('[data-choice]').forEach(function (button) {
+            button.setAttribute('aria-pressed', button.getAttribute('data-choice') === choice ? 'true' : 'false');
+        });
+        paint();
+    }
+
+    form.querySelectorAll('[data-choice]').forEach(function (button) {
+        button.addEventListener('click', function () {
+            apply(button.getAttribute('data-choice'));
+        });
+    });
+    rows().forEach(function (row) {
+        var sw = row.querySelector('.ka-switch');
+        var input = row.querySelector('.ka-weight');
+        sw.addEventListener('change', function () {
+            if (!sw.checked) input.value = '0';
+            form.querySelectorAll('[data-choice]').forEach(function (button) {
+                button.setAttribute('aria-pressed', 'false');
+            });
+            paint();
+        });
+        input.addEventListener('input', function () {
+            form.querySelectorAll('[data-choice]').forEach(function (button) {
+                button.setAttribute('aria-pressed', 'false');
+            });
+            paint();
+        });
+    });
+})();
+</script>
+@endpush

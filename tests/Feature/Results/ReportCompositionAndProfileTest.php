@@ -208,6 +208,69 @@ class ReportCompositionAndProfileTest extends TestCase
         $this->assertSame(80.0, $otherSheet->student($otherStudent->id)?->cell($other['maths']->id)?->mark);
     }
 
+    public function test_the_saved_mix_line_and_release_list_stay_inside_the_school(): void
+    {
+        $ctx = $this->school();
+        $other = $this->school('Other Mix School');
+        $term = $this->term($ctx);
+        $otherTerm = $this->term($other);
+        $mix = [
+            '1' => ['include' => true, 'weight' => 30.0],
+            '2' => ['include' => true, 'weight' => 70.0],
+        ];
+        $ctx['school']->forceFill(['report_composition' => $mix])->save();
+
+        $names = \App\Models\Academics\ExamType::query()->whereIn('id', [1, 2])->get()
+            ->mapWithKeys(fn ($type) => [(int) $type->id => (string) $type->name])
+            ->all();
+        $composer = app(\App\Services\Results\ReportComposition::class);
+
+        $this->assertSame('Made up of: End Of Term 70% · Mid Term 30%', $composer->madeUpOf($mix, $names));
+        $this->assertFalse($composer->hasReleasedCountedMark((int) $ctx['school']->id, $mix));
+        $this->assertStringNotContainsString('73', $composer->madeUpOf($mix, $names));
+
+        $otherExam = $this->exam($other, $otherTerm, $other['maths'], '2026-04-20', 2);
+        $this->mark($other, $otherExam, $other['maths'], $this->student($other, 'Other Learner'), 80, 'C');
+        MarksRelease::create([
+            'school_id' => $other['school']->id,
+            'exam_id' => $otherExam->id,
+            'scope' => 'school',
+            'scheduled_at' => '2026-04-21 08:00:00',
+            'released_at' => '2026-04-21 08:00:00',
+            'status' => MarksRelease::STATUS_RELEASED,
+        ]);
+
+        $this->assertFalse($composer->hasReleasedCountedMark((int) $ctx['school']->id, $mix));
+        $before = collect($composer->ownReports((int) $ctx['school']->id))->firstWhere('id', 2);
+        $this->assertSame('Not released yet', $before['status']);
+
+        $exam = $this->exam($ctx, $term, $ctx['maths'], '2026-04-20', 2);
+        $learner = $this->student($ctx, 'Counted Learner');
+        $this->mark($ctx, $exam, $ctx['maths'], $learner, 80, 'AB');
+        Marks::query()->where('exam_id', $exam->id)->update(['marks' => null, 'absent' => true]);
+        MarksRelease::create([
+            'school_id' => $ctx['school']->id,
+            'exam_id' => $exam->id,
+            'scope' => 'school',
+            'scheduled_at' => '2026-04-21 08:00:00',
+            'released_at' => '2026-04-21 08:00:00',
+            'status' => MarksRelease::STATUS_RELEASED,
+        ]);
+
+        $this->assertFalse(
+            $composer->hasReleasedCountedMark((int) $ctx['school']->id, $mix),
+            'an absent mark on a counted set is not turned into a report mark'
+        );
+
+        Marks::query()->where('exam_id', $exam->id)->update(['marks' => 80, 'absent' => false, 'grade' => 'C']);
+        $this->assertTrue($composer->hasReleasedCountedMark((int) $ctx['school']->id, $mix));
+        $released = collect($composer->ownReports((int) $ctx['school']->id))->firstWhere('id', 2);
+        $this->assertNotNull($released);
+        $this->assertTrue($released['released']);
+        $this->assertStringStartsWith('Released ', $released['status']);
+        $this->assertSame('Not released yet', collect($composer->ownReports((int) $ctx['school']->id))->firstWhere('id', 1)['status']);
+    }
+
     public function test_the_default_profile_seeds_nlsc_o_level_bands(): void
     {
         $school = School::create([

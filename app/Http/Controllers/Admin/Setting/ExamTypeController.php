@@ -27,17 +27,25 @@ class ExamTypeController extends Controller
         // on the schools table, or falls back to the exam_types default.
         $school = School::find($schoolId);
         $prefs = $this->jsonColumn($school, 'exam_type_preferences');
-        $storedComposition = $this->jsonColumn($school, 'report_composition');
-        $composition = $storedComposition === []
-            ? app(ReportComposition::class)->resolved($school)
-            : $storedComposition;
+        $composer = app(ReportComposition::class);
+        $composition = $composer->resolved($school);
+        $names = [];
+        foreach ($examTypes as $type) {
+            $names[(int) $type->id] = (string) $type->name;
+        }
+        $madeUpOf = $composer->madeUpOf($composition, $names);
+        $mix = $composer->mixSummary($composition, $names);
+        $preset = $composer->matchingPreset($examTypes, $composition);
+        $ownReports = $school ? $composer->ownReports((int) $school->id) : [];
+        $showMarksLater = ! ($school && $composer->hasReleasedCountedMark((int) $school->id, $composition));
         $profiles = config('curricula.profiles', []);
         $profileKey = GradingHelper::profileKeyForSchool($schoolId);
         $legacyBands = GradingHelper::legacyBandsForSchool($schoolId);
         $legacyIsExample = $school?->legacy_o_level_bands === null;
 
         return view('admin.settings.exam-types', compact(
-            'examTypes', 'prefs', 'composition', 'profiles', 'profileKey', 'legacyBands', 'legacyIsExample'
+            'examTypes', 'prefs', 'composition', 'profiles', 'profileKey', 'legacyBands', 'legacyIsExample',
+            'madeUpOf', 'mix', 'preset', 'ownReports', 'showMarksLater'
         ));
     }
 

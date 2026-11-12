@@ -185,6 +185,26 @@ class ExamTypeSettingsTest extends TestCase
         $this->assertDoesNotMatchRegularExpression('/data-testid="exam-type-include-'.$this->bot->id.'" checked/', $html);
         $this->assertMatchesRegularExpression('/name="weight\['.$this->eot->id.'\]"[^>]*value="100"/', $html);
         $this->assertStringContainsString('min-height:44px', $html);
+        $this->assertStringContainsString('Save report settings', $html);
+        $this->assertStringContainsString('End of Term only', $html);
+        $this->assertStringContainsString('Mid 30 · End 70', $html);
+        $this->assertStringContainsString('Mid Term 30 · End of Term 70', $html);
+        $this->assertStringContainsString('All three equally', $html);
+        $this->assertStringContainsString('type="button"', $html);
+        $this->assertStringContainsString('Counts on the report', $html);
+        $this->assertStringContainsString('Not on the end-of-term report', $html);
+        $this->assertStringContainsString('Adds up', $html);
+        $this->assertStringContainsString('Applies from the next release.', $html);
+        $this->assertStringContainsString('Reports already released keep the mix they were released with.', $html);
+        $this->assertStringContainsString('Made up of: End of Term Examination 100%', $html);
+        $this->assertStringContainsString('Report marks appear here after the counted exam sets are released.', $html);
+        $this->assertStringContainsString('Each exam set has its own report', $html);
+        $this->assertStringContainsString('Not released yet', $html);
+        $this->assertStringContainsString('The current mix was saved with the school.', $html);
+        $this->assertStringContainsString('Admins and head teachers can change this.', $html);
+        $this->assertStringContainsString('Cancel', $html);
+        $this->assertStringNotContainsString('Grace Achieng', $html);
+        $this->assertStringNotContainsString('80 × 30%', $html);
     }
 
     public function test_a_head_teacher_sets_the_mix_for_their_own_school(): void
