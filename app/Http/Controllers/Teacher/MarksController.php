@@ -26,6 +26,7 @@ use App\Services\Results\CombinedSheetPage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -150,7 +151,31 @@ public function submitMarks(Exam $exam, MarksSubmissionService $submissions)
             ->with('failmessage', 'Save marks before submitting them for review.');
     }
 
-    $submissions->submit($exam, $teacher);
+    $exam->loadMissing('standard');
+    $level = $exam->standard ? GradingHelper::levelTypeForStandard($exam->standard) : null;
+    if ($level !== 'nursery') {
+        $missing = $this->learnersMissingMarkOrAbs($exam, $teacher);
+        if ($missing > 0) {
+            $noun = $missing === 1 ? 'learner' : 'learners';
+
+            return redirect()
+                ->route('teacher.exam.marks.enter', $exam)
+                ->with('failmessage', 'A mark or ABS is missing for '.$missing.' '.$noun.'.');
+        }
+    }
+
+    try {
+        $submissions->submit($exam, $teacher);
+    } catch (ValidationException $e) {
+        $message = (string) collect($e->errors())->flatten()->implode(' ');
+        if (str_contains($message, 'mark or AB')) {
+            return redirect()
+                ->route('teacher.exam.marks.enter', $exam)
+                ->with('failmessage', 'A mark or ABS is missing.');
+        }
+
+        throw $e;
+    }
 
     return redirect()
         ->route('teacher.exam.marks.view', $exam)
@@ -173,17 +198,44 @@ public function enterExamMarks(Exam $exam)
      $allStudents = $this->roster->students($exam, $teacher, $streamId);
      $total = $allStudents->count();
 
-     $savedMarks = Marks::query()
+     $markColumns = ['student_id', 'marks', 'absent', 'grade'];
+     $marksHaveUpdatedAt = Schema::hasColumn('marks', 'updated_at');
+     if ($marksHaveUpdatedAt) {
+         $markColumns[] = 'updated_at';
+     }
+
+     $savedRows = Marks::query()
          ->where('exam_id', $exam->id)
          ->where('subject_id', $exam->subject_id)
          ->where('school_id', $schoolId)
          ->where(function ($query) {
              $query->whereNotNull('marks')->orWhere('absent', true);
          })
-         ->get(['student_id', 'marks', 'absent', 'grade'])
-         ->mapWithKeys(fn ($row) => [(int) $row->student_id => ($row->isAbsent() ? 'AB' : $this->markForInput($row->marks))])
+         ->get($markColumns);
+     $savedMarks = $savedRows
+         ->mapWithKeys(fn ($row) => [(int) $row->student_id => ($row->isAbsent() ? 'ABS' : $this->markForInput($row->marks))])
          ->all();
      $savedMarkCount = count($savedMarks);
+     $draftSavedAt = null;
+     if ($marksHaveUpdatedAt && $savedMarkCount > 0) {
+         $latest = $savedRows->max('updated_at');
+         $draftSavedAt = $latest ? \Illuminate\Support\Carbon::parse($latest) : null;
+     }
+
+     $enteredCount = 0;
+     $fixCount = 0;
+     $blankCount = 0;
+     foreach ($allStudents as $student) {
+         $current = request()->old('marks.'.$student->id, $savedMarks[(int) $student->id] ?? '');
+         $kind = $this->markEntryKind($exam, $current);
+         if ($kind === 'entered') {
+             $enteredCount++;
+         } elseif ($kind === 'fix') {
+             $fixCount++;
+         } else {
+             $blankCount++;
+         }
+     }
 
     $exam = $exam->load("academicTerm", "section", "subject", "teacher", "standard");
 
@@ -207,6 +259,8 @@ public function enterExamMarks(Exam $exam)
         }
     }
 
+    $missingMarkCount = $isNursery ? 0 : $this->learnersMissingMarkOrAbs($exam, $teacher);
+
     return view('teacher.marks.enter', [
         'allStudents' => $allStudents,
         'exam' => $exam,
@@ -218,6 +272,11 @@ public function enterExamMarks(Exam $exam)
         'correctionReasonRequired' => $this->correctionReasonRequired($exam),
         'savedMarkCount' => $savedMarkCount,
         'savedMarks' => $savedMarks,
+        'draftSavedAt' => $draftSavedAt,
+        'enteredCount' => $enteredCount,
+        'fixCount' => $fixCount,
+        'blankCount' => $blankCount,
+        'missingMarkCount' => $missingMarkCount,
         'canSubmit' => app(MarksSubmissionService::class)->hasWorkToSubmit($exam)
             && ! app(ExamMarkWriter::class)->writesAreRefused($exam),
         'returnNotice' => $this->returnNotice($exam, $teacher),
@@ -629,6 +688,55 @@ private function returnNotice(Exam $exam, User $viewer): ?string
     $reason = trim((string) ($row->rejection_reason ?: $row->reopen_reason));
 
     return $reason !== '' ? $reason : null;
+}
+
+/**
+ * Learners on the roster this teacher can enter who have no saved mark or ABS.
+ */
+private function learnersMissingMarkOrAbs(Exam $exam, User $teacher): int
+{
+    $roster = $this->roster->students($exam, $teacher);
+    if ($roster->isEmpty()) {
+        return 0;
+    }
+
+    $saved = Marks::query()
+        ->where('school_id', $exam->school_id)
+        ->where('exam_id', $exam->id)
+        ->where('subject_id', $exam->subject_id)
+        ->whereIn('student_id', $roster->pluck('id'))
+        ->get()
+        ->keyBy(fn (Marks $row) => (int) $row->student_id);
+
+    $missing = 0;
+    foreach ($roster as $student) {
+        $row = $saved->get((int) $student->id);
+        $entered = $row !== null && ($row->isAbsent() || $row->marks !== null);
+        if (! $entered) {
+            $missing++;
+        }
+    }
+
+    return $missing;
+}
+
+private function markEntryKind(Exam $exam, mixed $value): string
+{
+    $text = trim((string) $value);
+    if ($text === '') {
+        return 'blank';
+    }
+
+    $writer = app(ExamMarkWriter::class);
+    if ($writer->isAbsent($text)) {
+        return 'entered';
+    }
+
+    if (is_numeric($text)) {
+        return (float) $text > $writer->maximum($exam) ? 'fix' : 'entered';
+    }
+
+    return 'fix';
 }
 
 private function markForInput(mixed $mark): string

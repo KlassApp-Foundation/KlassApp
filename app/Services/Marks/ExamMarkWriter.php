@@ -137,7 +137,9 @@ class ExamMarkWriter
 
     public function isAbsent(mixed $mark): bool
     {
-        return strcasecmp(trim((string) $mark), 'AB') === 0;
+        $text = strtoupper(trim((string) $mark));
+
+        return $text === 'AB' || $text === 'ABS';
     }
 
     public function exceedsMaximum(Exam $exam, mixed $mark): bool
