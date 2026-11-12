@@ -5,6 +5,8 @@ namespace App\Services\ReportCards;
 use App\Models\Academics\ExamType;
 use App\Models\MarksRelease;
 use App\Models\School;
+use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -66,6 +68,76 @@ final class EndOfTermCompositionLine
     public function freezeColumnExists(): bool
     {
         return Schema::hasTable('marks_releases') && Schema::hasColumn('marks_releases', 'report_composition');
+    }
+
+    /**
+     * Each exam type this school can see, and whether that set is released
+     * for this class and term. Another school's release is ignored.
+     *
+     * @param  list<int>  $sectionIds
+     * @return list<array{id: int, name: string, status: string, released: bool}>
+     */
+    public function ownReports(int $schoolId, array $sectionIds, int $termId): array
+    {
+        $types = ExamType::query()->visibleToSchool($schoolId)->orderBy('id')->get(['id', 'name']);
+        $sectionIds = array_values(array_unique(array_filter(array_map('intval', $sectionIds), fn (int $id): bool => $id > 0)));
+
+        $query = DB::table('marks_releases')
+            ->join('exams', 'exams.id', '=', 'marks_releases.exam_id')
+            ->where('marks_releases.school_id', $schoolId)
+            ->where('exams.school_id', $schoolId)
+            ->where('marks_releases.status', MarksRelease::STATUS_RELEASED)
+            ->where('exams.academic_term_id', $termId)
+            ->whereNull('exams.deleted_at')
+            ->orderByDesc('marks_releases.released_at')
+            ->orderByDesc('marks_releases.id')
+            ->select(['exams.exam_type_id', 'marks_releases.released_at']);
+
+        if ($sectionIds === []) {
+            $query->whereRaw('0 = 1');
+        } else {
+            $query->whereIn('exams.section_id', $sectionIds);
+        }
+
+        $dated = [];
+        $undated = [];
+        foreach ($query->get() as $row) {
+            $typeId = (int) $row->exam_type_id;
+            if ($typeId < 1 || isset($dated[$typeId])) {
+                continue;
+            }
+            if ($row->released_at === null || $row->released_at === '') {
+                $undated[$typeId] = true;
+
+                continue;
+            }
+            $dated[$typeId] = CarbonImmutable::parse((string) $row->released_at, 'UTC');
+            unset($undated[$typeId]);
+        }
+
+        $rows = [];
+        foreach ($types as $type) {
+            $id = (int) $type->id;
+            $at = $dated[$id] ?? null;
+            if ($at instanceof CarbonImmutable) {
+                $status = 'Released '.$at->timezone((string) config('app.timezone'))->format('j M Y');
+                $released = true;
+            } elseif (isset($undated[$id])) {
+                $status = 'Released';
+                $released = true;
+            } else {
+                $status = 'Not released yet';
+                $released = false;
+            }
+            $rows[] = [
+                'id' => $id,
+                'name' => (string) $type->name,
+                'status' => $status,
+                'released' => $released,
+            ];
+        }
+
+        return $rows;
     }
 
     /**
