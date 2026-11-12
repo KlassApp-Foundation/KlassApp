@@ -38,7 +38,7 @@
         <p class="ka-sub">{{ $exam->standard->name ?? 'Nursery' }} · {{ $exam->academicTerm->name }}</p>
     @endunless
 
-    @if(!empty($submissionState))
+    @if($isNursery && !empty($submissionState))
         <p class="mb-4 text-sm font-medium text-gray-800" data-testid="marks-entry-state">{{ $submissionState }}</p>
     @endif
 
@@ -48,20 +48,22 @@
         </div>
     @endif
 
-    @if(($savedMarkCount ?? 0) > 0)
+    @if($isNursery && ($savedMarkCount ?? 0) > 0)
         <div role="status" class="mb-4 rounded-lg border border-blue-300 bg-blue-50 p-4 text-blue-900" data-testid="saved-marks-note">
             <strong>{{ $savedMarkCount }}</strong> {{ \Illuminate\Support\Str::plural('mark', $savedMarkCount) }} already saved.
             <a href="{{ route('teacher.exam.marks.view', $exam) }}" class="font-semibold underline">View them</a>
         </div>
     @endif
 
-    @php
-        $life = 'saved';
-        $stateText = strtolower((string) ($submissionState ?? ''));
-        if (str_contains($stateText, 'approv')) { $life = 'approved'; }
-        elseif (str_contains($stateText, 'submit') || str_contains($stateText, 'return')) { $life = 'submitted'; }
-    @endphp
-    @include('partials.ka-lifecycle', ['current' => $life])
+    @if($isNursery)
+        @php
+            $life = 'saved';
+            $stateText = strtolower((string) ($submissionState ?? ''));
+            if (str_contains($stateText, 'approv')) { $life = 'approved'; }
+            elseif (str_contains($stateText, 'submit') || str_contains($stateText, 'return')) { $life = 'submitted'; }
+        @endphp
+        @include('partials.ka-lifecycle', ['current' => $life])
+    @endif
 
     @if(($showStreamColumn ?? false) && count($entryStreams ?? []) > 0)
         <div id="entry-stream-filters" class="ka-entry-streams" data-ka-filters data-testid="marks-entry-stream-filter">
@@ -94,9 +96,7 @@
     <div class="ka-sticky ka-marks-bar">
         @unless($isNursery)
             <p class="ka-progress" data-testid="marks-progress"><strong>{{ $enteredCount }} of {{ $total }}</strong> entered · {{ $fixCount }} to fix · {{ $unsavedCount }} not saved yet</p>
-            @if(($missingMarkCount ?? 0) > 0)
-                <p class="ka-still-needed" data-testid="marks-still-needed">A mark or ABS is missing for {{ $missingMarkCount }} {{ \Illuminate\Support\Str::plural('learner', $missingMarkCount) }}.</p>
-            @endif
+            <p class="ka-still-needed" data-testid="marks-still-needed" @if(($missingMarkCount ?? 0) === 0) hidden @endif>A mark or ABS is missing for {{ $missingMarkCount }} {{ \Illuminate\Support\Str::plural('learner', $missingMarkCount) }}.</p>
             <div style="display:flex;gap:10px;">
                 <button type="button" class="ka-prev" data-testid="marks-previous" aria-label="Previous learner">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
@@ -108,7 +108,7 @@
             <button type="submit" form="marks-save-form" class="ds-btn ds-btn-outline" data-testid="marks-save-draft">
                 {{ $isNursery ? 'Save Assessments' : 'Save draft' }}
             </button>
-            @unless($isNursery)
+            @unless($isNursery || ! ($writesOpen ?? false))
                 <button type="submit" form="marks-submit-form" class="ds-btn ds-btn-primary ka-submit-approval" data-testid="marks-submit-button" @disabled(! $submitReady)>Submit for approval</button>
             @endunless
         </div>
@@ -273,8 +273,11 @@
 
 </main>
 </div>
+@endsection
+
+@push('scripts')
 <script>
-(function () {
+document.addEventListener('DOMContentLoaded', function () {
     var form = document.getElementById('marks-save-form');
     if (!form) return;
     var banner = document.getElementById('marks-offline-banner');
@@ -368,6 +371,12 @@
         });
         if (progress) {
             progress.innerHTML = '<strong>' + entered + ' of ' + inputs.length + '</strong> entered · ' + fix + ' to fix · ' + unsaved + ' not saved yet';
+        }
+        var missingLine = document.querySelector('[data-testid="marks-still-needed"]');
+        if (missingLine) {
+            var blanks = inputs.filter(function (input) { return String(input.value).trim() === ''; }).length;
+            missingLine.hidden = blanks === 0;
+            missingLine.textContent = 'A mark or ABS is missing for ' + blanks + ' ' + (blanks === 1 ? 'learner' : 'learners') + '.';
         }
         if (tally) {
             var life = tally.getAttribute('data-life') || tally.textContent.split('·').pop().trim() || 'not submitted';
@@ -494,6 +503,6 @@
 
     if (navigator.onLine === false) showOffline();
     paint();
-})();
+});
 </script>
-@endsection
+@endpush

@@ -28,9 +28,9 @@ class MarksImportViewsTest extends TestCase
     {
         $this->actingAs($this->owner)->get(route('teacher.exam.marks.enter', $this->exam))
             ->assertOk()
-            ->assertSee('data-testid="marks-import-button"', false)
+            ->assertSee('data-testid="marks-paste-upload"', false)
             ->assertSee(route('teacher.exam.marks.import.page', $this->exam), false)
-            ->assertSee('Import from spreadsheet');
+            ->assertSee('Paste or upload marks');
     }
 
     public function test_teacher_exam_list_has_the_import_button(): void
@@ -93,19 +93,19 @@ class MarksImportViewsTest extends TestCase
         }
     }
 
-    public function test_teacher_enter_page_download_template_link_is_44px(): void
+    public function test_teacher_enter_page_paste_link_is_48px(): void
     {
         $html = $this->actingAs($this->owner)->get(route('teacher.exam.marks.enter', $this->exam))->assertOk()->getContent();
 
         $this->assertMatchesRegularExpression(
-            '/<a[^>]+min-height:44px[^>]*>[^<]*Download template/s',
+            '/<a[^>]+min-height:48px[^>]*>[^<]*Paste or upload marks/s',
             $html,
-            'the Download template link must be a 44px target',
+            'the paste or upload link must be a 48px target',
         );
     }
 
 
-    public function test_entry_page_shows_a_saved_marks_note_only_when_marks_exist(): void
+    public function test_entry_page_counts_saved_marks_in_the_tally(): void
     {
         $this->actingAs($this->owner)->get(route('teacher.exam.marks.enter', $this->exam))
             ->assertOk()
@@ -116,9 +116,8 @@ class MarksImportViewsTest extends TestCase
 
         $html = $this->actingAs($this->owner)->get(route('teacher.exam.marks.enter', $this->exam))->assertOk()->getContent();
 
-        $this->assertStringContainsString('data-testid="saved-marks-note"', $html);
-        $this->assertStringContainsString('2</strong> marks already saved', $html);
-        $this->assertStringContainsString(route('teacher.exam.marks.view', $this->exam), $html);
+        $this->assertStringNotContainsString('already saved', $html);
+        $this->assertMatchesRegularExpression('/data-testid="marks-entry-tally"[^>]*>\\s*2 saved ·/', $html);
 
         $this->assertStringContainsString('value="80"', $html);
         $this->assertStringContainsString('value="65"', $html);

@@ -142,13 +142,13 @@ class MarksPhase2EntryTest extends TestCase
         $this->assertSame('A', Marks::where('exam_id', $this->exam->id)->where('student_id', $this->student->id)->value('grade'));
     }
 
-    public function test_submit_for_review_is_absent_until_a_mark_is_saved(): void
+    public function test_submit_for_review_stays_disabled_until_a_mark_is_saved(): void
     {
         $empty = $this->actingAs($this->subjectTeacher)
             ->get(route('teacher.exam.marks.enter', $this->exam))
             ->assertOk()
             ->getContent();
-        $this->assertStringNotContainsString('data-testid="marks-submit-button"', $empty);
+        $this->assertMatchesRegularExpression('/data-testid="marks-submit-button"[^>]*disabled/', $empty);
 
         $this->actingAs($this->subjectTeacher)
             ->post(route('teacher.exam.marks.submit', $this->exam))
