@@ -48,6 +48,18 @@
         @endif
     </div>
 
+    @if(!empty($data['own_reports'] ?? []))
+        <section class="ka-own" aria-labelledby="own-reports" data-testid="own-reports">
+            <h2 id="own-reports">Each exam set has its own report</h2>
+            @foreach($data['own_reports'] as $own)
+                <div class="ka-own-row" data-testid="own-report-{{ $own['id'] }}">
+                    <strong>{{ $own['name'] }}</strong>
+                    <span class="ka-pill {{ !empty($own['released']) ? 'ka-pill-green' : 'ka-pill-muted' }}">{{ $own['status'] }}</span>
+                </div>
+            @endforeach
+        </section>
+    @endif
+
     @if(! $class)
         <div class="rc-empty" data-testid="rc-no-classes">
             <h2>No classes yet</h2>

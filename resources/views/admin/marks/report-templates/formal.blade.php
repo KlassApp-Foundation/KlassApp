@@ -288,6 +288,12 @@
         {{-- design review: the end-of-term mix line is specified in the handoff, not drawn on the A4 cards. --}}
         <div class="doc-sub" data-testid="eot-composition">{{ $compositionLine }}</div>
         @endif
+        @if (!empty($ownReports ?? []))
+        <div class="doc-sub" data-testid="own-reports">Each exam set has its own report</div>
+        @foreach ($ownReports as $own)
+        <div class="doc-sub" data-testid="own-report-{{ $own['id'] ?? '' }}">{{ $own['name'] }} — {{ $own['status'] }}</div>
+        @endforeach
+        @endif
     </div>
 
 </div>

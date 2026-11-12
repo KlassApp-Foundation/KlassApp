@@ -84,6 +84,14 @@ class EndOfTermCompositionLineTest extends TestCase
 
         $this->assertStringContainsString('End of Term report: End of Term 70% · Mid Term 30%', $html);
         $this->assertStringContainsString('data-testid="eot-composition"', $html);
+        $this->assertStringContainsString('Each exam set has its own report', $html);
+        $this->assertStringContainsString('data-testid="own-report-1"', $html);
+        $this->assertStringContainsString('Not released yet', $html);
+        $release = MarksRelease::query()->where('exam_id', $this->exams['English']->id)->first();
+        $releasedOn = 'Released '.$release->released_at->timezone(config('app.timezone'))->format('j M Y');
+        $this->assertStringContainsString($releasedOn, $html);
+        $this->assertStringNotContainsString('Grace Achieng', $html);
+        $this->assertStringNotContainsString('80 × 30%', $html);
         $this->assertStringContainsString('KLS0000431', $html);
         $this->assertStringContainsString('data-testid="rc-phone-kls"', $html);
         $this->assertStringContainsString('data-testid="rc-phone-card"', $html);
@@ -178,6 +186,10 @@ class EndOfTermCompositionLineTest extends TestCase
         $line = app(EndOfTermCompositionLine::class)->lineFor((int) $this->school->id, true, (int) $this->exams['English']->id);
 
         $this->assertSame('End of Term report: End of Term 70% · Mid Term 30%', $line);
+
+        $html = $this->actingAs($this->admin)->get('/admin/reports/cards')->assertOk()->getContent();
+        $this->assertStringContainsString('End of Term report: End of Term 70% · Mid Term 30%', $html);
+        $this->assertStringNotContainsString('End of Term report: End of Term 100%', $html);
     }
 
     public function test_the_printed_card_shows_the_mix_line_and_abs(): void
@@ -230,6 +242,67 @@ class EndOfTermCompositionLineTest extends TestCase
         $plain = view('admin.marks.report-templates.formal', $data)->render();
         $this->assertStringNotContainsString('End of Term report:', $plain);
         $this->assertSame('AB', $mark->fresh()->grade);
+
+        $data['compositionLine'] = 'End of Term report: End of Term 70% · Mid Term 30%';
+        $data['ownReports'] = [
+            ['id' => 2, 'name' => 'End of Term', 'status' => 'Released 21 Apr 2026', 'released' => true],
+            ['id' => 1, 'name' => 'Mid Term', 'status' => 'Not released yet', 'released' => false],
+        ];
+        $listed = view('admin.marks.report-templates.formal', $data)->render();
+        $this->assertStringContainsString('Each exam set has its own report', $listed);
+        $this->assertStringContainsString('End of Term — Released 21 Apr 2026', $listed);
+        $this->assertStringContainsString('Mid Term — Not released yet', $listed);
+        $this->assertStringNotContainsString('Grace Achieng', $listed);
+        $this->assertStringNotContainsString('80 × 30%', $listed);
+    }
+
+    public function test_another_schools_release_does_not_mark_this_class_released(): void
+    {
+        $this->makeEndOfTerm();
+        $otherYear = \App\Models\AcademicYear::query()->where('school_id', $this->otherSchool->id)->first();
+        $otherSection = \App\Models\Section::query()->where('school_id', $this->otherSchool->id)->first();
+        $otherStandard = \App\Models\Standard::query()->where('school_id', $this->otherSchool->id)->first();
+        $otherTerm = \App\Models\AcademicTerm::query()->create([
+            'school_id' => $this->otherSchool->id,
+            'academic_year_id' => $otherYear->id,
+            'name' => 'Term 3',
+            'status' => 'current',
+            'starts_on' => '2026-09-01',
+            'ends_on' => '2026-12-18',
+        ]);
+        $subject = Subject::query()->create([
+            'school_id' => $this->otherSchool->id,
+            'academic_year_id' => $otherYear->id,
+            'standard_id' => $otherStandard->id,
+            'section_id' => $otherSection->id,
+            'name' => 'Other English',
+            'code' => 'OE',
+            'type' => 'core',
+            'status' => 1,
+        ]);
+        $exam = \App\Models\Academics\Exam::withoutEvents(fn () => \App\Models\Academics\Exam::query()->create([
+            'school_id' => $this->otherSchool->id,
+            'standard_id' => $otherStandard->id,
+            'section_id' => $otherSection->id,
+            'academic_year_id' => $otherYear->id,
+            'academic_term_id' => $otherTerm->id,
+            'subject_id' => $subject->id,
+            'teacher_id' => $this->teacher->id,
+            'exam_type_id' => 2,
+            'status' => 'undone',
+        ]));
+        \Tests\Support\ReleasedExam::release($exam);
+
+        $rows = app(EndOfTermCompositionLine::class)->ownReports(
+            (int) $this->school->id,
+            [(int) $this->section->id],
+            (int) $this->term->id,
+        );
+        $end = collect($rows)->firstWhere('id', 2);
+
+        $this->assertNotNull($end);
+        $this->assertSame('Not released yet', $end['status']);
+        $this->assertFalse($end['released']);
     }
 
     private function makeEndOfTerm(): void

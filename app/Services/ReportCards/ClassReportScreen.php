@@ -125,6 +125,11 @@ class ClassReportScreen
                 EndOfTermCompositionLine::isEndOfTerm($type?->name, $type?->code),
                 $exam?->id,
             ),
+            'own_reports' => app(EndOfTermCompositionLine::class)->ownReports(
+                $schoolId,
+                $this->sectionIdsFor($schoolId, (int) $class['id']),
+                (int) $sitting['term_id'],
+            ),
         ];
 
         if ($releasedLinks === []) {

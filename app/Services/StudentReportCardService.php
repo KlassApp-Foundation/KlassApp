@@ -591,6 +591,18 @@ class StudentReportCardService
             $row->examType?->code,
         )) || EndOfTermCompositionLine::isEndOfTerm($exam->examType?->name, $exam->examType?->code);
         $compositionLine = app(EndOfTermCompositionLine::class)->lineFor($schoolId, $endOfTerm, (int) $exam->id);
+        $reportSectionIds = array_values(array_unique(array_filter([
+            (int) ($stdLink->section_id ?? 0),
+            (int) ($exam->section_id ?? 0),
+        ])));
+        foreach (Section::query()->where('school_id', $schoolId)->whereIn('id', $reportSectionIds === [] ? [0] : $reportSectionIds)->get() as $reportSection) {
+            $reportSectionIds[] = (int) app(\App\Services\ClassStructureService::class)->resolveBaseSection($reportSection)->id;
+        }
+        $ownReports = app(EndOfTermCompositionLine::class)->ownReports(
+            $schoolId,
+            $reportSectionIds,
+            (int) $exam->academic_term_id,
+        );
         $logoPath = $this->resolveLogoPath($schoolId);
         $schoolIdentity = $this->resolveSchoolIdentity($school);
 
@@ -638,6 +650,7 @@ class StudentReportCardService
             'midSittings' => $midSittings,
             'logoPath' => $logoPath,
             'compositionLine' => $compositionLine,
+            'ownReports' => $ownReports,
         ]);
         $pdf->setPaper('a4', 'portrait');
 
