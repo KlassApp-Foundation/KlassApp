@@ -3225,6 +3225,14 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-11-12: Dashboards show marks one tap away
+
+- **Work done**: Draft [#1336](https://github.com/KlassApp-Foundation/KlassApp/pull/1336) on `feat/marks-dashboard-phone` (`2a6ad73e`), from `main`. Enter marks still opens the exams list. The teacher dashboard groups Returned, In progress, and Not started from the existing board. The admin dashboard counts this school's waiting submissions and classes ready to release. Local tests passed. Browser click-through is not done.
+- **Files touched**: `app/Services/DashboardV2DataService.php`, `resources/views/teacher/dashboard/dashboard.blade.php`, `resources/views/admin/dashboard/dashboard_v2.blade.php`, `public/css/ka-screen.css`, `tests/Feature/Marks/MarksDashboardPhoneTest.php`.
+- **Key decisions**: Attendance stays as it is. Head teachers do not gain a new release power on this branch. Another school's submissions are not counted.
+- **Status**: Draft [#1336](https://github.com/KlassApp-Foundation/KlassApp/pull/1336) at `2a6ad73e`. Not merged. Production untouched.
+- **Edge cases flagged**: A class counts as ready when one current-year sitting has every subject approved. The admin board has no loading or error state.
+
 ### 2026-11-12: Phone marks entry is draft #1335
 
 - **Work done**: Draft [#1335](https://github.com/KlassApp-Foundation/KlassApp/pull/1335) on `feat/marks-entry-phone` (`4681d034`), from `main`. The enter-marks screen uses phone cards, a 76 by 48 field, and an ABS control. A saved absence displays ABS. The stored grade stays AB. Pressing ABS again clears the field. Local tests: 17 tests, 134 assertions. Browser click-through is not done. Items 12, 14, 15 and 16 are being built on their own branches from `main`. Demo ports were not in use and were not started.
