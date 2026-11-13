@@ -11,6 +11,8 @@ use App\Services\Results\ResultStudent;
 use App\Services\Reports\ReportScoring;
 use App\Services\Results\ResultsQuery;
 use App\Services\Results\ResultsService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
 /**
