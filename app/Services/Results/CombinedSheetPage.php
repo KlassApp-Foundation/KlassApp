@@ -371,7 +371,7 @@ final class CombinedSheetPage
     private function withStatus(int $schoolId, array $tabs, ?AcademicTerm $term, ?Section $section): array
     {
         if ($tabs === [] || $term === null) {
-            return array_map(fn (ExamType $type) => $this->presentTab($type, 'coming', ''), $tabs);
+            return array_map(fn (ExamType $type) => $this->presentTab($type, 'coming', '', []), $tabs);
         }
 
         $typeIds = array_map(fn (ExamType $type) => (int) $type->id, $tabs);
@@ -407,6 +407,10 @@ final class CombinedSheetPage
             $subsByExam[(int) $row->exam_id][] = $row;
         }
 
+        $labels = [];
+        if (class_exists(\App\Services\Results\ReportComposition::class)) {
+            $labels = app(\App\Services\Results\ReportComposition::class)->displayNames($schoolId);
+        }
         $tabsWithStatus = [];
         foreach ($tabs as $type) {
             $bucket = $byType[(int) $type->id];
@@ -444,7 +448,7 @@ final class CombinedSheetPage
                     ? count($started).' of '.$total.' subjects started'
                     : count($approved).' of '.$total.' subjects approved';
             }
-            $tabsWithStatus[] = $this->presentTab($type, $key, $note);
+            $tabsWithStatus[] = $this->presentTab($type, $key, $note, $labels);
         }
 
         return $tabsWithStatus;
@@ -453,17 +457,20 @@ final class CombinedSheetPage
     /**
      * @return array{type: ExamType, key: string, desktop: string, phone: string, locked: bool, note: string, short: string}
      */
-    private function presentTab(ExamType $type, string $key, string $note): array
+    private function presentTab(ExamType $type, string $key, string $note, array $displayNames = []): array
     {
-        $labels = [
+        $statusLabels = [
             'released' => ['Released', 'Released', true],
             'approving' => ['Approving', 'Approving', false],
             'coming' => ['Marks coming in', 'Coming in', false],
         ];
-        [$desktop, $phone, $locked] = $labels[$key];
+        [$desktop, $phone, $locked] = $statusLabels[$key] ?? $statusLabels['coming'];
+
+        $label = trim((string) ($displayNames[(int) $type->id] ?? ''));
 
         return [
             'type' => $type,
+            'label' => $label !== '' ? $label : trim((string) $type->name),
             'key' => $key,
             'desktop' => $desktop,
             'phone' => $phone,

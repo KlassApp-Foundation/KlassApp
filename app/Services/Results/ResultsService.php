@@ -565,7 +565,7 @@ final class ResultsService
                 if ($countApprovedSubjects) {
                     $label = (string) ($subject['submission'] ?? 'Not started');
                     $cells[$subjectId] = $this->sheetDisplayCell($subjectId, $label, $raw);
-                    $totalCells[$subjectId] = $label === 'Approved'
+                    $totalCells[$subjectId] = in_array($label, ['Approved', 'Reopened', 'Locked'], true)
                         ? $raw
                         : new ResultCell($subjectId, null, null, null, ResultCell::MISSING);
                 } else {
@@ -688,7 +688,7 @@ final class ResultsService
      */
     private function sheetDisplayCell(int $subjectId, string $label, ResultCell $raw): ResultCell
     {
-        if (in_array($label, ['Submitted', 'Approved', 'Locked'], true)) {
+        if (in_array($label, ['Submitted', 'Approved', 'Locked', 'Reopened'], true)) {
             return $raw;
         }
 

@@ -74,7 +74,7 @@
                        @if($tabOn) aria-current="page" @endif
                        class="ka-exam-tab {{ $tabOn ? 'is-on' : '' }} ka-status-{{ $tab['key'] }}">
                         <span class="ka-exam-name">
-                            <span class="ka-exam-long">{{ trim($tabType->name) }}</span>
+                            <span class="ka-exam-long">{{ trim($tab['label'] ?? $tabType->name) }}</span>
                             <span class="ka-exam-short">{{ $tab['short'] }}</span>
                             @if($tab['locked'])
                                 <svg class="ka-lock" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Locked"><rect x="4" y="11" width="16" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 018 0v4"></path></svg>
@@ -122,7 +122,7 @@
                 @if(collect($subjects)->count() > 0)
                     · {{ $approvedSubjects }} of {{ collect($subjects)->count() }} subjects approved
                 @endif
-                <span class="ka-summary-phone"> · by position · totals count approved subjects</span>
+                <span class="ka-summary-phone"> · by position · ABS and Missing count as 0</span>
             </div>
             <div class="ka-sheet-actions ka-block-actions">
                 <a href="{{ $historyUrl }}" class="ds-btn ds-btn-outline" data-testid="marks-history">History</a>
@@ -191,7 +191,7 @@
 
     @if($filtered && ! $marksError)
         <p class="ka-sheet-foot ka-block-foot" data-testid="marks-sheet-note">
-            Totals and positions count approved subjects. A dash means the subject's marks haven't been submitted yet. ABS means the learner was absent.
+            ABS and Missing count as 0. A dash means that subject is not released yet. Once the set is released, a blank mark says Missing. ABS means the learner was absent.
             @if($savedSubjects->isNotEmpty())
                 {{ $savedSubjects->join(', ', ' and ') }} {{ $savedSubjects->count() === 1 ? 'is' : 'are' }} saved but not submitted.
             @endif
