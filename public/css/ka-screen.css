@@ -62,3 +62,118 @@
   .ka-sheet-table{display:none}
   .ka-phone-cards{display:flex;flex-direction:column;gap:10px}
 }
+.ka-phone-cards{overflow-x:hidden}
+.ka-learner-meta{font-size:.78rem;color:#475569}
+.ka-learner-card{border:1px solid #E2E8F0;border-radius:14px;background:#fff;padding:12px 14px;display:flex;flex-direction:column;gap:8px;max-width:100%}
+.ka-learner-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 10px}
+.ka-learner-pos{font:700 1.1rem 'Sora',sans-serif;color:#1E293B}
+.ka-learner-subjects{margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(72px,1fr));gap:4px}
+.ka-learner-subjects div{background:#F1F5F9;border-radius:8px;padding:6px 4px;text-align:center;min-width:0}
+.ka-learner-subjects dt{color:#475569;font-size:.78rem;overflow-wrap:anywhere}
+.ka-learner-subjects dd{margin:0;font-weight:700;color:#1E293B}
+.ka-learner-total{background:#EFF6FF}
+.ka-learner-total dt{color:#1D4ED8}
+.ka-exam-tabs{margin-bottom:8px}
+.ka-other-exam{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px}
+.ka-sheet-more{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+.ka-marks-error{margin:0 0 16px}
+.ka-filter-panel .ds-form-select,
+.ka-filter-panel .ds-btn,
+.ka-other-exam .ds-form-select,
+.ka-other-exam .ds-btn,
+.ka-sheet-actions .ds-btn{min-height:44px}
+@media (max-width:767px){
+  [data-testid="exams-marks"]{overflow-x:hidden}
+  .ka-sheet-pages{display:none}
+}
+
+/* Mark sheet: year, term, then exam-set tabs (MarkSheetTabs). Phone first. */
+.ka-marks-layout{display:flex;flex-direction:column;gap:12px;min-width:0;max-width:100%}
+.ka-block-life,.ka-legacy-kpis{display:none}
+.ka-year-term{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;min-width:0;width:100%}
+.ka-field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ka-field .ds-label{font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#475569}
+.ka-sheet-filters .ds-form-select,.ka-other-exam .ds-form-select{min-height:44px;max-width:100%}
+.ka-term-pills,.ka-stream-pills{display:none}
+.ka-choice{min-height:44px;padding:0 14px;border-radius:9px;background:transparent;color:#475569;text-decoration:none;display:inline-flex;align-items:center;font:600 .85rem 'DM Sans',sans-serif}
+.ka-choice.is-on{background:#fff;box-shadow:0 0 0 1px #CBD5E1;font-weight:700;color:#1E293B}
+.ka-class-launch{width:100%;justify-content:flex-start;gap:8px;min-height:44px}
+.ka-download-desk{display:none}
+.ka-block-tabs{min-width:0;max-width:100%}
+.ka-exam-tabs{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;overscroll-behavior-x:contain;border:0;margin:0;max-width:100%;min-width:0}
+.ka-exam-tabs a{flex:0 0 auto;min-height:60px;padding:8px 10px;border-radius:12px;border:1px solid #94A3B8;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;color:#1E293B;text-align:center;font-weight:700;box-sizing:border-box;white-space:nowrap}
+.ka-exam-tabs a[aria-current=page],.ka-exam-tabs a.is-on{border:2px solid #15803D;background:#F0FDF4;margin:0;color:#1E293B}
+.ka-exam-name{display:inline-flex;align-items:center;justify-content:center;gap:4px;max-width:100%}
+.ka-exam-long,.ka-exam-status-long,.ka-exam-note{display:none}
+.ka-exam-short{font:700 .85rem 'Sora',sans-serif}
+.ka-exam-status-short{font-size:.7rem;font-weight:700}
+.ka-status-released .ka-exam-status-short{color:#166534}
+.ka-status-approving .ka-exam-status-short{color:#92400E}
+.ka-status-coming .ka-exam-status-short{color:#334155}
+.ka-status-pill{padding:2px 10px;border-radius:999px;font-size:.72rem;font-weight:700;white-space:nowrap}
+.ka-status-released .ka-status-pill{background:#F0FDF4;color:#166534;border:1px solid #BBF7D0}
+.ka-status-approving .ka-status-pill{background:#FFFBEB;color:#92400E;border:1px solid #FDE68A}
+.ka-status-coming .ka-status-pill{background:#F1F5F9;color:#334155;border:1px solid #CBD5E1}
+.ka-subject-chips{display:flex;flex-wrap:wrap;gap:8px;min-width:0;max-width:100%}
+.ka-subject-chip{display:inline-flex;gap:8px;align-items:center;padding:6px 12px;border:1px solid #E2E8F0;border-radius:999px;font-size:.82rem;background:#fff;max-width:100%}
+.ka-life-pill{display:inline-flex;padding:2px 10px;border-radius:999px;font-size:.72rem;font-weight:700}
+.ka-life-approved{background:#F0FDF4;color:#166534;border:1px solid #BBF7D0}
+.ka-life-submitted{background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE}
+.ka-life-returned{background:#FEF2F2;color:#B91C1C;border:1px solid #FECACA}
+.ka-life-saved,.ka-life-muted{background:#F1F5F9;color:#334155;border:1px solid #CBD5E1}
+.ka-life-long{display:none}
+.ka-life-short{display:inline}
+.ka-sheet-summary{font-size:.82rem;color:#334155;min-width:0}
+.ka-sheet-foot{margin:0;font-size:.75rem;color:#475569}
+.ka-sheet-actions{display:flex;gap:8px;width:100%}
+.ka-sheet-actions .ds-btn{flex:1;min-height:48px;display:inline-flex;align-items:center;justify-content:center}
+.ka-sheet-actions .ds-btn-primary{flex:1.4}
+.ka-kls-line{font-size:.75rem;color:#475569;margin-top:-4px}
+.ka-learner-head strong{flex:1;min-width:0}
+.ka-learner-name{color:inherit;font-weight:600;text-decoration:none}
+.ka-learner-subjects div.ka-tile-abs{background:#FFFBEB;box-shadow:inset 0 0 0 1px #FDE68A}
+.ka-cell-abs{font-weight:700;color:#92400E;text-align:right}
+.ka-num{text-align:right;font-variant-numeric:tabular-nums}
+.ka-sheet-table .ds-grid-marks .gm-subject-code{display:none}
+.ka-other-exam{min-width:0;max-width:100%}
+@media (max-width:767px){
+  .ka-block-filters,#marks-sheet-filters,#marks-sheet-filters > .ka-sheet-filters,.ka-block-meta{display:contents}
+  .ka-block-title{order:1}
+  .ka-block-nav,.ka-block-message,.ka-block-empty{order:2}
+  .ka-year-term{order:3}
+  .ka-block-tabs,.ka-block-error{order:4}
+  .ka-class-launch{order:5}
+  .ka-block-chips{order:6}
+  .ka-block-summary{order:7}
+  .ka-block-grid{order:8}
+  .ka-block-actions{order:9}
+  .ka-block-foot{order:10}
+  .ka-sheet-more{min-height:48px;width:100%}
+  .ka-sheet-table,.ka-block-grid,.ds-table-wrap{max-width:100%}
+}
+@media (min-width:768px){
+  .ka-marks-layout{gap:18px}
+  .ka-year-term{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 16px;width:auto}
+  .ka-field-year{width:130px}
+  .ka-field-class{width:170px}
+  #marks-sheet-filters > .ka-sheet-filters{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 16px;width:100%}
+  #marks-sheet-filters .ka-filter-panel{display:contents}
+  .ka-term-pills,.ka-stream-pills{display:inline-flex;flex-wrap:wrap;padding:4px;border-radius:12px;background:#F1F5F9;gap:4px}
+  .ka-term-select,.ka-stream-select,.ka-sheet-apply,.ka-summary-phone{display:none}
+  .ka-download-desk{display:inline-flex;margin-left:auto;min-height:44px}
+  .ka-exam-tabs{display:flex;flex-wrap:wrap;gap:10px;overflow-x:visible}
+  .ka-exam-tabs a{flex:1 1 240px;min-height:72px;padding:12px 16px;border-radius:14px;align-items:flex-start;text-align:left;gap:6px;white-space:normal}
+  .ka-exam-name{justify-content:flex-start}
+  .ka-exam-long{display:inline;font:700 .98rem 'Sora',sans-serif}
+  .ka-exam-short,.ka-exam-status-short{display:none}
+  .ka-exam-status-long{display:inline-flex}
+  .ka-exam-note{display:block;font-size:.78rem;color:#475569;font-weight:400}
+  .ka-block-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+  .ka-block-summary{flex:1 1 220px}
+  .ka-sheet-actions{width:auto;margin-left:auto}
+  .ka-sheet-actions .ds-btn{flex:none;min-height:44px}
+  .ka-life-long{display:inline}
+  .ka-life-short{display:none}
+  .ka-sheet-foot{font-size:.8rem}
+  .ka-sheet-table{border:1px solid #E2E8F0;border-radius:14px;overflow-x:auto}
+}

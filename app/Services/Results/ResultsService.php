@@ -89,7 +89,16 @@ final class ResultsService
             $this->subjectIdsFor($exams, $marks, $mainTypeIds),
             $this->submissionLabels($query->schoolId, $exams, $mainTypeIds),
         );
-        $students = $this->buildStudents($policy, $query->schoolId, $roster, $chosen, $mainTypeIds, $subjects, $weights);
+        $students = $this->buildStudents(
+            $policy,
+            $query->schoolId,
+            $roster,
+            $chosen,
+            $mainTypeIds,
+            $subjects,
+            $weights,
+            $query->countApprovedSubjects,
+        );
         $summary = $this->summary($subjects, $students);
 
         $sittings = [];
@@ -112,6 +121,8 @@ final class ResultsService
                 $bucketChosen,
                 [$plan['typeId']],
                 $sittingSubjects,
+                [],
+                $query->countApprovedSubjects,
             );
             $sittings[] = new ResultSitting(
                 $plan['typeId'],
@@ -538,7 +549,7 @@ final class ResultsService
      * @param list<array{id: int, name: string, code: string, submission: string}> $subjects
      * @return list<ResultStudent>
      */
-    private function buildStudents(ResultsPolicy $policy, int $schoolId, Collection $roster, array $chosen, array $typeIds, array $subjects, array $weights = []): array
+    private function buildStudents(ResultsPolicy $policy, int $schoolId, Collection $roster, array $chosen, array $typeIds, array $subjects, array $weights = [], bool $countApprovedSubjects = false): array
     {
         $drafts = [];
         foreach ($roster as $entry) {
@@ -546,11 +557,25 @@ final class ResultsService
             $studentId = (int) $user->id;
             $standardId = (int) $entry['standardId'];
             $cells = [];
+            $totalCells = [];
             foreach ($subjects as $subject) {
-                $choice = $this->merged($chosen, $typeIds, $studentId, (int) $subject['id'], $weights);
-                $cells[(int) $subject['id']] = $this->cell($policy, $schoolId, $standardId, (int) $subject['id'], $choice);
+                $subjectId = (int) $subject['id'];
+                $choice = $this->merged($chosen, $typeIds, $studentId, $subjectId, $weights);
+                $raw = $this->cell($policy, $schoolId, $standardId, $subjectId, $choice);
+                if ($countApprovedSubjects) {
+                    $label = (string) ($subject['submission'] ?? 'Not started');
+                    $cells[$subjectId] = $this->sheetDisplayCell($subjectId, $label, $raw);
+                    $totalCells[$subjectId] = in_array($label, ['Approved', 'Reopened', 'Locked'], true)
+                        ? $raw
+                        : new ResultCell($subjectId, null, null, null, ResultCell::MISSING);
+                } else {
+                    $cells[$subjectId] = $raw;
+                }
             }
-            [$total, $counted, $average, $aggregate, $division, $displayTotal, $displayAverage] = $this->totals($policy, $cells);
+            [$total, $counted, $average, $aggregate, $division, $displayTotal, $displayAverage] = $this->totals(
+                $policy,
+                $countApprovedSubjects ? $totalCells : $cells,
+            );
             $drafts[] = [
                 'studentId' => $studentId,
                 'name' => (string) $user->name,
@@ -565,6 +590,7 @@ final class ResultsService
                 'division' => $division,
                 'displayTotal' => $displayTotal,
                 'displayAverage' => $displayAverage,
+                'registrationNumber' => trim((string) ($user->registration_number ?? '')),
                 'key' => $this->rankKey($policy, $total, $average, $aggregate),
             ];
         }
@@ -591,6 +617,7 @@ final class ResultsService
                 $positions['stream'][$id]['outOf'],
                 $draft['displayTotal'],
                 $draft['displayAverage'],
+                $draft['registrationNumber'],
             );
         }
 
@@ -654,6 +681,18 @@ final class ResultsService
             'scheduled' => $best['scheduled'],
             'examId' => $best['examId'],
         ];
+    }
+
+    /**
+     * Submitted, approved and locked subjects show their mark. A draft stays blank.
+     */
+    private function sheetDisplayCell(int $subjectId, string $label, ResultCell $raw): ResultCell
+    {
+        if (in_array($label, ['Submitted', 'Approved', 'Locked', 'Reopened'], true)) {
+            return $raw;
+        }
+
+        return new ResultCell($subjectId, null, null, null, ResultCell::MISSING);
     }
 
     /**
