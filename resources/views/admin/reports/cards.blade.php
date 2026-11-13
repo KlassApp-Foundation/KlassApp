@@ -72,6 +72,12 @@
             <p>Report cards use released marks only. Once an exam is marked and released, it shows here.</p>
             <a href="{{ route('admin.marks.releases.index') }}" class="ds-btn ds-btn-outline" style="min-height:44px;text-decoration:none;">Go to Marks Release</a>
         </div>
+    @elseif($state === 'blocked')
+        <div class="rc-empty" data-testid="report-blocked">
+            <h2>Combined report</h2>
+            <p data-testid="report-blocked-sets">{{ collect($data['blocked_sets'] ?? [])->pluck('name')->filter()->implode(', ') }} has marks that are not released yet.</p>
+            <a href="{{ route('admin.marks.releases.index') }}" class="ds-btn ds-btn-outline" style="min-height:44px;text-decoration:none;">Marks Release</a>
+        </div>
     @elseif($state === 'unreleased' || $state === 'empty')
         <div class="rc-empty" data-testid="rc-unreleased">
             <h2>{{ $class['label'] }} {{ $sitting['label'] }} {{ $state === 'empty' ? 'has no marks to show yet' : "isn't released yet" }}</h2>

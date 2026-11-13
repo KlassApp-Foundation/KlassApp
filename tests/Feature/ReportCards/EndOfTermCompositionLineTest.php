@@ -40,23 +40,23 @@ class EndOfTermCompositionLineTest extends TestCase
         $this->assertNull($line->format(false, [
             '2' => ['include' => true, 'weight' => 70, 'name' => 'End of Term'],
         ]));
-        $this->assertSame('End of Term report: End of Term 100%', $line->format(true, null));
-        $this->assertSame('End of Term report: End of Term 100%', $line->format(true, []));
+        $this->assertNull($line->format(true, null));
+        $this->assertNull($line->format(true, []));
         $this->assertSame(
-            'End of Term report: End of Term 70% · Mid Term 30%',
+            'Made up of: Mid Term 30% · End of Term 70%',
             $line->format(true, [
                 '1' => ['include' => true, 'weight' => 30, 'name' => 'Mid Term'],
                 '2' => ['include' => true, 'weight' => 70, 'name' => 'End of Term'],
             ])
         );
         $this->assertSame(
-            'End of Term report: Botany 100%',
+            'Made up of: Botany 100%',
             $line->format(true, [
                 '9' => ['include' => true, 'weight' => null, 'name' => 'Botany'],
             ])
         );
         $this->assertSame(
-            'End of Term report: End of Term 70%',
+            'Made up of: End of Term 70%',
             $line->format(true, [
                 '1' => ['include' => true, 'weight' => null, 'name' => 'Mid Term'],
                 '2' => ['include' => true, 'weight' => 70, 'name' => 'End of Term'],
@@ -74,6 +74,7 @@ class EndOfTermCompositionLineTest extends TestCase
             ],
         ])->save();
         $this->release('English');
+        $this->release('Mathematics');
 
         $this->school->refresh();
         $this->assertSame(ToshiMode::Preview, $this->school->toshi_mode);
@@ -82,7 +83,7 @@ class EndOfTermCompositionLineTest extends TestCase
 
         $html = $this->actingAs($this->admin)->get('/admin/reports/cards')->assertOk()->getContent();
 
-        $this->assertStringContainsString('End of Term report: End of Term 70% · Mid Term 30%', $html);
+        $this->assertStringContainsString('Made up of: Mid Term 30% · End of Term 70%', $html);
         $this->assertStringContainsString('data-testid="eot-composition"', $html);
         $this->assertStringContainsString('Each exam set has its own report', $html);
         $this->assertStringContainsString('data-testid="own-report-1"', $html);
@@ -102,11 +103,12 @@ class EndOfTermCompositionLineTest extends TestCase
         $this->makeEndOfTerm();
         $this->school->forceFill(['report_composition' => null])->save();
         $this->release('English');
+        $this->release('Mathematics');
 
         $this->actingAs($this->admin)
             ->get('/admin/reports/cards')
             ->assertOk()
-            ->assertSee('End of Term report: End of Term 100%')
+            ->assertSee('Made up of: End of Term 100%')
             ->assertDontSee('Mid Term 30%');
     }
 
@@ -119,19 +121,20 @@ class EndOfTermCompositionLineTest extends TestCase
             ],
         ])->save();
         $this->release('English');
+        $this->release('Mathematics');
 
         $this->actingAs($this->admin)
             ->get('/admin/reports/cards')
             ->assertOk()
-            ->assertSee('End of Term report: End of Term 100%');
+            ->assertSee('Made up of: End of Term 100%');
     }
 
-    public function test_a_mid_term_report_has_no_composition_line(): void
+    public function test_a_set_shown_on_its_own_has_no_composition_line(): void
     {
         $this->school->forceFill([
             'report_composition' => [
                 '1' => ['include' => true, 'weight' => 30],
-                '2' => ['include' => true, 'weight' => 70],
+                '2' => ['include' => false],
             ],
         ])->save();
         $this->release('English');
@@ -139,7 +142,7 @@ class EndOfTermCompositionLineTest extends TestCase
         $this->actingAs($this->admin)
             ->get('/admin/reports/cards')
             ->assertOk()
-            ->assertDontSee('End of Term report:');
+            ->assertDontSee('Made up of:');
     }
 
     public function test_an_absence_is_shown_as_abs_and_the_stored_grade_stays_ab(): void
@@ -185,11 +188,11 @@ class EndOfTermCompositionLineTest extends TestCase
 
         $line = app(EndOfTermCompositionLine::class)->lineFor((int) $this->school->id, true, (int) $this->exams['English']->id);
 
-        $this->assertSame('End of Term report: End of Term 70% · Mid Term 30%', $line);
+        $this->assertSame('Made up of: Mid Term 30% · End of Term 70%', $line);
 
         $html = $this->actingAs($this->admin)->get('/admin/reports/cards')->assertOk()->getContent();
-        $this->assertStringContainsString('End of Term report: End of Term 70% · Mid Term 30%', $html);
-        $this->assertStringNotContainsString('End of Term report: End of Term 100%', $html);
+        $this->assertStringContainsString('Made up of: Mid Term 30% · End of Term 70%', $html);
+        $this->assertStringNotContainsString('Made up of: End of Term 100%', $html);
     }
 
     public function test_the_printed_card_shows_the_mix_line_and_abs(): void
@@ -227,12 +230,12 @@ class EndOfTermCompositionLineTest extends TestCase
             'teacherComment' => '',
             'headTeacherComment' => '',
             'nextTerm' => null,
-            'compositionLine' => 'End of Term report: End of Term 70% · Mid Term 30%',
+            'compositionLine' => 'Made up of: Mid Term 30% · End of Term 70%',
         ];
 
         foreach (['admin.marks.report-templates.formal', 'admin.marks.report-templates.warm'] as $view) {
             $html = view($view, $data)->render();
-            $this->assertStringContainsString('End of Term report: End of Term 70% · Mid Term 30%', $html);
+            $this->assertStringContainsString('Made up of: Mid Term 30% · End of Term 70%', $html);
             $this->assertStringContainsString('data-testid="eot-composition"', $html);
             $this->assertStringContainsString('ABS', $html);
             $this->assertStringNotContainsString('>0<', $html);
@@ -240,10 +243,10 @@ class EndOfTermCompositionLineTest extends TestCase
 
         unset($data['compositionLine']);
         $plain = view('admin.marks.report-templates.formal', $data)->render();
-        $this->assertStringNotContainsString('End of Term report:', $plain);
+        $this->assertStringNotContainsString('Made up of:', $plain);
         $this->assertSame('AB', $mark->fresh()->grade);
 
-        $data['compositionLine'] = 'End of Term report: End of Term 70% · Mid Term 30%';
+        $data['compositionLine'] = 'Made up of: Mid Term 30% · End of Term 70%';
         $data['ownReports'] = [
             ['id' => 2, 'name' => 'End of Term', 'status' => 'Released 21 Apr 2026', 'released' => true],
             ['id' => 1, 'name' => 'Mid Term', 'status' => 'Not released yet', 'released' => false],

@@ -112,7 +112,13 @@ class ClassReportScreen
         $streams = array_column($links, 'stream', 'id');
         $exam = $this->examForSitting($schoolId, (int) $class['id'], $sitting);
         $releasedLinks = $this->releasedLinks($schoolId, $class, $sitting, $links, $exam);
-        $type = ExamType::query()->whereKey((int) $sitting['exam_type_id'])->first();
+        $type = ExamType::query()->visibleToSchool($schoolId)->whereKey((int) $sitting['exam_type_id'])->first();
+        $composition = app(EndOfTermCompositionLine::class);
+        $mix = $composition->compositionFor($schoolId, $exam?->id);
+        $counts = $type !== null && $composition->countsToward($type, $mix);
+        $blocked = ($counts && $exam !== null)
+            ? $composition->blockingSets($schoolId, (int) $exam->section_id, (int) $sitting['term_id'])
+            : [];
 
         $base = [
             'class' => $class['label'],
@@ -120,17 +126,18 @@ class ClassReportScreen
             'term_id' => $sitting['term_id'],
             'streams' => array_filter($streams, fn ($s) => $s !== ''),
             'released_links' => $releasedLinks,
-            'composition_line' => app(EndOfTermCompositionLine::class)->lineFor(
-                $schoolId,
-                EndOfTermCompositionLine::isEndOfTerm($type?->name, $type?->code),
-                $exam?->id,
-            ),
-            'own_reports' => app(EndOfTermCompositionLine::class)->ownReports(
+            'composition_line' => $composition->lineFor($schoolId, $counts, $exam?->id),
+            'own_reports' => $composition->ownReports(
                 $schoolId,
                 $this->sectionIdsFor($schoolId, (int) $class['id']),
                 (int) $sitting['term_id'],
             ),
+            'blocked_sets' => $blocked,
         ];
+
+        if ($blocked !== []) {
+            return $base + ['state' => 'blocked', 'rows' => [], 'subjects' => [], 'kpis' => null, 'divisions' => [], 'subject_averages' => [], 'generations' => []];
+        }
 
         if ($releasedLinks === []) {
             return $base + ['state' => 'unreleased', 'rows' => [], 'subjects' => [], 'kpis' => null, 'divisions' => [], 'subject_averages' => [], 'generations' => []];
@@ -168,7 +175,15 @@ class ClassReportScreen
             }
             foreach ($sheet->subjects as $subject) {
                 $cell = $student->cell($subject['id']);
-                if ($cell && $cell->mark !== null) {
+                if ($cell === null) {
+                    continue;
+                }
+                if ($cell->status === ResultCell::MISSING || $cell->status === ResultCell::ABSENT) {
+                    $subjectTotals[$subject['id']][] = 0.0;
+
+                    continue;
+                }
+                if ($cell->mark !== null) {
                     $subjectTotals[$subject['id']][] = $cell->mark;
                 }
             }
@@ -410,6 +425,9 @@ class ClassReportScreen
         }
         if ($cell->mark !== null) {
             return $this->number($cell->mark);
+        }
+        if ($cell->status === ResultCell::MISSING) {
+            return 'Missing';
         }
 
         return '—';
