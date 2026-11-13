@@ -396,7 +396,8 @@ class ApproveReturnReleasePhoneTest extends TestCase
         $this->assertSame('reopened', $row->status);
         $this->assertSame($reason, $row->reopen_reason);
         $this->assertSame($head->id, (int) $row->reopened_by);
-        $this->assertSame(MarksRelease::STATUS_RELEASED, $release->fresh()->status);
+        $this->assertSame(MarksRelease::STATUS_REOPENED, $release->fresh()->status);
+        $this->assertNotNull($release->fresh()->released_at);
 
         $grades = app(ParentPortalService::class)->grades($parent, null, $this->student->id);
         $this->assertTrue($grades['success'] ?? false, json_encode($grades));

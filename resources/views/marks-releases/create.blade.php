@@ -199,11 +199,13 @@
                             @foreach($sheet['subjects'] as $subject)
                                 @php $cell = $student['cells'][$subject['key']] ?? null; @endphp
                                 <td class="mr-num" data-subject="{{ $subject['key'] }}" data-value="{{ $cell['mark'] ?? '' }}">
-                                    @if($cell)
+                                    @if(in_array(($cell['mark'] ?? ''), ['AB', 'ABS'], true))
+                                        <span class="mr-mark" data-testid="release-cell-absent">ABS</span>
+                                    @elseif($cell)
                                         <span class="mr-mark">{{ $cell['mark'] }}</span>
                                         <span class="mr-grade">{{ $cell['grade'] }}</span>
                                     @else
-                                        <span class="mr-mark">—</span>
+                                        <span class="mr-mark" data-testid="release-cell-missing">Missing</span>
                                     @endif
                                 </td>
                             @endforeach

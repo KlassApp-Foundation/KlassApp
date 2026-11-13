@@ -600,11 +600,14 @@ final class MarksReleaseService
 
     private function releaseSheet(int $schoolId, Exam $anchor, StandardLink $classLink): ResultSheet
     {
+        // Exams are stored on the base class. A stream link still reads that sheet.
+        $sectionId = (int) $anchor->section_id > 0 ? (int) $anchor->section_id : (int) $classLink->section_id;
+
         return app(ResultsService::class)->sheet(new ResultsQuery(
             schoolId: $schoolId,
-            sectionId: (int) $classLink->section_id,
+            sectionId: $sectionId,
             academicTermId: (int) $anchor->academic_term_id,
-            standardLinkId: (int) $classLink->id,
+            standardLinkId: null,
             examTypeId: (int) $anchor->exam_type_id,
         ));
     }
@@ -1271,13 +1274,21 @@ final class MarksReleaseService
             ->where('exam_type_id', $anchor->exam_type_id)
             ->where('academic_term_id', $anchor->academic_term_id)
             ->whereNull('deleted_at')
-            ->pluck('section_id')->unique();
+            ->pluck('section_id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
 
-        $links = $link
-            ? collect([$link])
-            : StandardLink::query()->with('section')->where('school_id', $schoolId)
-                ->whereIn('academic_year_id', $this->currentYearIds($schoolId))
-                ->whereIn('section_id', $sections)->orderBy('section_id')->orderBy('stream')->get();
+        // An exam sits on the base class. Learners are enrolled on its streams.
+        $sectionIds = $link
+            ? $this->withStreamSections($schoolId, [(int) $link->section_id])
+            : $this->withStreamSections($schoolId, $sections);
+
+        $links = StandardLink::query()->with('section')->where('school_id', $schoolId)
+            ->whereIn('academic_year_id', $this->currentYearIds($schoolId))
+            ->whereIn('section_id', $sectionIds === [] ? [-1] : $sectionIds)
+            ->orderBy('section_id')->orderBy('stream')->get();
 
         foreach ($links as $classLink) {
             $ids = StudentAcademic::query()
@@ -1448,6 +1459,37 @@ final class MarksReleaseService
         $digits = preg_replace('/\D+/', '', $phone);
 
         return '•••' . substr($digits, -3);
+    }
+
+    /**
+     * The exam's class, plus every stream section whose name starts with that
+     * class name. "Primary Five" includes "Primary Five E" and "Primary Five W".
+     *
+     * @param  list<int>  $sectionIds
+     * @return list<int>
+     */
+    private function withStreamSections(int $schoolId, array $sectionIds): array
+    {
+        $sections = Section::query()->where('school_id', $schoolId)->get(['id', 'name']);
+        $ids = array_values(array_unique(array_map(fn ($id) => (int) $id, $sectionIds)));
+
+        foreach ($sections->whereIn('id', $ids) as $base) {
+            $prefix = trim((string) $base->name);
+            if ($prefix === '') {
+                continue;
+            }
+            $prefix .= ' ';
+            foreach ($sections as $candidate) {
+                if ((int) $candidate->id === (int) $base->id) {
+                    continue;
+                }
+                if (str_starts_with(trim((string) $candidate->name), $prefix)) {
+                    $ids[] = (int) $candidate->id;
+                }
+            }
+        }
+
+        return array_values(array_unique($ids));
     }
 
     /** @return array<int, int> */

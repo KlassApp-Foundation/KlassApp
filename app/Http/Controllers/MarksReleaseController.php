@@ -220,6 +220,12 @@ class MarksReleaseController extends Controller
             $submissions->reopen($user, $exam, (int) $submission->class_id, (int) $submission->subject_id, $reason);
         }
 
+        // Unlock editing. The frozen mix and the released time stay, so families
+        // keep the report they already have until the next release.
+        if ($row->status === MarksRelease::STATUS_RELEASED) {
+            $row->forceFill(['status' => MarksRelease::STATUS_REOPENED])->save();
+        }
+
         return redirect()
             ->route('admin.marks.releases.show', $row)
             ->with('status', 'Reopened. Families keep seeing the released results until you release again.');
