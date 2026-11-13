@@ -56,15 +56,17 @@ class StudentReportCardService
      */
     public static function midExamControlColumnLabel(Exam $exam): string
     {
+        $name = self::setName($exam);
         if ($exam->scheduled_at) {
-            return strtoupper($exam->scheduled_at->format('M')).' MID';
+            return strtoupper($exam->scheduled_at->format('M')).' '.$name;
         }
 
-        return 'MID';
+        return $name;
     }
 
     /**
-     * MID exam row label in monthly results tables (full month name).
+     * Row label in the stand-alone sets table. A dated sitting keeps the
+     * month name. A sitting with no date uses the school's own set name.
      */
     public static function midExamMonthRowLabel(Exam $exam): string
     {
@@ -72,7 +74,27 @@ class StudentReportCardService
             return strtoupper($exam->scheduled_at->format('F'));
         }
 
-        return 'MID TERM';
+        return self::setName($exam);
+    }
+
+    private static function setName(Exam $exam): string
+    {
+        if ($exam->relationLoaded('examType') && $exam->examType !== null) {
+            $name = trim((string) ($exam->examType->name ?? ''));
+            if ($name !== '') {
+                return $name;
+            }
+        }
+
+        if ($exam->exists) {
+            $exam->loadMissing('examType');
+            $name = trim((string) ($exam->examType->name ?? ''));
+            if ($name !== '') {
+                return $name;
+            }
+        }
+
+        return 'Exam set';
     }
 
     /**
@@ -188,14 +210,56 @@ class StudentReportCardService
 
     private function examOnSection(int $schoolId, int $sectionId, int $standardId, int $academicTermId): ?Exam
     {
-        return Exam::query()
+        $exams = Exam::query()
             ->where('school_id', $schoolId)
             ->where('section_id', $sectionId)
             ->where('standard_id', $standardId)
             ->where('academic_term_id', $academicTermId)
-            ->whereHas('examType', fn ($q) => $q->where('contributes_to_report_total', 1))
+            ->whereNull('deleted_at')
+            ->with('examType')
             ->orderBy('id')
-            ->first();
+            ->get();
+
+        $counting = $exams->first(
+            fn (Exam $exam): bool => (bool) ($exam->examType?->contributes_to_report_total)
+        );
+
+        return $counting ?? $exams->first();
+    }
+
+    /**
+     * Names of the exam sets that have a sitting for this class this term.
+     * A stream with no sitting of its own uses the base class's sittings.
+     *
+     * @return list<string>
+     */
+    public function examSetNames(int $schoolId, StandardLink $stdLink): array
+    {
+        $termId = $this->termIdForReport($schoolId, null);
+        if ($termId === null) {
+            return [];
+        }
+
+        $sectionIds = [(int) $stdLink->section_id];
+        $section = $stdLink->section;
+        if ($section !== null) {
+            $base = app(ClassStructureService::class)->resolveBaseSection($section);
+            $sectionIds[] = (int) $base->id;
+        }
+
+        return Exam::query()
+            ->where('school_id', $schoolId)
+            ->whereIn('section_id', array_values(array_unique($sectionIds)))
+            ->where('academic_term_id', $termId)
+            ->whereNull('deleted_at')
+            ->with('examType')
+            ->orderBy('id')
+            ->get()
+            ->map(fn (Exam $exam): string => trim((string) ($exam->examType->name ?? '')))
+            ->filter(fn (string $name): bool => $name !== '')
+            ->unique()
+            ->values()
+            ->all();
     }
 
     /**
@@ -252,7 +316,7 @@ class StudentReportCardService
     ): string {
         $exam = $this->resolveExam($schoolId, $stdLink, $academicTermId);
         if (! $exam) {
-            throw new \RuntimeException('No EOT exam found for this class.');
+            throw new \RuntimeException('No exam set found for this class.');
         }
 
         $allStudentIds = $this->studentIds($exam);
@@ -428,7 +492,9 @@ class StudentReportCardService
             $controls[] = self::midExamControlColumnLabel($ex);
         }
         foreach ($eotExams as $ex) {
-            $controls[] = 'EOT';
+            $ex->loadMissing('examType');
+            $label = trim((string) ($ex->examType->name ?? ''));
+            $controls[] = $label !== '' ? $label : 'Combined';
         }
         $controls = array_merge($controls, ['DIVISION', 'TEACHER', 'REMARK']);
 

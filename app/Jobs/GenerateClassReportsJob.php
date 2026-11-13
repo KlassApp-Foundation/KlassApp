@@ -53,7 +53,7 @@ class GenerateClassReportsJob implements ShouldQueue
                 : $reports->resolveExam($schoolId, $stdLink, $generation->academic_term_id);
 
             if (!$exam) {
-                throw new \RuntimeException('No EOT exam found for this class.');
+                throw new \RuntimeException('No exam set found for this class.');
             }
 
             $studentIds = \App\Models\Academics\Marks::where('exam_id', $exam->id)

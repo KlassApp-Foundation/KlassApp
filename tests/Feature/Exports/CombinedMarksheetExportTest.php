@@ -205,8 +205,8 @@ class CombinedMarksheetExportTest extends TestCase
         @unlink($tmp);
 
         return [
-            $reader->getSheetByName('MONTHLY RESULTS'),
-            $reader->getSheetByName('END OF TERM'),
+            $reader->getSheetByName('Mid Term'),
+            $reader->getSheetByName('End Of Term'),
         ];
     }
 
@@ -215,8 +215,8 @@ class CombinedMarksheetExportTest extends TestCase
         $binary = Excel::raw(new CombinedMarksheetExport($this->stdLink, $this->term), \Maatwebsite\Excel\Excel::XLSX);
         [$monthly, $eot] = $this->sheetsFromBinary($binary);
 
-        $this->assertNotNull($monthly, 'MONTHLY RESULTS sheet missing');
-        $this->assertNotNull($eot, 'END OF TERM sheet missing');
+        $this->assertNotNull($monthly, 'Mid Term sheet missing');
+        $this->assertNotNull($eot, 'End Of Term sheet missing');
 
         $monthlyRows = $monthly->toArray();
         $eotRows = $eot->toArray();

@@ -18,8 +18,12 @@
                 @endif
             </h1>
             <p class="mt-1 text-sm text-gray-600">
+                @if (!empty($examName)){{ $examName }}. @endif
                 Subjects with marks: {{ $subjectsFilled }} / {{ $subjectsTotal }}
             </p>
+            @if (!empty($compositionLine))
+                <p class="mt-1 text-sm text-gray-600" data-testid="report-made-up-of">{{ $compositionLine }}</p>
+            @endif
         </div>
     </div>
 
@@ -59,7 +63,7 @@
 
         <div class="p-6">
             @if (! $hasExam)
-                <p class="text-center py-12 text-gray-500">No EOT exam found for this class yet.</p>
+                <p class="text-center py-12 text-gray-500">No exam set found for this class yet.</p>
             @elseif ($students->isEmpty())
                 <p class="text-center py-12 text-gray-500">No students with marks on the report exam yet.</p>
             @else
