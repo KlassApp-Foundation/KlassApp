@@ -16,9 +16,11 @@ use Illuminate\Support\Collection;
 /**
  * Release policy backed by marks_releases.
  *
- * A sitting counts only when status is released. Scope "school" covers
- * every class of that exam type and term. Scope "class" covers the section
- * of a standard link the person was enrolled in, this year or a past year.
+ * A sitting counts when status is released. Reopening keeps it visible:
+ * families still see that release until a newer released row replaces it.
+ * Scope "school" covers every class of that exam type and term. Scope
+ * "class" covers the section of a standard link the person was enrolled
+ * in, this year or a past year.
  */
 final class EloquentReleaseGate implements ReleaseGate
 {
@@ -137,7 +139,16 @@ final class EloquentReleaseGate implements ReleaseGate
 
         return MarksRelease::query()
             ->where('school_id', $schoolId)
-            ->where('status', MarksRelease::STATUS_RELEASED)
+            ->where(function ($query): void {
+                $query->where('status', MarksRelease::STATUS_RELEASED)
+                    ->orWhere(function ($reopened): void {
+                        // Reopen unlocks editing. It must not drop the sitting
+                        // families were already shown. A newer released row
+                        // for the same sitting is what replaces it.
+                        $reopened->where('status', MarksRelease::STATUS_REOPENED)
+                            ->whereNotNull('released_at');
+                    });
+            })
             ->where(function ($query) use ($linkIds) {
                 $query->where('scope', 'school');
                 if ($linkIds !== []) {

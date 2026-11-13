@@ -933,6 +933,9 @@ Route::delete('/exams/sets/{batch}/exams/{exam}', [\App\Http\Controllers\Admin\E
 Route::get('/marks', 'MarksController@classExamOverview')->name('admin.marks');
 Route::get('/marks/filter', 'MarksController@classExamOverview')->name('admin.marks.filter');
 Route::get('/marks/classes/{section?}', 'ClassMarksController@show')->whereNumber('section')->name('admin.marks.classes');
+Route::get('/marks/history/{section}/{term}/{examType}', [\App\Http\Controllers\Admin\MarksHistoryController::class, 'show'])->whereNumber(['section', 'term', 'examType'])->name('admin.marks.history');
+Route::post('/marks/history/{section}/{term}/{examType}/check', [\App\Http\Controllers\Admin\MarksHistoryController::class, 'check'])->whereNumber(['section', 'term', 'examType'])->name('admin.marks.history.check');
+Route::post('/marks/history/{section}/{term}/{examType}/reopen', [\App\Http\Controllers\Admin\MarksHistoryController::class, 'reopen'])->whereNumber(['section', 'term', 'examType'])->name('admin.marks.history.reopen');
 // Task 9 Tier 2: release marks to parents (demo-bound numbers only for now).
 Route::get('/marks/releases', [\App\Http\Controllers\MarksReleaseController::class, 'index'])->name('admin.marks.releases.index');
 Route::get('/marks/releases/new', [\App\Http\Controllers\MarksReleaseController::class, 'create'])->name('admin.marks.releases.create');

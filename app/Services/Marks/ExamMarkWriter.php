@@ -23,6 +23,7 @@ class ExamMarkWriter
     public function __construct(
         private GradingSystemService $grading,
         private BaseClassExamRoster $roster,
+        private ReleasedMarksLock $releases,
     ) {}
 
     public function save(User $actor, Exam $exam, int $studentId, mixed $mark, ?string $correctionReason = null): Marks
@@ -46,25 +47,17 @@ class ExamMarkWriter
         $this->assertWritable($exam);
         $this->assertCorrectionReason($exam, $correctionReason);
 
-        if ($this->isAbsent($mark)) {
-            return Marks::updateOrCreate(
-                [
-                    'student_id' => $student->id,
-                    'exam_id' => $exam->id,
-                    'school_id' => $exam->school_id,
-                    'subject_id' => $exam->subject_id,
-                ],
-                [
-                    'teacher_id' => $exam->teacher_id ?: $actor->id,
-                    'marks' => null,
-                    'grade' => 'AB',
-                    'absent' => true,
-                    'section_id' => $exam->section_id,
-                ]
-            );
-        }
+        $existing = Marks::query()
+            ->where('student_id', $student->id)
+            ->where('exam_id', $exam->id)
+            ->where('school_id', $exam->school_id)
+            ->where('subject_id', $exam->subject_id)
+            ->first();
+        $old = $this->storedToken($existing);
+        $absent = $this->isAbsent($mark);
+        $new = $absent ? 'ABS' : $this->numericToken($mark);
 
-        return Marks::updateOrCreate(
+        $row = Marks::updateOrCreate(
             [
                 'student_id' => $student->id,
                 'exam_id' => $exam->id,
@@ -73,12 +66,18 @@ class ExamMarkWriter
             ],
             [
                 'teacher_id' => $exam->teacher_id ?: $actor->id,
-                'marks' => $mark,
-                'grade' => $this->letter($exam, $mark),
-                'absent' => false,
+                'marks' => $absent ? null : $mark,
+                'grade' => $absent ? 'AB' : $this->letter($exam, $mark),
+                'absent' => $absent,
                 'section_id' => $exam->section_id,
             ]
         );
+
+        if ($old !== $new) {
+            $this->recordMark($actor, $exam, $row, $existing === null ? 'entered' : 'changed', $old, $new);
+        }
+
+        return $row;
     }
 
     /**
@@ -88,6 +87,10 @@ class ExamMarkWriter
      */
     public function writesAreRefused(Exam $exam): bool
     {
+        if ($this->releases->isLocked($exam)) {
+            return true;
+        }
+
         $submission = $this->submission($exam);
 
         if ($submission) {
@@ -105,6 +108,10 @@ class ExamMarkWriter
 
     public function assertWritable(Exam $exam): void
     {
+        if ($this->releases->isLocked($exam)) {
+            throw new MarksLockedException(null, 'These marks are released. An admin or head teacher has to reopen them before they can change.');
+        }
+
         if (! $this->writesAreRefused($exam)) {
             return;
         }
@@ -188,5 +195,61 @@ class ExamMarkWriter
                 'correction_reason' => 'Keep the correction reason under 500 characters.',
             ]);
         }
+    }
+
+    private function storedToken(?Marks $row): ?string
+    {
+        if ($row === null) {
+            return null;
+        }
+
+        if ($row->isAbsent()) {
+            return 'ABS';
+        }
+
+        return $this->numericToken($row->marks);
+    }
+
+    private function numericToken(mixed $mark): ?string
+    {
+        if ($mark === null || trim((string) $mark) === '') {
+            return null;
+        }
+
+        if (! is_numeric($mark)) {
+            return trim((string) $mark);
+        }
+
+        $number = (float) $mark;
+
+        if (abs($number - round($number)) < 0.00001) {
+            return (string) (int) round($number);
+        }
+
+        return rtrim(rtrim(sprintf('%.4F', $number), '0'), '.');
+    }
+
+    private function recordMark(User $actor, Exam $exam, Marks $row, string $action, ?string $old, ?string $new): void
+    {
+        activity()
+            ->performedOn($row)
+            ->causedBy($actor)
+            ->useLog('marks')
+            ->withProperties([
+                'action' => $action,
+                'actor_id' => (int) $actor->id,
+                'school_id' => (int) $exam->school_id,
+                'exam_id' => (int) $exam->id,
+                'student_id' => (int) $row->student_id,
+                'subject_id' => (int) $exam->subject_id,
+                'section_id' => (int) $exam->section_id,
+                'academic_year_id' => $exam->academic_year_id !== null ? (int) $exam->academic_year_id : null,
+                'academic_term_id' => $exam->academic_term_id !== null ? (int) $exam->academic_term_id : null,
+                'exam_set_id' => $exam->exam_set_id !== null ? (int) $exam->exam_set_id : null,
+                'old_value' => $old,
+                'new_value' => $new,
+                'at' => now()->utc()->toIso8601String(),
+            ])
+            ->log($action === 'entered' ? 'marks.entered' : 'marks.changed');
     }
 }

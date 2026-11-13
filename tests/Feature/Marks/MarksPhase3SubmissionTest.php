@@ -236,6 +236,8 @@ class MarksPhase3SubmissionTest extends TestCase
         $approvedLog = ActivityLog::where('description', 'marks.submission.approved')->first();
         $this->assertSame($this->adminA->id, (int) $approvedLog->causer_id);
         $this->assertNotEmpty($approvedLog->properties['at']);
+        $this->assertSame('submitted', $approvedLog->properties['old_value']);
+        $this->assertSame('submitted', $approvedLog->properties['new_value']);
 
         $teacherNotice = DB::table('notifications')->where('notifiable_id', $this->teacherA->id)->first();
         $this->assertNotNull($teacherNotice);

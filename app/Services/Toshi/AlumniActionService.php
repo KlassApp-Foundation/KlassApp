@@ -3,8 +3,10 @@
 namespace App\Services\Toshi;
 
 use App\Contracts\Results\ReleaseGate;
+use App\Models\Academics\Exam;
 use App\Models\Academics\Marks;
 use App\Models\User;
+use App\Services\Results\FamilyReleasedCopy;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
@@ -34,13 +36,29 @@ class AlumniActionService
             ]);
         }
 
-        $records = $marks->map(fn ($mark) => [
-            'subject' => $mark->subject->name ?? 'Subject',
-            'exam'    => $mark->exam->examType->name ?? ('Exam #'.($mark->exam_id ?? '')),
-            'marks'   => $mark->marks,
-            'grade'   => $mark->grade,
-            'date'    => optional($mark->created_at)->toDateString(),
-        ])->all();
+        $copy = app(FamilyReleasedCopy::class);
+        $records = $marks->map(function ($mark) use ($alumni, $copy) {
+            $score = $mark->marks;
+            $grade = $mark->grade;
+            if ($mark->exam instanceof Exam) {
+                $frozen = $copy->subjectsFor($alumni, (int) $alumni->school_id, $mark->exam);
+                $subjectId = (int) $mark->subject_id;
+                if ($frozen !== null && isset($frozen[$subjectId])) {
+                    $score = $frozen[$subjectId]['mark'];
+                    if ($frozen[$subjectId]['grade'] !== null && $frozen[$subjectId]['grade'] !== '') {
+                        $grade = $frozen[$subjectId]['grade'];
+                    }
+                }
+            }
+
+            return [
+                'subject' => $mark->subject->name ?? 'Subject',
+                'exam' => $mark->exam->examType->name ?? ('Exam #'.($mark->exam_id ?? '')),
+                'marks' => $score,
+                'grade' => $grade,
+                'date' => optional($mark->created_at)->toDateString(),
+            ];
+        })->all();
 
         $lines = collect($records)->map(function ($r) {
             $grade = $r['grade'] ? " ({$r['grade']})" : '';

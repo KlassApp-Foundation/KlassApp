@@ -7,6 +7,7 @@ use App\Models\AcademicYear;
 use App\Models\MarksRelease;
 use App\Models\School;
 use App\Models\User;
+use App\Services\Records\SnapshotHasher;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -24,7 +25,7 @@ class RecordSnapshot extends Model
 
     protected $fillable = [
         'school_id', 'student_id', 'academic_year_id', 'academic_term_id',
-        'version', 'supersedes_id', 'reason', 'payload', 'released_at',
+        'version', 'supersedes_id', 'reason', 'payload', 'content_hash', 'released_at',
         'released_by', 'release_id', 'state',
     ];
 
@@ -57,5 +58,19 @@ class RecordSnapshot extends Model
     public function release(): BelongsTo
     {
         return $this->belongsTo(MarksRelease::class, 'release_id');
+    }
+
+    public function contentHash(): string
+    {
+        return SnapshotHasher::hash(is_array($this->payload) ? $this->payload : []);
+    }
+
+    public function contentMatches(): bool
+    {
+        if (! is_string($this->content_hash) || $this->content_hash === '') {
+            return false;
+        }
+
+        return hash_equals($this->content_hash, $this->contentHash());
     }
 }

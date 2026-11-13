@@ -721,6 +721,8 @@ final class MarksReleaseService
      */
     public function run(int $releaseId): bool
     {
+        $previousStatus = MarksRelease::query()->whereKey($releaseId)->value('status');
+
         $claimed = MarksRelease::query()
             ->whereKey($releaseId)
             ->whereIn('status', [MarksRelease::STATUS_SCHEDULED, MarksRelease::STATUS_FAILED])
@@ -770,7 +772,15 @@ final class MarksReleaseService
         }
 
         activity('marks_release')->performedOn($release)->causedBy($release->creator)
-            ->withProperties(['queued' => $result['queued'], 'skipped' => $result['skipped'], 'reasons' => $result['reasons']])
+            ->withProperties([
+                'queued' => $result['queued'],
+                'skipped' => $result['skipped'],
+                'reasons' => $result['reasons'],
+                'action' => 'released',
+                'old_value' => $previousStatus,
+                'new_value' => MarksRelease::STATUS_RELEASED,
+                'at' => now()->utc()->toIso8601String(),
+            ])
             ->log('Marks released');
 
         // Dispatched only after the result (with every "queued" entry) is saved.
