@@ -229,7 +229,7 @@
 
 @push('scripts')
 <script>
-(function () {
+document.addEventListener('DOMContentLoaded', function () {
     var form = document.querySelector('[data-testid="report-composition-form"]');
     if (!form) return;
 
@@ -353,6 +353,6 @@
             paint();
         });
     });
-})();
+});
 </script>
 @endpush

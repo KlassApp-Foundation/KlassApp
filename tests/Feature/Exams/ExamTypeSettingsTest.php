@@ -179,7 +179,13 @@ class ExamTypeSettingsTest extends TestCase
 
     public function test_the_unset_form_starts_at_end_of_term_only(): void
     {
-        $html = preg_replace('/\s+/', ' ', $this->actingAs($this->admin)->get('/admin/settings/exam-types')->assertOk()->getContent());
+        $raw = $this->actingAs($this->admin)->get('/admin/settings/exam-types')->assertOk()->getContent();
+        $scripts = strpos($raw, '<!-- Scripts -->');
+        $listener = strpos($raw, "document.addEventListener('DOMContentLoaded', function () {\n    var form = document.querySelector('[data-testid=\"report-composition-form\"]');");
+        $this->assertNotFalse($scripts);
+        $this->assertNotFalse($listener);
+        $this->assertGreaterThan($scripts, $listener);
+        $html = preg_replace('/\s+/', ' ', $raw);
 
         $this->assertMatchesRegularExpression('/data-testid="exam-type-include-'.$this->eot->id.'" checked/', $html);
         $this->assertDoesNotMatchRegularExpression('/data-testid="exam-type-include-'.$this->bot->id.'" checked/', $html);
