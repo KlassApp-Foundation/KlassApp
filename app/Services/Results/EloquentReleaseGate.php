@@ -137,7 +137,15 @@ final class EloquentReleaseGate implements ReleaseGate
 
         return MarksRelease::query()
             ->where('school_id', $schoolId)
-            ->where('status', MarksRelease::STATUS_RELEASED)
+            ->where(function ($query): void {
+                $query->where('status', MarksRelease::STATUS_RELEASED)
+                    ->orWhere(function ($reopened): void {
+                        // Reopen unlocks editing. Families keep the sitting they
+                        // were already shown until a newer release replaces it.
+                        $reopened->where('status', MarksRelease::STATUS_REOPENED)
+                            ->whereNotNull('released_at');
+                    });
+            })
             ->where(function ($query) use ($linkIds) {
                 $query->where('scope', 'school');
                 if ($linkIds !== []) {
