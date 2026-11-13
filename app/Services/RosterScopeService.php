@@ -423,14 +423,14 @@ class RosterScopeService
             return;
         }
 
-        if ((int) $actor->school_id !== $schoolId || ! in_array((int) $actor->usergroup_id, [3, 5], true)) {
+        if ((int) $actor->school_id !== $schoolId || ! in_array((int) $actor->usergroup_id, [3, 4, 5], true)) {
             throw new HttpException(403, 'You are not authorized for this school.');
         }
     }
 
     private function isAdmin(User $actor): bool
     {
-        return in_array((int) $actor->usergroup_id, [1, 3], true);
+        return \App\Support\SchoolAdmin::is($actor);
     }
 
     private function isSuperAdmin(User $actor): bool

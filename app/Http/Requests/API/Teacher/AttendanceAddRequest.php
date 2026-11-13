@@ -25,7 +25,7 @@ class AttendanceAddRequest extends FormRequest
         }
 
         // School admins keep school-wide attendance create.
-        if ((int) $user->usergroup_id === 3) {
+        if (\App\Support\SchoolAdmin::managesOwnSchool($user, $user->school_id)) {
             return true;
         }
 

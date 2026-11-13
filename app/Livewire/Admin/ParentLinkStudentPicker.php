@@ -29,7 +29,7 @@ class ParentLinkStudentPicker extends Component
 
         $actorSchoolId = (int) $actor->school_id;
 
-        if ((int) $actor->usergroup_id === 3) {
+        if (\App\Support\SchoolAdmin::managesOwnSchool($actor, $actorSchoolId)) {
             $this->schoolId = $actorSchoolId;
             $this->showSchoolName = false;
         } else {
