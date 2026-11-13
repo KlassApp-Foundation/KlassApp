@@ -1,0 +1,51 @@
+{
+  "name": "KlassApp MarksReleased counts",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "klassapp-marks-released",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "8f0a1c2e-1111-4a1a-9c1a-marks-webhook",
+      "name": "Marks released",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "klassapp-marks-released"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const crypto = require('crypto');\nconst item = $input.item.json;\nconst headers = item.headers || {};\nconst raw = typeof item.body === 'string' ? item.body : (item.rawBody || '');\nconst secret = $getWorkflowStaticData('global').klassappMarksSecret || '';\nif (!secret || !raw) {\n  return { json: { ok: false, reason: 'missing raw body or secret' } };\n}\nconst given = String(headers['x-klassapp-signature'] || headers['X-KlassApp-Signature'] || '');\nconst expected = 'sha256=' + crypto.createHmac('sha256', secret).update(raw).digest('hex');\nconst givenBuf = Buffer.from(given);\nconst expectedBuf = Buffer.from(expected);\nconst match = givenBuf.length === expectedBuf.length && crypto.timingSafeEqual(givenBuf, expectedBuf);\nlet payload = {};\ntry { payload = JSON.parse(raw); } catch (e) { payload = {}; }\nconst now = Math.floor(Date.now() / 1000);\nconst stamp = Number(payload.timestamp || 0);\nconst headerStamp = Number(headers['x-klassapp-timestamp'] || headers['X-KlassApp-Timestamp'] || 0);\nconst fresh = stamp > 0 && stamp === headerStamp && Math.abs(now - stamp) <= 600;\nconst countsOnly = payload.event === 'marks.released' && payload.learners !== undefined && payload.missing !== undefined && payload.absent !== undefined;\nif (!match || !fresh || !countsOnly) {\n  return { json: { ok: false, reason: 'rejected' } };\n}\nreturn { json: { ok: true, release_id: payload.release_id, learners: payload.learners, classes: payload.classes, subjects: payload.subjects, missing: payload.missing, absent: payload.absent } };"
+      },
+      "id": "8f0a1c2e-2222-4a1a-9c1a-marks-check",
+      "name": "Check signature",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 300]
+    }
+  ],
+  "connections": {
+    "Marks released": {
+      "main": [
+        [
+          {
+            "node": "Check signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
