@@ -134,18 +134,6 @@ final class ReportComposition
             return 'begin';
         }
 
-        $normalized = strtolower(str_replace(['-', '_'], ' ', trim((string) $name)));
-        $normalized = trim((string) preg_replace('/\s+/', ' ', $normalized));
-        if (str_contains($normalized, 'end of term')) {
-            return 'end';
-        }
-        if (str_contains($normalized, 'mid term') || str_contains($normalized, 'midterm')) {
-            return 'mid';
-        }
-        if (str_contains($normalized, 'beginning of term')) {
-            return 'begin';
-        }
-
         return null;
     }
 
@@ -278,7 +266,7 @@ final class ReportComposition
      * @param  iterable<int, ExamType>  $types
      * @return array<string, array{include: bool, weight: float|null}>
      */
-    public function suggested(iterable $types): array
+    public function suggested(iterable $types, ?int $schoolId = null): array
     {
         $ordered = [];
         foreach ($types as $type) {
@@ -287,7 +275,26 @@ final class ReportComposition
         if ($ordered === []) {
             return [];
         }
-        $lastId = (int) $ordered[array_key_last($ordered)]->id;
+        $ids = array_map(fn ($type): int => (int) $type->id, $ordered);
+        $withExam = [];
+        if ($schoolId !== null && $schoolId > 0) {
+            $withExam = DB::table('exams')
+                ->where('school_id', $schoolId)
+                ->whereIn('exam_type_id', $ids)
+                ->whereNull('deleted_at')
+                ->distinct()
+                ->pluck('exam_type_id')
+                ->map(fn ($id): int => (int) $id)
+                ->all();
+        }
+        $pool = $ordered;
+        if ($withExam !== []) {
+            $pool = array_values(array_filter(
+                $ordered,
+                fn ($type): bool => in_array((int) $type->id, $withExam, true),
+            ));
+        }
+        $lastId = (int) $pool[array_key_last($pool)]->id;
         $out = [];
         foreach ($ordered as $type) {
             $counts = (int) $type->id === $lastId;
@@ -361,7 +368,40 @@ final class ReportComposition
         $types = ExamType::visibleToSchool($schoolId)->orderBy('id')->get(['id', 'name']);
         $released = $this->latestReleasedAt($schoolId, null, null);
 
-        return $this->releaseRows($types, $released['dated'], $released['undated']);
+        return $this->releaseRows($types, $released['dated'], $released['undated'], $this->displayNames($schoolId));
+    }
+
+    /**
+     * Names the school typed over the starter list. The catalog row is left as it is.
+     *
+     * @return array<int, string>
+     */
+    public function displayNames(int $schoolId): array
+    {
+        if (! \Illuminate\Support\Facades\Schema::hasColumn('schools', 'exam_type_labels')) {
+            return [];
+        }
+
+        $raw = DB::table('schools')->where('id', $schoolId)->value('exam_type_labels');
+        if (is_string($raw)) {
+            $raw = json_decode($raw, true);
+        }
+        if (! is_array($raw)) {
+            return [];
+        }
+
+        $names = [];
+        foreach ($raw as $id => $name) {
+            if (! is_numeric($id)) {
+                continue;
+            }
+            $label = trim((string) $name);
+            if ($label !== '') {
+                $names[(int) $id] = $label;
+            }
+        }
+
+        return $names;
     }
 
     /**
@@ -453,7 +493,7 @@ final class ReportComposition
      * @param  array<int, true>  $undated
      * @return list<array{id: int, name: string, status: string, released: bool}>
      */
-    private function releaseRows(iterable $types, array $dated, array $undated): array
+    private function releaseRows(iterable $types, array $dated, array $undated, array $labels = []): array
     {
         $rows = [];
         foreach ($types as $type) {
@@ -469,9 +509,10 @@ final class ReportComposition
                 $status = 'Not released yet';
                 $released = false;
             }
+            $label = trim((string) ($labels[$id] ?? ''));
             $rows[] = [
                 'id' => $id,
-                'name' => (string) $type->name,
+                'name' => $label !== '' ? $label : (string) $type->name,
                 'status' => $status,
                 'released' => $released,
             ];

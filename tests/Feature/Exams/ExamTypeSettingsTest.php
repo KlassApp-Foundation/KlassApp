@@ -187,9 +187,11 @@ class ExamTypeSettingsTest extends TestCase
         $this->assertGreaterThan($scripts, $listener);
         $html = preg_replace('/\s+/', ' ', $raw);
 
+        $last = ExamType::query()->whereNull('school_id')->orderByDesc('id')->first();
+        $this->assertNotNull($last);
         $this->assertDoesNotMatchRegularExpression('/data-testid="exam-type-include-'.$this->eot->id.'" checked/', $html);
-        $this->assertMatchesRegularExpression('/data-testid="exam-type-include-'.$this->bot->id.'" checked/', $html);
-        $this->assertMatchesRegularExpression('/name="weight\['.$this->bot->id.'\]"[^>]*value="100"/', $html);
+        $this->assertMatchesRegularExpression('/data-testid="exam-type-include-'.$last->id.'" checked/', $html);
+        $this->assertMatchesRegularExpression('/name="weight\['.$last->id.'\]"[^>]*value="100"/', $html);
         $this->assertStringContainsString('min-height:44px', $html);
         $this->assertStringContainsString('Save report settings', $html);
         $this->assertStringContainsString('Last set only', $html);
@@ -203,7 +205,7 @@ class ExamTypeSettingsTest extends TestCase
         $this->assertStringContainsString('Adds up', $html);
         $this->assertStringContainsString('Applies from the next release.', $html);
         $this->assertStringContainsString('Reports already released keep the mix they were released with.', $html);
-        $this->assertStringContainsString('Made up of: Beginning of Term Examination 100%', $html);
+        $this->assertStringContainsString('Made up of: '.$last->name.' 100%', $html);
         $this->assertStringContainsString('Report marks appear here after the counted exam sets are released.', $html);
         $this->assertStringContainsString('Each exam set has its own report', $html);
         $this->assertStringContainsString('Not released yet', $html);
@@ -212,6 +214,39 @@ class ExamTypeSettingsTest extends TestCase
         $this->assertStringContainsString('Cancel', $html);
         $this->assertStringNotContainsString('Grace Achieng', $html);
         $this->assertStringNotContainsString('80 × 30%', $html);
+    }
+
+    public function test_a_school_renames_a_starter_set_and_the_catalog_row_stays(): void
+    {
+        $this->actingAs($this->admin)
+            ->get('/admin/settings/exam-types')
+            ->assertOk()
+            ->assertSee('Beginning of Term Examination')
+            ->assertSee('End of Term Examination')
+            ->assertSee('name="type_name['.$this->bot->id.']"', false);
+
+        $this->actingAs($this->admin)
+            ->post('/admin/settings/exam-types', [
+                'contributes' => [$this->eot->id => '1', $this->bot->id => '0'],
+                'include' => [$this->eot->id => '1', $this->bot->id => '1'],
+                'weight' => [$this->eot->id => '60', $this->bot->id => '40'],
+                'type_name' => [
+                    $this->bot->id => 'Opening Paper',
+                    $this->eot->id => 'End of Term Examination',
+                ],
+            ])
+            ->assertRedirect(route('admin.settings.exam-types'));
+
+        $this->assertSame('Beginning of Term Examination', $this->bot->fresh()->name);
+        $this->assertSame('End of Term Examination', $this->eot->fresh()->name);
+        $labels = $this->riverside->fresh()->exam_type_labels;
+        $this->assertSame('Opening Paper', $labels[(string) $this->bot->id] ?? null);
+
+        $this->actingAs($this->admin)
+            ->get('/admin/settings/exam-types')
+            ->assertOk()
+            ->assertSee('Opening Paper')
+            ->assertSee('Made up of:');
     }
 
     public function test_a_head_teacher_sets_the_mix_for_their_own_school(): void

@@ -56,15 +56,17 @@ class StudentReportCardService
      */
     public static function midExamControlColumnLabel(Exam $exam): string
     {
+        $name = self::setName($exam);
         if ($exam->scheduled_at) {
-            return strtoupper($exam->scheduled_at->format('M')).' MID';
+            return strtoupper($exam->scheduled_at->format('M')).' '.$name;
         }
 
-        return 'MID';
+        return $name;
     }
 
     /**
-     * MID exam row label in monthly results tables (full month name).
+     * Row label in the stand-alone sets table. A dated sitting keeps the
+     * month name. A sitting with no date uses the school's own set name.
      */
     public static function midExamMonthRowLabel(Exam $exam): string
     {
@@ -72,7 +74,27 @@ class StudentReportCardService
             return strtoupper($exam->scheduled_at->format('F'));
         }
 
-        return 'MID TERM';
+        return self::setName($exam);
+    }
+
+    private static function setName(Exam $exam): string
+    {
+        if ($exam->relationLoaded('examType') && $exam->examType !== null) {
+            $name = trim((string) ($exam->examType->name ?? ''));
+            if ($name !== '') {
+                return $name;
+            }
+        }
+
+        if ($exam->exists) {
+            $exam->loadMissing('examType');
+            $name = trim((string) ($exam->examType->name ?? ''));
+            if ($name !== '') {
+                return $name;
+            }
+        }
+
+        return 'Exam set';
     }
 
     /**
@@ -188,14 +210,31 @@ class StudentReportCardService
 
     private function examOnSection(int $schoolId, int $sectionId, int $standardId, int $academicTermId): ?Exam
     {
-        return Exam::query()
+        $exams = Exam::query()
             ->where('school_id', $schoolId)
             ->where('section_id', $sectionId)
             ->where('standard_id', $standardId)
             ->where('academic_term_id', $academicTermId)
-            ->whereHas('examType', fn ($q) => $q->where('contributes_to_report_total', 1))
+            ->whereNull('deleted_at')
+            ->with('examType')
             ->orderBy('id')
-            ->first();
+            ->get();
+
+        $mix = app(ReportComposition::class)->forTermReport($schoolId, $sectionId, $academicTermId);
+        $counting = $exams->first(function (Exam $exam) use ($mix): bool {
+            $type = $exam->examType;
+            if ($type === null) {
+                return false;
+            }
+
+            return app(ReportComposition::class)->countsToward(
+                $mix,
+                (int) $type->id,
+                (bool) $type->contributes_to_report_total,
+            );
+        });
+
+        return $counting ?? $exams->first();
     }
 
     /**
@@ -252,7 +291,7 @@ class StudentReportCardService
     ): string {
         $exam = $this->resolveExam($schoolId, $stdLink, $academicTermId);
         if (! $exam) {
-            throw new \RuntimeException('No EOT exam found for this class.');
+            throw new \RuntimeException('No exam set found for this class.');
         }
 
         $allStudentIds = $this->studentIds($exam);
@@ -404,7 +443,7 @@ class StudentReportCardService
         // The combined card keeps every set in the term. A set that stands
         // alone is drawn in its own section. Opening a set that does not
         // count stays that one set.
-        if ($anchorCounts && ($composition->isEndOfTerm($exam->examType) || $mix !== [])) {
+        if ($anchorCounts) {
             return $exams->values();
         }
 
@@ -454,7 +493,9 @@ class StudentReportCardService
             $controls[] = self::midExamControlColumnLabel($ex);
         }
         foreach ($eotExams as $ex) {
-            $controls[] = 'EOT';
+            $ex->loadMissing('examType');
+            $label = trim((string) ($ex->examType->name ?? ''));
+            $controls[] = $label !== '' ? $label : 'Combined';
         }
         $controls = array_merge($controls, ['DIVISION', 'TEACHER', 'REMARK']);
 
@@ -657,6 +698,7 @@ class StudentReportCardService
             'midSittings' => $midSittings,
             'logoPath' => $logoPath,
             'madeUpOf' => $this->madeUpOfLine($schoolId, (int) $exam->section_id, (int) $exam->academic_term_id, $sheet ?? null),
+            'typeLabels' => $this->typeLabels($schoolId),
         ]);
         $pdf->setPaper('a4', 'portrait');
 
@@ -670,12 +712,38 @@ class StudentReportCardService
         }
 
         $composer = app(ReportComposition::class);
+        $labels = $this->typeLabels($schoolId);
         $names = [];
         foreach ($sheet->sittings as $sitting) {
-            $names[(int) $sitting->examTypeId] = (string) $sitting->name;
+            $custom = trim((string) ($labels[(string) $sitting->examTypeId] ?? $labels[$sitting->examTypeId] ?? ''));
+            $names[(int) $sitting->examTypeId] = $custom !== '' ? $custom : (string) $sitting->name;
         }
 
         return $composer->madeUpOf($composer->forTermReport($schoolId, $sectionId, $termId), $names);
+    }
+
+    /**
+     * Names this school typed over the catalog. A missing column or a missing
+     * label means the catalog name.
+     *
+     * @return array<int|string, string>
+     */
+    private function typeLabels(int $schoolId): array
+    {
+        if (! \Illuminate\Support\Facades\Schema::hasColumn('schools', 'exam_type_labels')) {
+            return [];
+        }
+
+        $raw = DB::table('schools')->where('id', $schoolId)->value('exam_type_labels');
+        if (is_array($raw)) {
+            return $raw;
+        }
+        if (! is_string($raw) || $raw === '') {
+            return [];
+        }
+        $decoded = json_decode($raw, true);
+
+        return is_array($decoded) ? $decoded : [];
     }
 
     private function classSheet(int $schoolId, int $sectionId, int $academicTermId, int $standardId, ?int $studentId = null): ?ResultSheet

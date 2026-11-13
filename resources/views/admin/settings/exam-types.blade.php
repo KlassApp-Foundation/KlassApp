@@ -1,7 +1,7 @@
 {{-- SPDX-License-Identifier: MIT --}}
 @extends('layouts.admin.layout')
 @section('content')
-<div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4">
+<div class="dashboard-shell dashboard-shell--admin ka-exam-types px-4 md:px-6 py-4">
 
 @include('layouts.partials.settings-nav')
 
@@ -49,11 +49,15 @@
                             $weightValue = $weightNumber === null
                                 ? ''
                                 : rtrim(rtrim(number_format($weightNumber, 2, '.', ''), '0'), '.');
+                            $shownName = $labels[(string) $type->id] ?? $labels[$type->id] ?? $type->name;
                         @endphp
-                        <div class="ka-mix-row{{ $included ? '' : ' is-off' }}" data-mix-row data-name="{{ $type->name }}" data-testid="exam-type-row-{{ $type->id }}">
+                        <div class="ka-mix-row{{ $included ? '' : ' is-off' }}" data-mix-row data-name="{{ $shownName }}" data-testid="exam-type-row-{{ $type->id }}">
                             <input type="hidden" name="contributes[{{ $type->id }}]" value="{{ $checked ? '1' : '0' }}">
                             <div class="ka-mix-label">
-                                <strong>{{ $type->name }}</strong>
+                                <label class="ka-sr" for="type-name-{{ $type->id }}">Name</label>
+                                <input class="ds-input ka-type-name" id="type-name-{{ $type->id }}" name="type_name[{{ $type->id }}]"
+                                    value="{{ $shownName }}"
+                                    maxlength="80" data-testid="exam-type-label-{{ $type->id }}">
                                 <span data-mix-detail>{{ $included ? 'Counts toward the combined report' : 'Shown on its own' }}</span>
                                 <span class="ka-sr" data-testid="exam-type-owner-{{ $type->id }}">{{ $type->code }} · {{ $type->isShared() ? '(shared)' : '(your school)' }}</span>
                                 <label class="ka-hit" style="min-height:44px;">
@@ -83,7 +87,7 @@
                     </div>
                 </div>
 
-                <div class="ka-mix-bar" role="img" aria-label="{{ $mix['aria'] ?? 'No exam sets count on the end-of-term report' }}" data-mix-bar>
+                <div class="ka-mix-bar" role="img" aria-label="{{ $mix['aria'] ?? 'No exam sets count toward the combined report' }}" data-mix-bar>
                     @foreach(($mix['parts'] ?? []) as $index => $part)
                         <div class="{{ $index === count($mix['parts']) - 1 ? 'is-last' : 'is-part' }}" style="flex: {{ $part['weight'] }} 1 0;">{{ $part['name'] }} {{ rtrim(rtrim(number_format($part['weight'], 2, '.', ''), '0'), '.') }}%</div>
                     @endforeach
@@ -280,9 +284,11 @@ document.addEventListener('DOMContentLoaded', function () {
             var detail = row.querySelector('[data-mix-detail]');
             if (detail) detail.textContent = on ? 'Counts toward the combined report' : 'Shown on its own';
             var weight = parseFloat(input.value);
+            var nameInput = row.querySelector('.ka-type-name');
+            var name = nameInput && nameInput.value.trim() !== '' ? nameInput.value.trim() : (row.getAttribute('data-name') || '');
             if (on && isFinite(weight) && weight > 0) {
                 sum += weight;
-                parts.push({ name: row.getAttribute('data-name') || '', weight: weight });
+                parts.push({ name: name, weight: weight });
             }
         });
         var adds = parts.length > 0 && Math.abs(sum - 100) < 0.011;
@@ -347,6 +353,8 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             paint();
         });
+        var nameInput = row.querySelector('.ka-type-name');
+        if (nameInput) nameInput.addEventListener('input', paint);
     });
 });
 </script>

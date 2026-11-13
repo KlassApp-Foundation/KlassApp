@@ -291,8 +291,22 @@
             @endforeach
         </table>
     @else
+        @php
+            $labels = $typeLabels ?? [];
+            $labelFor = function ($exam) use ($labels) {
+                $id = (int) ($exam->exam_type_id ?? 0);
+                $custom = trim((string) ($labels[(string) $id] ?? $labels[$id] ?? ''));
+                if ($custom !== '') {
+                    return $custom;
+                }
+
+                return $exam->examType->name ?? null;
+            };
+            $aloneNames = $midExams->map($labelFor)->filter()->unique()->implode(' · ');
+            $countNames = $eotExams->map($labelFor)->filter()->unique()->implode(' · ');
+        @endphp
         @if ($midExams->isNotEmpty())
-        <div class="sec-heading"><span class="dot"></span>Exam sets shown on their own</div>
+        <div class="sec-heading"><span class="dot"></span>{{ $aloneNames !== '' ? $aloneNames : 'Exam sets shown on their own' }}</div>
         <table class="card-table">
             <tr>
                 <th style="width:12%">Month Of</th>
@@ -361,7 +375,7 @@
         @endif
 
         @if ($eotExams->isNotEmpty())
-        <div class="sec-heading sec-heading-eot"><span class="dot"></span>Combined report</div>
+        <div class="sec-heading sec-heading-eot"><span class="dot"></span>{{ $countNames !== '' ? $countNames : 'Combined report' }}</div>
         @if (!empty($madeUpOf))
             <p data-testid="report-made-up-of" style="margin:0 0 8px;font-size:12px;">{{ $madeUpOf }}</p>
         @endif

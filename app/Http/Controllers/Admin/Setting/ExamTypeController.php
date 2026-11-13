@@ -29,10 +29,12 @@ class ExamTypeController extends Controller
         $examTypes = $composer->orderedTypes((int) $schoolId);
         $prefs = $this->jsonColumn($school, 'exam_type_preferences');
         $stored = is_array($school?->report_composition) && $school->report_composition !== [];
-        $composition = $stored ? $composer->resolved($school) : $composer->suggested($examTypes);
+        $composition = $stored ? $composer->resolved($school) : $composer->suggested($examTypes, (int) $schoolId);
+        $labels = is_array($school?->exam_type_labels) ? $school->exam_type_labels : [];
         $names = [];
         foreach ($examTypes as $type) {
-            $names[(int) $type->id] = (string) $type->name;
+            $custom = trim((string) ($labels[(string) $type->id] ?? $labels[$type->id] ?? ''));
+            $names[(int) $type->id] = $custom !== '' ? $custom : (string) $type->name;
         }
         $madeUpOf = $composer->madeUpOf($composition, $names);
         $mix = $composer->mixSummary($composition, $names);
@@ -46,7 +48,7 @@ class ExamTypeController extends Controller
 
         return view('admin.settings.exam-types', compact(
             'examTypes', 'prefs', 'composition', 'profiles', 'profileKey', 'legacyBands', 'legacyIsExample',
-            'madeUpOf', 'mix', 'preset', 'ownReports', 'showMarksLater'
+            'madeUpOf', 'mix', 'preset', 'ownReports', 'showMarksLater', 'labels'
         ));
     }
 
@@ -77,6 +79,7 @@ class ExamTypeController extends Controller
         }
         $school->exam_type_preferences = $prefs ?: null;
         $school->report_composition = $composition ?: null;
+        $school->exam_type_labels = $this->labelsFromRequest($request, $visibleIds, $school);
 
         $school->save();
         $this->storeCombinedReport($school, is_array($composition) ? $composition : null);
@@ -128,6 +131,32 @@ class ExamTypeController extends Controller
 
         return redirect()->route('admin.settings.exam-types')
             ->with('successmessage', $name.' added to your exam types. Only your school sees it.');
+    }
+
+    /**
+     * Names the school typed for its exam sets. The catalog row is unchanged.
+     * An empty box keeps the catalog name.
+     *
+     * @param  list<int>  $visibleIds
+     * @return array<string, string>|null
+     */
+    private function labelsFromRequest(Request $request, array $visibleIds, School $school): ?array
+    {
+        $labels = is_array($school->exam_type_labels) ? $school->exam_type_labels : [];
+        foreach ((array) $request->input('type_name', []) as $typeId => $raw) {
+            $typeId = (int) $typeId;
+            if (! in_array($typeId, $visibleIds, true)) {
+                continue;
+            }
+            $name = trim((string) $raw);
+            if ($name === '' || mb_strlen($name) > 80) {
+                unset($labels[(string) $typeId]);
+                continue;
+            }
+            $labels[(string) $typeId] = $name;
+        }
+
+        return $labels === [] ? null : $labels;
     }
 
     /** @return list<int> */
