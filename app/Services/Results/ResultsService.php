@@ -270,7 +270,8 @@ final class ResultsService
             if ($exam === null || $exam->exam_type_id === null) {
                 continue;
             }
-            $absent = (bool) ($mark->absent ?? false) || strcasecmp(trim((string) $mark->grade), 'AB') === 0;
+            $label = strtoupper(trim((string) $mark->grade));
+            $absent = (bool) ($mark->absent ?? false) || in_array($label, ['AB', 'ABS'], true);
             $candidate = [
                 'mark' => ($absent || $mark->marks === null) ? null : (float) $mark->marks,
                 'grade' => $absent ? 'AB' : trim((string) $mark->grade),
@@ -550,7 +551,7 @@ final class ResultsService
                 $choice = $this->merged($chosen, $typeIds, $studentId, (int) $subject['id'], $weights);
                 $cells[(int) $subject['id']] = $this->cell($policy, $schoolId, $standardId, (int) $subject['id'], $choice);
             }
-            [$total, $counted, $average, $aggregate, $division, $displayTotal, $displayAverage] = $this->totals($policy, $cells);
+            [$total, $counted, $average, $aggregate, $division, $displayTotal, $displayAverage] = $this->totals($policy, $cells, $schoolId, $standardId);
             $drafts[] = [
                 'studentId' => $studentId,
                 'name' => (string) $user->name,
@@ -600,8 +601,8 @@ final class ResultsService
     /**
      * One merged mark per subject: the latest contributing mark, or a
      * weighted mean when the school's report composition configures weights
-     * for at least two contributing types (types without marks are dropped
-     * from both numerator and denominator).
+     * for at least two contributing types. A missing mark and an absence
+     * count as 0 and stay in the denominator.
      *
      * @param array<int, array<int, array<int, array{mark: float, grade: string, scheduled: int, examId: int}>>> $chosen
      * @param list<int> $typeIds
@@ -622,25 +623,21 @@ final class ResultsService
             return $best;
         }
 
-        if ($best === null) {
-            return null;
-        }
-
-        // Absent and descriptive (grade-only) results keep the latest
-        // behaviour; a weighted mean only makes sense for numeric marks.
-        if ($best['grade'] !== '') {
-            return $best;
-        }
-
         $sum = 0.0;
         $weightSum = 0.0;
         foreach ($typeIds as $typeId) {
-            $row = $chosen[$typeId][$studentId][$subjectId] ?? null;
             $weight = (float) ($weights[$typeId] ?? 0);
-            if ($row === null || $weight <= 0 || $row['mark'] === null) {
+            if ($weight <= 0) {
                 continue;
             }
-            $sum += (float) $row['mark'] * $weight;
+            $row = $chosen[$typeId][$studentId][$subjectId] ?? null;
+            $grade = trim((string) ($row['grade'] ?? ''));
+            $absent = $row !== null && strcasecmp($grade, 'AB') === 0;
+            if ($row !== null && ($row['mark'] ?? null) === null && ! $absent && $grade !== '') {
+                return $best;
+            }
+            $value = ($row !== null && ($row['mark'] ?? null) !== null && ! $absent) ? (float) $row['mark'] : 0.0;
+            $sum += $value * $weight;
             $weightSum += $weight;
         }
 
@@ -651,8 +648,8 @@ final class ResultsService
         return [
             'mark' => round($sum / $weightSum, 2),
             'grade' => '',
-            'scheduled' => $best['scheduled'],
-            'examId' => $best['examId'],
+            'scheduled' => $best['scheduled'] ?? 0,
+            'examId' => $best['examId'] ?? 0,
         ];
     }
 
@@ -689,13 +686,24 @@ final class ResultsService
      * @param array<int, ResultCell> $cells
      * @return array{0: ?float, 1: int, 2: ?float, 3: ?int, 4: ?string, 5: ?float, 6: ?float}
      */
-    private function totals(ResultsPolicy $policy, array $cells): array
+    private function totals(ResultsPolicy $policy, array $cells, int $schoolId = 0, int $standardId = 0): array
     {
         $total = 0.0;
         $counted = 0;
         $points = 0;
         $pointsSeen = false;
         foreach ($cells as $cell) {
+            if ($cell->status === ResultCell::MISSING || $cell->status === ResultCell::ABSENT) {
+                $total += 0;
+                $counted++;
+                $zeroPoints = $policy->gradingScale->pointsFor($schoolId, $standardId, 0);
+                if ($zeroPoints !== null) {
+                    $points += $zeroPoints;
+                    $pointsSeen = true;
+                }
+
+                continue;
+            }
             if ($cell->status !== ResultCell::MARKED || $cell->mark === null) {
                 continue;
             }

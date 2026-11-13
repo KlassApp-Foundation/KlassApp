@@ -352,7 +352,7 @@ class TeacherReportCardsTest extends TestCase
         $response = $this->actingAs($this->classTeacher)->get(route('teacher.reports.cards.show', $this->stream));
 
         $response->assertOk();
-        $response->assertSee('No EOT exam found for this class yet.');
+        $response->assertSee('No exam set found for this class yet.');
     }
 
     private function assertPdfPayloadEqual(string $a, string $b): void

@@ -12,6 +12,9 @@
     <div class="bg-white shadow-sm rounded-2xl border border-gray-200 overflow-hidden">
         <div class="px-6 py-5 border-b border-gray-200">
             <h2 class="text-lg font-semibold text-gray-800">My classes</h2>
+            @if (!empty($compositionLine))
+                <p class="mt-1 text-sm text-gray-600" data-testid="report-made-up-of">{{ $compositionLine }}</p>
+            @endif
         </div>
 
         <div class="p-6">
@@ -37,12 +40,17 @@
                                         @if ($sl->stream)
                                             <span class="text-gray-500 font-normal">({{ $sl->stream }})</span>
                                         @endif
+                                        @if (($row['setNames'] ?? []) !== [])
+                                            <div class="text-gray-500 font-normal">{{ implode(' · ', $row['setNames']) }}</div>
+                                        @endif
                                     </td>
                                     <td class="py-3 pr-4 text-gray-700">
                                         @if ($row['hasExam'])
                                             {{ $row['studentCount'] }}
+                                        @elseif (($row['setNames'] ?? []) !== [])
+                                            0
                                         @else
-                                            <span class="text-gray-400">No EOT exam</span>
+                                            <span class="text-gray-400">No exam set found for this class yet.</span>
                                         @endif
                                     </td>
                                     <td class="py-3 pr-4 text-gray-700">

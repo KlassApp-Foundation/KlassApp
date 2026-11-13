@@ -53,14 +53,20 @@ class ReportCardsController extends Controller
             return [
                 'stdLink' => $sl,
                 'hasExam' => $exam !== null,
+                'examName' => trim((string) ($exam?->examType?->name ?? '')),
+                'setNames' => $this->reports->examSetNames($schoolId, $sl),
                 'studentCount' => $studentCount,
                 'subjectsFilled' => $fill['filled'] ?? 0,
                 'subjectsTotal' => $fill['total'] ?? 0,
             ];
         });
 
+        $compositionLine = app(\App\Services\ReportCards\EndOfTermCompositionLine::class)
+            ->lineFor($schoolId, true, null);
+
         return view('teacher.reports.cards.index', [
             'rows' => $rows,
+            'compositionLine' => $compositionLine,
         ]);
     }
 
@@ -71,6 +77,9 @@ class ReportCardsController extends Controller
 
         $schoolId = (int) $teacher->school_id;
         $exam = $this->reports->resolveExam($schoolId, $stdLink);
+        if ($exam !== null) {
+            $exam->loadMissing('examType');
+        }
         $fill = $this->reports->subjectFillCounts($schoolId, $stdLink);
 
         $students = collect();
@@ -96,6 +105,9 @@ class ReportCardsController extends Controller
             'stdLink' => $stdLink,
             'students' => $students,
             'hasExam' => $exam !== null,
+            'examName' => trim((string) ($exam?->examType?->name ?? '')),
+            'compositionLine' => app(\App\Services\ReportCards\EndOfTermCompositionLine::class)
+                ->lineFor($schoolId, $exam !== null, $exam?->id),
             'subjectsFilled' => $fill['filled'] ?? 0,
             'subjectsTotal' => $fill['total'] ?? 0,
             'classGeneration' => $classGeneration,
@@ -140,7 +152,7 @@ class ReportCardsController extends Controller
         try {
             $exam = $this->reports->resolveExam($schoolId, $stdLink);
             if (! $exam) {
-                return back()->with('failmessage', 'No EOT exam found for this class.');
+                return back()->with('failmessage', 'No exam set found for this class.');
             }
 
             if (! $this->reports->studentIds($exam)->contains($learner->id)) {

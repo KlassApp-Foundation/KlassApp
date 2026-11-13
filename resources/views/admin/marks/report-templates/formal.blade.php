@@ -284,6 +284,16 @@
     <div class="doc-title-wrap">
         <span class="doc-title">PROGRESSIVE REPORT</span>
         <div class="doc-sub">{{ $termName }}</div>
+        @if (!empty($compositionLine ?? null))
+        {{-- design review: the end-of-term mix line is specified in the handoff, not drawn on the A4 cards. --}}
+        <div class="doc-sub" data-testid="eot-composition">{{ $compositionLine }}</div>
+        @endif
+        @if (!empty($ownReports ?? []))
+        <div class="doc-sub" data-testid="own-reports">Each exam set has its own report</div>
+        @foreach ($ownReports as $own)
+        <div class="doc-sub" data-testid="own-report-{{ $own['id'] ?? '' }}">{{ $own['name'] }} — {{ $own['status'] }}</div>
+        @endforeach
+        @endif
     </div>
 
 </div>
@@ -328,8 +338,17 @@
             @endforeach
         </table>
     @else
+        @php
+            $labelFor = function ($exam) {
+                $name = trim((string) ($exam->examType->name ?? ''));
+
+                return $name !== '' ? $name : null;
+            };
+            $aloneNames = $midExams->map($labelFor)->filter()->unique()->implode(' · ');
+            $countNames = $eotExams->map($labelFor)->filter()->unique()->implode(' · ');
+        @endphp
         @if ($midExams->isNotEmpty())
-        <div class="section-label">MONTHLY RESULTS — MID TERM</div>
+        <div class="section-label">{{ $aloneNames !== '' ? $aloneNames : 'Exam sets shown on their own' }}</div>
         <table class="ledger">
             <tr>
                 <th style="width:12%">Month Of</th>
@@ -358,7 +377,7 @@
                                     $midGrade = \App\Helpers\GradingHelper::formatAggLabel($g) ?? '-';
                                 }
                             @endphp
-                            <td>{{ $markValue !== null ? floor($markValue) : '-' }}</td>
+                            <td>@include('admin.marks.report-templates.mark-text', ['mark' => $cell ?? null])</td>
                             @if ($showAgg) <td>{{ $midGrade }}</td> @endif
                         @endif
                     @endforeach
@@ -384,7 +403,7 @@
                                     $midGrade = \App\Helpers\GradingHelper::formatAggLabel($g) ?? '-';
                                 }
                             @endphp
-                            <td>{{ $midMark && $midMark->marks !== null ? floor($midMark->marks) : '-' }}</td>
+                            <td>@include('admin.marks.report-templates.mark-text', ['mark' => $midMark ?? null])</td>
                             @if ($showAgg) <td>{{ $midGrade }}</td> @endif
                         @endif
                     @endforeach
@@ -398,7 +417,7 @@
         @endif
 
         @if ($eotExams->isNotEmpty())
-        <div class="section-label">END OF TERM {{ $termNumeral ?: 'EXAMINATION' }}</div>
+        <div class="section-label">{{ $countNames !== '' ? $countNames : 'Combined report' }}</div>
         <table class="ledger">
             <tr>
                 <th>Subject</th>
@@ -409,7 +428,10 @@
                 <th style="width:10%">TR Initials</th>
             </tr>
             @foreach ($subjects as $subject)
-                @php $eotMark = ($eotMarkBySubject[$subject->id] ?? null); @endphp
+                @php
+                    $shownMarks = $eotDisplayBySubject ?? $eotMarkBySubject ?? [];
+                    $eotMark = $shownMarks[$subject->id] ?? null;
+                @endphp
                 @if (!$eotMark) @continue @endif
                 @php
                     $hasEotMarks = $eotMark->marks !== null;
@@ -434,7 +456,7 @@
                 <tr>
                     <td class="left"><strong>{{ $subject->name }}</strong></td>
                     <td>100</td>
-                    <td>{{ $eotMark && $eotMark->marks !== null ? floor($eotMark->marks) : '-' }}</td>
+                    <td>@include('admin.marks.report-templates.mark-text', ['mark' => $eotMark])</td>
                     @if ($showAgg) <td>{{ $eotGrade }}</td> @endif
                     <td>{{ $eotComment }}</td>
                     <td>{{ $teacherName }}</td>

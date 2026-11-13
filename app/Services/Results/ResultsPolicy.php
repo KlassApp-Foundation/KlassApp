@@ -55,7 +55,7 @@ final class ResultsPolicy
         if ($needle === '' ) {
             return false;
         }
-        if ($needle === 'ab') {
+        if (in_array($needle, ['ab', 'abs'], true)) {
             return true;
         }
         foreach ($this->absentGradeLabels as $label) {

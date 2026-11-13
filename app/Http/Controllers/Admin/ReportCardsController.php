@@ -192,7 +192,7 @@ class ReportCardsController extends Controller
         $schoolId = Auth::user()->school_id;
 
         $exam = $this->resolveExam($schoolId, $stdLink, $this->requestedTermId($schoolId));
-        if (!$exam) return back()->with('failmessage', 'No EOT exam found for this class.');
+        if (!$exam) return back()->with('failmessage', 'No exam set found for this class.');
 
         $studentIds = $this->studentIds($exam);
         if ($studentIds->isEmpty()) return back()->with('failmessage', 'No students with marks.');
@@ -309,7 +309,7 @@ class ReportCardsController extends Controller
             $reports = app(StudentReportCardService::class);
             $termId = $this->requestedTermId($schoolId);
             $exam = $reports->resolveExam($schoolId, $stdLink, $termId);
-            if (!$exam) return back()->with('failmessage', 'No EOT exam found for this class.');
+            if (!$exam) return back()->with('failmessage', 'No exam set found for this class.');
 
             $pdfContent = $reports->pdfForStudent($schoolId, $stdLink, $learner, null, $termId);
 

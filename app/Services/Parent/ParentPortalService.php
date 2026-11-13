@@ -486,6 +486,7 @@ class ParentPortalService
             'student_name' => $name,
             'school_id' => $schoolId > 0 ? $schoolId : null,
             'exam_groups' => [],
+            'registration_number' => trim((string) ($student->registration_number ?? '')),
             'years' => $yearRows,
             'selected_year' => $selected,
             'current_year_id' => $currentId,
@@ -534,9 +535,11 @@ class ParentPortalService
             $subjects = [];
             foreach ($typeExams as $exam) {
                 foreach ($exam->marks as $mark) {
+                    $absent = $mark->isAbsent();
                     $subjects[] = [
                         'name' => $mark->subject?->name ?? $exam->subject?->name ?? 'Subject',
-                        'score' => (float) ($mark->marks ?? 0),
+                        'score' => $absent ? null : (float) ($mark->marks ?? 0),
+                        'display' => $absent ? 'ABS' : (string) (int) round((float) ($mark->marks ?? 0)),
                         'total' => 100,
                         'grade' => $mark->grade ?? '-',
                     ];
@@ -549,9 +552,10 @@ class ParentPortalService
                 $first->examType?->name ?? 'Exam',
             ], fn ($part) => $part !== null && $part !== ''));
 
-            $average = $subjects === []
+            $counted = array_values(array_filter($subjects, fn (array $row) => $row['score'] !== null));
+            $average = $counted === []
                 ? 0.0
-                : round(array_sum(array_column($subjects, 'score')) / count($subjects), 1);
+                : round(array_sum(array_column($counted, 'score')) / count($counted), 1);
 
             $examGroups[] = [
                 'exam_type' => $label !== '' ? $label : 'Exam',

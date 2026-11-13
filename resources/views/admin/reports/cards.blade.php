@@ -27,6 +27,9 @@
         <div>
             <h1>Report cards</h1>
             <p style="margin:6px 0 0;font-size:.9rem;color:#475569;">Built from released marks only</p>
+            @if(!empty($data['composition_line'] ?? null))
+                <p class="ka-compose" data-testid="eot-composition">{{ $data['composition_line'] }}</p>
+            @endif
         </div>
         @if($class && $sitting)
         <form method="GET" action="{{ url('/admin/reports/cards') }}" class="rc-filters" data-testid="desktop-filters">
@@ -45,6 +48,18 @@
         @endif
     </div>
 
+    @if(!empty($data['own_reports'] ?? []))
+        <section class="ka-own" aria-labelledby="own-reports" data-testid="own-reports">
+            <h2 id="own-reports">Each exam set has its own report</h2>
+            @foreach($data['own_reports'] as $own)
+                <div class="ka-own-row" data-testid="own-report-{{ $own['id'] }}">
+                    <strong>{{ $own['name'] }}</strong>
+                    <span class="ka-pill {{ !empty($own['released']) ? 'ka-pill-green' : 'ka-pill-muted' }}">{{ $own['status'] }}</span>
+                </div>
+            @endforeach
+        </section>
+    @endif
+
     @if(! $class)
         <div class="rc-empty" data-testid="rc-no-classes">
             <h2>No classes yet</h2>
@@ -56,6 +71,12 @@
             <h2>{{ $class['label'] }} has no exams yet</h2>
             <p>Report cards use released marks only. Once an exam is marked and released, it shows here.</p>
             <a href="{{ route('admin.marks.releases.index') }}" class="ds-btn ds-btn-outline" style="min-height:44px;text-decoration:none;">Go to Marks Release</a>
+        </div>
+    @elseif($state === 'blocked')
+        <div class="rc-empty" data-testid="report-blocked">
+            <h2>Combined report</h2>
+            <p data-testid="report-blocked-sets">{{ collect($data['blocked_sets'] ?? [])->pluck('name')->filter()->implode(', ') }} has marks that are not released yet.</p>
+            <a href="{{ route('admin.marks.releases.index') }}" class="ds-btn ds-btn-outline" style="min-height:44px;text-decoration:none;">Marks Release</a>
         </div>
     @elseif($state === 'unreleased' || $state === 'empty')
         <div class="rc-empty" data-testid="rc-unreleased">
@@ -134,13 +155,13 @@
                 @foreach($rows as $r)
                     <tr data-testid="rc-row">
                         <td><strong>{{ $r['position'] ?? '—' }}</strong> <span style="color:#475569;">of {{ $r['out_of'] }}</span></td>
-                        <th scope="row">{{ $r['name'] }}</th>
+                        <th scope="row">{{ $r['name'] }}@if(($r['kls'] ?? '') !== '')<div data-testid="rc-kls">{{ $r['kls'] }}</div>@endif</th>
                         <td>{{ $r['stream'] !== '' ? $r['stream'] : '—' }}</td>
                         @foreach($r['marks'] as $m)<td class="rc-r">{{ $m }}</td>@endforeach
                         <td class="rc-r" style="font-weight:700;">{{ $r['total'] }}</td>
                         <td class="rc-r">{{ $r['aggregate'] }}</td>
                         <td><span class="rc-pill">{{ $r['division'] }}</span></td>
-                        <td><a href="{{ $r['download_url'] }}" class="ds-btn ds-btn-ghost ds-btn-sm" style="min-height:40px;text-decoration:none;" aria-label="Download report card for {{ $r['name'] }}">PDF</a></td>
+                        <td><a href="{{ $r['download_url'] }}" class="ds-btn ds-btn-ghost ds-btn-sm ka-hit" style="min-height:44px;text-decoration:none;" aria-label="Download report card for {{ $r['name'] }}">PDF</a></td>
                     </tr>
                 @endforeach
                 </tbody>
@@ -149,10 +170,17 @@
 
         <div class="rc-phone" data-testid="rc-phone-list">
             @foreach($rows as $r)
-                <div>
+                <div data-testid="rc-phone-card">
                     <span class="rc-pos">{{ $r['position'] ?? '—' }}</span>
-                    <div style="flex:1;min-width:0;"><div style="font-weight:600;">{{ $r['name'] }}</div><div style="font-size:.75rem;color:#475569;">{{ $class['label'] }}{{ $r['stream'] !== '' ? ' '.$r['stream'] : '' }} · total {{ $r['total'] }} · agg {{ $r['aggregate'] }} · Div {{ $r['division'] }}</div></div>
-                    <a href="{{ $r['download_url'] }}" class="rc-dl" aria-label="Download report card for {{ $r['name'] }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg></a>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-weight:600;">{{ $r['name'] }}</div>
+                        <div style="font-size:.75rem;color:#475569;">@if(($r['kls'] ?? '') !== '')<span data-testid="rc-phone-kls">{{ $r['kls'] }}</span> · @endif{{ $class['label'] }}{{ $r['stream'] !== '' ? ' '.$r['stream'] : '' }} · total {{ $r['total'] }} · agg {{ $r['aggregate'] }} · Div {{ $r['division'] }}</div>
+                        {{-- design review: ReportPhone.dc.html shows only the summary line. Subject rows are listed here so a mark or ABS stays on the card and the phone does not scroll sideways. --}}
+                        @foreach($subjects as $i => $sub)
+                            <div class="ka-mark-row"><span>{{ $sub['name'] }}</span><strong>{{ $r['marks'][$i] ?? '—' }}</strong></div>
+                        @endforeach
+                    </div>
+                    <a href="{{ $r['download_url'] }}" class="rc-dl ka-hit" aria-label="Download report card for {{ $r['name'] }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg></a>
                 </div>
             @endforeach
         </div>

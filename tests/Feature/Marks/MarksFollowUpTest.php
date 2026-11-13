@@ -184,7 +184,7 @@ class MarksFollowUpTest extends TestCase
             'nextTerm' => null,
         ])->render();
 
-        $this->assertMatchesRegularExpression('/Mark Gained[\s\S]*\bAB\b/', $html);
+        $this->assertMatchesRegularExpression('/Mark Gained[\s\S]*\bABS\b/', $html);
         $this->assertMatchesRegularExpression('/TOTAL<\/strong><\/td>\s*<td>[^<]*<\/td>\s*<td><strong>\s*<\/strong>/', $html);
         $this->assertStringNotContainsString('>0<', $html);
     }
