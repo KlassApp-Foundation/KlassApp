@@ -411,10 +411,18 @@
                 {
                     "label": "Marks",
                     "url": "teacher/exam/marks",
-                    "active": [
-                        "marks",
-                        "mark"
+                    "paths": [
+                        "teacher/exam/marks",
+                        "teacher/exam/marks/*"
                     ]
+                },
+                {
+                    "label": "Review marks",
+                    "route": "teacher.marks.approvals",
+                    "active": [
+                        "marks/approvals"
+                    ],
+                    "condition": "class_teacher"
                 },
                 {
                     "label": "Report Cards",
