@@ -26,6 +26,9 @@ final class MarksSubmissionService
     /** @var list<int> */
     private const SCHOOL_ADMIN_GROUPS = [1, 2, 3];
 
+    /** Admins and head teachers. Approve and return stay with school admins. */
+    private const REOPEN_GROUPS = [1, 3, 4];
+
     /**
      * Submit for review needs a saved numeric mark, or a nursery rating.
      * An empty grid is not something to submit.
@@ -255,7 +258,7 @@ final class MarksSubmissionService
 
     public function reopen(User $actor, Exam $exam, int $classId, int $subjectId, string $reason): ExamMarksSubmission
     {
-        $this->assertSchoolAdmin($actor, $exam);
+        $this->assertCanReopen($actor, $exam);
         $this->assertClassAndSubject($exam, $classId, $subjectId);
         $reason = $this->reason($reason, 'reopen_reason');
 
@@ -421,6 +424,15 @@ final class MarksSubmissionService
 
         if (! in_array((int) $actor->usergroup_id, self::SCHOOL_ADMIN_GROUPS, true)) {
             abort(403, 'Only a school admin can review marks.');
+        }
+    }
+
+    private function assertCanReopen(User $actor, Exam $exam): void
+    {
+        $this->assertSameSchool($actor, $exam);
+
+        if (! in_array((int) $actor->usergroup_id, self::REOPEN_GROUPS, true)) {
+            abort(403, 'Only an admin or a head teacher can reopen released marks.');
         }
     }
 

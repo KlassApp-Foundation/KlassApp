@@ -13,6 +13,9 @@
     $fmt = fn ($t) => $t ? $t->setTimezone($tz)->format('D j M Y, H:i') : '–';
 @endphp
 <div class="mr" data-testid="marks-release-show">
+    @if(!empty($canReopen))
+        <input type="checkbox" id="ka-release-reopen" class="ka-sr ka-release-open" @checked(!empty($reopenOpen))>
+    @endif
     <h1>Marks release</h1>
     <p class="mr-sub">Times in {{ $tz }}.</p>
     @if(session('status'))
@@ -68,6 +71,40 @@
         @endif
         <a class="mr-btn mr-btn--soft" href="{{ route($area.'.marks.releases.index') }}">All releases</a>
     </div>
+
+    @if(!empty($canReopen))
+        @php
+            $reopenClass = trim((string) ($release->standardLink?->section?->name ?? $release->exam?->section?->name ?? ''));
+            if ($release->scope === 'school' || $reopenClass === '') {
+                $reopenClass = $release->scope === 'school' ? 'All classes' : 'this class';
+            }
+            $reopenSet = $release->exam?->examType?->name ?? 'this set';
+        @endphp
+        <section class="ka-release-reopen" role="dialog" aria-labelledby="h-reopen" data-testid="release-reopen">
+            <h2 id="h-reopen">Reopen {{ $reopenClass }} · {{ $reopenSet }}?</h2>
+            <ul>
+                <li>The marks unlock so the class teacher can correct them.</li>
+                <li>Families keep seeing the released results until you release again.</li>
+                <li>Your reason is kept in this history. It isn't sent to families.</li>
+            </ul>
+            <form method="POST" action="{{ route('admin.marks.releases.reopen', $release) }}">
+                @csrf
+                <label for="why">Why are you reopening it? <span class="ka-release-required">Required</span></label>
+                <textarea id="why" name="reason" rows="3" required minlength="10" maxlength="500">{{ old('reason') }}</textarea>
+                @error('reason')
+                    <p class="ka-alert ka-alert-error" role="alert">{{ $message }}</p>
+                @enderror
+                <div class="ka-release-reopen-actions">
+                    <label for="ka-release-reopen" class="ds-btn ds-btn-outline">Cancel</label>
+                    <button type="submit" class="ds-btn ds-btn-primary">Reopen {{ $reopenClass }} marks</button>
+                </div>
+            </form>
+        </section>
+        <div class="ka-release-reopen-bar">
+            <label for="ka-release-reopen" class="ds-btn ds-btn-outline" aria-haspopup="dialog">Reopen marks</label>
+            <span>Admins and head teachers only</span>
+        </div>
+    @endif
 
     @if(! empty($release->result['messages']))
     <div class="mr-card mr-scroll">

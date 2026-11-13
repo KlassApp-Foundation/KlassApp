@@ -86,3 +86,19 @@
   .ka-release-go .mr-btn{width:100%;min-height:52px}
   .mr-error,.ka-alert-error{max-width:100%}
 }
+.ka-released-pill{display:inline-flex;align-items:center;gap:6px}
+.ka-released-pill .ka-lock{width:14px;height:14px}
+.ka-release-reopen{display:none;flex-direction:column;gap:12px;border:2px solid #1E293B;border-radius:14px;padding:18px 20px;background:#fff;margin-top:16px}
+.ka-release-open:checked ~ .ka-release-reopen{display:flex}
+.ka-release-reopen ul{margin:0;padding-left:18px;color:#334155;display:flex;flex-direction:column;gap:4px}
+.ka-release-reopen label{font-weight:600}
+.ka-release-required{color:#B91C1C}
+.ka-release-reopen textarea{min-height:84px;width:100%;border:1px solid #CBD5E1;border-radius:8px;padding:8px;color:#1E293B;font:inherit;background:#fff}
+.ka-release-reopen-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}
+.ka-release-reopen-actions .ds-btn{min-height:44px}
+.ka-release-reopen-bar{display:none}
+@media (max-width:767px){
+  .ka-release-reopen-bar{display:flex;flex-direction:column;gap:6px;position:sticky;bottom:0;z-index:20;background:#fff;border-top:1px solid #E2E8F0;padding:12px 0 4px}
+  .ka-release-reopen-bar .ds-btn{min-height:48px;justify-content:center}
+  .ka-release-reopen-bar span{text-align:center;font-size:.75rem;color:#475569}
+}

@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Academics\Exam;
+use App\Models\Academics\ExamMarksSubmission;
 use App\Models\MarksRelease;
 use App\Models\User;
 use App\Support\ClassLevelOrder;
+use App\Services\Marks\MarksSubmissionService;
 use App\Services\MarksRelease\MarksReleaseService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -127,12 +129,13 @@ class MarksReleaseController extends Controller
 
     public function show(Request $request, int $release): View
     {
-        $user = $this->user();
+        $user = $this->viewer();
         $row = MarksRelease::query()
-            ->with(['exam.examType', 'exam.academicTerm', 'standardLink.section', 'creator'])
+            ->with(['exam.examType', 'exam.academicTerm', 'exam.section', 'standardLink.section', 'creator'])
             ->where('school_id', $user->school_id)
             ->findOrFail($release);
-        if (! $this->releases->isSchoolAdmin($user)
+        if (! $this->canReopenSitting($user)
+            && ! $this->releases->isSchoolAdmin($user)
             && ! ($row->scope === 'class' && $this->releases->links($user)->contains('id', $row->standard_link_id))) {
             abort(404);
         }
@@ -148,7 +151,78 @@ class MarksReleaseController extends Controller
         return view('marks-releases.show', $this->shared($request) + [
             'release' => $row,
             'releasedBy' => $releasedBy,
+            'canReopen' => $this->canReopenSitting($user)
+                && $row->status === MarksRelease::STATUS_RELEASED
+                && $row->released_at !== null,
+            'reopenOpen' => $request->session()->get('errors')?->has('reason') === true,
         ]);
+    }
+
+    public function reopen(Request $request, int $release, MarksSubmissionService $submissions): RedirectResponse
+    {
+        $user = Auth::user();
+        abort_unless($user instanceof User && $this->canReopenSitting($user), 403);
+
+        $row = MarksRelease::query()
+            ->with(['exam', 'standardLink'])
+            ->where('school_id', $user->school_id)
+            ->findOrFail($release);
+
+        if ($row->status !== MarksRelease::STATUS_RELEASED || $row->released_at === null) {
+            throw ValidationException::withMessages([
+                'reason' => 'Only a released set can be reopened.',
+            ]);
+        }
+
+        $reason = trim((string) $request->input('reason', ''));
+        if (mb_strlen($reason) < 10) {
+            throw ValidationException::withMessages([
+                'reason' => 'Give a reason of at least 10 characters.',
+            ]);
+        }
+        if (mb_strlen($reason) > 500) {
+            throw ValidationException::withMessages([
+                'reason' => 'Keep the reason under 500 characters.',
+            ]);
+        }
+
+        $anchor = $row->exam;
+        abort_if($anchor === null, 404);
+
+        $examIds = Exam::query()
+            ->where('school_id', $row->school_id)
+            ->where('exam_type_id', $anchor->exam_type_id)
+            ->where('academic_term_id', $anchor->academic_term_id)
+            ->whereNull('deleted_at')
+            ->when($row->scope !== 'school', function ($query) use ($row, $anchor): void {
+                $sectionId = (int) ($row->standardLink?->section_id ?: $anchor->section_id);
+                $query->where('section_id', $sectionId);
+            })
+            ->pluck('id');
+
+        $locked = ExamMarksSubmission::query()
+            ->where('school_id', $row->school_id)
+            ->whereIn('exam_id', $examIds)
+            ->get()
+            ->filter(fn (ExamMarksSubmission $submission): bool => $submission->isLocked() || $submission->isApproved());
+
+        if ($locked->isEmpty()) {
+            throw ValidationException::withMessages([
+                'reason' => 'Only a locked or approved subject can be reopened.',
+            ]);
+        }
+
+        foreach ($locked as $submission) {
+            $exam = Exam::query()->where('school_id', $row->school_id)->whereKey($submission->exam_id)->first();
+            if ($exam === null) {
+                continue;
+            }
+            $submissions->reopen($user, $exam, (int) $submission->class_id, (int) $submission->subject_id, $reason);
+        }
+
+        return redirect()
+            ->route('admin.marks.releases.show', $row)
+            ->with('status', 'Reopened. Families keep seeing the released results until you release again.');
     }
 
     /** @return array{exam_id:int, standard_link_id:int|null, class:string, stream:string, when:string, scheduled_for:string|null, timezone:string|null, confirm_past:bool, whatsapp_send:bool} */
@@ -187,6 +261,24 @@ class MarksReleaseController extends Controller
         abort_unless($this->releases->canRelease($user), 403);
 
         return $user;
+    }
+
+    /**
+     * A class teacher may open a release they made. Reopening is only for
+     * an admin or head teacher of this school.
+     */
+    private function viewer(): User
+    {
+        $user = Auth::user();
+        abort_unless($user instanceof User, 403);
+        abort_unless($this->releases->canRelease($user) || $this->canReopenSitting($user), 403);
+
+        return $user;
+    }
+
+    private function canReopenSitting(User $user): bool
+    {
+        return $user->school_id !== null && in_array((int) $user->usergroup_id, [1, 3, 4], true);
     }
 
     private function area(Request $request): string
