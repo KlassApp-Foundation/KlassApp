@@ -142,3 +142,11 @@
   .ka-compose-actions a,.ka-compose-actions button{flex:0 0 auto}
   .ka-made{font-size:.9rem}
 }
+
+/* Phone: quick choices scroll inside their row. The page itself does not. */
+@media (max-width: 767px) {
+  .ka-compose, .ka-compose-layout, .ka-compose-main, .ka-quick-wrap { min-width: 0; max-width: 100%; }
+  .ka-quick { max-width: 100%; }
+  .ka-compose select.ds-form-input { width: 100% !important; max-width: 100%; box-sizing: border-box; }
+  .ka-compose table { display: block; width: 100%; max-width: 100%; overflow-x: auto; }
+}
