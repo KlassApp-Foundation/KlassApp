@@ -51,7 +51,7 @@
         <article class="ka-learner-card" data-testid="marks-phone-card">
             <div class="ka-learner-head">
                 <span class="ka-learner-pos">{{ ($streamFiltered ? $student->streamPosition : $student->classPosition) ?? '—' }}</span>
-                <span class="ka-learner-meta" data-testid="marks-phone-position">{{ $student->placeLabel($streamFiltered) }}</span>
+                <span class="ka-learner-meta" data-testid="marks-phone-position">{{ ($streamFiltered ? $student->streamPosition : $student->classPosition) === null ? '—' : 'of '.($streamFiltered ? $student->streamOutOf : $student->classOutOf) }}</span>
                 <strong>
                     @if($showReportLink && $exam && $class)
                         <a class="ka-learner-name" href="{{ route('admin.marks.student.class', ['user' => $student->studentId, 'class' => $class->id, 'exam' => $exam->id]) }}">{{ $student->name }}</a>
@@ -76,7 +76,7 @@
                 @endforeach
                 <div class="ka-learner-total">
                     <dt>Total</dt>
-                    <dd data-testid="marks-phone-total">Total {{ $student->displayTotal ?? '—' }}</dd>
+                    <dd data-testid="marks-phone-total">{{ $student->displayTotal ?? '—' }}</dd>
                 </div>
             </dl>
         </article>

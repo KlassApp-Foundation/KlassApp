@@ -316,7 +316,8 @@ class MarksOverviewTest extends TestCase
             $this->assertStringNotContainsString('91', $cell);
         }
         $this->assertTrue($this->cellHas($this->innerCells($html, $this->reading->id), '77'));
-        $this->assertStringContainsString('Total 50', $html);
+        $this->assertMatchesRegularExpression('/data-testid="marks-phone-total">\s*50\s*</', $html);
+        $this->assertDoesNotMatchRegularExpression('/data-testid="marks-phone-total">\s*Total/', $html);
         $this->assertStringNotContainsString('Total 127', $html);
         $this->assertStringNotContainsString('Total 218', $html);
         $this->assertStringContainsString('>ABS<', $html);
@@ -337,6 +338,7 @@ class MarksOverviewTest extends TestCase
         $this->assertStringContainsString('KLS0010001', $card);
         $this->assertStringContainsString('KLS0010001 · East', $card);
         $this->assertStringContainsString('ka-learner-pos', $card);
+        $this->assertMatchesRegularExpression('/data-testid="marks-phone-position">\s*of 1\s*</', $card);
         $this->assertStringContainsString($this->english->name, $card);
         $this->assertStringContainsString($this->reading->name, $card);
         $this->assertStringContainsString($this->science->name, $card);
@@ -361,6 +363,11 @@ class MarksOverviewTest extends TestCase
         $this->assertStringContainsString('Ready when you are', $empty);
         $this->assertStringNotContainsString('data-testid="marks-sheet-error"', $empty);
         $this->assertStringContainsString('data-ka-filters', $empty);
+        $scripts = strpos($empty, '<!-- Scripts -->');
+        $listener = strpos($empty, "field.form.classList.contains('ka-sheet-filters')");
+        $this->assertNotFalse($scripts);
+        $this->assertNotFalse($listener);
+        $this->assertGreaterThan($scripts, $listener);
 
         $this->actingAs($this->admin)->get(route('admin.marks.filter', [
             'year' => 999999,
