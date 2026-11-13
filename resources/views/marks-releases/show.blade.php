@@ -7,15 +7,37 @@
 @endsection
 
 @section('content')
+@include('partials.ka-screen')
 @php
     $tz = $release->timezone ?: 'Africa/Kampala';
     $fmt = fn ($t) => $t ? $t->setTimezone($tz)->format('D j M Y, H:i') : '–';
 @endphp
 <div class="mr" data-testid="marks-release-show">
+    @if(!empty($canReopen))
+        <input type="checkbox" id="ka-release-reopen" class="ka-sr ka-release-open" @checked(!empty($reopenOpen))>
+    @endif
     <h1>Marks release</h1>
     <p class="mr-sub">Times in {{ $tz }}.</p>
     @if(session('status'))
         <div class="mr-card" role="status" data-testid="release-flash">{{ session('status') }}</div>
+    @endif
+    @if($release->status === 'failed' || (int) ($release->result['failed'] ?? 0) > 0)
+        <div class="ka-alert ka-alert-error" role="alert" data-testid="release-error">
+            @if($release->status === 'failed')
+                Release failed. {{ (int) ($release->result['failed'] ?? 0) }} failed.
+            @else
+                {{ (int) $release->result['failed'] }} failed.
+            @endif
+        </div>
+    @endif
+    @if($release->status === \App\Models\MarksRelease::STATUS_RELEASED && $release->released_at)
+        <div class="mr-card">
+            @include('partials.ka-released-lock', ['lock' => [
+                'at' => $release->released_at,
+                'timezone' => $tz,
+                'name' => $releasedBy ?: 'Unknown',
+            ]])
+        </div>
     @endif
     @if(($release->result['queued'] ?? 0) > 0)
         <p class="mr-sub" data-testid="release-in-progress">{{ $release->result['queued'] }} still sending. Refresh this page to update.</p>
@@ -27,7 +49,10 @@
             <dt>Status</dt><dd data-testid="release-status">{{ ucfirst($release->status) }}</dd>
             <dt>Scheduled</dt><dd>{{ $fmt($release->scheduled_at) }}</dd>
             <dt>Released</dt><dd>{{ $fmt($release->released_at) }}</dd>
-            <dt>By</dt><dd>{{ $release->creator?->name ?? '–' }}</dd>
+            <dt>By</dt><dd>{{ $releasedBy ?: '–' }}</dd>
+            @if(filled($release->release_reason))
+            <dt>Reason</dt><dd data-testid="release-history-reason">{{ $release->release_reason }}</dd>
+            @endif
             <dt>WhatsApp</dt><dd data-testid="release-whatsapp">{{ $release->whatsapp_send ? 'On' : 'Off' }}</dd>
             <dt>Sent</dt><dd data-testid="release-sent">{{ $release->result['sent'] ?? '–' }}</dd>
             <dt>Skipped</dt><dd data-testid="release-skipped">{{ $release->result['skipped'] ?? '–' }}</dd>
@@ -46,6 +71,40 @@
         @endif
         <a class="mr-btn mr-btn--soft" href="{{ route($area.'.marks.releases.index') }}">All releases</a>
     </div>
+
+    @if(!empty($canReopen))
+        @php
+            $reopenClass = trim((string) ($release->standardLink?->section?->name ?? $release->exam?->section?->name ?? ''));
+            if ($release->scope === 'school' || $reopenClass === '') {
+                $reopenClass = $release->scope === 'school' ? 'All classes' : 'this class';
+            }
+            $reopenSet = $release->exam?->examType?->name ?? 'this set';
+        @endphp
+        <section class="ka-release-reopen" role="dialog" aria-labelledby="h-reopen" data-testid="release-reopen">
+            <h2 id="h-reopen">Reopen {{ $reopenClass }} · {{ $reopenSet }}?</h2>
+            <ul>
+                <li>The marks unlock so the class teacher can correct them.</li>
+                <li>Families keep seeing the released results until you release again.</li>
+                <li>Your reason is kept in this history. It isn't sent to families.</li>
+            </ul>
+            <form method="POST" action="{{ route('admin.marks.releases.reopen', $release) }}">
+                @csrf
+                <label for="why">Why are you reopening it? <span class="ka-release-required">Required</span></label>
+                <textarea id="why" name="reason" rows="3" required minlength="10" maxlength="500">{{ old('reason') }}</textarea>
+                @error('reason')
+                    <p class="ka-alert ka-alert-error" role="alert">{{ $message }}</p>
+                @enderror
+                <div class="ka-release-reopen-actions">
+                    <label for="ka-release-reopen" class="ds-btn ds-btn-outline">Cancel</label>
+                    <button type="submit" class="ds-btn ds-btn-primary">Reopen {{ $reopenClass }} marks</button>
+                </div>
+            </form>
+        </section>
+        <div class="ka-release-reopen-bar">
+            <label for="ka-release-reopen" class="ds-btn ds-btn-outline" aria-haspopup="dialog">Reopen marks</label>
+            <span>Admins and head teachers only</span>
+        </div>
+    @endif
 
     @if(! empty($release->result['messages']))
     <div class="mr-card mr-scroll">
