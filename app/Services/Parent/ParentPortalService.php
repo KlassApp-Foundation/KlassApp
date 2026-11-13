@@ -14,6 +14,7 @@ use App\Models\StudentAcademic;
 use App\Models\StudentHealthIncident;
 use App\Models\StudentParentLink;
 use App\Models\User;
+use App\Services\Results\FamilyReleasedCopy;
 use App\Services\StudentFeeResolver;
 use App\Services\StudentReportCardService;
 use App\Support\AttendanceDays;
@@ -515,6 +516,7 @@ class ParentPortalService
             $examQuery->where('academic_year_id', $selected);
         }
 
+        $releasedCopy = app(FamilyReleasedCopy::class);
         $exams = $examQuery->get()->sortBy(function (Exam $exam) {
             $yearStart = (string) ($exam->academicYear?->start_date ?? '');
             $termStart = (string) ($exam->academicTerm?->starts_on ?? '');
@@ -533,12 +535,24 @@ class ParentPortalService
             $first = $typeExams->first();
             $subjects = [];
             foreach ($typeExams as $exam) {
+                $frozen = $releasedCopy->subjectsFor($student, $schoolId, $exam);
                 foreach ($exam->marks as $mark) {
+                    $subjectId = (int) ($mark->subject_id ?? 0);
+                    if ($frozen !== null) {
+                        if (! isset($frozen[$subjectId])) {
+                            continue;
+                        }
+                        $score = $frozen[$subjectId]['mark'];
+                        $grade = $frozen[$subjectId]['grade'] ?? '-';
+                    } else {
+                        $score = (float) ($mark->marks ?? 0);
+                        $grade = $mark->grade ?? '-';
+                    }
                     $subjects[] = [
                         'name' => $mark->subject?->name ?? $exam->subject?->name ?? 'Subject',
-                        'score' => (float) ($mark->marks ?? 0),
+                        'score' => $score,
                         'total' => 100,
-                        'grade' => $mark->grade ?? '-',
+                        'grade' => $grade,
                     ];
                 }
             }

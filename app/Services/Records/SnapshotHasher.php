@@ -19,6 +19,19 @@ class SnapshotHasher
         return hash('sha256', $encoded === false ? '[]' : $encoded);
     }
 
+    /**
+     * The stored hex, in groups of four, for the record-check line.
+     */
+    public static function grouped(string $hash): string
+    {
+        $hex = strtoupper((string) preg_replace('/[^0-9a-fA-F]/', '', $hash));
+        if ($hex === '') {
+            return '';
+        }
+
+        return trim(chunk_split($hex, 4, ' '));
+    }
+
     public static function normalize(mixed $value): mixed
     {
         if (! is_array($value)) {

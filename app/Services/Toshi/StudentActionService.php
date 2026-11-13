@@ -3,7 +3,9 @@
 namespace App\Services\Toshi;
 
 use App\Contracts\Results\ReleaseGate;
+use App\Models\Academics\Exam;
 use App\Models\Academics\Marks;
+use App\Services\Results\FamilyReleasedCopy;
 use App\Models\Assignment;
 use App\Models\Attendance;
 use App\Models\BookLending;
@@ -142,6 +144,7 @@ class StudentActionService
             Marks::where('student_id', $student->id)->where('school_id', $student->school_id),
             $student,
         )
+            ->with('exam')
             ->orderByDesc('id')
             ->limit(20)
             ->get(['id', 'subject_id', 'exam_id', 'marks', 'grade']);
@@ -150,12 +153,37 @@ class StudentActionService
             return self::result(true, 'No marks recorded for you yet.', ['count' => 0]);
         }
 
-        $lines = $rows->map(fn ($m) => "- Mark #{$m->id}: score {$m->marks}".($m->grade ? " (grade {$m->grade})" : ''))->implode("\n");
+        $copy = app(FamilyReleasedCopy::class);
+        $lines = $rows->map(function ($mark) use ($student, $copy) {
+            $score = $mark->marks;
+            $grade = $mark->grade;
+            if ($mark->exam instanceof Exam) {
+                $frozen = $copy->subjectsFor($student, (int) $student->school_id, $mark->exam);
+                $subjectId = (int) $mark->subject_id;
+                if ($frozen !== null && isset($frozen[$subjectId])) {
+                    $score = self::releasedScore($frozen[$subjectId]['mark']);
+                    if ($frozen[$subjectId]['grade'] !== null && $frozen[$subjectId]['grade'] !== '') {
+                        $grade = $frozen[$subjectId]['grade'];
+                    }
+                }
+            }
+
+            return "- Mark #{$mark->id}: score {$score}".($grade ? " (grade {$grade})" : '');
+        })->implode("\n");
 
         return self::result(true, "**Your marks:**\n{$lines}", [
             'count' => $rows->count(),
             'ids' => $rows->pluck('id')->all(),
         ]);
+    }
+
+    private static function releasedScore(float $mark): string
+    {
+        if (abs($mark - round($mark)) < 0.00001) {
+            return (string) (int) round($mark);
+        }
+
+        return rtrim(rtrim(sprintf('%.2F', $mark), '0'), '.');
     }
 
     public static function viewAttendance(User $student): array
