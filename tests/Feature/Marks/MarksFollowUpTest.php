@@ -152,7 +152,7 @@ class MarksFollowUpTest extends TestCase
             ->get(route('teacher.exam.marks.enter', $this->exam))
             ->assertOk()
             ->getContent();
-        $this->assertStringContainsString('value="AB"', $html);
+        $this->assertStringContainsString('value="ABS"', $html);
         $this->assertStringContainsString('value="80"', $html);
 
         app(MarksSubmissionService::class)->submit($this->exam, $this->teacher);

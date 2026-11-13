@@ -58,7 +58,75 @@
   .ka-filter-panel{display:none}
   .ka-filter-panel.is-open{display:flex;flex-direction:column;gap:14px;position:fixed;z-index:80;left:0;right:0;bottom:0;background:#fff;border-radius:20px 20px 0 0;padding:10px 16px 20px;max-height:85vh;overflow:auto}
   .ka-filter-backdrop.is-open{display:block;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:70}
-  .ka-mark{width:100% !important;min-height:52px !important;font-size:1.1rem !important}
+  .ka-mark{width:76px !important;height:48px !important;min-height:48px !important;max-width:76px !important;font-size:1.05rem !important}
+  .ka-marks-sheet{overflow:visible;max-width:100%}
+  .ka-marks-roster thead{display:none}
+  .ka-marks-roster,.ka-marks-roster tbody{display:block;width:100%}
+  .ka-marks-roster tr.ka-learner{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;padding:10px 14px;margin:0 0 10px}
+  .ka-marks-roster tr.ka-learner.is-invalid{background:#FEF2F2}
+  .ka-marks-roster tr.ka-learner td{display:block;width:auto;padding:0;border:0}
+  .ka-learner-id{grid-column:1;grid-row:1}
+  .ka-stream-cell{grid-column:1;grid-row:2;color:#64748B;font-size:.75rem}
+  .ka-mark-cell{grid-column:2;grid-row:1 / span 2;justify-self:end}
+  .ka-sticky.ka-marks-bar{position:fixed;left:0;right:0;bottom:0;z-index:45;margin:0;flex-direction:column;align-items:stretch;background:#FFFFFF;border-top:1px solid #E2E8F0}
+  .ka-marks-page{padding-bottom:150px}
+  .ka-entry-streams .ka-filter-launch,.ka-entry-streams .ka-filter-backdrop{display:none !important}
+  .ka-entry-streams .ka-filter-panel{display:flex !important;flex-direction:row;flex-wrap:wrap;position:static;max-height:none;overflow:visible;padding:0;background:transparent;border-radius:0;z-index:auto}
+  .ka-entry-streams .ka-chip{min-height:44px}
   .ka-sheet-table{display:none}
   .ka-phone-cards{display:flex;flex-direction:column;gap:10px}
 }
+.ka-marks-form{order:1}
+.ka-marks-bar{order:2}
+.ka-marks-actions{display:flex;gap:10px;flex-wrap:wrap}
+.ka-marks-actions button,.ka-marks-actions .ds-btn{min-height:48px;flex:1 1 140px}
+.ka-progress{margin:0;font-size:.82rem;color:#334155}
+.ka-progress strong{color:#1E293B}
+.ka-still-needed{margin:0;font-size:.82rem;color:#334155}
+.ka-draft-saved{margin:6px 0 0;font-size:.8rem;color:#64748B}
+.ka-learner-name{font-weight:600;font-size:.92rem;color:#1E293B}
+.ka-learner-kls{font-size:.75rem;color:#64748B}
+.ka-mark-controls{display:flex;align-items:center;gap:8px}
+.ka-mark{width:76px;height:48px;min-height:48px;border:1px solid #CBD5E1;border-radius:10px;text-align:center;font-weight:700;color:#1E293B;background:#FFFFFF;box-sizing:border-box}
+.ka-mark.is-blank{border:1px dashed #CBD5E1}
+.ka-mark.is-invalid{border:2px solid #B91C1C}
+.ka-abs{min-width:44px;min-height:44px;padding:0 12px;border-radius:10px;border:1px solid #CBD5E1;background:#FFFFFF;color:#1E293B;font-weight:700}
+.ka-abs[aria-pressed="true"]{border:2px solid #1E293B;background:#F1F5F9}
+.ka-saved-check{color:#15803D;font-weight:700;min-width:24px}
+.ka-not-saved{display:inline-block;margin-top:4px;color:#92400E;background:#FFFBEB;font-size:.75rem;font-weight:700;border-radius:8px;padding:4px 8px}
+.ka-mark-cell [data-mark-error]{font-size:.75rem;color:#B91C1C;font-weight:700;margin-top:3px}
+.ka-submit-approval:not(:disabled){background:#15803D;color:#FFFFFF;border:1px solid #15803D}
+.ka-submit-approval:disabled{background:#FFFFFF;color:#64748B;border:1px solid #CBD5E1}
+.ka-nursery-sheet{overflow-x:auto}
+@media (min-width:768px){
+  .ka-marks-sheet{overflow-x:auto}
+}
+.ka-entry-list{display:flex;flex-direction:column;background:#fff;border:1px solid #E2E8F0;border-radius:14px;overflow:hidden}
+.ka-entry-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #E2E8F0;background:#fff}
+.ka-entry-row[data-state="pending"]{background:#FFFBEB}
+.ka-entry-row[data-state="error"]{background:#FEF2F2}
+.ka-entry-row[data-state="typing"]{background:#EFF6FF}
+.ka-entry-who{flex:1;min-width:0}
+.ka-entry-meta{font-size:.75rem;color:#475569}
+.ka-entry-status{display:flex;align-items:center;gap:4px;margin-top:2px;font-size:.75rem;font-weight:700}
+.ka-entry-row[data-state="saved"] .ka-entry-status,.ka-entry-row[data-state="absent"] .ka-entry-status{color:#166534}
+.ka-entry-row[data-state="pending"] .ka-entry-status{color:#92400E}
+.ka-entry-row[data-state="error"] .ka-entry-status{color:#B91C1C}
+.ka-entry-row[data-state="typing"] .ka-entry-status{color:#1D4ED8}
+.ka-entry-row[data-state="blank"] .ka-entry-status{color:#475569}
+.ka-entry-list .ka-mark{width:76px;height:48px;min-height:48px;max-width:76px;border-radius:10px;text-align:center;font-weight:700;font-size:1.05rem;color:#1E293B;background:#fff;box-sizing:border-box}
+.ka-entry-row[data-state="saved"] .ka-mark{border:1px solid #64748B;background:#fff}
+.ka-entry-row[data-state="absent"] .ka-mark{border:1px solid #94A3B8;background:#F1F5F9;color:#334155}
+.ka-entry-row[data-state="pending"] .ka-mark{border:2px solid #B45309;background:#fff}
+.ka-entry-row[data-state="error"] .ka-mark{border:2px solid #B91C1C;background:#fff}
+.ka-entry-row[data-state="typing"] .ka-mark{border:2px solid #1D4ED8;box-shadow:0 0 0 3px #BFDBFE;background:#fff}
+.ka-entry-row[data-state="blank"] .ka-mark{border:1px dashed #64748B;background:#FAFAF5}
+.ka-entry-list .ka-abs{min-width:52px;width:52px;height:48px;min-height:48px;padding:0 8px;border-radius:10px;border:1px solid #64748B;background:#fff;color:#334155;font:700 .78rem 'DM Sans',sans-serif}
+.ka-entry-list .ka-abs[aria-pressed="true"]{border:1px solid #0F172A;background:#0F172A;color:#fff}
+.ka-offline{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;background:#FFFBEB;border:1px solid #FDE68A;color:#92400E;font-size:.85rem;line-height:1.4}
+.ka-next{flex:1;min-height:48px;border-radius:10px;border:1px solid #0F172A;background:#0F172A;color:#fff;font:700 .92rem 'DM Sans',sans-serif}
+.ka-prev{width:52px;min-height:48px;border-radius:10px;border:1px solid #64748B;background:#fff;color:#1E293B;display:inline-flex;align-items:center;justify-content:center}
+.ka-entry-help{margin:0;font-size:.75rem;color:#475569}
+.ka-entry-tally{font-size:.8rem;color:#475569}
+.ka-marks-sheet.ka-entry-list{overflow:hidden}
+.ka-marks-page{padding-bottom:240px}

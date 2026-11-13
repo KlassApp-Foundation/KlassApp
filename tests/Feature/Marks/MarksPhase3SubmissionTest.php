@@ -186,9 +186,9 @@ class MarksPhase3SubmissionTest extends TestCase
             ->get(route('teacher.exam.marks.enter', $this->examA))
             ->assertOk()
             ->getContent();
-        $this->assertStringContainsString('data-testid="marks-entry-state"', $enter);
-        $this->assertStringContainsString('Submitted', $enter);
-        $this->assertStringNotContainsString('data-testid="marks-submit-button"', $enter);
+        $this->assertStringContainsString('data-testid="marks-entry-tally"', $enter);
+        $this->assertMatchesRegularExpression('/not saved yet · submitted/', $enter);
+        $this->assertDoesNotMatchRegularExpression('/<button[^>]*data-testid="marks-submit-button"/', $enter);
 
         $view = $this->actingAs($this->teacherA)
             ->get(route('teacher.exam.marks.view', $this->examA))

@@ -73,12 +73,16 @@
 
                         {{-- Marks --}}
                         <td class="p-1 border border-gray-400">
+                            @if($mark->isAbsent())
+                                <span data-testid="submitted-mark-absent">ABS</span>
+                            @else
                             <span class="px-2 py-1 text-sm font-semibold rounded-full
-                                {{ $mark->marks >= 70 ? 'bg-green-100 text-green-700' : 
-                                   ($mark->marks >= 50 ? 'bg-yellow-100 text-yellow-700' : 
+                                {{ $mark->marks >= 70 ? 'bg-green-100 text-green-700' :
+                                   ($mark->marks >= 50 ? 'bg-yellow-100 text-yellow-700' :
                                    'bg-red-100 text-red-700') }}">
-                                {{ ceil($mark->marks) }}
+                                {{ $mark->displayMark() }}
                             </span>
+                            @endif
                         </td>
 
                         {{-- Exam --}}
@@ -93,7 +97,7 @@
 
                          {{-- grade --}}
                         <td class="p-1  border border-gray-400">
-                            {{ $mark->grade ?? 'N/A' }}
+                            {{ $mark->isAbsent() ? 'ABS' : ($mark->grade ?? 'N/A') }}
                         </td>
 
                         {{-- Actions --}}
