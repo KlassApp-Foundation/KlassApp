@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class ExamType extends Model
 {
     use HasFactory;
-    protected $fillable = ["school_id", "name", "code", "contributes_to_report_total"];
+    protected $fillable = ["school_id", "name", "code", "short_name", "contributes_to_report_total"];
 
     protected $casts = [
         'contributes_to_report_total' => 'boolean',

@@ -45,20 +45,9 @@
 
     @if($filtered && $missingSubjects->isNotEmpty())
         <div class="ds-reminder-banner" data-testid="exams-reminder-banner" style="margin-bottom: 16px;">
-            <div style="font-family: var(--d-font-display, 'Sora', sans-serif); font-weight: 600; font-size: 14px; color: var(--d-dark);">
-                {{ $missingSubjects->count() }} {{ \Illuminate\Support\Str::plural('subject', $missingSubjects->count()) }} still missing marks
-            </div>
-            <div style="font-size: 13px; color: var(--d-text-secondary); margin-top: 4px;">
-                {{ $missingSubjects->pluck('name')->join(', ', ' and ') }}
-                {{ $missingSubjects->count() === 1 ? 'has' : 'have' }} no submitted entries
-                @if($class)
-                    for {{ $class->name }}
-                @endif.
-                Publishing now would send incomplete report cards to parents.
-            </div>
-            <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
-                <a href="{{ url('/admin/exams') }}" class="ds-btn ds-btn-primary text-sm">Remind subject teachers</a>
-            </div>
+            <p style="margin:0;font-size:14px;color:var(--d-dark);">
+                {{ $missingSubjects->count() }} {{ \Illuminate\Support\Str::plural('subject', $missingSubjects->count()) }} have no submitted marks. Each missing mark counts as 0.
+            </p>
         </div>
     @endif
 

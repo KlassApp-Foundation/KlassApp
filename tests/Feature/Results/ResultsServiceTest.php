@@ -86,7 +86,7 @@ class ResultsServiceTest extends TestCase
         }
     }
 
-    public function test_missing_marks_are_excluded_and_absent_labels_do_not_count_as_zero(): void
+    public function test_missing_and_absent_marks_count_as_zero(): void
     {
         $ctx = $this->school();
         $term = $this->term($ctx);
@@ -109,17 +109,16 @@ class ResultsServiceTest extends TestCase
         $this->assertSame('missing', $partialRow->cell($ctx['maths']->id)->status);
         $this->assertNull($partialRow->cell($ctx['maths']->id)->mark);
         $this->assertSame(80.0, $partialRow->total);
-        $this->assertSame(80.0, $partialRow->average);
-        $this->assertSame(1, $partialRow->subjectsCounted);
-        $this->assertSame(9, $partialRow->aggregate);
-        $this->assertSame('1', $partialRow->division);
+        $this->assertSame(40.0, $partialRow->average);
+        $this->assertSame(2, $partialRow->subjectsCounted);
+        $this->assertSame(18, $partialRow->aggregate);
 
         $absentRow = $sheet->student($absent->id);
         $this->assertSame('absent', $absentRow->cell($ctx['maths']->id)->status);
         $this->assertNull($absentRow->cell($ctx['maths']->id)->mark);
         $this->assertSame(80.0, $absentRow->total);
-        $this->assertSame(80.0, $absentRow->average);
-        $this->assertSame(1, $absentRow->subjectsCounted);
+        $this->assertSame(40.0, $absentRow->average);
+        $this->assertSame(2, $absentRow->subjectsCounted);
     }
 
     public function test_decimal_marks_use_the_scale_and_display_rounds_half_up(): void
@@ -247,10 +246,15 @@ class ResultsServiceTest extends TestCase
         $this->assertSame(1, $row->subjectsCounted);
         $this->assertArrayNotHasKey($science->id, $row->cells);
 
-        $this->assertCount(1, $sheet->sittings);
-        $this->assertSame('EOT', $sheet->sittings[0]->code);
-        $this->assertTrue($sheet->sittings[0]->contributesToReport);
-        $this->assertSame(80.0, $sheet->sittings[0]->student($student->id)->total);
+        $this->assertCount(2, $sheet->sittings);
+        $byCode = [];
+        foreach ($sheet->sittings as $sitting) {
+            $byCode[$sitting->code] = $sitting;
+        }
+        $this->assertTrue($byCode['EOT']->contributesToReport);
+        $this->assertSame(80.0, $byCode['EOT']->student($student->id)->total);
+        $this->assertFalse($byCode['MID']->contributesToReport);
+        $this->assertSame(70.0, $byCode['MID']->student($student->id)->total);
 
         $midSheet = $this->sheet($ctx, $term, examTypeId: 1);
         $this->assertSame(70.0, $midSheet->student($student->id)->total);
