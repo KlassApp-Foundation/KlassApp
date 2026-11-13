@@ -12,6 +12,7 @@ use App\Models\Subject;
 use App\Models\User;
 use App\Notifications\MarksSubmissionNotification;
 use App\Services\Academics\BaseClassExamRoster;
+use App\Services\ExamAuthorization;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
@@ -96,7 +97,14 @@ final class MarksSubmissionService
 
     public function approve(User $actor, Exam $exam, ?int $classId = null, ?int $subjectId = null): int
     {
-        $this->assertSchoolAdmin($actor, $exam);
+        $scope = $this->reviewScope($actor, $exam);
+
+        if ($scope === 'class') {
+            if ($classId !== null && (int) $classId !== (int) $exam->section_id) {
+                abort(403, 'You can only review marks for the class you head.');
+            }
+            $classId = (int) $exam->section_id;
+        }
 
         $query = ExamMarksSubmission::query()
             ->where('school_id', $exam->school_id)
@@ -152,6 +160,7 @@ final class MarksSubmissionService
      */
     public function approveSelected(User $actor, array $submissionIds): array
     {
+        $this->assertCanReviewSelected($actor, $submissionIds);
         if (! in_array((int) $actor->usergroup_id, self::SCHOOL_ADMIN_GROUPS, true)) {
             abort(403, 'Only a school admin can review marks.');
         }
@@ -180,7 +189,12 @@ final class MarksSubmissionService
 
     public function returnToTeacher(User $actor, Exam $exam, int $classId, int $subjectId, string $reason): ExamMarksSubmission
     {
-        $this->assertSchoolAdmin($actor, $exam);
+        $scope = $this->reviewScope($actor, $exam);
+
+        if ($scope === 'class' && (int) $classId !== (int) $exam->section_id) {
+            abort(403, 'You can only return marks for the class you head.');
+        }
+
         $this->assertClassAndSubject($exam, $classId, $subjectId);
         $reason = $this->reason($reason, 'return_reason');
 
@@ -317,10 +331,11 @@ final class MarksSubmissionService
         return $row;
     }
 
-    public function pendingCount(int $schoolId): int
+    public function pendingCount(int $schoolId, ?array $sectionIds = null): int
     {
         return ExamMarksSubmission::query()
             ->where('school_id', $schoolId)
+            ->when($sectionIds !== null, fn ($q) => $q->whereIn('class_id', $sectionIds))
             ->whereIn('status', ['submitted', 'locked'])
             ->where(function ($query) {
                 $query->where('approval_status', 'pending')
@@ -329,10 +344,11 @@ final class MarksSubmissionService
             ->count();
     }
 
-    public function awaitingReview(int $schoolId)
+    public function awaitingReview(int $schoolId, ?array $sectionIds = null)
     {
         return ExamMarksSubmission::query()
             ->where('school_id', $schoolId)
+            ->when($sectionIds !== null, fn ($q) => $q->whereIn('class_id', $sectionIds))
             ->whereIn('status', ['submitted', 'locked'])
             ->where(function ($query) {
                 $query->where('approval_status', 'pending')
@@ -404,6 +420,49 @@ final class MarksSubmissionService
                 throw ValidationException::withMessages([
                     'submission' => 'Every student needs a mark or AB before you submit for approval.',
                 ]);
+            }
+        }
+    }
+
+    /**
+     * 'school' for a full admin (1, 2, 3), 'class' for the teacher who heads
+     * the exam's class. Anyone else is refused. Mirrors release scoping.
+     */
+    private function reviewScope(User $actor, Exam $exam): string
+    {
+        $this->assertSameSchool($actor, $exam);
+
+        if (in_array((int) $actor->usergroup_id, self::SCHOOL_ADMIN_GROUPS, true)) {
+            return 'school';
+        }
+
+        if ((int) $actor->usergroup_id === 5
+            && app(ExamAuthorization::class)->isClassTeacherForExam($actor, $exam)) {
+            return 'class';
+        }
+
+        abort(403, 'Only a school admin or the class teacher can review marks.');
+    }
+
+    private function assertCanReviewSelected(User $actor, array $submissionIds): void
+    {
+        if (in_array((int) $actor->usergroup_id, self::SCHOOL_ADMIN_GROUPS, true)) {
+            return;
+        }
+
+        if ((int) $actor->usergroup_id !== 5) {
+            abort(403, 'Only a school admin or the class teacher can review marks.');
+        }
+
+        $rows = ExamMarksSubmission::query()
+            ->whereIn('id', array_map('intval', $submissionIds))
+            ->with('exam')
+            ->get();
+
+        $authorization = app(ExamAuthorization::class);
+        foreach ($rows as $row) {
+            if ($row->exam === null || ! $authorization->isClassTeacherForExam($actor, $row->exam)) {
+                abort(403, 'You can only review marks for the class you head.');
             }
         }
     }
