@@ -37,7 +37,7 @@ class Marks extends Model
             return 'ABS';
         }
         if ($this->marks === null) {
-            return '-';
+            return 'Missing';
         }
 
         return (string) (int) floor((float) $this->marks);

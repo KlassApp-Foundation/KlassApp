@@ -718,11 +718,13 @@ class StudentReportCardService
                 mkdir($fontDir, 0755, true);
             }
         }
-        $endOfTerm = \App\Services\ReportCards\EndOfTermCompositionLine::isEndOfTerm(
-            $exam->examType?->name,
-            $exam->examType?->code,
+        $composition = app(\App\Services\ReportCards\EndOfTermCompositionLine::class);
+        $anchorType = $exam->examType;
+        $countsOnCombined = $anchorType !== null && $composition->countsToward(
+            $anchorType,
+            $composition->compositionFor($schoolId, (int) $exam->id),
         );
-        $compositionLine = app(\App\Services\ReportCards\EndOfTermCompositionLine::class)->lineFor($schoolId, $endOfTerm, (int) $exam->id);
+        $compositionLine = $composition->lineFor($schoolId, $countsOnCombined, (int) $exam->id);
         $reportSectionIds = array_values(array_unique(array_filter([
             (int) ($stdLink->section_id ?? 0),
             (int) ($exam->section_id ?? 0),
@@ -1013,6 +1015,47 @@ class StudentReportCardService
         }
 
         return $chosen;
+    }
+
+    /**
+     * Marks the card prints. A numeric mark is the chosen row. An absence
+     * prints ABS. A subject on this report with no mark prints Missing.
+     * The total comes from the results sheet, which counts both as 0.
+     *
+     * @param  array<int, Marks>  $chosen
+     * @param  Collection<int, Marks>  $marks
+     * @param  Collection<int, Exam>  $exams
+     * @return array<int, Marks>
+     */
+    private function displayMarksBySubject(array $chosen, Collection $marks, Collection $exams): array
+    {
+        $byId = $exams->keyBy('id');
+        $display = $chosen;
+        foreach ($marks as $mark) {
+            if (! $byId->has($mark->exam_id) || ($mark->marks !== null && ! $mark->isAbsent())) {
+                continue;
+            }
+            $subjectId = (int) $mark->subject_id;
+            if (! isset($display[$subjectId])) {
+                $display[$subjectId] = $mark;
+            }
+        }
+
+        foreach ($exams as $exam) {
+            $subjectId = (int) $exam->subject_id;
+            if ($subjectId < 1 || isset($display[$subjectId])) {
+                continue;
+            }
+            $display[$subjectId] = new Marks([
+                'subject_id' => $subjectId,
+                'exam_id' => (int) $exam->id,
+                'school_id' => (int) $exam->school_id,
+                'marks' => null,
+                'absent' => false,
+            ]);
+        }
+
+        return $display;
     }
 
     private function markIsLater(Marks $candidate, Marks $current, Collection $exams): bool

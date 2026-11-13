@@ -2,7 +2,9 @@
 
 namespace App\Services\ReportCards;
 
+use App\Models\Academics\Exam;
 use App\Models\Academics\ExamType;
+use App\Models\Academics\Marks;
 use App\Models\MarksRelease;
 use App\Models\School;
 use Carbon\CarbonImmutable;
@@ -10,28 +12,130 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * The one line on an end-of-term report: "End of Term report: End of Term 70% · Mid Term 30%".
+ * The line on a combined report: "Made up of: Paper 1 40% · Paper 2 60%".
  *
- * Weights and names come from the stored composition. An empty composition
- * is "End of Term report: End of Term 100%". One included set with a blank
- * weight is 100. Weights are never invented for the other sets.
- *
- * A released report must keep the mix used at release. That freeze is
- * marks_releases.report_composition on #1330. This branch does not add that
- * column. When it is absent, the line reads the school's current
- * report_composition, so a later settings change still changes the line.
+ * One combined report per term. The stored mix decides which sets count.
+ * With nothing stored, the sets that already count toward a total are used,
+ * and a single counting set is 100. This branch does not add
+ * marks_releases.report_composition. When that column is absent, the line
+ * reads the school's current report_composition.
  */
 final class EndOfTermCompositionLine
 {
-    public function lineFor(int $schoolId, bool $endOfTerm, ?int $examId = null): ?string
+    public function lineFor(int $schoolId, bool $counts, ?int $examId = null): ?string
     {
-        if (! $endOfTerm) {
+        if (! $counts) {
             return null;
         }
 
         $mix = $this->compositionFor($schoolId, $examId);
+        $line = $this->format(true, $mix, $this->namesFor($schoolId, $mix ?? []));
+        if ($line !== null) {
+            return $line;
+        }
 
-        return $this->format(true, $mix, $this->namesFor($schoolId, $mix ?? []));
+        return $this->lineFromCountingSittings($schoolId, $examId);
+    }
+
+    /**
+     * A set counts when the saved mix says so. With nothing saved, the set's
+     * own total flag is used. A set marked to stand alone does not count.
+     *
+     * @param  array<int|string, mixed>|null  $mix
+     */
+    public function countsToward(ExamType $type, ?array $mix): bool
+    {
+        $flag = (bool) $type->contributes_to_report_total;
+        if ($mix === null || $this->numericRows($mix) === []) {
+            return $flag;
+        }
+
+        $row = $mix[(string) $type->id] ?? $mix[$type->id] ?? null;
+        if (! is_array($row)) {
+            return false;
+        }
+        if (($row['include'] ?? true) === false) {
+            return false;
+        }
+        $weight = $row['weight'] ?? null;
+        if (is_numeric($weight) && (float) $weight > 0) {
+            return true;
+        }
+
+        return $flag;
+    }
+
+    /**
+     * Counting sets in this class and term that have a mark entered on an
+     * exam that is not released. A set with no marks is left out.
+     *
+     * @return list<array{id: int, name: string}>
+     */
+    public function blockingSets(int $schoolId, int $sectionId, int $termId): array
+    {
+        $mix = $this->compositionFor($schoolId);
+        $exams = Exam::query()
+            ->where('school_id', $schoolId)
+            ->where('section_id', $sectionId)
+            ->where('academic_term_id', $termId)
+            ->whereNull('deleted_at')
+            ->whereNotNull('exam_type_id')
+            ->orderByRaw('scheduled_at is null')
+            ->orderBy('scheduled_at')
+            ->orderBy('id')
+            ->get(['id', 'exam_type_id']);
+
+        $types = ExamType::query()
+            ->visibleToSchool($schoolId)
+            ->whereIn('id', $exams->pluck('exam_type_id')->unique()->all())
+            ->get()
+            ->keyBy(fn (ExamType $type): int => (int) $type->id);
+
+        $released = array_fill_keys(
+            MarksRelease::query()
+                ->where('school_id', $schoolId)
+                ->where('status', MarksRelease::STATUS_RELEASED)
+                ->whereIn('exam_id', $exams->pluck('id')->all() ?: [0])
+                ->pluck('exam_id')
+                ->map(fn ($id) => (int) $id)
+                ->all(),
+            true,
+        );
+
+        $blocked = [];
+        $seen = [];
+        foreach ($exams as $exam) {
+            $typeId = (int) $exam->exam_type_id;
+            if (isset($seen[$typeId]) || ! $types->has($typeId)) {
+                continue;
+            }
+            $type = $types->get($typeId);
+            if (! $this->countsToward($type, $mix)) {
+                $seen[$typeId] = true;
+
+                continue;
+            }
+            $seen[$typeId] = true;
+            $openIds = $exams
+                ->filter(fn (Exam $row): bool => (int) $row->exam_type_id === $typeId && ! isset($released[(int) $row->id]))
+                ->map(fn (Exam $row): int => (int) $row->id)
+                ->all();
+            if ($openIds === []) {
+                continue;
+            }
+            $hasMark = Marks::query()
+                ->where('school_id', $schoolId)
+                ->whereIn('exam_id', $openIds)
+                ->where(function ($query): void {
+                    $query->whereNotNull('marks')->orWhere('absent', true);
+                })
+                ->exists();
+            if ($hasMark) {
+                $blocked[] = ['id' => $typeId, 'name' => (string) $type->name];
+            }
+        }
+
+        return $blocked;
     }
 
     /**
@@ -46,10 +150,10 @@ final class EndOfTermCompositionLine
 
         $parts = $this->parts(is_array($composition) ? $composition : [], $namesById);
         if ($parts === null) {
-            return 'End of Term report: End of Term 100%';
+            return null;
         }
 
-        return 'End of Term report: '.implode(' · ', $parts);
+        return 'Made up of: '.implode(' · ', $parts);
     }
 
     public static function isEndOfTerm(?string $name, ?string $code): bool
@@ -255,9 +359,70 @@ final class EndOfTermCompositionLine
             return null;
         }
 
-        usort($weighted, fn (array $a, array $b) => $b['weight'] <=> $a['weight'] ?: strcasecmp($a['name'], $b['name']));
-
         return array_map(fn (array $row) => $row['name'].' '.$this->percent($row['weight']), $weighted);
+    }
+
+    /**
+     * @param  array<int|string, mixed>|null  $mix
+     * @return array<int|string, mixed>
+     */
+    private function numericRows(?array $mix): array
+    {
+        if ($mix === null) {
+            return [];
+        }
+
+        $rows = [];
+        foreach ($mix as $key => $settings) {
+            if (is_numeric($key) && is_array($settings)) {
+                $rows[$key] = $settings;
+            }
+        }
+
+        return $rows;
+    }
+
+    private function lineFromCountingSittings(int $schoolId, ?int $examId): ?string
+    {
+        if ($examId === null || $examId < 1) {
+            return null;
+        }
+
+        $exam = Exam::query()->where('school_id', $schoolId)->whereKey($examId)->first();
+        if ($exam === null) {
+            return null;
+        }
+
+        $typeIds = Exam::query()
+            ->where('school_id', $schoolId)
+            ->where('section_id', $exam->section_id)
+            ->where('academic_term_id', $exam->academic_term_id)
+            ->whereNull('deleted_at')
+            ->whereNotNull('exam_type_id')
+            ->orderByRaw('scheduled_at is null')
+            ->orderBy('scheduled_at')
+            ->orderBy('id')
+            ->pluck('exam_type_id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        $names = [];
+        foreach ($typeIds as $typeId) {
+            $type = ExamType::query()->visibleToSchool($schoolId)->whereKey($typeId)->first();
+            if ($type !== null && (bool) $type->contributes_to_report_total) {
+                $names[] = trim((string) $type->name);
+            }
+        }
+        $names = array_values(array_filter($names, fn (string $name): bool => $name !== ''));
+        if (count($names) === 1) {
+            return 'Made up of: '.$names[0].' 100%';
+        }
+        if ($names === []) {
+            return null;
+        }
+
+        return 'Made up of: '.implode(' · ', $names);
     }
 
     private function percent(float $weight): string

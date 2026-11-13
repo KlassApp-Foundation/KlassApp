@@ -720,8 +720,8 @@ final class ResultsService
     /**
      * One merged mark per subject: the latest contributing mark, or a
      * weighted mean when the school's report composition configures weights
-     * for at least two contributing types (types without marks are dropped
-     * from both numerator and denominator).
+     * for at least two contributing types. A missing mark and an absence
+     * count as 0 and stay in the denominator.
      *
      * @param array<int, array<int, array<int, array{mark: float, grade: string, scheduled: int, examId: int}>>> $chosen
      * @param list<int> $typeIds
@@ -759,12 +759,18 @@ final class ResultsService
         $sum = 0.0;
         $weightSum = 0.0;
         foreach ($typeIds as $typeId) {
-            $row = $chosen[$typeId][$studentId][$subjectId] ?? null;
             $weight = (float) ($weights[$typeId] ?? 0);
-            if ($row === null || $weight <= 0 || $row['mark'] === null) {
+            if ($weight <= 0) {
                 continue;
             }
-            $sum += (float) $row['mark'] * $weight;
+            $row = $chosen[$typeId][$studentId][$subjectId] ?? null;
+            $grade = trim((string) ($row['grade'] ?? ''));
+            $absent = $row !== null && strcasecmp($grade, 'AB') === 0;
+            if ($row !== null && ($row['mark'] ?? null) === null && ! $absent && $grade !== '') {
+                return $best;
+            }
+            $value = ($row !== null && ($row['mark'] ?? null) !== null && ! $absent) ? (float) $row['mark'] : 0.0;
+            $sum += $value * $weight;
             $weightSum += $weight;
         }
 
@@ -775,8 +781,8 @@ final class ResultsService
         return [
             'mark' => round($sum / $weightSum, 2),
             'grade' => '',
-            'scheduled' => $best['scheduled'],
-            'examId' => $best['examId'],
+            'scheduled' => $best['scheduled'] ?? 0,
+            'examId' => $best['examId'] ?? 0,
         ];
     }
 
@@ -882,7 +888,7 @@ final class ResultsService
      * @param array<int, ResultCell> $cells
      * @return array{0: ?float, 1: int, 2: ?float, 3: ?int, 4: ?string, 5: ?float, 6: ?float}
      */
-    private function totals(ResultsPolicy $policy, array $cells): array
+    private function totals(ResultsPolicy $policy, array $cells, int $schoolId = 0, int $standardId = 0): array
     {
         $total = 0.0;
         $counted = 0;
