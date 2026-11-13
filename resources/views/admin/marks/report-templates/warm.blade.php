@@ -292,7 +292,7 @@
         </table>
     @else
         @if ($midExams->isNotEmpty())
-        <div class="sec-heading"><span class="dot"></span>MONTHLY RESULTS — MID TERM</div>
+        <div class="sec-heading"><span class="dot"></span>Exam sets shown on their own</div>
         <table class="card-table">
             <tr>
                 <th style="width:12%">Month Of</th>
@@ -321,7 +321,7 @@
                                     $midGrade = \App\Helpers\GradingHelper::formatAggLabel($g) ?? '-';
                                 }
                             @endphp
-                            <td>{{ $markValue !== null ? floor($markValue) : '-' }}</td>
+                            <td>{{ \App\Services\Results\ResultCell::printedMark($cell ?? null) }}</td>
                             @if ($showAgg) <td>@if($midGrade !== '-')<span class="chip {{ $chipClass($midGrade) }}">{{ $midGrade }}</span>@else - @endif</td> @endif
                         @endif
                     @endforeach
@@ -347,7 +347,7 @@
                                     $midGrade = \App\Helpers\GradingHelper::formatAggLabel($g) ?? '-';
                                 }
                             @endphp
-                            <td>{{ $midMark && $midMark->marks !== null ? floor($midMark->marks) : '-' }}</td>
+                            <td>{{ \App\Services\Results\ResultCell::printedMark($midMark ?? null) }}</td>
                             @if ($showAgg) <td>@if($midGrade !== '-')<span class="chip {{ $chipClass($midGrade) }}">{{ $midGrade }}</span>@else - @endif</td> @endif
                         @endif
                     @endforeach
@@ -361,7 +361,10 @@
         @endif
 
         @if ($eotExams->isNotEmpty())
-        <div class="sec-heading sec-heading-eot"><span class="dot"></span>END OF TERM {{ $termNumeral ?: 'EXAMINATION' }}</div>
+        <div class="sec-heading sec-heading-eot"><span class="dot"></span>Combined report</div>
+        @if (!empty($madeUpOf))
+            <p data-testid="report-made-up-of" style="margin:0 0 8px;font-size:12px;">{{ $madeUpOf }}</p>
+        @endif
         <table class="card-table">
             <tr>
                 <th class="eot-th">Subject</th>
@@ -397,7 +400,7 @@
                 <tr>
                     <td class="left">{{ $subject->name }}</td>
                     <td>100</td>
-                    <td>{{ $eotMark && $eotMark->marks !== null ? floor($eotMark->marks) : '-' }}</td>
+                    <td>{{ \App\Services\Results\ResultCell::printedMark($eotMark ?? null) }}</td>
                     @if ($showAgg) <td>@if($eotGrade !== '-')<span class="chip {{ $chipClass($eotGrade) }}">{{ $eotGrade }}</span>@else - @endif</td> @endif
                     <td>{{ $eotComment }}</td>
                     <td>{{ $teacherName }}</td>

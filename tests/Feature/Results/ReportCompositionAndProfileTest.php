@@ -94,7 +94,7 @@ class ReportCompositionAndProfileTest extends TestCase
         $this->assertSame(80.0, $row->cell($ctx['maths']->id)?->mark);
     }
 
-    public function test_a_hidden_type_is_dropped_from_the_term_sheet_sittings(): void
+    public function test_a_set_that_stands_alone_stays_on_the_sheet_and_out_of_the_total(): void
     {
         $ctx = $this->school();
         $term = $this->term($ctx);
@@ -110,7 +110,8 @@ class ReportCompositionAndProfileTest extends TestCase
         $this->mark($ctx, $eot, $ctx['maths'], $student, 80, '');
 
         $sheet = $this->sheet($ctx, $term);
-        $this->assertSame([2], array_map(fn ($sitting) => $sitting->examTypeId, $sheet->sittings));
+        $this->assertSame([1, 2], array_map(fn ($sitting) => $sitting->examTypeId, $sheet->sittings));
+        $this->assertSame(80.0, $sheet->student($student->id)?->cell($ctx['maths']->id)?->mark);
     }
 
     public function test_a_visible_type_stays_on_the_term_sheet(): void
@@ -148,7 +149,7 @@ class ReportCompositionAndProfileTest extends TestCase
         $this->mark($ctx, $eot, $ctx['maths'], $student, 50, '');
 
         $sheet = $this->sheet($ctx, $term);
-        $this->assertSame([2], array_map(fn ($sitting) => $sitting->examTypeId, $sheet->sittings));
+        $this->assertSame([1, 2], array_map(fn ($sitting) => $sitting->examTypeId, $sheet->sittings));
         $this->assertSame(50.0, $sheet->student($student->id)?->cell($ctx['maths']->id)?->mark);
 
         $ownSet = app(ResultsService::class)->sheet(new ResultsQuery(
@@ -225,7 +226,7 @@ class ReportCompositionAndProfileTest extends TestCase
             ->all();
         $composer = app(\App\Services\Results\ReportComposition::class);
 
-        $this->assertSame('Made up of: End Of Term 70% · Mid Term 30%', $composer->madeUpOf($mix, $names));
+        $this->assertSame('Made up of: Mid Term 30% · End Of Term 70%', $composer->madeUpOf($mix, $names));
         $this->assertFalse($composer->hasReleasedCountedMark((int) $ctx['school']->id, $mix));
         $this->assertStringNotContainsString('73', $composer->madeUpOf($mix, $names));
 

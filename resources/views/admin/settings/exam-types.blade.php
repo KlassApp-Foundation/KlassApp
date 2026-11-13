@@ -15,8 +15,8 @@
 <div class="ka-compose">
     <nav class="ka-crumb" aria-label="Breadcrumb"><a href="{{ route('admin.reports.cards.index') }}">Report cards</a> <span aria-hidden="true">/</span> Report settings</nav>
     <div>
-        <h1 class="ka-h1">End-of-term report</h1>
-        <p class="ka-compose-lead">Choose which exam sets count on the end-of-term report, and by how much. Every exam set still gets its own report when its marks are released.</p>
+        <h1 class="ka-h1">Combined report</h1>
+        <p class="ka-compose-lead">Each exam set either counts toward the combined report, with a weight, or is shown on its own. Every exam set still has its own report when it is released. One combined report is kept for the term. Another, such as a year-end report, can be added later.</p>
     </div>
 
     <form method="POST" action="{{ route('admin.settings.exam-types.update') }}" data-testid="report-composition-form">
@@ -26,17 +26,13 @@
 
         <div class="ka-compose-layout">
             <section class="ka-card ka-card-pad ka-compose-main" aria-labelledby="h-mix">
-                <h2 id="h-mix" class="ka-h2">What counts on the end-of-term report</h2>
+                <h2 id="h-mix" class="ka-h2">How each exam set appears</h2>
 
                 <div class="ka-quick-wrap">
                     <span class="ka-lbl">Quick choices</span>
                     <div class="ka-quick" role="group" aria-label="Quick choices">
-                        <button type="button" class="ka-choice" data-choice="end" aria-pressed="{{ $preset === 'end' ? 'true' : 'false' }}">End of Term only</button>
-                        <button type="button" class="ka-choice" data-choice="mid70" aria-pressed="{{ $preset === 'mid70' ? 'true' : 'false' }}">
-                            <span class="ka-choice-long">Mid Term 30 · End of Term 70</span>
-                            <span class="ka-choice-short">Mid 30 · End 70</span>
-                        </button>
-                        <button type="button" class="ka-choice" data-choice="equal" aria-pressed="{{ $preset === 'equal' ? 'true' : 'false' }}">All three equally</button>
+                        <button type="button" class="ka-choice" data-choice="last" aria-pressed="{{ $preset === 'last' ? 'true' : 'false' }}">Last set only</button>
+                        <button type="button" class="ka-choice" data-choice="equal" aria-pressed="{{ $preset === 'equal' ? 'true' : 'false' }}">All sets equally</button>
                     </div>
                 </div>
 
@@ -51,22 +47,24 @@
                             $weight = is_array($settings) ? ($settings['weight'] ?? null) : null;
                             $weightNumber = is_numeric($weight) ? (float) $weight : null;
                             $weightValue = $weightNumber === null
-                                ? ($included ? '' : '0')
+                                ? ''
                                 : rtrim(rtrim(number_format($weightNumber, 2, '.', ''), '0'), '.');
-                            $role = app(\App\Services\Results\ReportComposition::class)->sittingRole($type->name, $type->code) ?? '';
                         @endphp
-                        <div class="ka-mix-row{{ $included ? '' : ' is-off' }}" data-mix-row data-role="{{ $role }}" data-name="{{ $type->name }}" data-testid="exam-type-row-{{ $type->id }}">
+                        <div class="ka-mix-row{{ $included ? '' : ' is-off' }}" data-mix-row data-name="{{ $type->name }}" data-testid="exam-type-row-{{ $type->id }}">
                             <input type="hidden" name="contributes[{{ $type->id }}]" value="{{ $checked ? '1' : '0' }}">
-                            <input type="hidden" name="include[{{ $type->id }}]" value="0">
-                            <label class="ka-mix-label">
-                                <input type="checkbox" class="ka-switch" name="include[{{ $type->id }}]" value="1"
-                                    data-testid="exam-type-include-{{ $type->id }}" @checked($included)>
-                                <span class="ka-mix-name">
-                                    <strong>{{ $type->name }}</strong>
-                                    <span data-mix-detail>{{ $included ? 'Counts on the report' : 'Not on the end-of-term report' }}</span>
-                                    <span class="ka-sr" data-testid="exam-type-owner-{{ $type->id }}">{{ $type->code }} · {{ $type->isShared() ? '(shared)' : '(your school)' }}</span>
-                                </span>
-                            </label>
+                            <div class="ka-mix-label">
+                                <strong>{{ $type->name }}</strong>
+                                <span data-mix-detail>{{ $included ? 'Counts toward the combined report' : 'Shown on its own' }}</span>
+                                <span class="ka-sr" data-testid="exam-type-owner-{{ $type->id }}">{{ $type->code }} · {{ $type->isShared() ? '(shared)' : '(your school)' }}</span>
+                                <label class="ka-hit" style="min-height:44px;">
+                                    <input type="radio" name="mode[{{ $type->id }}]" value="count" data-mode="count" data-testid="exam-type-include-{{ $type->id }}" @checked($included)>
+                                    Counts toward the combined report
+                                </label>
+                                <label class="ka-hit" style="min-height:44px;">
+                                    <input type="radio" name="mode[{{ $type->id }}]" value="alone" data-mode="alone" @checked(! $included)>
+                                    Shown on its own
+                                </label>
+                            </div>
                             <span class="ka-hide-sm ka-weight-label">Weight</span>
                             <input class="ds-input ka-weight" type="text" inputmode="numeric" name="weight[{{ $type->id }}]"
                                 value="{{ $weightValue }}" @disabled(! $included)
@@ -129,7 +127,7 @@
 
                 <section class="ka-card ka-card-pad" aria-labelledby="h-log">
                     <h2 id="h-log" class="ka-h2">Changes to this setting</h2>
-                    <p class="ka-log" data-testid="composition-log">The current mix was saved with the school.</p>
+                    <p class="ka-log" data-testid="composition-log">Changes apply from the next release. A released report keeps the mix it was released with. Until you save, reports keep each exam set's current total setting.</p>
                 </section>
             </div>
         </div>
@@ -152,6 +150,11 @@
                 <label class="form-label" for="exam-type-code">Short code</label>
                 <input type="text" name="code" id="exam-type-code" class="ds-form-input" style="width: 110px;"
                        value="{{ old('code') }}" maxlength="10" required placeholder="MOCK" data-testid="exam-type-code">
+            </div>
+            <div>
+                <label class="form-label" for="exam-type-short">Phone name</label>
+                <input type="text" name="short_name" id="exam-type-short" class="ds-form-input" style="width: 120px;"
+                       value="{{ old('short_name') }}" maxlength="24" placeholder="First word if empty" data-testid="exam-type-short">
             </div>
             <div style="padding-bottom: 9px;">
                 <label class="inline-flex items-center gap-2 text-sm">
@@ -242,16 +245,14 @@ document.addEventListener('DOMContentLoaded', function () {
         return text;
     }
 
-    function group(role) {
-        return rows().filter(function (row) { return row.getAttribute('data-role') === role; });
-    }
-
     function setRow(row, on, weight) {
-        var sw = row.querySelector('.ka-switch');
+        var count = row.querySelector('[data-mode="count"]');
+        var alone = row.querySelector('[data-mode="alone"]');
         var input = row.querySelector('.ka-weight');
-        sw.checked = !!on;
+        if (count) count.checked = !!on;
+        if (alone) alone.checked = !on;
         input.disabled = !on;
-        input.value = on ? String(weight) : '0';
+        input.value = on ? String(weight) : '';
         row.classList.toggle('is-off', !on);
     }
 
@@ -271,13 +272,13 @@ document.addEventListener('DOMContentLoaded', function () {
         var parts = [];
         var sum = 0;
         rows().forEach(function (row) {
-            var sw = row.querySelector('.ka-switch');
+            var count = row.querySelector('[data-mode="count"]');
             var input = row.querySelector('.ka-weight');
-            var on = sw.checked;
+            var on = !!(count && count.checked);
             input.disabled = !on;
             row.classList.toggle('is-off', !on);
             var detail = row.querySelector('[data-mix-detail]');
-            if (detail) detail.textContent = on ? 'Counts on the report' : 'Not on the end-of-term report';
+            if (detail) detail.textContent = on ? 'Counts toward the combined report' : 'Shown on its own';
             var weight = parseFloat(input.value);
             if (on && isFinite(weight) && weight > 0) {
                 sum += weight;
@@ -295,7 +296,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!bar) return;
         var label = parts.length
             ? parts.map(function (part) { return part.name + ' ' + trimNum(part.weight) + ' percent'; }).join(', ')
-            : 'No exam sets count on the end-of-term report';
+            : 'No exam sets count toward the combined report';
         bar.setAttribute('aria-label', label);
         bar.textContent = '';
         parts.forEach(function (part, index) {
@@ -308,22 +309,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function apply(choice) {
-        var begin = group('begin');
-        var mid = group('mid');
-        var end = group('end');
-        var named = begin.concat(mid, end);
-        rows().forEach(function (row) {
-            if (named.indexOf(row) === -1) setRow(row, false, 0);
-        });
-        if (choice === 'end') {
-            begin.concat(mid).forEach(function (row) { setRow(row, false, 0); });
-            split(end, 100);
-        } else if (choice === 'mid70') {
-            begin.forEach(function (row) { setRow(row, false, 0); });
-            split(mid, 30);
-            split(end, 70);
+        var list = rows();
+        if (choice === 'last') {
+            list.forEach(function (row, index) {
+                setRow(row, index === list.length - 1, index === list.length - 1 ? 100 : 0);
+            });
         } else if (choice === 'equal') {
-            split(named, 100);
+            split(list, 100);
         }
         form.querySelectorAll('[data-choice]').forEach(function (button) {
             button.setAttribute('aria-pressed', button.getAttribute('data-choice') === choice ? 'true' : 'false');
@@ -337,15 +329,18 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
     rows().forEach(function (row) {
-        var sw = row.querySelector('.ka-switch');
+        var count = row.querySelector('[data-mode="count"]');
+        var alone = row.querySelector('[data-mode="alone"]');
         var input = row.querySelector('.ka-weight');
-        sw.addEventListener('change', function () {
-            if (!sw.checked) input.value = '0';
+        function choose() {
+            if (alone && alone.checked) input.value = '';
             form.querySelectorAll('[data-choice]').forEach(function (button) {
                 button.setAttribute('aria-pressed', 'false');
             });
             paint();
-        });
+        }
+        if (count) count.addEventListener('change', choose);
+        if (alone) alone.addEventListener('change', choose);
         input.addEventListener('input', function () {
             form.querySelectorAll('[data-choice]').forEach(function (button) {
                 button.setAttribute('aria-pressed', 'false');

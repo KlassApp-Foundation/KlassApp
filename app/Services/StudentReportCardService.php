@@ -383,8 +383,8 @@ class StudentReportCardService
     }
 
     /**
-     * An End of Term card uses the school's mix (or the mix frozen at release).
-     * Any other exam set is its own report: that set's columns only.
+     * A counting set opens the combined card: every set in the term, with
+     * stand-alone sets in their own section. Any other set is its own report.
      *
      * @param  Collection<int, Exam>  $exams
      * @return Collection<int, Exam>
@@ -394,10 +394,18 @@ class StudentReportCardService
         $exam->loadMissing('examType');
         $composition = app(ReportComposition::class);
 
-        if ($composition->isEndOfTerm($exam->examType)) {
-            $mix = $composition->forTermReport($schoolId, (int) $exam->section_id, (int) $exam->academic_term_id);
+        $mix = $composition->forTermReport($schoolId, (int) $exam->section_id, (int) $exam->academic_term_id);
+        $anchorCounts = $composition->countsToward(
+            $mix,
+            (int) $exam->exam_type_id,
+            (bool) ($exam->examType->contributes_to_report_total ?? false),
+        );
 
-            return $exams->filter(fn (Exam $row): bool => $composition->includes($mix, (int) $row->exam_type_id))->values();
+        // The combined card keeps every set in the term. A set that stands
+        // alone is drawn in its own section. Opening a set that does not
+        // count stays that one set.
+        if ($anchorCounts && ($composition->isEndOfTerm($exam->examType) || $mix !== [])) {
+            return $exams->values();
         }
 
         $ownTypeId = (int) $exam->exam_type_id;
@@ -423,8 +431,22 @@ class StudentReportCardService
         $exams = $helper->exam($schoolId, $exam);
         $exams = $this->examsOnThisReport($schoolId, $exam, $exams);
 
-        $midExams = $exams->filter(fn ($e) => $e->examType->code === 'MID')->sortBy('scheduled_at')->values();
-        $eotExams = $exams->filter(fn ($e) => $e->examType->code !== 'MID')->values();
+        $reportMix = app(ReportComposition::class)->forTermReport(
+            $schoolId,
+            (int) $exam->section_id,
+            (int) $exam->academic_term_id,
+        );
+        $countsOnCombined = function ($row) use ($reportMix): bool {
+            $row->loadMissing('examType');
+
+            return app(ReportComposition::class)->countsToward(
+                $reportMix,
+                (int) $row->exam_type_id,
+                (bool) ($row->examType->contributes_to_report_total ?? false),
+            );
+        };
+        $midExams = $exams->filter(fn ($e) => ! $countsOnCombined($e))->sortBy('scheduled_at')->values();
+        $eotExams = $exams->filter(fn ($e) => $countsOnCombined($e))->values();
         $allExamColumns = $midExams->merge($eotExams);
 
         $controls = ['SUBJECT', 'OUT OF'];
@@ -634,10 +656,26 @@ class StudentReportCardService
             'streamTotal' => $streamTotal,
             'midSittings' => $midSittings,
             'logoPath' => $logoPath,
+            'madeUpOf' => $this->madeUpOfLine($schoolId, (int) $exam->section_id, (int) $exam->academic_term_id, $sheet ?? null),
         ]);
         $pdf->setPaper('a4', 'portrait');
 
         return $pdf->output();
+    }
+
+    private function madeUpOfLine(int $schoolId, int $sectionId, int $termId, ?ResultSheet $sheet): string
+    {
+        if ($sheet === null) {
+            return '';
+        }
+
+        $composer = app(ReportComposition::class);
+        $names = [];
+        foreach ($sheet->sittings as $sitting) {
+            $names[(int) $sitting->examTypeId] = (string) $sitting->name;
+        }
+
+        return $composer->madeUpOf($composer->forTermReport($schoolId, $sectionId, $termId), $names);
     }
 
     private function classSheet(int $schoolId, int $sectionId, int $academicTermId, int $standardId, ?int $studentId = null): ?ResultSheet

@@ -219,6 +219,16 @@ class MarksReleaseController extends Controller
             ? $this->releases->preview($user, $examId, $previewId)
             : '';
         $count = (int) array_sum(array_column($sheet['groups'], 'count'));
+        $missingCount = 0;
+        foreach ($sheet['groups'] as $group) {
+            foreach ($group['students'] ?? [] as $student) {
+                foreach ($sheet['subjects'] as $subject) {
+                    if (($student['cells'][$subject['key']] ?? null) === null) {
+                        $missingCount++;
+                    }
+                }
+            }
+        }
         $who = $this->audience($examLinks, $class, $stream, $targets);
         $noun = $count === 1 ? 'student' : 'students';
         $verb = ($old['when'] ?? 'now') === 'schedule' ? 'Schedule for' : 'Release to';
@@ -235,6 +245,7 @@ class MarksReleaseController extends Controller
             'confirming' => $confirming,
             'whenLabel' => 'Now',
             'sheet' => $sheet,
+            'missingCount' => $missingCount,
             'approvals' => $approvals,
             'pastSitting' => $pastSitting,
             'needsReason' => $examId > 0 && $known && $this->needsReason($user, $examId, $targets),

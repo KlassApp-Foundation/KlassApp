@@ -177,7 +177,7 @@ class ExamTypeSettingsTest extends TestCase
         $this->assertNull($this->riverside->fresh()->exam_type_preferences);
     }
 
-    public function test_the_unset_form_starts_at_end_of_term_only(): void
+    public function test_the_unset_form_starts_with_the_last_set_counting(): void
     {
         $raw = $this->actingAs($this->admin)->get('/admin/settings/exam-types')->assertOk()->getContent();
         $scripts = strpos($raw, '<!-- Scripts -->');
@@ -187,26 +187,27 @@ class ExamTypeSettingsTest extends TestCase
         $this->assertGreaterThan($scripts, $listener);
         $html = preg_replace('/\s+/', ' ', $raw);
 
-        $this->assertMatchesRegularExpression('/data-testid="exam-type-include-'.$this->eot->id.'" checked/', $html);
-        $this->assertDoesNotMatchRegularExpression('/data-testid="exam-type-include-'.$this->bot->id.'" checked/', $html);
-        $this->assertMatchesRegularExpression('/name="weight\['.$this->eot->id.'\]"[^>]*value="100"/', $html);
+        $this->assertDoesNotMatchRegularExpression('/data-testid="exam-type-include-'.$this->eot->id.'" checked/', $html);
+        $this->assertMatchesRegularExpression('/data-testid="exam-type-include-'.$this->bot->id.'" checked/', $html);
+        $this->assertMatchesRegularExpression('/name="weight\['.$this->bot->id.'\]"[^>]*value="100"/', $html);
         $this->assertStringContainsString('min-height:44px', $html);
         $this->assertStringContainsString('Save report settings', $html);
-        $this->assertStringContainsString('End of Term only', $html);
-        $this->assertStringContainsString('Mid 30 · End 70', $html);
-        $this->assertStringContainsString('Mid Term 30 · End of Term 70', $html);
-        $this->assertStringContainsString('All three equally', $html);
+        $this->assertStringContainsString('Last set only', $html);
+        $this->assertStringContainsString('All sets equally', $html);
+        $this->assertStringNotContainsString('End of Term only', $html);
+        $this->assertStringNotContainsString('Mid 30 · End 70', $html);
+        $this->assertStringNotContainsString('All three equally', $html);
         $this->assertStringContainsString('type="button"', $html);
-        $this->assertStringContainsString('Counts on the report', $html);
-        $this->assertStringContainsString('Not on the end-of-term report', $html);
+        $this->assertStringContainsString('Counts toward the combined report', $html);
+        $this->assertStringContainsString('Shown on its own', $html);
         $this->assertStringContainsString('Adds up', $html);
         $this->assertStringContainsString('Applies from the next release.', $html);
         $this->assertStringContainsString('Reports already released keep the mix they were released with.', $html);
-        $this->assertStringContainsString('Made up of: End of Term Examination 100%', $html);
+        $this->assertStringContainsString('Made up of: Beginning of Term Examination 100%', $html);
         $this->assertStringContainsString('Report marks appear here after the counted exam sets are released.', $html);
         $this->assertStringContainsString('Each exam set has its own report', $html);
         $this->assertStringContainsString('Not released yet', $html);
-        $this->assertStringContainsString('The current mix was saved with the school.', $html);
+        $this->assertStringContainsString('Until you save, reports keep each exam set\'s current total setting.', $html);
         $this->assertStringContainsString('Admins and head teachers can change this.', $html);
         $this->assertStringContainsString('Cancel', $html);
         $this->assertStringNotContainsString('Grace Achieng', $html);

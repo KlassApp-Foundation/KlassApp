@@ -11,18 +11,25 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Which exam sets count on the end-of-term report, and at what weight.
+ * How a school's exam sets appear on one combined report.
  *
- * A school that has not chosen starts at End of Term only, weight 100.
- * A release copies that choice onto its own row. A later edit of the
- * school setting does not change a report that was already released.
+ * A set either counts toward the combined mark, with a weight, or stands
+ * on its own with no weight. One combined report is stored per term for
+ * now. The saved JSON keeps a `_reports` list so a second report, such as
+ * a year-end report, can be added later without a new column.
+ *
+ * A school that has not saved a mix keeps each set's contributes flag.
+ * The settings form offers a starting choice (the last set counts at 100)
+ * and writes it only when an admin or head teacher saves. A release copies
+ * the mix onto its own row. A later edit does not change a released report.
  */
 final class ReportComposition
 {
     public const END_OF_TERM_CODE = 'EOT';
 
     /**
-     * The mix a report that has not been released yet would use.
+     * The mix already saved for this school. Empty means the school has not
+     * chosen, and totals keep each exam set's own contributes flag.
      *
      * @return array<string, array{include: bool, weight: float|null}>
      */
@@ -37,16 +44,17 @@ final class ReportComposition
             return $this->normalize($stored);
         }
 
-        return $this->endOfTermOnly((int) $school->id);
+        return [];
     }
 
     /**
-     * The mix for one class's end-of-term report.
+     * The mix for one class's combined report this term.
      *
-     * When that class's End of Term set is already released, the mix is the
-     * one stored on the release. Otherwise it is the school's current choice.
+     * When a release for this class and term already stored a mix, that copy
+     * is used. Otherwise it is the school's current choice. Empty means the
+     * school has not chosen, and each set's contributes flag still decides.
      *
-     * @return array<string, array{include: bool, weight: float|null}>
+     * @return array<string, array{include: bool, weight: float|null, locked?: bool}>
      */
     public function forTermReport(int $schoolId, int $sectionId, int $academicTermId): array
     {
@@ -68,7 +76,40 @@ final class ReportComposition
         }
 
         $release->loadMissing('school');
-        $release->report_composition = $this->resolved($release->school);
+        $stored = $this->resolved($release->school);
+        $release->report_composition = $stored !== []
+            ? $stored
+            : $this->legacySnapshot((int) $release->school_id);
+    }
+
+    /**
+     * Whether this exam set counts toward the combined mark.
+     *
+     * No saved mix uses the set's own flag. A set left out of the mix stands
+     * alone. A weight means it counts. An included set with no weight still
+     * follows the flag, unless the mix was locked onto a release.
+     */
+    public function countsToward(array $composition, int $typeId, bool $catalogContributes): bool
+    {
+        if ($composition === []) {
+            return $catalogContributes;
+        }
+
+        $settings = $composition[(string) $typeId] ?? $composition[$typeId] ?? null;
+        if (! is_array($settings) || ! array_key_exists('include', $settings)) {
+            return $catalogContributes;
+        }
+        if (($settings['locked'] ?? false) === true) {
+            return $this->isOn($settings['include'] ?? false);
+        }
+        if (! $this->isOn($settings['include'] ?? false)) {
+            return false;
+        }
+        if (is_numeric($settings['weight'] ?? null) && (float) $settings['weight'] > 0) {
+            return true;
+        }
+
+        return $catalogContributes;
     }
 
     public function isEndOfTerm(?ExamType $type): bool
@@ -144,7 +185,7 @@ final class ReportComposition
             'total' => $total,
             'adds_up' => $addsUp,
             'aria' => $parts === []
-                ? 'No exam sets count on the end-of-term report'
+                ? 'No exam sets count toward the combined report'
                 : implode(', ', array_map(
                     fn (array $part): string => $part['name'].' '.$this->percentText($part['weight']).' percent',
                     $parts,
@@ -153,60 +194,160 @@ final class ReportComposition
     }
 
     /**
-     * Which quick choice matches the saved mix, if any.
+     * Which generated quick choice matches this mix, if any.
+     * The choices come from the sets in the order given, never from fixed names.
      *
      * @param  iterable<int, ExamType>  $types
      * @param  array<int|string, mixed>  $composition
      */
     public function matchingPreset(iterable $types, array $composition): ?string
     {
-        $begin = [];
-        $mid = [];
-        $end = [];
-        $otherOn = false;
-
+        $ordered = [];
         foreach ($types as $type) {
-            $id = (int) $type->id;
-            $settings = $composition[(string) $id] ?? $composition[$id] ?? null;
-            if (! is_array($settings) || ! $this->isOn($settings['include'] ?? false)) {
-                continue;
-            }
-            $weight = is_numeric($settings['weight'] ?? null) ? (float) $settings['weight'] : 0.0;
-            $role = $this->sittingRole($type->name, $type->code);
-            if ($role === 'begin') {
-                $begin[] = $weight;
-            } elseif ($role === 'mid') {
-                $mid[] = $weight;
-            } elseif ($role === 'end') {
-                $end[] = $weight;
-            } else {
-                $otherOn = true;
-            }
+            $ordered[] = $type;
         }
-
-        $near = fn (float $value, float $target): bool => abs($value - $target) < 0.011;
-        $sum = fn (array $weights): float => (float) array_sum($weights);
-
-        if (! $otherOn && $begin === [] && $mid === [] && $end !== [] && $near($sum($end), 100.0)) {
-            return 'end';
-        }
-        if (! $otherOn && $begin === [] && $mid !== [] && $end !== [] && $near($sum($mid), 30.0) && $near($sum($end), 70.0)) {
-            return 'mid70';
-        }
-
-        $named = array_merge($begin, $mid, $end);
-        if ($otherOn || $named === [] || ! $near($sum($named), 100.0)) {
+        if ($ordered === []) {
             return null;
         }
 
-        $expected = $this->equalWeights(count($named));
+        $near = fn (float $value, float $target): bool => abs($value - $target) < 0.011;
+        $last = $ordered[array_key_last($ordered)];
+        $lastOnly = true;
+        $weights = [];
+        foreach ($ordered as $type) {
+            $id = (int) $type->id;
+            $settings = $composition[(string) $id] ?? $composition[$id] ?? null;
+            $on = is_array($settings) && $this->isOn($settings['include'] ?? false);
+            $weight = is_array($settings) && is_numeric($settings['weight'] ?? null) ? (float) $settings['weight'] : 0.0;
+            if ((int) $type->id === (int) $last->id) {
+                if (! $on || ! $near($weight, 100.0)) {
+                    $lastOnly = false;
+                }
+            } elseif ($on) {
+                $lastOnly = false;
+            }
+            if ($on) {
+                $weights[] = $weight;
+            }
+        }
+        if ($lastOnly) {
+            return 'last';
+        }
+        if (count($weights) !== count($ordered)) {
+            return null;
+        }
+        $expected = $this->equalWeights(count($ordered));
         foreach ($expected as $index => $weight) {
-            if (! $near((float) $named[$index], $weight)) {
+            if (! $near((float) $weights[$index], $weight)) {
                 return null;
             }
         }
 
         return 'equal';
+    }
+
+    /**
+     * Exam sets in date order. A set with no exam yet stays after the dated
+     * ones, in id order. The last of this list is the starting combined set.
+     *
+     * @return \Illuminate\Support\Collection<int, ExamType>
+     */
+    public function orderedTypes(int $schoolId): \Illuminate\Support\Collection
+    {
+        $types = ExamType::visibleToSchool($schoolId)->get();
+        $dates = DB::table('exams')
+            ->where('school_id', $schoolId)
+            ->whereNull('deleted_at')
+            ->whereNotNull('scheduled_at')
+            ->groupBy('exam_type_id')
+            ->selectRaw('exam_type_id, MIN(scheduled_at) as first_at')
+            ->pluck('first_at', 'exam_type_id');
+
+        return $types->sortBy(function (ExamType $type) use ($dates): array {
+            $at = $dates[$type->id] ?? null;
+
+            return [$at === null ? 1 : 0, (string) ($at ?? ''), (int) $type->id];
+        })->values();
+    }
+
+    /**
+     * Starting choice for a school that has not saved a mix: the last set
+     * counts at 100 and the others stand alone. This is not written until
+     * someone saves it.
+     *
+     * @param  iterable<int, ExamType>  $types
+     * @return array<string, array{include: bool, weight: float|null}>
+     */
+    public function suggested(iterable $types): array
+    {
+        $ordered = [];
+        foreach ($types as $type) {
+            $ordered[] = $type;
+        }
+        if ($ordered === []) {
+            return [];
+        }
+        $lastId = (int) $ordered[array_key_last($ordered)]->id;
+        $out = [];
+        foreach ($ordered as $type) {
+            $counts = (int) $type->id === $lastId;
+            $out[(string) $type->id] = [
+                'include' => $counts,
+                'weight' => $counts ? 100.0 : null,
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Counting sets in this class and term that have marks entered and are
+     * not released. A set with no marks at all is not listed: those marks
+     * are Missing, and the combined report is not blocked.
+     *
+     * @return list<array{id: int, name: string}>
+     */
+    public function blockingSets(int $schoolId, int $sectionId, int $termId): array
+    {
+        $mix = $this->forTermReport($schoolId, $sectionId, $termId);
+        $blocked = [];
+        foreach ($this->orderedTypes($schoolId) as $type) {
+            if (! $this->countsToward($mix, (int) $type->id, (bool) $type->contributes_to_report_total)) {
+                continue;
+            }
+            $examIds = DB::table('exams')
+                ->where('school_id', $schoolId)
+                ->where('section_id', $sectionId)
+                ->where('academic_term_id', $termId)
+                ->where('exam_type_id', $type->id)
+                ->whereNull('deleted_at')
+                ->pluck('id');
+            if ($examIds->isEmpty()) {
+                continue;
+            }
+            $markedIds = Marks::query()
+                ->where('school_id', $schoolId)
+                ->whereIn('exam_id', $examIds)
+                ->where(function ($query): void {
+                    $query->whereNotNull('marks')->orWhere('absent', true);
+                })
+                ->distinct()
+                ->pluck('exam_id');
+            if ($markedIds->isEmpty()) {
+                continue;
+            }
+            $releasedIds = MarksRelease::query()
+                ->where('school_id', $schoolId)
+                ->where('status', MarksRelease::STATUS_RELEASED)
+                ->whereIn('exam_id', $markedIds)
+                ->pluck('exam_id');
+            if ($markedIds->diff($releasedIds)->isEmpty()) {
+                continue;
+            }
+            $blocked[] = ['id' => (int) $type->id, 'name' => (string) $type->name];
+        }
+
+        return $blocked;
     }
 
     /**
@@ -225,10 +366,7 @@ final class ReportComposition
 
     /**
      * A counted set has a released numeric mark for this school.
-     *
-     * An absent mark is not a released learner mark here: which report mark
-     * to show for ABS, and what to show when a counted set was never released,
-     * are still open. This does not invent either rule.
+     * An absent mark is not a numeric mark. Missing marks are not filled in.
      *
      * @param  array<int|string, mixed>  $composition
      */
@@ -376,10 +514,7 @@ final class ReportComposition
             return [['name' => $included[0]['name'], 'weight' => 100.0]];
         }
 
-        $weighted = array_values(array_filter($included, fn (array $row): bool => $row['weight'] !== null));
-        usort($weighted, fn (array $a, array $b): int => $b['weight'] <=> $a['weight'] ?: strcasecmp($a['name'], $b['name']));
-
-        return $weighted;
+        return array_values(array_filter($included, fn (array $row): bool => $row['weight'] !== null));
     }
 
     private function percentText(float $weight): string
@@ -443,10 +578,21 @@ final class ReportComposition
      * @param  array<int|string, mixed>  $include
      * @param  array<int|string, mixed>  $weight
      * @param  list<int>  $visibleIds
+     * @param  array<int|string, mixed>  $mode
      * @return array<string, array{include: bool, weight: float|null}>|null
      */
-    public function fromRequest(array $include, array $weight, array $visibleIds): ?array
+    public function fromRequest(array $include, array $weight, array $visibleIds, array $mode = []): ?array
     {
+        if ($mode !== []) {
+            $include = [];
+            foreach ($mode as $typeId => $value) {
+                $include[$typeId] = ($value === 'count' || $value === '1' || $value === 1 || $value === true) ? '1' : '0';
+                if ($include[$typeId] === '0') {
+                    unset($weight[$typeId]);
+                }
+            }
+        }
+
         if ($include === [] && $weight === []) {
             return null;
         }
@@ -489,7 +635,7 @@ final class ReportComposition
 
         if ($included === []) {
             throw ValidationException::withMessages([
-                'include' => 'Choose at least one exam set for the end-of-term report.',
+                'include' => 'Choose at least one exam set for the combined report.',
             ]);
         }
 
@@ -507,42 +653,41 @@ final class ReportComposition
         if (count($included) === 1 && $missing === 1) {
             $only = (string) array_key_first($included);
             $composition[$only]['weight'] = 100.0;
-
-            return $composition;
-        }
-
-        if ($missing > 0 || abs($sum - 100.0) > 0.01) {
+        } elseif ($missing > 0 || abs($sum - 100.0) > 0.01) {
             throw ValidationException::withMessages([
-                'weight' => 'The weights of the exam sets on the end-of-term report must total 100.',
+                'weight' => 'The weights of the exam sets that count toward the combined report must total 100.',
             ]);
         }
+
+        // One combined report per term today. Another entry in this list is
+        // how a second report (for example a year-end report) will be stored.
+        $composition['_reports'] = [
+            ['name' => 'Term report'],
+        ];
 
         return $composition;
     }
 
     /**
-     * @return array<string, array{include: bool, weight: float|null}>
+     * Copy of each set's contributes flag at the moment of release.
+     * Locked so a later settings change does not move a released report.
+     * Weights stay empty: several counting sets keep today's unweighted total.
+     *
+     * @return array<string, array{include: bool, weight: null, locked: bool}>
      */
-    private function endOfTermOnly(int $schoolId): array
+    private function legacySnapshot(int $schoolId): array
     {
-        $types = ExamType::visibleToSchool($schoolId)->get(['id', 'code']);
-        $endOfTermIds = $types
-            ->filter(fn (ExamType $type): bool => strtoupper((string) $type->code) === self::END_OF_TERM_CODE)
-            ->map(fn (ExamType $type): int => (int) $type->id)
-            ->values();
-
-        if ($endOfTermIds->isEmpty()) {
-            return [];
+        $out = [];
+        foreach (ExamType::visibleToSchool($schoolId)->get(['id', 'contributes_to_report_total']) as $type) {
+            $out[(string) $type->id] = [
+                'include' => (bool) $type->contributes_to_report_total,
+                'weight' => null,
+                'locked' => true,
+            ];
         }
 
-        $single = $endOfTermIds->count() === 1;
-        $out = [];
-        foreach ($types as $type) {
-            $counts = $endOfTermIds->contains((int) $type->id);
-            $out[(string) $type->id] = [
-                'include' => $counts,
-                'weight' => $counts && $single ? 100.0 : null,
-            ];
+        if ($out === []) {
+            return ['0' => ['include' => false, 'weight' => null, 'locked' => true]];
         }
 
         return $out;
@@ -556,14 +701,18 @@ final class ReportComposition
     {
         $out = [];
         foreach ($stored as $key => $settings) {
-            if (! is_array($settings)) {
+            if (! is_numeric($key) || ! is_array($settings) || ! array_key_exists('include', $settings)) {
                 continue;
             }
             $weight = $settings['weight'] ?? null;
-            $out[(string) $key] = [
+            $row = [
                 'include' => $this->isOn($settings['include'] ?? false),
                 'weight' => is_numeric($weight) ? (float) $weight : null,
             ];
+            if (($settings['locked'] ?? false) === true) {
+                $row['locked'] = true;
+            }
+            $out[(string) $key] = $row;
         }
 
         return $out;
@@ -587,10 +736,7 @@ final class ReportComposition
                 $query->where('school_id', $schoolId)
                     ->where('section_id', $sectionId)
                     ->where('academic_term_id', $academicTermId)
-                    ->whereNull('deleted_at')
-                    ->whereHas('examType', function ($type): void {
-                        $type->whereRaw('UPPER(code) = ?', [self::END_OF_TERM_CODE]);
-                    });
+                    ->whereNull('deleted_at');
             })
             ->orderByDesc('released_at')
             ->orderByDesc('id')

@@ -32,9 +32,9 @@
                         @foreach ($sittings as $sitting)
                             @php
                                 $cell = $sitting->student($student->studentId)?->cell($subjectId);
-                                $mark = ($cell && $cell->status === 'marked' && $cell->mark !== null) ? $cell->mark : null;
+                                $mark = $cell ? $cell->sheetLabel() : 'Missing';
                             @endphp
-                            <td>{{ $mark === null ? '—' : $mark }}</td>
+                            <td>{{ $mark }}</td>
                         @endforeach
                     </tr>
                 @endforeach
