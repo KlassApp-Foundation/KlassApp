@@ -15,6 +15,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
@@ -26,9 +28,6 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 final class CombinedSheetPage
 {
     private const PAGE_SIZE = 20;
-
-    /** @var list<string> */
-    private const EXAM_SET_NAMES = ['beginning of term', 'mid term', 'end of term'];
 
     public function __construct(private readonly ResultsService $results)
     {
@@ -112,13 +111,6 @@ final class CombinedSheetPage
             ->orderByDesc('id')
             ->get();
 
-        $examTypes = ExamType::query()
-            ->visibleToSchool($schoolId)
-            ->orderBy('name')
-            ->orderBy('id')
-            ->get();
-        [$examSetTabs, $otherExamTypes] = $this->examSets($examTypes, $schoolId);
-
         $sectionId = $request->filled('class') ? (int) $request->input('class') : null;
         $termId = $request->filled('term') ? (int) $request->input('term') : null;
         $examTypeId = $request->filled('examType') ? (int) $request->input('examType') : null;
@@ -137,9 +129,8 @@ final class CombinedSheetPage
             'classes' => $classes,
             'years' => $years,
             'terms' => $terms,
-            'examTypes' => $examTypes,
-            'examSetTabs' => $examSetTabs,
-            'otherExamTypes' => $otherExamTypes,
+            'examSetTabs' => [],
+            'setReleased' => false,
             'selectedYearId' => $selectedYearId,
             'streams' => collect(),
             'subjects' => collect(),
@@ -188,7 +179,12 @@ final class CombinedSheetPage
             }
         }
         $base['filterLaunch'] = $this->filterLaunch($section, $streamName);
-        $base['examSetTabs'] = $this->withStatus($schoolId, $examSetTabs, $requestedTerm, $section);
+        $base['examSetTabs'] = $this->withStatus(
+            $schoolId,
+            $this->examSets($schoolId, $requestedTerm, $section),
+            $requestedTerm,
+            $section,
+        );
 
         if ($sectionId === null || $termId === null || $examTypeId === null) {
             return $base;
@@ -261,6 +257,13 @@ final class CombinedSheetPage
             $students->total().' students',
         ])));
 
+        $setReleased = false;
+        foreach ($base['examSetTabs'] as $tab) {
+            if ((int) $tab['type']->id === (int) $type->id && $tab['key'] === 'released') {
+                $setReleased = true;
+            }
+        }
+
         return array_merge($base, [
             'subjects' => $subjects,
             'students' => $students,
@@ -274,52 +277,75 @@ final class CombinedSheetPage
             'streamFiltered' => $streamId !== null,
             'marksSubtitle' => $marksSubtitle !== '' ? $marksSubtitle : 'Marks grid',
             'sheet' => $sheet,
+            'setReleased' => $setReleased,
         ]);
     }
 
     /**
-     * The three term sittings, in workbook order. Any other type stays
-     * in the extra control. A school's own type wins over a shared name.
+     * Every exam set that has a sitting in this term, earliest date first.
+     * A type with no sitting this term is not a tab.
      *
-     * @param Collection<int, ExamType> $types
-     * @return array{0: list<ExamType>, 1: Collection<int, ExamType>}
+     * @return list<ExamType>
      */
-    private function examSets(Collection $types, int $schoolId): array
+    private function examSets(int $schoolId, ?AcademicTerm $term, ?Section $section): array
     {
+        if ($term === null) {
+            return [];
+        }
+
+        $exams = Exam::query()
+            ->where('school_id', $schoolId)
+            ->where('academic_term_id', $term->id)
+            ->when($section !== null, fn ($query) => $query->where('section_id', $section->id))
+            ->whereNull('deleted_at')
+            ->whereNotNull('exam_type_id')
+            ->get(['id', 'exam_type_id', 'scheduled_at']);
+
+        if ($exams->isEmpty()) {
+            return [];
+        }
+
+        $types = ExamType::query()
+            ->visibleToSchool($schoolId)
+            ->whereIn('id', $exams->pluck('exam_type_id')->unique()->all())
+            ->get()
+            ->keyBy(fn (ExamType $type): int => (int) $type->id);
+
+        $earliest = [];
+        foreach ($exams as $exam) {
+            $typeId = (int) $exam->exam_type_id;
+            if (! $types->has($typeId)) {
+                continue;
+            }
+            $when = $exam->scheduled_at?->getTimestamp();
+            $known = array_key_exists($typeId, $earliest);
+            if (! $known || ($when !== null && ($earliest[$typeId] === null || $when < $earliest[$typeId]))) {
+                $earliest[$typeId] = $when;
+            }
+        }
+
+        uksort($earliest, function (int $left, int $right) use ($earliest): int {
+            $leftWhen = $earliest[$left];
+            $rightWhen = $earliest[$right];
+            if ($leftWhen === $rightWhen) {
+                return $left <=> $right;
+            }
+            if ($leftWhen === null) {
+                return 1;
+            }
+            if ($rightWhen === null) {
+                return -1;
+            }
+
+            return $leftWhen <=> $rightWhen;
+        });
+
         $tabs = [];
-        foreach (self::EXAM_SET_NAMES as $name) {
-            $tabs[$name] = null;
-        }
-        $others = collect();
-        foreach ($types as $type) {
-            $key = mb_strtolower(trim((string) $type->name));
-            if (! array_key_exists($key, $tabs)) {
-                $others->push($type);
-                continue;
-            }
-            $current = $tabs[$key];
-            if (! $current instanceof ExamType || $this->preferExamType($type, $current, $schoolId)) {
-                if ($current instanceof ExamType) {
-                    $others->push($current);
-                }
-                $tabs[$key] = $type;
-                continue;
-            }
-            $others->push($type);
+        foreach (array_keys($earliest) as $typeId) {
+            $tabs[] = $types->get($typeId);
         }
 
-        return [array_values(array_filter($tabs)), $others->values()];
-    }
-
-    private function preferExamType(ExamType $candidate, ExamType $current, int $schoolId): bool
-    {
-        $candidateOwn = (int) $candidate->school_id === $schoolId;
-        $currentOwn = (int) $current->school_id === $schoolId;
-        if ($candidateOwn !== $currentOwn) {
-            return $candidateOwn;
-        }
-
-        return (int) $candidate->id < (int) $current->id;
+        return $tabs;
     }
 
     private function filterLaunch(?Section $section, ?string $streamName): string
@@ -435,13 +461,6 @@ final class CombinedSheetPage
             'coming' => ['Marks coming in', 'Coming in', false],
         ];
         [$desktop, $phone, $locked] = $labels[$key];
-        $nameKey = mb_strtolower(trim((string) $type->name));
-        $short = match ($nameKey) {
-            'beginning of term' => 'Beginning',
-            'mid term' => 'Mid',
-            'end of term' => 'End',
-            default => trim((string) $type->name),
-        };
 
         return [
             'type' => $type,
@@ -450,8 +469,25 @@ final class CombinedSheetPage
             'phone' => $phone,
             'locked' => $locked,
             'note' => $note,
-            'short' => $short,
+            'short' => $this->shortLabel($type),
         ];
+    }
+
+    private function shortLabel(ExamType $type): string
+    {
+        if (Schema::hasColumn($type->getTable(), 'short_name')) {
+            $stored = trim((string) ($type->getAttribute('short_name') ?? ''));
+            if ($stored !== '') {
+                return $stored;
+            }
+        }
+
+        $name = trim((string) $type->name);
+        if ($name === '') {
+            return '';
+        }
+
+        return (string) Str::of($name)->squish()->before(' ');
     }
 
     /**

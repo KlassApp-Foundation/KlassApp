@@ -209,6 +209,7 @@ class MarksOverviewTest extends TestCase
         $this->englishMid = $this->exam($standard, $this->english, $this->mid, '2026-10-08');
         $this->exam($standard, $this->reading, $this->mid, '2026-10-09');
         $scienceMid = $this->exam($standard, $this->science, $this->mid, '2026-10-10');
+        $this->exam($standard, $this->english, $this->end, '2026-11-12');
 
         $this->mark($englishBot, $this->english, $this->ada, 61, '');
         $this->mark($this->englishMid, $this->english, $this->ada, 50, '');
@@ -267,10 +268,8 @@ class MarksOverviewTest extends TestCase
         $this->assertStringContainsString('section='.$this->section->id, $html);
         $this->assertStringContainsString('ka-tile-abs', $html);
         $this->assertStringContainsString('>ABS<', $html);
-        preg_match('/<select name="examType" id="examType".*?<\/select>/s', $html, $otherExam);
-        $this->assertStringContainsString('Quiz', $otherExam[0]);
-        $this->assertStringNotContainsString('MID TERM', $otherExam[0]);
-        $this->assertStringNotContainsString('End of Term', $otherExam[0]);
+        $this->assertStringNotContainsString('data-testid="marks-other-exam"', $html);
+        $this->assertStringNotContainsString('>Other exam<', $html);
         $this->assertMatchesRegularExpression(
             '/href="[^"]*examType='.$this->beginning->id.'[^"]*"[^>]*data-exam-set="beginning of term"/',
             $html
@@ -280,6 +279,8 @@ class MarksOverviewTest extends TestCase
         $beginningCells = $this->innerCells($beginning, $this->english->id);
         $this->assertTrue($this->cellHas($beginningCells, '61'));
         $this->assertFalse($this->cellHas($beginningCells, '50'));
+        $this->assertTrue($this->cellHas($beginningCells, 'Missing'));
+        $this->assertStringContainsString('data-testid="marks-cell-missing"', $beginning);
         $this->assertMatchesRegularExpression(
             '/data-exam-set="beginning of term"[^>]*aria-current="page"/',
             $beginning
@@ -314,7 +315,9 @@ class MarksOverviewTest extends TestCase
         foreach ($science as $cell) {
             $this->assertStringContainsString('—', $cell);
             $this->assertStringNotContainsString('91', $cell);
+            $this->assertStringNotContainsString('Missing', $cell);
         }
+        $this->assertStringNotContainsString('marks-cell-missing', $html);
         $this->assertTrue($this->cellHas($this->innerCells($html, $this->reading->id), '77'));
         $this->assertMatchesRegularExpression('/data-testid="marks-phone-total">\s*50\s*</', $html);
         $this->assertDoesNotMatchRegularExpression('/data-testid="marks-phone-total">\s*Total/', $html);

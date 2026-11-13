@@ -91,23 +91,6 @@
                 @endforeach
             </div>
         @endif
-
-        <form method="GET" action="{{ route($filterRoute) }}" class="ka-other-exam" data-testid="marks-other-exam">
-            <input type="hidden" name="year" value="{{ request('year') }}">
-            <input type="hidden" name="term" value="{{ request('term') }}">
-            <input type="hidden" name="class" value="{{ request('class') }}">
-            <input type="hidden" name="stream" value="{{ request('stream') }}">
-            <label for="examType" class="ds-label">Other exam</label>
-            <select name="examType" id="examType" class="ds-form-select">
-                <option value="">Other exam</option>
-                @foreach ($otherExamTypes as $otherType)
-                    <option value="{{ $otherType->id }}" @selected((string) request('examType') === (string) $otherType->id)>
-                        {{ $otherType->name }}
-                    </option>
-                @endforeach
-            </select>
-            <button type="submit" class="ds-btn ds-btn-outline">Show exam</button>
-        </form>
     </div>
 
     @if($marksError)

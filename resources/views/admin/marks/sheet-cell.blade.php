@@ -5,6 +5,8 @@
     @if($cell->grade)
         <span data-testid="marks-cell-grade">{{ $cell->grade }}</span>
     @endif
+@elseif(!empty($setReleased))
+    <span data-testid="marks-cell-missing">Missing</span>
 @else
     —
 @endif

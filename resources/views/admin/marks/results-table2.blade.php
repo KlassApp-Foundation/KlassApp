@@ -36,7 +36,7 @@
                             $absent = $cell && $cell->status === \App\Services\Results\ResultCell::ABSENT;
                         @endphp
                         <td class="ka-num {{ $absent ? 'ka-cell-abs' : '' }}" data-testid="marks-cell" data-subject="{{ $subject['id'] }}">
-                            @include('admin.marks.sheet-cell', ['cell' => $cell])
+                            @include('admin.marks.sheet-cell', ['cell' => $cell, 'setReleased' => (bool) ($setReleased ?? false)])
                         </td>
                     @endforeach
                     <td class="gm-total ka-num" data-testid="marks-total">{{ $student->displayTotal ?? '—' }}</td>
@@ -70,7 +70,7 @@
                     <div @class(['ka-tile-abs' => $absent])>
                         <dt>{{ $subject['name'] }}</dt>
                         <dd data-testid="marks-cell" data-subject="{{ $subject['id'] }}">
-                            @include('admin.marks.sheet-cell', ['cell' => $cell])
+                            @include('admin.marks.sheet-cell', ['cell' => $cell, 'setReleased' => (bool) ($setReleased ?? false)])
                         </dd>
                     </div>
                 @endforeach

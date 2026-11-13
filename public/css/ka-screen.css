@@ -99,8 +99,9 @@
 .ka-choice.is-on{background:#fff;box-shadow:0 0 0 1px #CBD5E1;font-weight:700;color:#1E293B}
 .ka-class-launch{width:100%;justify-content:flex-start;gap:8px;min-height:44px}
 .ka-download-desk{display:none}
-.ka-exam-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;border:0;margin:0}
-.ka-exam-tabs a{min-height:60px;padding:8px 6px;border-radius:12px;border:1px solid #94A3B8;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;color:#1E293B;text-align:center;font-weight:700;box-sizing:border-box}
+.ka-block-tabs{min-width:0;max-width:100%}
+.ka-exam-tabs{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;overscroll-behavior-x:contain;border:0;margin:0;max-width:100%;min-width:0}
+.ka-exam-tabs a{flex:0 0 auto;min-height:60px;padding:8px 10px;border-radius:12px;border:1px solid #94A3B8;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;color:#1E293B;text-align:center;font-weight:700;box-sizing:border-box;white-space:nowrap}
 .ka-exam-tabs a[aria-current=page],.ka-exam-tabs a.is-on{border:2px solid #15803D;background:#F0FDF4;margin:0;color:#1E293B}
 .ka-exam-name{display:inline-flex;align-items:center;justify-content:center;gap:4px;max-width:100%}
 .ka-exam-long,.ka-exam-status-long,.ka-exam-note{display:none}
@@ -160,8 +161,8 @@
   .ka-term-pills,.ka-stream-pills{display:inline-flex;flex-wrap:wrap;padding:4px;border-radius:12px;background:#F1F5F9;gap:4px}
   .ka-term-select,.ka-stream-select,.ka-sheet-apply,.ka-summary-phone{display:none}
   .ka-download-desk{display:inline-flex;margin-left:auto;min-height:44px}
-  .ka-exam-tabs{display:flex;flex-wrap:wrap;gap:10px}
-  .ka-exam-tabs a{flex:1 1 240px;min-height:72px;padding:12px 16px;border-radius:14px;align-items:flex-start;text-align:left;gap:6px}
+  .ka-exam-tabs{display:flex;flex-wrap:wrap;gap:10px;overflow-x:visible}
+  .ka-exam-tabs a{flex:1 1 240px;min-height:72px;padding:12px 16px;border-radius:14px;align-items:flex-start;text-align:left;gap:6px;white-space:normal}
   .ka-exam-name{justify-content:flex-start}
   .ka-exam-long{display:inline;font:700 .98rem 'Sora',sans-serif}
   .ka-exam-short,.ka-exam-status-short{display:none}
