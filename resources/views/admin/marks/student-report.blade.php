@@ -194,9 +194,22 @@
             @endforeach
         </table>
     @else
-        {{-- ═══ MID TERM — MONTHLY RESULTS (subjects as columns, exams as rows) ═══ --}}
+        @php
+            $labels = $typeLabels ?? [];
+            $labelFor = function ($exam) use ($labels) {
+                $id = (int) ($exam->exam_type_id ?? 0);
+                $custom = trim((string) ($labels[(string) $id] ?? $labels[$id] ?? ''));
+                if ($custom !== '') {
+                    return $custom;
+                }
+
+                return $exam->examType->name ?? null;
+            };
+            $aloneNames = $midExams->map($labelFor)->filter()->unique()->implode(' · ');
+            $countNames = $eotExams->map($labelFor)->filter()->unique()->implode(' · ');
+        @endphp
         @if ($midExams->isNotEmpty())
-        <div class="grades-heading">MONTHLY RESULTS — MID TERM</div>
+        <div class="grades-heading">{{ $aloneNames !== '' ? $aloneNames : 'Exam sets shown on their own' }}</div>
         <table class="marks-table">
             <tr>
                 <th style="width:12%">Month Of</th>
@@ -231,9 +244,11 @@
         </table>
         @endif
 
-        {{-- ═══ END OF TERM (subjects as rows, full column set) ═══ --}}
         @if ($eotExams->isNotEmpty())
-        <div class="grades-heading" style="color: #1E6FD9;">END OF TERM EXAMINATION</div>
+        <div class="grades-heading" style="color: #1E6FD9;">{{ $countNames !== '' ? $countNames : 'Combined report' }}</div>
+        @if (!empty($madeUpOf))
+            <p data-testid="report-made-up-of">{{ $madeUpOf }}</p>
+        @endif
         <table class="marks-table">
             <tr>
                 <th>Subject</th>

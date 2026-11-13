@@ -145,6 +145,10 @@
         </x-fold-list>
     @endif
 
+    @if(($missingCount ?? 0) > 0)
+        <p data-testid="release-missing-fact">{{ $missingCount === 1 ? '1 mark is missing and will count as 0' : $missingCount.' marks are missing and will count as 0' }}.</p>
+    @endif
+
     <div class="mr-sheet {{ $wide ? 'mr-sheet--wide' : '' }}" data-testid="marks-release-sheet">
         <table class="mr-grid">
             <thead>
@@ -173,11 +177,13 @@
                             @foreach($sheet['subjects'] as $subject)
                                 @php $cell = $student['cells'][$subject['key']] ?? null; @endphp
                                 <td class="mr-num" data-subject="{{ $subject['key'] }}" data-value="{{ $cell['mark'] ?? '' }}">
-                                    @if($cell)
+                                    @if(($cell['mark'] ?? '') === 'AB')
+                                        <span class="mr-mark" data-testid="release-cell-absent">ABS</span>
+                                    @elseif($cell)
                                         <span class="mr-mark">{{ $cell['mark'] }}</span>
                                         <span class="mr-grade">{{ $cell['grade'] }}</span>
                                     @else
-                                        <span class="mr-mark">—</span>
+                                        <span class="mr-mark" data-testid="release-cell-missing">Missing</span>
                                     @endif
                                 </td>
                             @endforeach

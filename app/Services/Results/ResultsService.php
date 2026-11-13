@@ -32,6 +32,7 @@ final class ResultsService
         private readonly GradingScale $gradingScale,
         private readonly DivisionRule $divisionRule,
         private readonly ExamTypeContribution $examTypeContribution,
+        private readonly ReportComposition $reportComposition,
     ) {
     }
 
@@ -58,26 +59,42 @@ final class ResultsService
 
         $school = School::query()->find($query->schoolId);
         $preferences = $school?->exam_type_preferences;
-        $composition = $school?->report_composition;
+        // One exam set is that set's own report. A term query is the
+        // end-of-term report, and a released End of Term set keeps the mix
+        // it was released with.
+        $composition = $query->examTypeId === null
+            ? $this->reportComposition->forTermReport($query->schoolId, $query->sectionId, (int) $term->id)
+            : null;
         $typeMeta = $this->typeMeta($exams, $preferences, $composition);
         $marks = $this->marksFor($query->schoolId, $exams);
         $chosen = $this->choose($exams, $marks);
         $roster = $this->roster($query, (int) $term->academic_year_id, $exams);
 
+        // A saved or frozen mix decides which sets count. No mix keeps each
+        // set's own contributes flag, so a school that has not saved a mix
+        // keeps the totals it has today. A set that stands alone is still
+        // listed below; it does not enter this total.
+        $countsTowardTerm = function (array $type) use ($composition): bool {
+            return $this->reportComposition->countsToward(
+                is_array($composition) ? $composition : [],
+                (int) $type['id'],
+                (bool) $type['contributes'],
+            );
+        };
         $mainTypeIds = $query->examTypeId !== null
             ? (isset($typeMeta[$query->examTypeId]) ? [$query->examTypeId] : [])
             : array_values(array_map(
                 fn (array $type) => $type['id'],
-                array_filter($typeMeta, fn (array $type) => $type['contributes'])
+                array_filter($typeMeta, $countsTowardTerm)
             ));
 
-        // Weights only apply on the term report: a weighted mean across the
-        // contributing types that carry a weight; types without one keep the
-        // latest-mark behaviour for the merge below.
+        // Weights only apply on the end-of-term report: a weighted mean across
+        // the sets that carry a weight. One weight, or none, keeps a single
+        // set's own mark.
         $weights = $query->examTypeId === null
             ? array_filter(array_map(
                 fn (array $type) => $type['weight'],
-                array_filter($typeMeta, fn (array $type) => $type['contributes'] && $type['weight'] !== null)
+                array_filter($typeMeta, fn (array $type) => $countsTowardTerm($type) && $type['weight'] !== null)
             ), fn ($weight) => $weight !== null)
             : [];
         if (count($weights) < 2) {
@@ -94,9 +111,8 @@ final class ResultsService
 
         $sittings = [];
         foreach ($this->sittingPlans($exams, $policy->splitMidTermByMonth, $preferences) as $plan) {
-            if ($query->examTypeId === null && ! ($typeMeta[$plan['typeId']]['included'] ?? true)) {
-                continue;
-            }
+            // A set that stands alone still has its own sitting. Only the
+            // combined total above leaves it out.
             $bucketExams = $exams->whereIn('id', $plan['examIds'])->values();
             $bucketMarks = $marks->whereIn('exam_id', $plan['examIds'])->values();
             $bucketChosen = $this->choose($bucketExams, $bucketMarks);
@@ -550,7 +566,7 @@ final class ResultsService
                 $choice = $this->merged($chosen, $typeIds, $studentId, (int) $subject['id'], $weights);
                 $cells[(int) $subject['id']] = $this->cell($policy, $schoolId, $standardId, (int) $subject['id'], $choice);
             }
-            [$total, $counted, $average, $aggregate, $division, $displayTotal, $displayAverage] = $this->totals($policy, $cells);
+            [$total, $counted, $average, $aggregate, $division, $displayTotal, $displayAverage] = $this->totals($policy, $cells, $schoolId, $standardId);
             $drafts[] = [
                 'studentId' => $studentId,
                 'name' => (string) $user->name,
@@ -599,9 +615,9 @@ final class ResultsService
 
     /**
      * One merged mark per subject: the latest contributing mark, or a
-     * weighted mean when the school's report composition configures weights
-     * for at least two contributing types (types without marks are dropped
-     * from both numerator and denominator).
+     * weighted mean when at least two counting sets have a weight.
+     * A missing mark and an ABS count as 0. The weights stay as saved.
+     * Nothing is dropped from the denominator to make the rest add up.
      *
      * @param array<int, array<int, array<int, array{mark: float, grade: string, scheduled: int, examId: int}>>> $chosen
      * @param list<int> $typeIds
@@ -622,25 +638,21 @@ final class ResultsService
             return $best;
         }
 
-        if ($best === null) {
-            return null;
-        }
-
-        // Absent and descriptive (grade-only) results keep the latest
-        // behaviour; a weighted mean only makes sense for numeric marks.
-        if ($best['grade'] !== '') {
-            return $best;
-        }
-
         $sum = 0.0;
         $weightSum = 0.0;
         foreach ($typeIds as $typeId) {
-            $row = $chosen[$typeId][$studentId][$subjectId] ?? null;
             $weight = (float) ($weights[$typeId] ?? 0);
-            if ($row === null || $weight <= 0 || $row['mark'] === null) {
+            if ($weight <= 0) {
                 continue;
             }
-            $sum += (float) $row['mark'] * $weight;
+            $row = $chosen[$typeId][$studentId][$subjectId] ?? null;
+            $grade = trim((string) ($row['grade'] ?? ''));
+            $absent = $row !== null && strcasecmp($grade, 'AB') === 0;
+            if ($row !== null && $row['mark'] === null && ! $absent && $grade !== '') {
+                return $best;
+            }
+            $value = ($row !== null && $row['mark'] !== null && ! $absent) ? (float) $row['mark'] : 0.0;
+            $sum += $value * $weight;
             $weightSum += $weight;
         }
 
@@ -651,8 +663,8 @@ final class ResultsService
         return [
             'mark' => round($sum / $weightSum, 2),
             'grade' => '',
-            'scheduled' => $best['scheduled'],
-            'examId' => $best['examId'],
+            'scheduled' => $best['scheduled'] ?? 0,
+            'examId' => $best['examId'] ?? 0,
         ];
     }
 
@@ -686,16 +698,30 @@ final class ResultsService
     }
 
     /**
+     * A missing mark and an ABS add 0, the lowest grade. They stay in the
+     * count so the average and the position use that zero.
+     *
      * @param array<int, ResultCell> $cells
      * @return array{0: ?float, 1: int, 2: ?float, 3: ?int, 4: ?string, 5: ?float, 6: ?float}
      */
-    private function totals(ResultsPolicy $policy, array $cells): array
+    private function totals(ResultsPolicy $policy, array $cells, int $schoolId = 0, int $standardId = 0): array
     {
         $total = 0.0;
         $counted = 0;
         $points = 0;
         $pointsSeen = false;
         foreach ($cells as $cell) {
+            if ($cell->status === ResultCell::MISSING || $cell->status === ResultCell::ABSENT) {
+                $total += 0;
+                $counted++;
+                $zeroPoints = $policy->gradingScale->pointsFor($schoolId, $standardId, 0);
+                if ($zeroPoints !== null) {
+                    $points += $zeroPoints;
+                    $pointsSeen = true;
+                }
+
+                continue;
+            }
             if ($cell->status !== ResultCell::MARKED || $cell->mark === null) {
                 continue;
             }

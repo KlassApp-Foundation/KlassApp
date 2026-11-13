@@ -328,8 +328,22 @@
             @endforeach
         </table>
     @else
+        @php
+            $labels = $typeLabels ?? [];
+            $labelFor = function ($exam) use ($labels) {
+                $id = (int) ($exam->exam_type_id ?? 0);
+                $custom = trim((string) ($labels[(string) $id] ?? $labels[$id] ?? ''));
+                if ($custom !== '') {
+                    return $custom;
+                }
+
+                return $exam->examType->name ?? null;
+            };
+            $aloneNames = $midExams->map($labelFor)->filter()->unique()->implode(' · ');
+            $countNames = $eotExams->map($labelFor)->filter()->unique()->implode(' · ');
+        @endphp
         @if ($midExams->isNotEmpty())
-        <div class="section-label">MONTHLY RESULTS — MID TERM</div>
+        <div class="section-label">{{ $aloneNames !== '' ? $aloneNames : 'Exam sets shown on their own' }}</div>
         <table class="ledger">
             <tr>
                 <th style="width:12%">Month Of</th>
@@ -358,7 +372,7 @@
                                     $midGrade = \App\Helpers\GradingHelper::formatAggLabel($g) ?? '-';
                                 }
                             @endphp
-                            <td>{{ $markValue !== null ? floor($markValue) : '-' }}</td>
+                            <td>{{ \App\Services\Results\ResultCell::printedMark($cell ?? null) }}</td>
                             @if ($showAgg) <td>{{ $midGrade }}</td> @endif
                         @endif
                     @endforeach
@@ -384,7 +398,7 @@
                                     $midGrade = \App\Helpers\GradingHelper::formatAggLabel($g) ?? '-';
                                 }
                             @endphp
-                            <td>{{ $midMark && $midMark->marks !== null ? floor($midMark->marks) : '-' }}</td>
+                            <td>{{ \App\Services\Results\ResultCell::printedMark($midMark ?? null) }}</td>
                             @if ($showAgg) <td>{{ $midGrade }}</td> @endif
                         @endif
                     @endforeach
@@ -398,7 +412,10 @@
         @endif
 
         @if ($eotExams->isNotEmpty())
-        <div class="section-label">END OF TERM {{ $termNumeral ?: 'EXAMINATION' }}</div>
+        <div class="section-label">{{ $countNames !== '' ? $countNames : 'Combined report' }}</div>
+        @if (!empty($madeUpOf))
+            <p data-testid="report-made-up-of" style="margin:0 0 8px;font-size:12px;">{{ $madeUpOf }}</p>
+        @endif
         <table class="ledger">
             <tr>
                 <th>Subject</th>
@@ -434,7 +451,7 @@
                 <tr>
                     <td class="left"><strong>{{ $subject->name }}</strong></td>
                     <td>100</td>
-                    <td>{{ $eotMark && $eotMark->marks !== null ? floor($eotMark->marks) : '-' }}</td>
+                    <td>{{ \App\Services\Results\ResultCell::printedMark($eotMark ?? null) }}</td>
                     @if ($showAgg) <td>{{ $eotGrade }}</td> @endif
                     <td>{{ $eotComment }}</td>
                     <td>{{ $teacherName }}</td>

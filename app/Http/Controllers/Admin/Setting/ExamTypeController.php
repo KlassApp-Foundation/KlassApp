@@ -4,10 +4,14 @@ namespace App\Http\Controllers\Admin\Setting;
 
 use App\Http\Controllers\Controller;
 use App\Helpers\GradingHelper;
+use App\Models\AcademicTerm;
 use App\Models\Academics\ExamType;
 use App\Models\School;
+use App\Services\Results\ReportComposition;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -20,20 +24,31 @@ class ExamTypeController extends Controller
     public function index()
     {
         $schoolId = Auth::user()->school_id;
-        $examTypes = ExamType::visibleToSchool($schoolId)->orderBy('id')->get();
-
-        // Load current toggles: each school's preference is stored in a JSON column
-        // on the schools table, or falls back to the exam_types default.
         $school = School::find($schoolId);
+        $composer = app(ReportComposition::class);
+        $examTypes = $composer->orderedTypes((int) $schoolId);
         $prefs = $this->jsonColumn($school, 'exam_type_preferences');
-        $composition = $this->jsonColumn($school, 'report_composition');
+        $stored = is_array($school?->report_composition) && $school->report_composition !== [];
+        $composition = $stored ? $composer->resolved($school) : $composer->suggested($examTypes, (int) $schoolId);
+        $labels = is_array($school?->exam_type_labels) ? $school->exam_type_labels : [];
+        $names = [];
+        foreach ($examTypes as $type) {
+            $custom = trim((string) ($labels[(string) $type->id] ?? $labels[$type->id] ?? ''));
+            $names[(int) $type->id] = $custom !== '' ? $custom : (string) $type->name;
+        }
+        $madeUpOf = $composer->madeUpOf($composition, $names);
+        $mix = $composer->mixSummary($composition, $names);
+        $preset = $composer->matchingPreset($examTypes, $composition);
+        $ownReports = $school ? $composer->ownReports((int) $school->id) : [];
+        $showMarksLater = ! ($school && $composer->hasReleasedCountedMark((int) $school->id, $composition));
         $profiles = config('curricula.profiles', []);
         $profileKey = GradingHelper::profileKeyForSchool($schoolId);
         $legacyBands = GradingHelper::legacyBandsForSchool($schoolId);
         $legacyIsExample = $school?->legacy_o_level_bands === null;
 
         return view('admin.settings.exam-types', compact(
-            'examTypes', 'prefs', 'composition', 'profiles', 'profileKey', 'legacyBands', 'legacyIsExample'
+            'examTypes', 'prefs', 'composition', 'profiles', 'profileKey', 'legacyBands', 'legacyIsExample',
+            'madeUpOf', 'mix', 'preset', 'ownReports', 'showMarksLater', 'labels'
         ));
     }
 
@@ -42,6 +57,16 @@ class ExamTypeController extends Controller
         $schoolId = Auth::user()->school_id;
         $school = School::findOrFail($schoolId);
         $visibleIds = $this->visibleTypeIds((int) $schoolId);
+
+        $compositionSent = $request->exists('include') || $request->exists('weight') || $request->exists('mode');
+        $composition = $compositionSent
+            ? app(ReportComposition::class)->fromRequest(
+                (array) $request->input('include', []),
+                (array) $request->input('weight', []),
+                $visibleIds,
+                (array) $request->input('mode', []),
+            )
+            : $school->report_composition;
 
         // Only this school's types are toggles it may set: posting another
         // school's id leaves no trace in this school's preferences.
@@ -53,38 +78,11 @@ class ExamTypeController extends Controller
             }
         }
         $school->exam_type_preferences = $prefs ?: null;
-
-        $composition = [];
-        foreach ((array) $request->input('include', []) as $typeId => $on) {
-            $typeId = (int) $typeId;
-            if (! in_array($typeId, $visibleIds, true)) {
-                continue;
-            }
-            $composition[(string) $typeId] = ['include' => (string) $on === '1', 'weight' => null];
-        }
-        foreach ((array) $request->input('weight', []) as $typeId => $weight) {
-            $typeId = (int) $typeId;
-            if (! in_array($typeId, $visibleIds, true)) {
-                continue;
-            }
-            $weight = trim((string) $weight);
-            if ($weight === '') {
-                continue;
-            }
-            if (! is_numeric($weight) || (float) $weight <= 0 || (float) $weight > 100) {
-                continue;
-            }
-            $key = (string) $typeId;
-            $composition[$key] = ($composition[$key] ?? ['include' => true, 'weight' => null]);
-            $composition[$key]['weight'] = (float) $weight;
-        }
-        foreach ($composition as $key => $settings) {
-            // Right-hand side fills gaps only: `+` keeps include/weight already set.
-            $composition[$key] = $settings + ['include' => true, 'weight' => null];
-        }
         $school->report_composition = $composition ?: null;
+        $school->exam_type_labels = $this->labelsFromRequest($request, $visibleIds, $school);
 
         $school->save();
+        $this->storeCombinedReport($school, is_array($composition) ? $composition : null);
 
         return redirect()->route('admin.settings.exam-types')
             ->with('successmessage', 'Exam type preferences updated.');
@@ -102,6 +100,7 @@ class ExamTypeController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:80'],
             'code' => ['required', 'string', 'max:10'],
+            'short_name' => ['nullable', 'string', 'max:24'],
             'contributes_to_report_total' => ['nullable', 'boolean'],
         ]);
 
@@ -121,10 +120,12 @@ class ExamTypeController extends Controller
             ]);
         }
 
+        $short = trim((string) ($data['short_name'] ?? ''));
         ExamType::create([
             'school_id' => $school->id,
             'name' => $name,
             'code' => $code,
+            'short_name' => $short === '' ? null : $short,
             'contributes_to_report_total' => $request->boolean('contributes_to_report_total'),
         ]);
 
@@ -132,10 +133,93 @@ class ExamTypeController extends Controller
             ->with('successmessage', $name.' added to your exam types. Only your school sees it.');
     }
 
+    /**
+     * Names the school typed for its exam sets. The catalog row is unchanged.
+     * An empty box keeps the catalog name.
+     *
+     * @param  list<int>  $visibleIds
+     * @return array<string, string>|null
+     */
+    private function labelsFromRequest(Request $request, array $visibleIds, School $school): ?array
+    {
+        $labels = is_array($school->exam_type_labels) ? $school->exam_type_labels : [];
+        foreach ((array) $request->input('type_name', []) as $typeId => $raw) {
+            $typeId = (int) $typeId;
+            if (! in_array($typeId, $visibleIds, true)) {
+                continue;
+            }
+            $name = trim((string) $raw);
+            if ($name === '' || mb_strlen($name) > 80) {
+                unset($labels[(string) $typeId]);
+                continue;
+            }
+            $labels[(string) $typeId] = $name;
+        }
+
+        return $labels === [] ? null : $labels;
+    }
+
     /** @return list<int> */
     private function visibleTypeIds(int $schoolId): array
     {
         return ExamType::visibleToSchool($schoolId)->pluck('id')->map(fn ($id) => (int) $id)->all();
+    }
+
+    /**
+     * One "Term report" row for the current term. A second name on this table
+     * is how another combined report will be added later.
+     *
+     * @param  array<int|string, mixed>|null  $composition
+     */
+    private function storeCombinedReport(School $school, ?array $composition): void
+    {
+        if (! is_array($composition) || $composition === [] || ! Schema::hasTable('combined_reports')) {
+            return;
+        }
+
+        $termId = AcademicTerm::query()
+            ->where('school_id', $school->id)
+            ->where('status', 'current')
+            ->orderByDesc('id')
+            ->value('id');
+
+        $existing = DB::table('combined_reports')
+            ->where('school_id', $school->id)
+            ->where('name', 'Term report')
+            ->when($termId === null, fn ($query) => $query->whereNull('academic_term_id'), fn ($query) => $query->where('academic_term_id', $termId))
+            ->value('id');
+
+        if ($existing === null) {
+            $existing = DB::table('combined_reports')->insertGetId([
+                'school_id' => $school->id,
+                'academic_term_id' => $termId,
+                'name' => 'Term report',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } else {
+            DB::table('combined_reports')->where('id', $existing)->update(['updated_at' => now()]);
+        }
+
+        DB::table('combined_report_components')->where('combined_report_id', $existing)->delete();
+        $rows = [];
+        foreach ($composition as $key => $settings) {
+            if (! is_numeric($key) || ! is_array($settings) || ! array_key_exists('include', $settings)) {
+                continue;
+            }
+            $counts = $settings['include'] === true || $settings['include'] === 1 || $settings['include'] === '1';
+            $rows[] = [
+                'combined_report_id' => $existing,
+                'exam_type_id' => (int) $key,
+                'mode' => $counts ? 'count' : 'alone',
+                'weight' => $counts && is_numeric($settings['weight'] ?? null) ? $settings['weight'] : null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+        if ($rows !== []) {
+            DB::table('combined_report_components')->insert($rows);
+        }
     }
 
     public function updateProfile(Request $request)

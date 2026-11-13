@@ -53,6 +53,7 @@ class School extends Model
         'name' , 'motto' , 'email' , 'phone' , 'address' , 'country_id' , 'city_id' , 'pincode' , 'slug' , 'ministry_code', 'uneb_center_number', 'curriculum', 'school_category', 'status', 'registration_country', 'student_size',
         'school_pay_code', 'school_pay_api_password', 'school_pay_webhook_enabled',
         'exam_type_preferences',
+        'exam_type_labels',
         'report_composition',
         'curriculum_profile',
         'legacy_o_level_bands',
@@ -65,6 +66,7 @@ class School extends Model
 
     protected $casts = [
         'exam_type_preferences' => 'array',
+        'exam_type_labels' => 'array',
         'report_composition' => 'array',
         'legacy_o_level_bands' => 'array',
         'toshi_mode' => \App\Enums\ToshiMode::class,
