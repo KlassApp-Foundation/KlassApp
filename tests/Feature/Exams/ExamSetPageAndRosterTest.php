@@ -368,13 +368,13 @@ class ExamSetPageAndRosterTest extends TestCase
 
         $this->assertStringContainsString('<select name="term" id="term" class="ds-form-select">', $html);
         $this->assertStringContainsString('<select name="class" id="class" class="ds-form-select">', $html);
-        $this->assertStringContainsString('<select name="examType" id="examType" class="ds-form-select">', $html);
+        $this->assertStringNotContainsString('<select name="examType" id="examType"', $html);
+        $this->assertStringNotContainsString('data-testid="marks-other-exam"', $html);
         $this->assertStringContainsString('data-testid="marks-filters-open"', $html);
         $this->assertStringContainsString('data-ka-filters', $html);
         $this->assertStringContainsString('>Filters<', $html);
         $this->assertStringNotContainsString('id="term" class="ds-form-select" required', $html);
         $this->assertStringNotContainsString('id="class" class="ds-form-select" required', $html);
-        $this->assertStringNotContainsString('id="examType" class="ds-form-select" required', $html);
 
         $children = collect(config('navigation.roles.admin.sections'))
             ->flatMap(fn (array $section) => $section['rows'] ?? [])
