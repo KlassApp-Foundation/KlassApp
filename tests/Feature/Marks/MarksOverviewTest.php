@@ -260,7 +260,7 @@ class MarksOverviewTest extends TestCase
         $this->assertStringContainsString('P.5 · all streams', $html);
         $this->assertStringContainsString('KLS number', $html);
         $this->assertStringContainsString('KLS0010001', $html);
-        $this->assertStringContainsString('Totals and positions count approved subjects', $html);
+        $this->assertStringContainsString('ABS and Missing count as 0', $html);
         $this->assertStringContainsString($this->science->name.' is saved but not submitted.', $html);
         $this->assertStringNotContainsString('Social Studies', $html);
         $this->assertStringNotContainsString('Further down', $html);
