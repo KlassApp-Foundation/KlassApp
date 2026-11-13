@@ -150,3 +150,20 @@
   .ka-compose select.ds-form-input { width: 100% !important; max-width: 100%; box-sizing: border-box; }
   .ka-compose table { display: block; width: 100%; max-width: 100%; overflow-x: auto; }
 }
+
+/* Exam types at 375: the page does not scroll sideways. A wide table scrolls inside itself. */
+.ka-type-name { width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; min-height: 44px; }
+@media (max-width: 767px) {
+  .ka-exam-types { overflow-x: clip; max-width: 100%; min-width: 0; }
+  .ka-exam-types .ka-mix-row { flex-wrap: wrap; align-items: flex-start; }
+  .ka-exam-types .ka-mix-label { flex: 1 1 100%; flex-wrap: wrap; min-width: 0; }
+  .ka-exam-types .ka-type-name { flex: 1 1 100%; }
+  .ka-exam-types .ka-mix-bar { max-width: 100%; }
+  .ka-exam-types .ds-form-input,
+  .ka-exam-types select,
+  .ka-exam-types input[type="text"] { max-width: 100% !important; width: 100% !important; box-sizing: border-box; }
+  .ka-exam-types form .flex { flex-direction: column; align-items: stretch; }
+  .ka-exam-types form .flex > div { width: 100%; max-width: 100%; }
+  .ka-exam-types table { display: block; max-width: 100%; overflow-x: auto; }
+  .ka-exam-types .ml-3 { margin-left: 0 !important; margin-top: 8px; }
+}
