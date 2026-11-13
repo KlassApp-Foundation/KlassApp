@@ -13,9 +13,13 @@ use App\Models\School;
 use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
+use App\Models\StudentAcademic;
+use App\Models\StudentParentLink;
 use App\Models\Subject;
 use App\Models\User;
+use App\Models\Userprofile;
 use App\Services\Marks\MarksSubmissionService;
+use App\Services\Parent\ParentPortalService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -265,6 +269,140 @@ class ApproveReturnReleasePhoneTest extends TestCase
         $this->assertSame('reopened', $row->status);
         $this->assertSame($reason, $row->reopen_reason);
         $this->assertSame($this->admin->id, (int) $row->reopened_by);
+    }
+
+    public function test_a_head_teacher_reopens_without_hiding_the_released_mark(): void
+    {
+        DB::table('usergroups')->insert([
+            ['id' => 7, 'name' => 'parent', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+        $this->mark($this->exam, $this->subject);
+        ExamMarksSubmission::create([
+            'school_id' => $this->school->id,
+            'exam_id' => $this->exam->id,
+            'class_id' => $this->section->id,
+            'subject_id' => $this->subject->id,
+            'teacher_id' => $this->teacher->id,
+            'status' => 'locked',
+            'approval_status' => 'approved',
+            'submitted_at' => now(),
+            'approved_at' => now(),
+        ]);
+        $link = StandardLink::query()->where('section_id', $this->section->id)->first();
+        $link->forceFill(['class_teacher_id' => $this->teacher->id])->save();
+        $release = MarksRelease::create([
+            'school_id' => $this->school->id,
+            'exam_id' => $this->exam->id,
+            'scope' => 'class',
+            'standard_link_id' => $link->id,
+            'scheduled_at' => '2026-10-28 09:00:00',
+            'released_at' => '2026-10-28 09:00:00',
+            'status' => MarksRelease::STATUS_RELEASED,
+            'created_by' => $this->admin->id,
+            'timezone' => 'Africa/Kampala',
+            'whatsapp_send' => false,
+        ]);
+        StudentAcademic::create([
+            'school_id' => $this->school->id,
+            'academic_year_id' => $this->year->id,
+            'user_id' => $this->student->id,
+            'standardLink_id' => $link->id,
+        ]);
+        $parent = User::factory()->create([
+            'school_id' => null,
+            'usergroup_id' => 7,
+            'name' => 'Mara Kato',
+            'email' => 'mara.kato@north-ridge.test',
+            'status' => 'active',
+        ]);
+        Userprofile::create([
+            'user_id' => $parent->id,
+            'usergroup_id' => 7,
+            'school_id' => null,
+            'firstname' => 'Mara',
+            'lastname' => 'Kato',
+            'status' => 'active',
+        ]);
+        Userprofile::create([
+            'user_id' => $this->student->id,
+            'usergroup_id' => 6,
+            'school_id' => $this->school->id,
+            'firstname' => 'Kato',
+            'lastname' => 'Learner',
+            'status' => 'active',
+        ]);
+        StudentParentLink::create([
+            'school_id' => $this->school->id,
+            'parent_id' => $parent->id,
+            'student_id' => $this->student->id,
+            'status' => 1,
+        ]);
+        $head = User::factory()->create([
+            'school_id' => $this->school->id,
+            'usergroup_id' => 4,
+            'name' => 'Helen Adong',
+            'email' => 'helen.adong@north-ridge.test',
+            'status' => 'active',
+        ]);
+        $otherHead = User::factory()->create([
+            'school_id' => $this->otherSchool->id,
+            'usergroup_id' => 4,
+            'name' => 'Kidepo Head',
+            'email' => 'head@south-ridge.test',
+            'status' => 'active',
+        ]);
+
+        $show = $this->actingAs($this->admin)->get(route('admin.marks.releases.show', $release))->assertOk()->getContent();
+        $this->assertStringContainsString('Released and locked', $show);
+        $this->assertStringContainsString('Released on 28 Oct 2026 by Nalongo Reviewer', $show);
+        $this->assertStringContainsString('data-testid="release-reopen"', $show);
+        $this->assertStringContainsString('Reopen P.4 · Mid Term?', $show);
+        $this->assertStringContainsString('Families keep seeing the released results until you release again.', $show);
+        $this->assertStringContainsString('Your reason is kept in this history. It isn\'t sent to families.', $show);
+        $this->assertStringContainsString('Reopen P.4 marks', $show);
+        $this->assertStringContainsString('Admins and head teachers only', $show);
+
+        $teacherPage = $this->actingAs($this->teacher)->get(route('teacher.marks.releases.show', $release))->assertOk()->getContent();
+        $this->assertStringNotContainsString('data-testid="release-reopen"', $teacherPage);
+
+        $this->actingAs($head)->get(route('admin.marks.releases.show', $release))->assertOk();
+        $this->actingAs($otherHead)->get(route('admin.marks.releases.show', $release))->assertNotFound();
+
+        $this->actingAs($this->teacher)
+            ->post(route('admin.marks.releases.reopen', $release), [
+                'reason' => 'A teacher must not reopen this.',
+            ])
+            ->assertRedirect('/teacher/dashboard');
+        $this->actingAs($head)
+            ->from(route('admin.marks.releases.show', $release))
+            ->post(route('admin.marks.releases.reopen', $release), ['reason' => ''])
+            ->assertRedirect(route('admin.marks.releases.show', $release))
+            ->assertSessionHasErrors('reason');
+        $this->actingAs($otherHead)
+            ->post(route('admin.marks.releases.reopen', $release), [
+                'reason' => 'Another school must not reopen this.',
+            ])
+            ->assertNotFound();
+
+        $this->assertSame('locked', ExamMarksSubmission::query()->value('status'));
+        $this->assertSame(MarksRelease::STATUS_RELEASED, $release->fresh()->status);
+
+        $reason = 'The head asked for a recount of two papers.';
+        $this->actingAs($head)
+            ->post(route('admin.marks.releases.reopen', $release), ['reason' => $reason])
+            ->assertRedirect(route('admin.marks.releases.show', $release));
+
+        $row = ExamMarksSubmission::query()->first();
+        $this->assertSame('reopened', $row->status);
+        $this->assertSame($reason, $row->reopen_reason);
+        $this->assertSame($head->id, (int) $row->reopened_by);
+        $this->assertSame(MarksRelease::STATUS_RELEASED, $release->fresh()->status);
+
+        $grades = app(ParentPortalService::class)->grades($parent, null, $this->student->id);
+        $this->assertTrue($grades['success'] ?? false, json_encode($grades));
+        $this->assertSame(70.0, (float) $grades['data']['exam_groups'][0]['subjects'][0]['score']);
+        $page = $this->actingAs($parent)->get(route('parent.children.grades', $this->student))->assertOk()->getContent();
+        $this->assertMatchesRegularExpression('/scope="row">MATHEMATICS<\/th>\s*<td>70<\/td>/', $page);
     }
 
     private function school(string $name, string $slug): School
