@@ -2459,6 +2459,12 @@ class WhatsAppController extends Controller
                 $grade = $grades->subject($schoolId, $row->standardId, $cell->mark, $stored[$cell->subjectId] ?? null);
                 $lines .= '• '.($names[$cell->subjectId] ?? 'Subject').": {$score}/100 ({$grade})\n";
             }
+            foreach ($row->cells as $cell) {
+                if ($cell->status !== ResultCell::ABSENT) {
+                    continue;
+                }
+                $lines .= '• '.($names[$cell->subjectId] ?? 'Subject').": ABS\n";
+            }
             $avg = $row->average;
             if ($withRank) {
                 $rank = $row->classPosition;
@@ -2467,6 +2473,11 @@ class WhatsAppController extends Controller
         } else {
             foreach ($fallback->sortByDesc('marks')->take(10) as $mark) {
                 $subject = $mark->subject?->name ?? 'Subject';
+                if ($mark->isAbsent()) {
+                    $lines .= "• {$subject}: ABS\n";
+
+                    continue;
+                }
                 $score = $mark->marks ?? 0;
                 $grade = $mark->grade ?? '-';
                 $lines .= "• {$subject}: {$score}/100 ({$grade})\n";

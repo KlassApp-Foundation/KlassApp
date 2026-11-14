@@ -13,6 +13,7 @@ Draft work. Nothing here is merged or deployed.
 | #1346 | Parity test for points, division and position. |
 | #1347 | A release stores the bands, division ranges and ranking. A reprint uses that copy. https://github.com/KlassApp-Foundation/KlassApp/pull/1347 |
 | #1348 | One division table on the card, the mark sheets, the download, and the parent and learner marks page. https://github.com/KlassApp-Foundation/KlassApp/pull/1348 |
+| next | An absence is shown as ABS. The combined marksheet names each sheet after the school's exam set. |
 
 ## 2026-11-15 — rules stored on the release
 
@@ -23,6 +24,12 @@ A release from before this column has no copy and the row is not rewritten. Its 
 ## 2026-11-15 — rules screen on a phone
 
 Clicked through Report cards as a school admin and a head teacher at 375px and 1280px. The report type, its history line, a card with Missing and ABS, and a reprint after editing the ranges all held. The reprint text did not change. On a phone the rules tables were wider than the screen and the page hid the overflow. #1343 now stacks Division, From aggregate, To aggregate, and the grade bands under their own labels. Nothing else on that screen changed.
+
+## 2026-11-15 — ABS, and the school's set names on the download
+
+An absence is shown as ABS on Enter Marks, the class mark sheet, Report cards, the release preview, the parent marks list, and both spreadsheets. The stored grade stays AB. Typing AB or ABS both save an absence.
+
+The combined marksheet no longer has sheets named MONTHLY RESULTS or END OF TERM. Each exam set is its own sheet, titled with the name the school stored. A set that was split by month keeps that month in the title. A set that counts toward the term total keeps the division column. The report card itself still uses the headings MONTHLY RESULTS and END OF TERM EXAMINATION.
 
 ## 2026-11-15 — one division table
 

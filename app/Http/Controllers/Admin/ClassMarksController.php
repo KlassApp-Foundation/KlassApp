@@ -84,6 +84,18 @@ class ClassMarksController extends Controller
                     foreach ($exam['subjects'] as $subject) {
                         $mark = $marks->get($subject['id']);
                         $cell = $result?->cell((int) $subject['id']);
+                        if (($cell !== null && $cell->status === ResultCell::ABSENT) || ($mark && $mark->isAbsent())) {
+                            $grade = ($cell !== null && $cell->grade !== null && strcasecmp((string) $cell->grade, 'AB') !== 0)
+                                ? (string) $cell->grade
+                                : '';
+                            $rows[] = [
+                                'subject' => $subject['name'],
+                                'mark' => 'ABS',
+                                'grade' => $grade,
+                            ];
+
+                            continue;
+                        }
                         $fromSheet = $cell !== null && $cell->status === ResultCell::MARKED && $cell->mark !== null && $result !== null;
                         $rows[] = [
                             'subject' => $subject['name'],

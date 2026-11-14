@@ -663,7 +663,7 @@ final class MarksReleaseService
             $key = mb_strtolower($name);
             $cell = $row?->cell($subjectId);
             if ($cell !== null && $cell->status === ResultCell::ABSENT) {
-                $cells[$key] = ['mark' => 'AB', 'grade' => '—'];
+                $cells[$key] = ['mark' => 'ABS', 'grade' => '—'];
 
                 continue;
             }
