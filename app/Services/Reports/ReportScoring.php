@@ -4,7 +4,10 @@ namespace App\Services\Reports;
 
 use App\Contracts\Results\GradingScale;
 use App\Models\MarksRelease;
+use App\Services\Results\RangeDivisionRule;
 use App\Services\Results\ResultsPolicy;
+use App\Services\Results\StoredGradingScale;
+use App\Services\Results\ThresholdDivisionRule;
 
 /**
  * How a blank mark is scored. The rule is stamped on the release.
@@ -68,6 +71,69 @@ final class ReportScoring
             $rules->divisionRule($schoolId, $standardId),
             $basis,
             higherIsBetter: $higherIsBetter,
+            countMissingAsZero: $countMissingAsZero,
+        );
+    }
+
+    /**
+     * The policy for a card. A stored release uses its copy. A release with
+     * no copy keeps the default division table and automatic ranking.
+     * An unreleased card uses the school's current rules.
+     */
+    public function policyForTerm(int $schoolId, int $standardId, ?int $sectionId, ?int $termId): ResultsPolicy
+    {
+        $applied = app(ProgressiveRulesStamp::class)->applied($schoolId, $sectionId, $termId, $standardId);
+        $countMissingAsZero = $this->countsMissingAsZero($schoolId, $sectionId, $termId);
+
+        if ($applied['mode'] === ProgressiveRulesStamp::MODE_STORED && is_array($applied['rules'])) {
+            return $this->policyFromStored($applied['rules'], $countMissingAsZero);
+        }
+
+        if ($applied['mode'] === ProgressiveRulesStamp::MODE_HISTORICAL) {
+            return $this->historicalPolicy($schoolId, $standardId, $countMissingAsZero);
+        }
+
+        return $this->policy($schoolId, $standardId, $countMissingAsZero);
+    }
+
+    /**
+     * @param  array<string, mixed>  $rules
+     */
+    private function policyFromStored(array $rules, bool $countMissingAsZero): ResultsPolicy
+    {
+        $stamp = app(ProgressiveRulesStamp::class);
+        $ranges = is_array($rules['division_ranges'] ?? null) && $rules['division_ranges'] !== []
+            ? $rules['division_ranges']
+            : ProgressiveRules::defaultDivisionRanges();
+        $bands = is_array($rules['bands'] ?? null) ? $rules['bands'] : [];
+
+        return new ResultsPolicy(
+            new StoredGradingScale($bands),
+            new RangeDivisionRule($ranges),
+            $stamp->rankingBasis($rules),
+            higherIsBetter: (bool) ($rules['higher_is_better'] ?? false),
+            countMissingAsZero: $countMissingAsZero,
+        );
+    }
+
+    /**
+     * A release that predates stored rules. Saved division ranges and a
+     * saved ranking are ignored, so editing them does not change this reprint.
+     * Bands stay live: none were copied onto the release.
+     */
+    private function historicalPolicy(int $schoolId, int $standardId, bool $countMissingAsZero): ResultsPolicy
+    {
+        $usesPoints = \App\Models\Academics\SchoolGradingSystem::query()
+            ->where('school_id', $schoolId)
+            ->where('standard_id', $standardId)
+            ->get()
+            ->contains(fn ($row) => \App\Helpers\GradingHelper::effectivePoints($row) !== null);
+
+        return new ResultsPolicy(
+            app(GradingScale::class),
+            new ThresholdDivisionRule,
+            $usesPoints ? ResultsPolicy::BASIS_AGGREGATE : ResultsPolicy::BASIS_TOTAL,
+            higherIsBetter: ! $usesPoints,
             countMissingAsZero: $countMissingAsZero,
         );
     }
