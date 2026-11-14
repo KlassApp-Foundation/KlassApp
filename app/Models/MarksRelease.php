@@ -25,7 +25,7 @@ class MarksRelease extends Model
 
     protected $fillable = [
         'school_id', 'exam_id', 'scope', 'standard_link_id', 'scheduled_at', 'released_at',
-        'status', 'report_kind', 'created_by', 'timezone', 'result', 'whatsapp_send', 'release_reason',
+        'status', 'report_kind', 'scoring_rule', 'created_by', 'timezone', 'result', 'whatsapp_send', 'release_reason',
     ];
 
     protected $casts = [
