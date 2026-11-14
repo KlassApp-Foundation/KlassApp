@@ -12,6 +12,7 @@ Draft work. Nothing here is merged or deployed.
 | #1345 | Columns use the school's own exam-set names. |
 | #1346 | Parity test for points, division and position. |
 | #1347 | A release stores the bands, division ranges and ranking. A reprint uses that copy. https://github.com/KlassApp-Foundation/KlassApp/pull/1347 |
+| #1348 | One division table on the card, the mark sheets, the download, and the parent and learner marks page. https://github.com/KlassApp-Foundation/KlassApp/pull/1348 |
 
 ## 2026-11-15 — rules stored on the release
 
