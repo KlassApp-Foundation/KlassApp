@@ -2,15 +2,13 @@
 
 namespace App\Exports;
 
-use App\Contracts\Results\DivisionRule;
-use App\Contracts\Results\GradingScale;
 use App\Models\AcademicTerm;
 use App\Models\StandardLink;
 use App\Models\Subject;
 use App\Services\Results\ResultCell;
 use App\Services\Results\ResultSitting;
 use App\Services\Results\ResultStudent;
-use App\Services\Results\ResultsPolicy;
+use App\Services\Reports\ReportScoring;
 use App\Services\Results\ResultsQuery;
 use App\Services\Results\ResultsService;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
@@ -48,11 +46,7 @@ class CombinedMarksheetExport implements WithMultipleSheets
             sectionId: $sectionId,
             academicTermId: (int) $this->term->id,
             standardLinkId: (int) $this->stdLink->id,
-        ), new ResultsPolicy(
-            app(GradingScale::class),
-            app(DivisionRule::class),
-            splitMidTermByMonth: true,
-        ));
+        ), app(ReportScoring::class)->displayPolicy($schoolId, $sectionId, (int) $this->term->id, (int) $this->stdLink->id, true));
 
         $students = $sheet->students;
         usort($students, function (ResultStudent $left, ResultStudent $right) {
@@ -94,7 +88,7 @@ class CombinedMarksheetExport implements WithMultipleSheets
             }
         }
 
-        $eotHeadings = array_merge(['STUDENT NAME'], $subjectNames);
+        $eotHeadings = array_merge(['STUDENT NAME'], $subjectNames, ['DIVISION']);
         $eotRows = [];
         foreach ($students as $student) {
             $source = $contributing?->student($student->studentId);
@@ -102,6 +96,7 @@ class CombinedMarksheetExport implements WithMultipleSheets
             foreach ($subjects as $subject) {
                 $row[] = $this->cellValue($source?->cell((int) $subject->id));
             }
+            $row[] = (string) ($student->division ?? '');
             $eotRows[] = $row;
         }
 

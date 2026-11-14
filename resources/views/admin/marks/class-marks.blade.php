@@ -48,6 +48,7 @@
             @foreach($students as $student)
                 <li class="cm-card" data-testid="class-marks-student">
                     <h2><span class="cm-code">{{ $student['code'] }}</span><span class="cm-name">{{ $student['first_name'] }}</span></h2>
+                    <p data-testid="class-marks-division">Division {{ $student['division'] ?? '—' }}</p>
                     @foreach($student['rows'] as $row)
                         <div class="cm-row">
                             <span>{{ $row['subject'] }}</span>

@@ -162,6 +162,24 @@
 
     <div class="report-title">PROGRESSIVE REPORT</div>
 
+    @php
+        $reportDivision = $division ?? null;
+        if ($reportDivision === null && empty($isNursery) && isset($stdLink)) {
+            $reportTermId = null;
+            if (isset($eotExams) && $eotExams->first()) {
+                $reportTermId = (int) ($eotExams->first()->academic_term_id ?? 0);
+                $reportTermId = $reportTermId > 0 ? $reportTermId : null;
+            }
+            $reportAggregate = (isset($grade['agg']) && is_numeric($grade['agg'])) ? (int) $grade['agg'] : null;
+            $reportDivision = app(\App\Services\Reports\ReportScoring::class)->divisionRuleForTerm(
+                (int) $stdLink->school_id,
+                (int) $stdLink->standard_id,
+                isset($stdLink->section_id) ? (int) $stdLink->section_id : null,
+                $reportTermId,
+            )->division($reportAggregate, (int) ($examinedSubjectCount ?? 0));
+        }
+    @endphp
+
     {{-- ═══ STUDENT INFO CARD ═══ --}}
     <table class="info-table">
         <tr>
@@ -176,6 +194,10 @@
             <td>
                 <div class="info-label">Aggregate</div>
                 <div class="info-value">@if(!empty($isNursery)) &mdash; @else {{ $grade['agg'] ?? '&mdash;' }} @endif</div>
+            </td>
+            <td>
+                <div class="info-label">Division</div>
+                <div class="info-value" data-testid="student-report-division">@if(!empty($isNursery)) &mdash; @else {{ $reportDivision ?? '—' }} @endif</div>
             </td>
         </tr>
     </table>

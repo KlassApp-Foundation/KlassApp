@@ -2,8 +2,10 @@
 
 namespace App\Services\Reports;
 
+use App\Contracts\Results\DivisionRule;
 use App\Contracts\Results\GradingScale;
 use App\Models\MarksRelease;
+use App\Models\StandardLink;
 use App\Services\Results\RangeDivisionRule;
 use App\Services\Results\ResultsPolicy;
 use App\Services\Results\StoredGradingScale;
@@ -94,6 +96,78 @@ final class ReportScoring
         }
 
         return $this->policy($schoolId, $standardId, $countMissingAsZero);
+    }
+
+    /**
+     * The division table the progressive card uses for this class and term.
+     * A stored release uses its copy. A release with no copy keeps the
+     * default table. An unreleased class uses the school's current ranges.
+     */
+    public function divisionRuleForTerm(int $schoolId, int $standardId, ?int $sectionId, ?int $termId): DivisionRule
+    {
+        return $this->policyForTerm($schoolId, $standardId, $sectionId, $termId)->divisionRule;
+    }
+
+    /**
+     * The division table for a class sheet. No class level means the default table.
+     */
+    public function divisionRuleForSection(int $schoolId, int $sectionId, int $termId, ?int $standardLinkId = null): DivisionRule
+    {
+        return $this->displayPolicy($schoolId, $sectionId, $termId, $standardLinkId)->divisionRule;
+    }
+
+    /**
+     * Grade bands and division ranges shared with the progressive card.
+     * Ranking and blank marks stay on the caller's own settings.
+     */
+    public function displayPolicy(
+        int $schoolId,
+        int $sectionId,
+        int $termId,
+        ?int $standardLinkId = null,
+        bool $splitMidTermByMonth = false,
+        ?DivisionRule $fallback = null,
+    ): ResultsPolicy {
+        $standardId = $this->standardIdForSection($schoolId, $sectionId, $standardLinkId);
+        $shared = $standardId === null
+            ? null
+            : $this->policyForTerm($schoolId, $standardId, $sectionId, $termId);
+
+        return new ResultsPolicy(
+            $shared?->gradingScale ?? app(GradingScale::class),
+            $shared?->divisionRule ?? $fallback ?? app(DivisionRule::class),
+            splitMidTermByMonth: $splitMidTermByMonth,
+        );
+    }
+
+    /**
+     * The class level for a section. Streams of one class share one standard.
+     * A section tied to more than one standard has no single table here.
+     */
+    public function standardIdForSection(int $schoolId, ?int $sectionId, ?int $standardLinkId = null): ?int
+    {
+        if ($standardLinkId !== null && $standardLinkId > 0) {
+            $id = StandardLink::query()
+                ->where('school_id', $schoolId)
+                ->whereKey($standardLinkId)
+                ->value('standard_id');
+
+            return $id ? (int) $id : null;
+        }
+
+        if ($sectionId === null || $sectionId < 1) {
+            return null;
+        }
+
+        $ids = StandardLink::query()
+            ->where('school_id', $schoolId)
+            ->where('section_id', $sectionId)
+            ->pluck('standard_id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        return $ids->count() === 1 ? (int) $ids->first() : null;
     }
 
     /**

@@ -2,14 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Contracts\Results\DivisionRule;
-use App\Contracts\Results\GradingScale;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicTerm;
 use App\Models\Academics\Exam;
 use App\Models\Section;
 use App\Models\User;
-use App\Services\Results\ResultsPolicy;
+use App\Services\Reports\ReportScoring;
 use App\Services\Results\ResultsQuery;
 use App\Services\Results\ResultsService;
 use Illuminate\Support\Facades\Auth;
@@ -82,11 +80,7 @@ class GetStudentsMarks extends Controller
             sectionId: $sectionId,
             academicTermId: (int) $term->id,
             studentId: (int) $user->id,
-        ), new ResultsPolicy(
-            app(GradingScale::class),
-            app(DivisionRule::class),
-            splitMidTermByMonth: true,
-        ));
+        ), app(ReportScoring::class)->displayPolicy($schoolId, $sectionId, (int) $term->id, null, true));
 
         $student = $sheet->student((int) $user->id);
         if ($student === null) {

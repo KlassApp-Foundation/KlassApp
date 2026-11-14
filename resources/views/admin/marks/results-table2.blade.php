@@ -15,6 +15,7 @@
                 <th>Total</th>
                 <th>Average</th>
                 <th>Agg</th>
+                <th>Division</th>
                 <th>Pos</th>
                 <th>Actions</th>
             </tr>
@@ -43,6 +44,7 @@
                     <td class="gm-total" data-testid="marks-total">{{ $student->displayTotal ?? '—' }}</td>
                     <td data-testid="marks-average">{{ $student->displayAverage ?? '—' }}</td>
                     <td class="gm-agg">{{ $student->aggregate ?? '—' }}</td>
+                    <td data-testid="marks-division">{{ $student->division ?? '—' }}</td>
                     <td class="gm-pos" data-testid="marks-position">{{ $student->placeLabel($streamFiltered) }}</td>
                     <td>
                         @if($showReportLink && $exam && $class)
@@ -62,6 +64,7 @@
             <strong>{{ $student->name }}</strong>
             <span>{{ $student->stream !== '' ? $student->stream : '—' }}</span>
             <span>Total {{ $student->displayTotal ?? '—' }}</span>
+            <span data-testid="marks-phone-division">Division {{ $student->division ?? '—' }}</span>
             <span data-testid="marks-phone-position">{{ $student->placeLabel($streamFiltered) }}</span>
         </article>
     @endforeach
