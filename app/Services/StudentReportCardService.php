@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Contracts\Results\DivisionRule;
 use App\Contracts\Results\GradingScale;
 use App\Contracts\Results\ReleaseGate;
 use App\Contracts\Results\ReportTemplates;
@@ -449,7 +448,8 @@ class StudentReportCardService
             ->orderBy('min_score', 'desc')
             ->get();
 
-        $division = app(DivisionRule::class);
+        $division = app(\App\Services\Reports\ProgressiveRules::class)
+            ->divisionRule($schoolId, (int) $stdLink->standard_id);
         $divisionLabel = static function (?array $points) use ($division): string {
             if ($points === null) {
                 return '-';
@@ -659,17 +659,14 @@ class StudentReportCardService
      */
     private function resultsPolicy(int $schoolId, int $standardId): ResultsPolicy
     {
-        $usesPoints = \App\Models\Academics\SchoolGradingSystem::query()
-            ->where('school_id', $schoolId)
-            ->where('standard_id', $standardId)
-            ->get()
-            ->contains(fn ($row) => \App\Helpers\GradingHelper::effectivePoints($row) !== null);
+        $rules = app(\App\Services\Reports\ProgressiveRules::class);
+        [$basis, $higherIsBetter] = $rules->ranking($schoolId, $standardId);
 
         return new ResultsPolicy(
             app(GradingScale::class),
-            app(DivisionRule::class),
-            $usesPoints ? ResultsPolicy::BASIS_AGGREGATE : ResultsPolicy::BASIS_TOTAL,
-            higherIsBetter: ! $usesPoints,
+            $rules->divisionRule($schoolId, $standardId),
+            $basis,
+            higherIsBetter: $higherIsBetter,
         );
     }
 
