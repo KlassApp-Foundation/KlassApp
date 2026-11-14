@@ -10,7 +10,7 @@
     @if($errors->any())
         <div class="ka-alert ka-alert-error" role="alert" data-testid="marks-submit-error">{{ $errors->first() }}</div>
     @endif
-    <p class="ka-sub">Type AB when a student was absent. Marks are out of 100.</p>
+    <p class="ka-sub">Type ABS when a student was absent. Marks are out of 100.</p>
     <!-- Page Header -->
 
 

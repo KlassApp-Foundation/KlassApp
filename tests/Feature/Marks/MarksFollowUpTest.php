@@ -152,11 +152,55 @@ class MarksFollowUpTest extends TestCase
             ->get(route('teacher.exam.marks.enter', $this->exam))
             ->assertOk()
             ->getContent();
-        $this->assertStringContainsString('value="AB"', $html);
+        $this->assertStringContainsString('value="ABS"', $html);
+        $this->assertStringContainsString('Type ABS when a student was absent.', $html);
+        $this->assertStringNotContainsString('value="AB"', $html);
         $this->assertStringContainsString('value="80"', $html);
 
         app(MarksSubmissionService::class)->submit($this->exam, $this->teacher);
         $this->assertSame('submitted', ExamMarksSubmission::query()->where('exam_id', $this->exam->id)->value('status'));
+    }
+
+    public function test_typing_abs_stores_the_absence_and_the_screen_shows_abs(): void
+    {
+        app(ExamMarkWriter::class)->save($this->teacher, $this->exam, $this->brian->id, 'abs');
+
+        $absent = Marks::query()->where('student_id', $this->brian->id)->first();
+        $this->assertTrue($absent->isAbsent());
+        $this->assertNull($absent->marks);
+        $this->assertSame('AB', $absent->grade);
+
+        $sheet = $this->actingAs($this->admin)->get(route('admin.marks.filter', [
+            'class' => $this->section->id,
+            'term' => $this->term->id,
+            'examType' => $this->exam->exam_type_id,
+        ]))->assertOk()->getContent();
+        $this->assertStringContainsString('data-testid="marks-cell-absent">ABS<', $sheet);
+        $this->assertStringNotContainsString('data-testid="marks-cell-absent">AB<', $sheet);
+
+        $release = $this->actingAs($this->admin)
+            ->get(route('admin.marks.releases.create', ['exam_id' => $this->exam->id]))
+            ->assertOk()
+            ->getContent();
+        $this->assertStringContainsString('>ABS<', $release);
+        $this->assertStringNotContainsString('>AB<', $release);
+
+        $parent = view('parent.partials.grades-panel', [
+            'grades' => [
+                'exam_groups' => [[
+                    'exam_type' => 'Opening paper',
+                    'subjects' => [[
+                        'name' => 'Science',
+                        'score' => 0,
+                        'total' => 100,
+                        'grade' => '—',
+                        'shown' => 'ABS',
+                    ]],
+                ]],
+            ],
+        ])->render();
+        $this->assertStringContainsString('>ABS<', $parent);
+        $this->assertStringNotContainsString('>AB<', $parent);
     }
 
     public function test_the_report_card_prints_ab_and_does_not_add_it(): void
@@ -184,7 +228,8 @@ class MarksFollowUpTest extends TestCase
             'nextTerm' => null,
         ])->render();
 
-        $this->assertMatchesRegularExpression('/Mark Gained[\s\S]*\bAB\b/', $html);
+        $this->assertMatchesRegularExpression('/Mark Gained[\s\S]*\bABS\b/', $html);
+        $this->assertDoesNotMatchRegularExpression('/Mark Gained[\s\S]*\bAB\b/', $html);
         $this->assertMatchesRegularExpression('/TOTAL<\/strong><\/td>\s*<td>[^<]*<\/td>\s*<td><strong>\s*<\/strong>/', $html);
         $this->assertStringNotContainsString('>0<', $html);
     }

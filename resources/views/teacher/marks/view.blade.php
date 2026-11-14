@@ -77,7 +77,7 @@
                                 {{ $mark->marks >= 70 ? 'bg-green-100 text-green-700' : 
                                    ($mark->marks >= 50 ? 'bg-yellow-100 text-yellow-700' : 
                                    'bg-red-100 text-red-700') }}">
-                                {{ ceil($mark->marks) }}
+                                {{ $mark->isAbsent() ? 'ABS' : ceil($mark->marks) }}
                             </span>
                         </td>
 
