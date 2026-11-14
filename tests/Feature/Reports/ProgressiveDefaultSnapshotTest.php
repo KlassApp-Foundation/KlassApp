@@ -21,9 +21,10 @@ use Smalot\PdfParser\Parser;
 use Tests\TestCase;
 
 /**
- * With no stored division ranges and no stored ranking choice, the progressive
- * card and its PDF match the output captured from the code before those
- * choices existed. The fixture is that capture.
+ * With no stored division ranges and no stored ranking choice, the marks,
+ * aggregate, division and position stay the values captured before those
+ * choices existed. The fixture was recaptured when the column headings moved
+ * to the school's own exam-set names. Those numbers did not change.
  */
 class ProgressiveDefaultSnapshotTest extends TestCase
 {
@@ -37,8 +38,8 @@ class ProgressiveDefaultSnapshotTest extends TestCase
     {
         parent::setUp();
 
-        $this->htmlFixture = dirname(__DIR__, 2).'/Fixtures/reports/progressive-default-card.html';
-        $this->pdfFixture = dirname(__DIR__, 2).'/Fixtures/reports/progressive-default-card.pdf.txt';
+        $this->htmlFixture = dirname(__DIR__, 2).'/fixtures/reports/progressive-default-card.html';
+        $this->pdfFixture = dirname(__DIR__, 2).'/fixtures/reports/progressive-default-card.pdf.txt';
 
         DB::table('usergroups')->upsert([
             ['id' => 5, 'name' => 'teacher', 'created_at' => now(), 'updated_at' => now()],
