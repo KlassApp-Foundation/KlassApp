@@ -25,7 +25,7 @@ class MarksRelease extends Model
 
     protected $fillable = [
         'school_id', 'exam_id', 'scope', 'standard_link_id', 'scheduled_at', 'released_at',
-        'status', 'report_kind', 'scoring_rule', 'progressive_rules', 'created_by', 'timezone', 'result', 'whatsapp_send', 'release_reason',
+        'status', 'report_kind', 'scoring_rule', 'progressive_rules', 'created_by', 'timezone', 'result', 'whatsapp_send', 'release_reason', 'pilot_recipients',
     ];
 
     protected $casts = [
@@ -33,6 +33,7 @@ class MarksRelease extends Model
         'released_at' => UtcDateTime::class,
         'result' => 'array',
         'progressive_rules' => 'array',
+        'pilot_recipients' => 'array',
         'whatsapp_send' => 'boolean',
     ];
 

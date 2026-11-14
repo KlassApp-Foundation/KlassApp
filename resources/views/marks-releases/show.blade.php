@@ -29,6 +29,9 @@
             <dt>Released</dt><dd>{{ $fmt($release->released_at) }}</dd>
             <dt>By</dt><dd>{{ $release->creator?->name ?? '–' }}</dd>
             <dt>WhatsApp</dt><dd data-testid="release-whatsapp">{{ $release->whatsapp_send ? 'On' : 'Off' }}</dd>
+            @if(is_array($release->pilot_recipients))
+            <dt>Who was told</dt><dd data-testid="release-pilot">Only the people who were chosen</dd>
+            @endif
             <dt>Sent</dt><dd data-testid="release-sent">{{ $release->result['sent'] ?? '–' }}</dd>
             <dt>Skipped</dt><dd data-testid="release-skipped">{{ $release->result['skipped'] ?? '–' }}</dd>
             @if(isset($release->result['queued']))
@@ -55,7 +58,7 @@
             <tbody>
             @foreach($release->result['messages'] as $m)
                 <tr>
-                    <td data-testid="release-student-name">{{ $m['name'] ?? $m['student'] }}</td>
+                    <td data-testid="release-student-name">{{ $m['name'] ?? $m['student'] }}@if(!empty($m['parent'])) · <span data-testid="release-recipient">{{ $m['parent'] }}</span>@endif</td>
                     <td data-testid="release-student-class">{{ ($m['class'] ?? '') !== '' ? $m['class'] : '–' }}</td>
                     <td>{{ $m['to'] ?? '–' }}</td>
                     <td>{{ match ($m['status']) { 'sent' => 'Sent', 'queued' => 'Sending…', 'retrying' => 'Retrying: '.$m['reason'], 'failed' => 'Failed: '.$m['reason'], default => 'Skipped: '.$m['reason'] } }}</td>
