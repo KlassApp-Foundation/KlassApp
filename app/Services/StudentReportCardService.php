@@ -46,6 +46,7 @@ class StudentReportCardService
     public const TEMPLATES = [
         'formal' => ['label' => 'Formal', 'view' => 'admin.marks.report-templates.formal'],
         'warm' => ['label' => 'Warm', 'view' => 'admin.marks.report-templates.warm'],
+        'progressive' => ['label' => 'Progressive (new look)', 'view' => 'admin.marks.report-templates.progressive'],
     ];
 
     /**
@@ -408,7 +409,8 @@ class StudentReportCardService
         ReportCardCommentService $svc,
         int $totalLearners,
         int $myPos = 0,
-        ?string $templateKey = null
+        ?string $templateKey = null,
+        bool $sample = false
     ): string {
         $learner = User::find($sid);
         $learner = $helper->learner($schoolId, $learner, $exam);
@@ -564,6 +566,16 @@ class StudentReportCardService
         $termSets = $sheet instanceof ResultSheet
             ? $this->sittingColumns($sheet, (int) $learner->id, true)
             : [];
+        $setColumns = $sheet instanceof ResultSheet
+            ? $this->sittingColumns($sheet, (int) $learner->id, null)
+            : [];
+        $standardId = (int) ($standard->id ?? $stdLink->standard_id);
+        $progressiveRules = app(\App\Services\Reports\ProgressiveRules::class);
+        $divisionRanges = $progressiveRules->rangesFor($schoolId, $standardId);
+        if ($divisionRanges === []) {
+            $divisionRanges = \App\Services\Reports\ProgressiveRules::defaultDivisionRanges();
+        }
+        [$rankingBasis] = $progressiveRules->ranking($schoolId, $standardId);
         $showDivision = $showAgg && ! $isALevel && $eotDivision !== '-';
         $eotCells = $resultRow?->cells ?? [];
         $examinedSubjectCount = $subjects->filter(fn ($s) => $learner->marks->where('subject_id', $s->id)->isNotEmpty())->count();
@@ -579,6 +591,12 @@ class StudentReportCardService
             : '';
 
         $view = app(ReportTemplates::class)->resolve($templateKey, $school?->report_template);
+        if (($view['view'] ?? '') === 'admin.marks.report-templates.progressive') {
+            $fontDir = storage_path('fonts');
+            if (! is_dir($fontDir)) {
+                mkdir($fontDir, 0755, true);
+            }
+        }
         $logoPath = $this->resolveLogoPath($schoolId);
         $schoolIdentity = $this->resolveSchoolIdentity($school);
 
@@ -627,6 +645,10 @@ class StudentReportCardService
             'eotCells' => $eotCells,
             'monthlySets' => $monthlySets,
             'termSets' => $termSets,
+            'setColumns' => $setColumns,
+            'divisionRanges' => $divisionRanges,
+            'rankingBasis' => $rankingBasis,
+            'sampleForApproval' => $sample,
         ]);
         $pdf->setPaper('a4', 'portrait');
 
@@ -715,13 +737,13 @@ class StudentReportCardService
      * One column per exam set, in the sheet's date order.
      * The heading is the set's own name.
      *
-     * @return list<array{label: string, cells: array<int, \App\Services\Results\ResultCell>, total: ?float, pos: ?int, of: int, division: string}>
+     * @return list<array{label: string, cells: array<int, \App\Services\Results\ResultCell>, total: ?float, aggregate: ?int, pos: ?int, of: int, division: string}>
      */
-    private function sittingColumns(ResultSheet $sheet, int $studentId, bool $contributing): array
+    private function sittingColumns(ResultSheet $sheet, int $studentId, ?bool $contributing): array
     {
         $rows = [];
         foreach ($sheet->sittings as $sitting) {
-            if ($sitting->contributesToReport !== $contributing) {
+            if ($contributing !== null && $sitting->contributesToReport !== $contributing) {
                 continue;
             }
             $student = $sitting->student($studentId);
@@ -732,6 +754,7 @@ class StudentReportCardService
                 'label' => $sitting->name,
                 'cells' => $student->cells,
                 'total' => $student->total,
+                'aggregate' => $student->aggregate,
                 'pos' => $student->classPosition,
                 'of' => $student->classOutOf,
                 'division' => $student->division ?? '-',

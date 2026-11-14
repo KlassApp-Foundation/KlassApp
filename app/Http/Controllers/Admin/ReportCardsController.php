@@ -405,7 +405,7 @@ class ReportCardsController extends Controller
      * Backward-compatible entry point for jobs/commands. Real implementation:
      * StudentReportCardService::generatePdf().
      */
-    public static function generatePdf(int $sid, Exam $exam, StandardLink $stdLink, int $schoolId, $helper, ReportCardCommentService $svc, int $totalLearners, int $myPos = 0, ?string $templateKey = null): string
+    public static function generatePdf(int $sid, Exam $exam, StandardLink $stdLink, int $schoolId, $helper, ReportCardCommentService $svc, int $totalLearners, int $myPos = 0, ?string $templateKey = null, bool $sample = false): string
     {
         return app(StudentReportCardService::class)->generatePdf(
             $sid,
@@ -416,11 +416,12 @@ class ReportCardsController extends Controller
             $svc,
             $totalLearners,
             $myPos,
-            $templateKey
+            $templateKey,
+            $sample
         );
     }
 
-    public function previewTemplate(string $template)
+    public function previewTemplate(Request $request, string $template)
     {
         abort_unless(isset(self::TEMPLATES[$template]), 404);
 
@@ -458,7 +459,18 @@ class ReportCardsController extends Controller
         $positionMap = $reports->computePositionMap($exam, $schoolId);
         $myPos = $positionMap[$learner->id] ?? 0;
 
-        $pdf = $reports->generatePdf($learner->id, $exam, $stdLink, $schoolId, $helper, $svc, $totalLearners, $myPos, $template);
+        $pdf = $reports->generatePdf(
+            $learner->id,
+            $exam,
+            $stdLink,
+            $schoolId,
+            $helper,
+            $svc,
+            $totalLearners,
+            $myPos,
+            $template,
+            $request->boolean('sample') && $template === 'progressive',
+        );
 
         return response($pdf)
             ->header('Content-Type', 'application/pdf')
