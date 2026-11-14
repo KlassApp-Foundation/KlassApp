@@ -523,6 +523,7 @@ class ParentPortalService
         })->values();
 
         $examGroups = [];
+        $divisionByTerm = [];
         foreach ($exams->groupBy(function (Exam $exam) {
             return implode('|', [
                 (string) ($exam->academic_year_id ?? ''),
@@ -553,11 +554,18 @@ class ParentPortalService
                 ? 0.0
                 : round(array_sum(array_column($subjects, 'score')) / count($subjects), 1);
 
+            $termKey = ((int) ($first->academic_term_id ?? 0)).'|'.((int) ($first->section_id ?? 0));
             $examGroups[] = [
                 'exam_type' => $label !== '' ? $label : 'Exam',
                 'year_id' => $first->academic_year_id ? (int) $first->academic_year_id : null,
                 'subjects' => $subjects,
                 'average' => $average,
+                'division' => $divisionByTerm[$termKey] ??= $this->termDivision(
+                    $schoolId,
+                    (int) ($first->section_id ?? 0),
+                    (int) ($first->academic_term_id ?? 0),
+                    (int) $student->id,
+                ),
             ];
         }
 
@@ -568,6 +576,25 @@ class ParentPortalService
         ];
 
         return $base;
+    }
+
+    /**
+     * The term division from the same table as the progressive card.
+     */
+    private function termDivision(int $schoolId, int $sectionId, int $termId, int $studentId): ?string
+    {
+        if ($sectionId < 1 || $termId < 1) {
+            return null;
+        }
+
+        $sheet = app(\App\Services\Results\ResultsService::class)->sheet(new \App\Services\Results\ResultsQuery(
+            schoolId: $schoolId,
+            sectionId: $sectionId,
+            academicTermId: $termId,
+            studentId: $studentId,
+        ));
+
+        return $sheet->student($studentId)?->division;
     }
 
     /**

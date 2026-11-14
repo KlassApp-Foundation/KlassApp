@@ -6,6 +6,7 @@
     $released = array_map(fn ($group) => [
         'label' => $group['exam_type'],
         'average' => $group['average'],
+        'division' => $group['division'] ?? null,
         'scores' => array_map(fn ($subject) => [$subject['name'], $subject['score']], $group['subjects']),
     ], $groups);
 @endphp
@@ -22,6 +23,7 @@
         @include('portal.partials.performance-chart', ['grades' => $bundle['grades']])
         <section class="family-table-card">
             <h2>{{ $latest['exam_type'] }}</h2>
+            <p data-testid="family-division">Division {{ $latest['division'] ?? '—' }}</p>
             <table>
                 <thead>
                     <tr><th>Subject</th><th>Mark / 100</th></tr>
