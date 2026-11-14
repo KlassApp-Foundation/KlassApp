@@ -80,7 +80,8 @@ class ProgressiveMissingMarksTest extends TestCase
         $card = $this->card($school, $ctx, $learner);
         $this->assertSame('U', $card['eotDivision']);
         $this->assertSame(36, $card['eotAgg']);
-        $this->assertCount(0, $card['midExams']);
+        $this->assertSame([], $card['monthlySets']);
+        $this->assertSame(['End Of Term'], array_column($card['termSets'], 'label'));
         $html = view('admin.marks.report-templates.formal', $card)->render();
         $this->assertStringContainsString('Missing', $html);
         $this->assertStringContainsString('ABS', $html);
