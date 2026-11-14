@@ -749,6 +749,7 @@ final class MarksReleaseService
                 // change on the school does not rewrite this row or the snapshots.
                 app(\App\Services\Reports\ReportKindSetting::class)->freeze($release);
                 app(\App\Services\Reports\ReportScoring::class)->freeze($release);
+                app(\App\Services\Reports\ProgressiveRulesStamp::class)->freeze($release);
 
                 app(\App\Services\Records\SnapshotService::class)->capture($release, $release->release_reason);
 
