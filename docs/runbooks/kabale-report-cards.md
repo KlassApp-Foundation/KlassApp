@@ -109,7 +109,7 @@ Until gate 5 is cleared, no WhatsApp message of any kind goes out. Until gate 1 
 - **Per learner:** the download icon on the row (`/admin/reports/cards/{stdLink}/student/{learner}/download`).
 - **Whole class:** *Download all* (`/admin/reports/cards/download/{stdLink}`). Up to 12 learners are built in the request; more go to a queued job that returns a ZIP (job timeout 900 s).
 
-**Rehearsal timings (76 learners, one class):** 0.49 s per card, 37.4 s for all 76, 39.6 s for the merged class PDF (51.5 MB). **800 learners, 10 classes:** see the scale table in the rehearsal report; per-card time is the same, so the whole school is minutes, not hours, when run class by class.
+**Rehearsal timings (76 learners, one class):** 0.49 s per card, 37.4 s for all 76, 39.6 s for the merged class PDF (51.5 MB). **800 learners, 10 classes:** 0.83 s per card on average, 57–80 s for a class of 80, 22.4 minutes for the whole school; see the table in section 9.
 
 **Check:** one page per learner; both sittings as columns in date order; TOTAL per sitting; the anchor sitting's aggregate and division; no "SAMPLE FOR APPROVAL" tag on a final card; name, KLS, class and term correct; prints legibly in black and white.
 
@@ -174,3 +174,27 @@ Until gate 5 is cleared, no WhatsApp message of any kind goes out. Until gate 1 
 5. **No pilot selection** in release; **file name uses the child's name**, not the KLS number.
 
 Items 1–2 are prerequisites for Kabale's 76. Items 3–5 must be closed before the WhatsApp pilot and before anyone promises the school a card that matches the design.
+
+---
+
+## 9. Measured at scale (800 learners, 10 classes, 3 sittings, 4–6 subjects)
+
+Made-up school, scratch database, one PHP process, no queue worker.
+
+| Stage | Measured | Notes |
+|---|---|---|
+| School, 10 classes, 40 subjects, bands | 0.3 s | setup only |
+| Learner load, 800 in one CSV | 49.8 s | real `UsersImport`, KLS minted for each |
+| Marks import, 150 subject files | 44.5 s total, 0.30 s each (max 0.46 s) | preview + commit + fill the gaps as AB |
+| Submit, approve, release 10 classes | under a minute | release itself is sub-second per class |
+| Per-learner card | 0.83 s average, 2.95 s worst | 800 cards, zero failures |
+| Class PDF, 80 learners | 57–80 s, 54.3 MB | merged PDF, one page per learner |
+| Whole school (all 800 cards + 10 class PDFs) | **1346 s ≈ 22.4 min** | 1.0 GB of PDFs on disk |
+| Peak memory, one 80-learner merged class PDF | 248.5 MB | PHP `memory_limit` 512 MB |
+
+**Where it would break at 3,000 learners**
+
+- **Time:** about 41 minutes of card rendering plus class merges, roughly an hour for one full run in a single process; the bulk download is queued per class with a 900 s timeout, which is comfortable for 80–150 learners and tight beyond ~400.
+- **Memory:** the merged class PDF is held in memory. At ~3.1 MB per learner, a class above roughly 150 learners approaches the 512 MB limit. Split very large classes, or stream/zip per learner instead of merging in one process.
+- **Disk:** about 3.7 GB per full generation (cards plus class PDFs) before anything is cleaned up.
+- **Not tested:** concurrent requests, a real queue worker, object storage, or PDF rendering under FPM (the rehearsal ran on the CLI).
