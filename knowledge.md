@@ -3225,6 +3225,102 @@ Phase B: Mix→Vite + Vue 3 runtime
 
 ## Session Log
 
+### 2026-11-12: Another school's exam is not found (T-144)
+
+- **Work done**: Draft [#1340](https://github.com/KlassApp-Foundation/KlassApp/pull/1340) on `feat/exam-school-not-found` (`338b03c0`), from `main`. The admin exam form, its save, and its archive now 404 when the exam is missing or belongs to another school. A class or learner report for another school 404s. A mark edit 404s unless the mark belongs to that exam and school. The mobile upcoming and past exam lists 404 a learner from another school. Routes that already returned 403 after a school check were left as 403. The sweep table is in the pull request. Local tests passed (14 tests, 156 assertions). Not merged. Production untouched.
+- **Files touched**: `app/Http/Controllers/Admin/ExamController.php`, `app/Http/Controllers/Admin/ReportCardsController.php`, `app/Http/Controllers/Api/ExamController.php`, `app/Http/Controllers/Teacher/MarksController.php`, `tests/Feature/ExamCrossSchoolTest.php`, `tests/Feature/Marks/ExamSchoolNotFoundTest.php`.
+- **Key decisions**: Wrong-school and missing are the same 404. An existing 403 that already checks the school stays 403. The fix is not on the proof branch.
+- **Status**: Draft [#1340](https://github.com/KlassApp-Foundation/KlassApp/pull/1340) at `338b03c0`. Not merged. Production untouched.
+- **Edge cases flagged**: A teacher who opens an admin exam URL is sent to the teacher dashboard by the admin gate. A missing id can 404 from route binding before that redirect, so those two responses differ. The form is not shown either way. Full test-guard is not run on this branch yet.
+
+### 2026-11-12: Mark sheet, release, and report cards have phone drafts
+
+- **Work done**: Draft [#1337](https://github.com/KlassApp-Foundation/KlassApp/pull/1337) on `feat/marks-overview` (`bb8ab0df`) shows the sheet by year, term, and Beginning / Mid / End tabs. A draft subject is a dash. Totals count approved subjects. Draft [#1338](https://github.com/KlassApp-Foundation/KlassApp/pull/1338) on `feat/marks-approve-release` (`98681051`) is the phone approvals and release screen. The button states the outcome. Reopen of a released sitting stays on #1331. Draft [#1339](https://github.com/KlassApp-Foundation/KlassApp/pull/1339) on `feat/marks-report-phone` (`9e0d97bb`) adds the end-of-term composition line and phone cards. The line reads the school's current mix because the freeze column is on #1330. Local tests passed. Browser click-through is not done. The proof server for #1334 was started on port 8142 only.
+- **Files touched**: mark sheet services and views; approvals and release views; report card line and parent marks. Each item is its own branch from `main`.
+- **Key decisions**: Do not stack these on each other or on the proof. Display ABS. Do not copy #1324, #1325, or #1331 onto the release screen.
+- **Status**: Drafts #1337, #1338, and #1339. Not merged. Production untouched.
+- **Edge cases flagged**: A head teacher who can see Reopen is still refused by the submission service. Changing the school mix still changes the printed line until #1330 is in. The proof click-through of #1334 passed the six role checks at 375 and 1280. The exam edit page does not check the exam's school, so another school's head teacher can open the form. The update query is school-scoped. Not fixed here.
+
+### 2026-11-12: Dashboards show marks one tap away
+
+- **Work done**: Draft [#1336](https://github.com/KlassApp-Foundation/KlassApp/pull/1336) on `feat/marks-dashboard-phone` (`2a6ad73e`), from `main`. Enter marks still opens the exams list. The teacher dashboard groups Returned, In progress, and Not started from the existing board. The admin dashboard counts this school's waiting submissions and classes ready to release. Local tests passed. Browser click-through is not done.
+- **Files touched**: `app/Services/DashboardV2DataService.php`, `resources/views/teacher/dashboard/dashboard.blade.php`, `resources/views/admin/dashboard/dashboard_v2.blade.php`, `public/css/ka-screen.css`, `tests/Feature/Marks/MarksDashboardPhoneTest.php`.
+- **Key decisions**: Attendance stays as it is. Head teachers do not gain a new release power on this branch. Another school's submissions are not counted.
+- **Status**: Draft [#1336](https://github.com/KlassApp-Foundation/KlassApp/pull/1336) at `2a6ad73e`. Not merged. Production untouched.
+- **Edge cases flagged**: A class counts as ready when one current-year sitting has every subject approved. The admin board has no loading or error state.
+
+### 2026-11-12: Phone marks entry is draft #1335
+
+- **Work done**: Draft [#1335](https://github.com/KlassApp-Foundation/KlassApp/pull/1335) on `feat/marks-entry-phone` (`4681d034`), from `main`. The enter-marks screen uses phone cards, a 76 by 48 field, and an ABS control. A saved absence displays ABS. The stored grade stays AB. Pressing ABS again clears the field. Local tests: 17 tests, 134 assertions. Browser click-through is not done. Items 12, 14, 15 and 16 are being built on their own branches from `main`. Demo ports were not in use and were not started.
+- **Files touched**: `resources/views/teacher/marks/enter.blade.php`, `public/css/ka-screen.css`, `app/Http/Controllers/Teacher/MarksController.php`, `app/Services/Marks/ExamMarkWriter.php`, `tests/Feature/Marks/MarksEntryPhoneTest.php`, `tests/Feature/Marks/MarksFollowUpTest.php`.
+- **Key decisions**: Display ABS. Store the existing absent flag and grade AB. Accept AB and ABS in any case. Saved check, offline banner and the ABS control are flagged for design review.
+- **Status**: Draft [#1335](https://github.com/KlassApp-Foundation/KlassApp/pull/1335) at `4681d034`. Not merged. Production untouched.
+- **Edge cases flagged**: Click-through at 375 and 1280 is still owed. Full test-guard not run.
+
+### 2026-11-12: Items 2 to 9 are combined for the proof
+
+- **Work done**: Draft [#1334](https://github.com/KlassApp-Foundation/KlassApp/pull/1334) on `proof/marks-items-2-to-9` (`bc6dcab9`). It merges the class-teacher, head-teacher, ABS import, exam-type, admin entry, report mix, history, and KLS filler drafts. A head teacher can open approvals for their own school. The mark row names who saved it, and the log still keeps the old and new value. Local suites passed. Browser click-through is not done. Not for merge.
+- **Files touched**: merge resolutions in `MarksSubmissionService`, `MarksImportService`, `ExamTypeController`, `MustBeFullSchoolAdmin`, `ExamMarkWriter`, `ExamMarksSubmissionController`, and two tests.
+- **Key decisions**: Item 3 wins on settings access for head teachers. Item 10 stays on #1333 and is not in this branch.
+- **Status**: Draft [#1334](https://github.com/KlassApp-Foundation/KlassApp/pull/1334) at `bc6dcab9`. Not merged. Production untouched.
+- **Edge cases flagged**: Click-through at 375 and 1280 is still owed. Full test-guard not run.
+
+### 2026-11-12: Term workbook importer saves drafts and never submits
+
+- **Work done**: Draft [#1333](https://github.com/KlassApp-Foundation/KlassApp/pull/1333) on `feat/term-workbook-importer` (`fdd68a3e`), from `main`. A term workbook creates missing exams and saves draft marks. The same file again changes nothing. A changed mark updates and reports the old and new value. A removed row leaves the saved draft. Unknown classes and subjects are reported. A subject teacher and another school are refused. A class teacher writes only their class. Local tests: 4 tests, 51 assertions. Full test-guard not run. Demo ports were not in use and were not started.
+- **Files touched**: `app/Services/Marks/TermWorkbookImporter.php`, `tests/Feature/Marks/TermWorkbookImporterTest.php`.
+- **Key decisions**: Not stacked on #1326, #1327, or #1332. `ABS` is stored with the existing absent flag. Setup report-card flags and weights are not applied to the school mix. The class tab must already be the school's class name. No upload screen.
+- **Status**: Draft [#1333](https://github.com/KlassApp-Foundation/KlassApp/pull/1333) at `fdd68a3e`. Not merged. Production untouched.
+- **Edge cases flagged**: Two sections with the same name, or two exam types with the same name, write nothing for that sheet or block. Nursery learning-area remarks are not in this file shape.
+
+### 2026-11-11: KLS filler writes a number only on an exact class match
+
+- **Work done**: Draft [#1332](https://github.com/KlassApp-Foundation/KlassApp/pull/1332) on `feat/kls-filler` (`baed13be`), from `main`. A marks workbook gets a KLS number in column A only when one active learner in that class matches the name. Near-misses, duplicates, a missing number, a different number already in the cell, and another school's class are listed and left blank. A teacher cannot run it. Demo on port 8000 was not touched.
+- **Files touched**: `app/Services/Marks/KlsFiller.php`, `tests/Feature/Marks/KlsFillerTest.php`.
+- **Key decisions**: The class tab matches the school's own class name. It does not translate a country list, and "Primary Four" is not guessed as "P.4". Head teachers of that school can run it, with admins. The filler does not mint a new KLS number. Not stacked on #1331.
+- **Status**: Draft [#1332](https://github.com/KlassApp-Foundation/KlassApp/pull/1332) at `baed13be`. Not merged. Production untouched. Full test-guard not run here. No screen yet.
+- **Edge cases flagged**: Two current academic years, or none, write nothing. A learner with no profile name is matched on the user name.
+
+### 2026-11-11: Released marks lock, audit trail, and snapshot hash
+
+- **Work done**: Draft [#1331](https://github.com/KlassApp-Foundation/KlassApp/pull/1331) on `feat/marks-history-integrity` (`5322c6aa`), from `main`. Marks for one school list as year, term, exam set, class, subject. Each save logs who changed a mark and the old and new value. A released sitting is locked until an admin or head teacher of that school reopens it with a reason. Each snapshot stores a content hash. Demo on port 8000 was not touched.
+- **Files touched**: `app/Services/Marks/ReleasedMarksLock.php`, `app/Services/Marks/MarksHistory.php`, `app/Services/Marks/ExamMarkWriter.php`, `app/Services/Records/SnapshotHasher.php`, `app/Services/Records/SnapshotService.php`, `app/Services/MarksRelease/MarksReleaseService.php`, `app/Services/Marks/MarksSubmissionService.php`, `app/Models/MarksRelease.php`, `app/Models/Records/RecordSnapshot.php`, `database/migrations/2026_11_11_160000_add_content_hash_to_record_snapshots_table.php`, `tests/Feature/Marks/MarksHistoryIntegrityTest.php`.
+- **Key decisions**: Reopen of a release is separate from sending a submission back. Head teachers can reopen in their own school only; full admin parity stays in #1325. `marks.teacher_id` stays the exam's teacher on this branch. The hash is sha256 of the canonical payload, not a signature. Not stacked on #1329 or #1330.
+- **Status**: Draft [#1331](https://github.com/KlassApp-Foundation/KlassApp/pull/1331) at `5322c6aa`. Not merged. Production untouched. Full test-guard not run here. No reopen screen yet.
+- **Edge cases flagged**: A class release locks every subject in that class for the exam type and term, not only the subject on the release row. A school release locks every class. A deleted exam does not lock the sitting.
+
+### 2026-11-11: One report per exam set, frozen end-of-term mix
+
+- **Work done**: Draft [#1330](https://github.com/KlassApp-Foundation/KlassApp/pull/1330) on `feat/report-per-exam-set` (`39c96432`), from `main`. Each exam set has its own results sheet. The end-of-term report uses `schools.report_composition`, defaulting to End of Term at weight 100. A save whose weights do not total 100 is refused. Admins and head teachers can save that screen for their own school; a teacher cannot, and a head teacher still cannot open the other settings screens. A release copies the mix onto `marks_releases.report_composition` and into the snapshot payload. The end-of-term sheet for that class keeps the copy after the school setting changes. Demo on port 8000 was not touched.
+- **Files touched**: `app/Services/Results/ReportComposition.php`, `app/Services/Results/ResultsService.php`, `app/Services/StudentReportCardService.php`, `app/Services/MarksRelease/MarksReleaseService.php`, `app/Services/Records/SnapshotService.php`, `app/Models/MarksRelease.php`, `app/Http/Controllers/Admin/Setting/ExamTypeController.php`, `app/Http/Middleware/MustBeFullSchoolAdmin.php`, `resources/views/admin/settings/exam-types.blade.php`, `database/migrations/2026_11_11_150000_add_report_composition_to_marks_releases_table.php`, and the results and exam-type settings tests.
+- **Key decisions**: The mix is the authority for which sets are on the end-of-term report. A set with a weight counts even if the older contributes flag is off. An included set with no weight still follows that flag. The snapshot stays one current row per learner per term; item 8 adds the hash. Do not stack this on #1327, which also edits the exam type settings page.
+- **Status**: Draft [#1330](https://github.com/KlassApp-Foundation/KlassApp/pull/1330) at `39c96432`. Not merged. Production untouched. Full test-guard not run here. Browser click-through at 375 and 1280 is still owed.
+- **Edge cases flagged**: A school with no End of Term type keeps the older contributes behaviour, because there is no default row to freeze. Head teachers get this settings screen only; the rest of admin parity remains #1325.
+
+### 2026-11-11: Shared exam types restore themselves
+
+- **Work done**: Continued draft [#1327](https://github.com/KlassApp-Foundation/KlassApp/pull/1327) on `feat/exam-type-catalog` at `80a1380f`. The set-page test keeps the exam type the school chose (a school-owned row), so the shared catalog sync no longer renames it. The reference seeder writes the shared catalog by code and a null school. Opening exam type settings does the same. An empty exam-set form tells an admin how to restore the list (44px link) and tells a teacher to ask an admin. `php artisan exam-types:sync` does the same write and is not hooked into deploy. Demo on port 8000 was not touched.
+- **Files touched**: `app/Console/Commands/SyncExamTypesCommand.php`, `app/Http/Controllers/Admin/Setting/ExamTypeController.php`, `database/seeders/result/ExamTypes.php`, `resources/views/admin/exams/exam-set-create.blade.php`, `resources/views/admin/settings/exam-types.blade.php`, `tests/Feature/Academics/ExamTypeCatalogTest.php`, `tests/Feature/Exams/ExamSetPageAndRosterTest.php`.
+- **Key decisions**: Do not seed the catalog from a migration. RefreshDatabase would insert the shared rows, then fixtures insert the same codes again, and the upsert throws because it will not guess. Deploy stays migrate-only. An existing school gets the list when an admin opens exam sets or exam type settings, or when someone runs the command or the reference seeder.
+- **Status**: Draft [#1327](https://github.com/KlassApp-Foundation/KlassApp/pull/1327) at `80a1380f`. Not merged. Production untouched. Local suites green. Full test-guard not run here. GitHub test-guard was still running. Browser click-through is still owed.
+- **Edge cases flagged**: On this branch only a school admin (usergroup 3) can open settings. Head teachers get that screen from #1325. Do not stack the two branches.
+
+### 2026-11-11: Admins and head teachers can enter marks
+
+- **Work done**: Draft [#1329](https://github.com/KlassApp-Foundation/KlassApp/pull/1329) on `feat/admin-marks-entry` (`8717a426`). A school admin, a head teacher, and a site admin of that school can open the existing teacher marks screen, save, and submit for any class in their school. The mark row's `teacher_id` is the person who saved it. Another school, a subject teacher who does not own the exam, a learner, and a parent are refused. The rest of the teacher area stays closed. The exam set page links to that screen. Demo on port 8000 was not touched.
+- **Files touched**: `app/Http/Middleware/MustBeTeacher.php`, `app/Services/ExamAuthorization.php`, `app/Services/Academics/BaseClassExamRoster.php`, `app/Http/Controllers/Teacher/MarksController.php`, `app/Services/Marks/ExamMarkWriter.php`, `app/Services/MarksImport/MarksImportService.php`, `resources/views/admin/exams/exam-set-show.blade.php`, `tests/Feature/Marks/AdminMarksEntryTest.php`, plus three tests whose stamp expectation moved to the person who entered the mark.
+- **Key decisions**: Reused the teacher screen. Did not add a second marks page. Did not stack this on #1325. `marks.teacher_id` is the latest person who saved the mark; the exam row still names the subject teacher. Full history is item 8.
+- **Status**: Draft [#1329](https://github.com/KlassApp-Foundation/KlassApp/pull/1329). Not merged. Production untouched. Browser click-through at 375 and 1280 is still owed.
+- **Edge cases flagged**: #1325 and #1329 both touch marks authorization and will need a small merge. A head teacher can also open the existing spreadsheet import from that screen; it still only writes drafts.
+
+### 2026-11-11: Marks recovery inventory
+
+- **Work done**: Rebuilt the marks picture from #1322 and the drafts opened the same day. Verified #1323's own release tests (30 passed, 191 assertions) in an isolated worktree. Did not rewrite that branch. Wrote `docs/dev/marks-progress.md` as the handover. Demo on port 8000 was not stopped or edited.
+- **Files touched**: `docs/dev/marks-progress.md`, `knowledge.md`.
+- **Key decisions**: Class-teacher approval (#1324) and ABS import (#1326) are usable. Head-teacher parity (#1325) and the exam-type catalog (#1327) are not, until their single new suite failures are fixed. Item 4 (admins enter marks) has no branch yet.
+- **Status**: Draft handover [#1328](https://github.com/KlassApp-Foundation/KlassApp/pull/1328). Item 3 continued on [#1325](https://github.com/KlassApp-Foundation/KlassApp/pull/1325) at `c57bcc52`. Not merged. Production untouched.
+- **Edge cases flagged**: A demo release now queues one extra webhook job, so `MarksReleaseQueueTest` expects 50 jobs and sees 51. Left on #1323 on purpose.
+
 ### 2026-11-02: phone lookups do not cross countries or schools (#1251)
 
 - **Work done**: Merged the updated #1246 head into this branch. A WhatsApp sender id without a plus (`254712345678`) is read as that country code, not as a Ugandan national number. Login, password reset, one-time code, and WhatsApp sender lookup tests each reject a bare local collision across countries and schools, and still match the same-country number. `PhoneCountry::keys` does not return `0712345678` for `+254712345678`. No production data and no deploy.
