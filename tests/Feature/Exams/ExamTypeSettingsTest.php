@@ -146,6 +146,8 @@ class ExamTypeSettingsTest extends TestCase
 
     public function test_includes_and_weights_survive_the_save(): void
     {
+        $this->riverside->forceFill(['report_kind' => 'set_based'])->save();
+
         $this->actingAs($this->admin)
             ->post('/admin/settings/exam-types', [
                 'contributes' => [$this->eot->id => '1', $this->bot->id => '0'],

@@ -745,6 +745,10 @@ final class MarksReleaseService
                     'result' => $result,
                 ])->save();
 
+                // The type in force at release time. A later change on the school
+                // does not rewrite this row or the snapshots written below.
+                app(\App\Services\Reports\ReportKindSetting::class)->freeze($release);
+
                 app(\App\Services\Records\SnapshotService::class)->capture($release, $release->release_reason);
 
                 if ($webhookStudents !== null) {

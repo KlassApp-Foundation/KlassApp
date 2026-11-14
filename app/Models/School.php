@@ -61,6 +61,11 @@ class School extends Model
         'onboarding_finished_at',
         'onboarding_skipped_steps',
         'report_template',
+        'report_kind',
+    ];
+
+    protected $attributes = [
+        'report_kind' => 'progressive',
     ];
 
     protected $casts = [
