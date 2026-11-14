@@ -71,13 +71,22 @@ class MarksReleaseController extends Controller
             'timezone' => $timezone,
             'confirm_past' => $data['confirm_past'],
             'whatsapp_send' => $data['whatsapp_send'],
+            'pilot' => $data['pilot'],
+            'pilot_learners' => $data['pilot_learners'],
+            'pilot_parents' => $data['pilot_parents'],
+            'pilot_recipients' => $data['pilot_recipients'],
         ], true));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|View
     {
         $user = $this->user();
         $data = $this->validated($request);
+        // A pilot is never released on the first post. The preview names every
+        // recipient and the message, and only the confirm step may send.
+        if ($data['pilot_recipients'] !== null && ! $data['pilot_confirmed']) {
+            return $this->preview($request);
+        }
         // The same class list the screen used, whether it came from the
         // class/stream picker, a standard_link_id on the URL, or both.
         $targets = $this->releaseTargets($user, $data);
@@ -89,7 +98,7 @@ class MarksReleaseController extends Controller
         $localWhen = $data['when'] === 'schedule' ? $data['scheduled_for'] : null;
         $created = [];
         if ($targets === null) {
-            $created[] = $this->releases->create($user, $data['exam_id'], null, $localWhen, $data['timezone'], $data['confirm_past'], $data['whatsapp_send'], $data['release_reason']);
+            $created[] = $this->releases->create($user, $data['exam_id'], null, $localWhen, $data['timezone'], $data['confirm_past'], $data['whatsapp_send'], $data['release_reason'], $data['pilot_recipients']);
         } else {
             // Every class is checked before any release row is written.
             foreach ($targets as $linkId) {
@@ -98,7 +107,7 @@ class MarksReleaseController extends Controller
                 $this->releases->requirePastConfirmation($anchor, $data['confirm_past']);
             }
             foreach ($targets as $linkId) {
-                $created[] = $this->releases->create($user, $data['exam_id'], $linkId, $localWhen, $data['timezone'], $data['confirm_past'], $data['whatsapp_send'], $data['release_reason']);
+                $created[] = $this->releases->create($user, $data['exam_id'], $linkId, $localWhen, $data['timezone'], $data['confirm_past'], $data['whatsapp_send'], $data['release_reason'], $data['pilot_recipients']);
             }
         }
         if ($data['when'] !== 'schedule') {
@@ -137,7 +146,9 @@ class MarksReleaseController extends Controller
         return view('marks-releases.show', $this->shared($request) + ['release' => $row]);
     }
 
-    /** @return array{exam_id:int, standard_link_id:int|null, class:string, stream:string, when:string, scheduled_for:string|null, timezone:string|null, confirm_past:bool, whatsapp_send:bool} */
+    /**
+     * @return array{exam_id:int, standard_link_id:int|null, class:string, stream:string, when:string, scheduled_for:string|null, timezone:string|null, confirm_past:bool, whatsapp_send:bool, pilot:string, pilot_learners:list<int>, pilot_parents:list<string>, pilot_recipients:list<array{student_id:int, parent_id:int|null}>|null, pilot_confirmed:bool, release_reason:string}
+     */
     private function validated(Request $request): array
     {
         $data = $request->validate([
@@ -151,7 +162,23 @@ class MarksReleaseController extends Controller
             'confirm_past' => ['nullable', 'boolean'],
             'whatsapp_send' => ['nullable', 'boolean'],
             'release_reason' => ['nullable', 'string', 'max:500'],
+            'pilot' => ['nullable', 'in:class,chosen'],
+            'pilot_learners' => ['nullable', 'array'],
+            'pilot_learners.*' => ['integer'],
+            'pilot_parents' => ['nullable', 'array'],
+            'pilot_parents.*' => ['string', 'max:40'],
+            'pilot_confirmed' => ['nullable', 'boolean'],
         ]);
+
+        $pilot = ($data['pilot'] ?? 'class') === 'chosen' ? 'chosen' : 'class';
+        $learners = array_map('intval', $data['pilot_learners'] ?? []);
+        $parents = array_map(fn ($token) => trim((string) $token), $data['pilot_parents'] ?? []);
+        $recipients = $this->releases->chosenRecipients($pilot, $learners, $parents);
+        if ($recipients === []) {
+            throw ValidationException::withMessages([
+                'pilot' => 'Choose at least one parent or learner. The class is not told.',
+            ]);
+        }
 
         return [
             'exam_id' => (int) $data['exam_id'],
@@ -164,6 +191,11 @@ class MarksReleaseController extends Controller
             'confirm_past' => filter_var($data['confirm_past'] ?? false, FILTER_VALIDATE_BOOLEAN),
             'whatsapp_send' => filter_var($data['whatsapp_send'] ?? false, FILTER_VALIDATE_BOOLEAN),
             'release_reason' => trim((string) ($data['release_reason'] ?? '')),
+            'pilot' => $pilot,
+            'pilot_learners' => $learners,
+            'pilot_parents' => $parents,
+            'pilot_recipients' => $recipients,
+            'pilot_confirmed' => filter_var($data['pilot_confirmed'] ?? false, FILTER_VALIDATE_BOOLEAN),
         ];
     }
 
@@ -224,6 +256,14 @@ class MarksReleaseController extends Controller
         $verb = ($old['when'] ?? 'now') === 'schedule' ? 'Schedule for' : 'Release to';
         $old['class'] = $class;
         $old['stream'] = $stream;
+        $pilot = ($old['pilot'] ?? 'class') === 'chosen' ? 'chosen' : 'class';
+        $old['pilot'] = $pilot;
+        $recipients = array_key_exists('pilot_recipients', $old)
+            ? $old['pilot_recipients']
+            : $this->releases->chosenRecipients($pilot, $old['pilot_learners'] ?? [], $old['pilot_parents'] ?? []);
+        $pilotLines = ($confirming && is_array($recipients) && $examId && $known)
+            ? $this->pilotLines($user, $examId, $targets, $recipients, (bool) ($old['whatsapp_send'] ?? false))
+            : [];
 
         return $this->shared($request) + [
             'exams' => $exams,
@@ -240,6 +280,10 @@ class MarksReleaseController extends Controller
             'needsReason' => $examId > 0 && $known && $this->needsReason($user, $examId, $targets),
             'releaseReasonPrompt' => $this->releaseReasonPrompt($this->releasedClassNames($user, $examId, $known ? $targets : [])),
             'previewMessage' => $previewMessage,
+            'pilotChoices' => ($examId && $known)
+                ? $this->releases->pilotChoices($user, $examId, $targets)
+                : [],
+            'pilotLines' => $pilotLines,
             'audience' => ($examId && $known)
                 ? $this->releases->audienceSummary($user, $examId, $targets)
                 : ['classes' => [], 'parents' => 0, 'whatsapp' => 0],
@@ -282,7 +326,34 @@ class MarksReleaseController extends Controller
             'scheduled_for' => (string) $request->input('scheduled_for', ''),
             'timezone' => (string) $request->input('timezone', 'Africa/Kampala'),
             'whatsapp_send' => $request->boolean('whatsapp_send'),
+            'pilot' => old('pilot', $request->input('pilot', 'class')) === 'chosen' ? 'chosen' : 'class',
+            'pilot_learners' => array_map('intval', (array) old('pilot_learners', $request->input('pilot_learners', []))),
+            'pilot_parents' => array_map('strval', (array) old('pilot_parents', $request->input('pilot_parents', []))),
         ];
+    }
+
+    /**
+     * One line per chosen person. A person who is in any selected class keeps that line.
+     *
+     * @param  array<int, int>|null  $targets
+     * @param  list<array{student_id:int, parent_id:int|null}>  $recipients
+     * @return list<array{learner:string, parent:string, number:string, message:string, told:bool, reason:?string}>
+     */
+    private function pilotLines(User $user, int $examId, ?array $targets, array $recipients, bool $whatsappSend): array
+    {
+        $scopes = $targets === null ? [null] : $targets;
+        $lines = [];
+        foreach ($scopes as $linkId) {
+            foreach ($this->releases->pilotPreview($user, $examId, $linkId, $recipients, $whatsappSend) as $line) {
+                $key = $line['learner']."\0".$line['parent'];
+                $kept = $lines[$key] ?? null;
+                if ($kept === null || ($kept['told'] === false && $line['told'] === true) || ($kept['reason'] === 'This learner is not in this class' && $line['reason'] !== 'This learner is not in this class')) {
+                    $lines[$key] = $line;
+                }
+            }
+        }
+
+        return array_values($lines);
     }
 
     /** @param  array<string, mixed>|null  $exam */
