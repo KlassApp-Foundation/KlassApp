@@ -15,7 +15,7 @@ Draft work. Nothing here is merged or deployed.
 | #1348 | One division table on the card, the mark sheets, the download, and the parent and learner marks page. https://github.com/KlassApp-Foundation/KlassApp/pull/1348 |
 | #1350 | An absence is shown as ABS. The combined marksheet names each sheet after the school's exam set. https://github.com/KlassApp-Foundation/KlassApp/pull/1350 |
 | #1351 | Exam-set columns follow the exam date. The term's start date is the tie-break. https://github.com/KlassApp-Foundation/KlassApp/pull/1351 |
-| next | A pilot release tells only the parents or learners the school chooses. |
+| #1352 | A pilot release tells only the parents or learners the school chooses. https://github.com/KlassApp-Foundation/KlassApp/pull/1352 |
 
 ## 2026-11-15 — rules stored on the release
 
@@ -31,7 +31,7 @@ Clicked through Report cards as a school admin and a head teacher at 375px and 1
 
 On **Marks Release**, a school admin or a class teacher can choose **Only the people I choose**. The preview names each person and the message. **Confirm and release** messages only that list. The rest of the class is not told. A parent who is not linked to the learner, or who has no number, is skipped and written on the release log. **Everyone in this class** is unchanged. A head teacher still cannot open Marks Release.
 
-Nothing was sent on WhatsApp from this work. The local click left the send switched off, so the log says the messages are switched off.
+Nothing was sent on WhatsApp from this work. The local click left the send switched off, so the log says the messages are switched off. Draft pull request: https://github.com/KlassApp-Foundation/KlassApp/pull/1352
 
 ## 2026-11-15 — exam-set columns follow the exam date
 
