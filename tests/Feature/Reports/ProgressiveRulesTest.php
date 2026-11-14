@@ -81,7 +81,10 @@ class ProgressiveRulesTest extends TestCase
             ->assertSee('Progressive report rules')
             ->assertSee('12')
             ->assertSee('By aggregate')
-            ->assertSee('data-testid="automatic-division"', false);
+            ->assertSee('data-testid="automatic-division"', false)
+            ->assertSee('data-label="From aggregate"', false)
+            ->assertSee('data-label="Remark"', false)
+            ->assertSee('division-ranges-scroll', false);
 
         $this->assertNull($this->school->fresh()->ranking_basis);
         $this->assertNull($this->standard->fresh()->ranking_basis);
