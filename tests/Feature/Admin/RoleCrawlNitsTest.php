@@ -16,8 +16,8 @@ use Tests\TestCase;
  * A5 — quick fixes from the demo role crawl:
  *  - SchoolSubadmin's nav no longer 404s on the year list / notification feed
  *    (routes/setting.php used to shadow the admin definitions with fullschooladmin);
- *  - the admin sidebar hides Settings + Classes & Streams from SchoolSubadmin
- *    (their routes exclude ug4 by design);
+ *  - a head teacher keeps Settings and Classes, the same as a school admin
+ *    inside their own school, and cannot change another school's settings;
  *  - the teacher sidebar no longer links to the unbuilt library activity page;
  *  - the calendar icon asset the stylesheet references actually exists.
  */
@@ -110,19 +110,46 @@ class RoleCrawlNitsTest extends TestCase
         $this->actingAs($this->admin)->get('/admin/notification/showList')->assertOk();
     }
 
-    public function test_subadmin_dashboard_hides_settings_and_classes_links(): void
+    public function test_head_teacher_dashboard_keeps_settings_and_classes_links(): void
     {
         $response = $this->actingAs($this->head)->get('/subadmin/dashboard');
         $response->assertOk();
-        $response->assertDontSee(url('/admin/settings'));
-        // Data exports is a Settings row. The quick-access tile used to point
-        // at /admin/reports, which this gate now refuses. Report cards stay
-        // at /admin/reports/cards, so match the index href exactly.
-        $response->assertDontSee('href="'.url('/admin/reports').'"', false);
-        // Classes and streams is school-admin only. The parent row stays, and
-        // for a subadmin it opens Subjects rather than /admin/classes.
-        $response->assertDontSee(url('/admin/classes'));
-        $response->assertDontSee('Classes and streams', false);
+        $response->assertSee(url('/admin/settings'), false);
+        $response->assertSee(url('/admin/classes'), false);
+        $response->assertSee('Classes and streams', false);
+    }
+
+    public function test_a_head_teacher_cannot_change_another_schools_settings(): void
+    {
+        $other = School::create([
+            'name' => 'Other Settings School',
+            'slug' => 'other-settings-'.uniqid(),
+            'email' => 'other-settings-'.uniqid().'@t.sch.ug',
+            'phone' => '070'.random_int(1000000, 9999999),
+            'status' => 1,
+        ]);
+        $year = AcademicYear::create([
+            'school_id' => $other->id,
+            'name' => '2026',
+            'description' => 'Other year',
+            'start_date' => '2026-01-01',
+            'end_date' => '2026-12-31',
+            'status' => 1,
+        ]);
+
+        $this->actingAs($this->head)
+            ->post('/admin/academic/update/'.$year->id, [
+                'description' => 'Taken over',
+                'start_date' => '2026-01-01',
+                'end_date' => '2026-12-31',
+                'status' => 'old',
+            ])
+            ->assertNotFound();
+
+        $fresh = $year->fresh();
+        $this->assertSame('Other year', $fresh->description);
+        $this->assertSame(1, (int) $fresh->status);
+        $this->assertSame((int) $other->id, (int) $fresh->school_id);
     }
 
     public function test_admin_dashboard_still_shows_settings_and_classes_links(): void

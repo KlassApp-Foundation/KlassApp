@@ -71,6 +71,8 @@ final class MarksReleaseService
 
     public const USERGROUP_TEACHER = 5;
 
+    public const USERGROUP_HEAD_TEACHER = 4;
+
     /** @var array<int, true> release ids whose demo webhook was already posted */
     private array $demoWebhookRecorded = [];
 
@@ -85,7 +87,8 @@ final class MarksReleaseService
 
     public function isSchoolAdmin(User $user): bool
     {
-        return (int) $user->usergroup_id === self::USERGROUP_SCHOOL_ADMIN && $user->school_id !== null;
+        return in_array((int) $user->usergroup_id, [self::USERGROUP_SCHOOL_ADMIN, self::USERGROUP_HEAD_TEACHER], true)
+            && $user->school_id !== null;
     }
 
     /**

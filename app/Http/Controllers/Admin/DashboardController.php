@@ -92,7 +92,7 @@ class DashboardController extends Controller
         // ── Onboarding reminder for school admins ──
         $onboardingMissing = [];
         $onboardingSteps = [];
-        if (Auth::user()->usergroup_id === 3 && $school_id) {
+        if (\App\Support\SchoolAdmin::managesOwnSchool(Auth::user(), $school_id)) {
             $school = Auth::user()->school;
 
             // Plan selection is a visible last step in the manual wizard / Toshi —
@@ -105,7 +105,7 @@ class DashboardController extends Controller
         }
 
         $setupIncomplete = ! empty($dashboard['setupIncomplete'])
-            || (Auth::user()->usergroup_id === 3 && ! empty($onboardingMissing));
+            || (\App\Support\SchoolAdmin::managesOwnSchool(Auth::user(), $school_id) && ! empty($onboardingMissing));
 
         // Never auto-open / auto-maximize after signup. Drain the legacy session
         // flash so it cannot force a fullscreen Toshi overlay (blocks Manual @375).
