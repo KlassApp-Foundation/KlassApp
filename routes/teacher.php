@@ -421,6 +421,13 @@ Route::get('/marks/releases/new', [\App\Http\Controllers\MarksReleaseController:
 Route::post('/marks/releases/preview', [\App\Http\Controllers\MarksReleaseController::class, 'preview'])->name('teacher.marks.releases.preview');
 Route::post('/marks/releases', [\App\Http\Controllers\MarksReleaseController::class, 'store'])->name('teacher.marks.releases.store');
 Route::get('/marks/releases/{release}', [\App\Http\Controllers\MarksReleaseController::class, 'show'])->whereNumber('release')->name('teacher.marks.releases.show');
+// Class teachers review, approve and return marks for their own class.
+Route::get('/marks/approvals', [\App\Http\Controllers\Admin\ExamMarksSubmissionController::class, 'index'])->name('teacher.marks.approvals');
+Route::get('/marks/approvals/{exam}', [\App\Http\Controllers\Admin\ExamMarksSubmissionController::class, 'show'])->name('teacher.marks.approvals.show');
+Route::post('/marks/approvals/approve-selected', [\App\Http\Controllers\Admin\ExamMarksSubmissionController::class, 'approveSelected'])->name('teacher.marks.approvals.approve-selected');
+Route::post('/marks/approvals/{exam}/approve', [\App\Http\Controllers\Admin\ExamMarksSubmissionController::class, 'approve'])->name('teacher.marks.approvals.approve');
+Route::post('/marks/approvals/{exam}/reject', [\App\Http\Controllers\Admin\ExamMarksSubmissionController::class, 'reject'])->name('teacher.marks.approvals.reject');
+
 Route::get('/marks/sheet', 'MarksController@combinedSheet')->name('teacher.marks.sheet');
 Route::get('/marks/sheet/download', 'MarksController@downloadCombinedSheet')->name('teacher.marks.sheet.download');
 
