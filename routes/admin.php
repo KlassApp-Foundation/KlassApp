@@ -961,6 +961,8 @@ Route::post('/marks/submissions/{exam}/reject', 'ExamMarksSubmissionController@r
 // Route::resource('exams', 'Admin\ExamController')->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
 // handle classes — same hidden Classes and streams item.
 Route::middleware('can:full-school-admin')->group(function () {
+Route::get("/school-identity", "SchoolIdentityController@edit")->name("admin.school-identity");
+Route::post("/school-identity", "SchoolIdentityController@update")->name("admin.school-identity.update");
 Route::get("/classes/link-section/{section}", "ClassLinkController@confirm")->whereNumber('section')->name("admin.classes.link-section");
 Route::post("/classes/link-section/{section}", "ClassLinkController@store")->whereNumber('section')->name("admin.classes.link-section.store");
 Route::get("/classes/add", "ClassesController@create")->name("admin.classes.add");
