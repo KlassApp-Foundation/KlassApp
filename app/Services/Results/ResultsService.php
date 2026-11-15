@@ -112,7 +112,7 @@ final class ResultsService
         $summary = $this->summary($subjects, $students);
 
         $sittings = [];
-        foreach ($this->sittingPlans($exams, $policy->splitMidTermByMonth, $preferences) as $plan) {
+        foreach ($this->sittingPlans($exams, $policy->splitMidTermByMonth, $preferences, $term) as $plan) {
             if ($query->examTypeId === null && ! ($typeMeta[$plan['typeId']]['included'] ?? true)) {
                 continue;
             }
@@ -216,10 +216,14 @@ final class ResultsService
      * mode stays its own sitting. Contributing types stay one sitting, and
      * the main total is unaffected.
      *
+     * Columns follow the set's exam date, earliest first. A set with no date
+     * goes last. The term's start date, then its id, breaks a tie. The earliest
+     * exam id is only the last stable key when the date and the term are the same.
+     *
      * @param array<int|string, mixed>|null $preferences
      * @return list<array{typeId: int, name: string, code: string, contributes: bool, periodKey: string, periodLabel: string, examIds: list<int>}>
      */
-    private function sittingPlans(Collection $exams, bool $splitMidTermByMonth, ?array $preferences): array
+    private function sittingPlans(Collection $exams, bool $splitMidTermByMonth, ?array $preferences, AcademicTerm $term): array
     {
         $plans = [];
         foreach ($exams as $exam) {
@@ -242,6 +246,7 @@ final class ResultsService
                 $periodKey = '';
                 $periodLabel = '';
             }
+            $stamp = $exam->scheduled_at?->getTimestamp();
             if (! isset($plans[$key])) {
                 $plans[$key] = [
                     'typeId' => (int) $type->id,
@@ -251,17 +256,23 @@ final class ResultsService
                     'periodKey' => $periodKey,
                     'periodLabel' => $periodLabel,
                     'examIds' => [],
+                    'sortAt' => $stamp ?? PHP_INT_MAX,
+                    'sortTermStart' => $term->starts_on?->getTimestamp() ?? PHP_INT_MAX,
+                    'sortTermId' => (int) $term->id,
                     'sortExamId' => (int) $exam->id,
                 ];
             }
             $plans[$key]['examIds'][] = (int) $exam->id;
             $plans[$key]['sortExamId'] = min($plans[$key]['sortExamId'], (int) $exam->id);
+            if ($stamp !== null && $stamp < $plans[$key]['sortAt']) {
+                $plans[$key]['sortAt'] = $stamp;
+            }
         }
 
         $list = array_values($plans);
         usort($list, function (array $left, array $right) {
-            return [$left['typeId'], $left['periodKey'], $left['sortExamId']]
-                <=> [$right['typeId'], $right['periodKey'], $right['sortExamId']];
+            return [$left['sortAt'], $left['sortTermStart'], $left['sortTermId'], $left['sortExamId']]
+                <=> [$right['sortAt'], $right['sortTermStart'], $right['sortTermId'], $right['sortExamId']];
         });
 
         return $list;

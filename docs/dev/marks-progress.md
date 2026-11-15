@@ -14,6 +14,7 @@ Draft work. Nothing here is merged or deployed.
 | #1347 | A release stores the bands, division ranges and ranking. A reprint uses that copy. https://github.com/KlassApp-Foundation/KlassApp/pull/1347 |
 | #1348 | One division table on the card, the mark sheets, the download, and the parent and learner marks page. https://github.com/KlassApp-Foundation/KlassApp/pull/1348 |
 | #1350 | An absence is shown as ABS. The combined marksheet names each sheet after the school's exam set. https://github.com/KlassApp-Foundation/KlassApp/pull/1350 |
+| #1351 | Exam-set columns follow the exam date. The term's start date is the tie-break. https://github.com/KlassApp-Foundation/KlassApp/pull/1351 |
 
 ## 2026-11-15 — rules stored on the release
 
@@ -24,6 +25,12 @@ A release from before this column has no copy and the row is not rewritten. Its 
 ## 2026-11-15 — rules screen on a phone
 
 Clicked through Report cards as a school admin and a head teacher at 375px and 1280px. The report type, its history line, a card with Missing and ABS, and a reprint after editing the ranges all held. The reprint text did not change. On a phone the rules tables were wider than the screen and the page hid the overflow. #1343 now stacks Division, From aggregate, To aggregate, and the grade bands under their own labels. Nothing else on that screen changed.
+
+## 2026-11-15 — exam-set columns follow the exam date
+
+A column uses the earliest **Scheduled Date & Time** of that set. A set with no date goes last. If two sets share a date, the term that starts earlier comes first, and then the term's id. The earliest exam id is only used when the date and the term are the same, so the order stays put. The order the sets were created is not the order.
+
+On the progressive card the monthly block is still above the end-of-term block. Inside each block the columns follow the date. The combined download is one list, so a counting set dated before another set comes first there too.
 
 ## 2026-11-15 — ABS, and the school's set names on the download
 
