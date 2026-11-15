@@ -131,6 +131,7 @@ public function teacherExamMarksList()
         $row = $submissionLabels->get($exam->id.'|'.$exam->section_id.'|'.$exam->subject_id);
         $exam->submission_label = $row ? $row->reviewLabel() : 'Not started';
         $exam->marks_entered = (int) ($entered[$exam->id] ?? 0);
+        $exam->return_note = $this->returnedNoteForTeacher($row, $exam, $teacher);
     }
 
     return view('teacher.marks.teacher-exam-list', compact('exams', 'examsByClass', 'assignedStdLinks', 'canCreateExams'));
@@ -759,6 +760,23 @@ private function markEntryKind(Exam $exam, mixed $value): string
     }
 
     return 'fix';
+}
+
+/**
+ * The return note on "Your exams to mark", for the exam's own teacher only.
+ */
+private function returnedNoteForTeacher(?ExamMarksSubmission $row, Exam $exam, User $teacher): ?string
+{
+    if ($row === null || ! $row->isReturned() || (int) $exam->teacher_id !== (int) $teacher->id) {
+        return null;
+    }
+
+    $reason = trim((string) $row->rejection_reason);
+    if ($reason === '') {
+        $reason = trim((string) $row->reopen_reason);
+    }
+
+    return $reason !== '' ? $reason : null;
 }
 
 private function markForInput(mixed $mark): string

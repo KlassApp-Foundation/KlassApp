@@ -21,6 +21,8 @@ class MarksRelease extends Model
     public const STATUS_FAILED = 'failed';
     public const STATUS_CANCELLED = 'cancelled';
 
+    public const STATUS_REOPENED = 'reopened';
+
     protected $table = 'marks_releases';
 
     protected $fillable = [
