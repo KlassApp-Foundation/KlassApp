@@ -74,15 +74,21 @@ class GradingSettingsScreenTest extends TestCase
             ->assertSee('never changes', false);
     }
 
-    public function test_the_screen_offers_the_three_presets_without_a_school_name(): void
+    public function test_the_screen_offers_the_three_generic_presets(): void
     {
         $html = $this->actingAs($this->admin)->get(self::URL.'?standard='.$this->standard->id)->assertOk()->getContent();
 
         $this->assertStringContainsString('>App default<', $html);
         $this->assertStringContainsString('Older seeded scale (confirm with the school)', $html);
         $this->assertStringContainsString('>Custom<', $html);
-        $this->assertStringNotContainsStringIgnoringCase('kabale', $html);
-        $this->assertStringNotContainsStringIgnoringCase('uganda', $html);
+        // The preset names are generic: exactly these three options, nothing named for a school or a country.
+        preg_match('/<select id="rules-preset".*?<\/select>/s', $html, $select);
+        preg_match_all('/<option value="([^"]+)"[^>]*>([^<]+)<\/option>/', $select[0] ?? '', $options, PREG_SET_ORDER);
+        $this->assertSame([
+            ['default', 'App default'],
+            ['older-seeded', 'Older seeded scale (confirm with the school)'],
+            ['custom', 'Custom'],
+        ], array_map(fn ($o) => [$o[1], $o[2]], $options));
     }
 
     public function test_loading_the_older_seeded_preset_fills_the_form_but_saves_nothing(): void
@@ -226,9 +232,9 @@ class GradingSettingsScreenTest extends TestCase
             'out of order' => [['label' => '2', 'min' => '11', 'max' => ''], ['label' => '1', 'min' => '', 'max' => '10']],
             'closed at the bottom' => [['label' => '1', 'min' => '3', 'max' => '10'], ['label' => '2', 'min' => '11', 'max' => '']],
         ];
-        foreach ($cases as $name => $ranges) {
+        foreach ($cases as $ranges) {
             $this->actingAs($this->admin)->post(self::URL, ['ranking_basis' => 'automatic', 'ranges' => $ranges])
-                ->assertSessionHasErrors('ranges', null, $name);
+                ->assertSessionHasErrors('ranges');
         }
         $this->assertSame(0, ReportDivisionRange::query()->count());
     }
