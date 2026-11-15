@@ -1,0 +1,677 @@
+{
+  "country": {
+    "name": "Uganda",
+    "iso_code": "UG"
+  },
+  "year": 2026,
+  "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+  "source_title": "Schools and Other Institutions Calendar for 2026",
+  "retrieved_date": "2026-11-15",
+  "circular_date": "2025-11-24",
+  "reference": "ADM/085/157/01",
+  "listing_url": "https://www.education.go.ug/school-calendars/",
+  "day_count_method": "Inclusive count of every calendar date from the start date through the end date, including both ends, weekends and public holidays. This matches the circular's note that the days it records include public holidays and weekends.",
+  "terms": [
+    {
+      "name": "Term I",
+      "opening_date": null,
+      "closing_date": "2026-05-01",
+      "number_of_days": null,
+      "conflicts": [
+        {
+          "field": "opening_date",
+          "value": "2026-02-02",
+          "stated_number_of_days": 89,
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "source_title": "Schools and Other Institutions Calendar for 2026",
+          "source_date": "2025-11-24",
+          "note": "Primary and secondary table, page 1: Monday 2nd February, 2026 to Friday 1st May, 2026, printed as 89 days. An inclusive count of those two dates is 89. Closing date is Friday 1st May, 2026."
+        },
+        {
+          "field": "opening_date",
+          "value": "2026-02-02",
+          "stated_number_of_days": null,
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/OBSERVANCE-OF-THE-OFFICIAL-CALENDAR-FOR-EDUCATION-INSTITUTIONS-FOR-THE-ACADEMIC-YEAR-2026.pdf",
+          "source_title": "Observance of the Official Calendar for Education Institutions for the Academic Year 2026",
+          "source_date": "2026-01-06",
+          "note": "The letter says the calendar gives the opening and closing of the school terms and institutional semesters as 2nd February 2026 and 1st May 2026. Those two dates match Term I in the calendar. The letter does not restate Term II or Term III and does not print a day count."
+        },
+        {
+          "field": "opening_date",
+          "value": "2026-02-10",
+          "stated_number_of_days": null,
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/OFFICIAL-ANNOUNCEMENT-ON-THE-REOPENING-OF-ALL-SCHOOLS-AND-EDUCATION-INSTITUTIONS-1.pdf",
+          "source_title": "Official Announcement on the Re-opening of All Schools and Education Institutions",
+          "source_date": "2026-01-16",
+          "note": "Directs schools to reopen on Tuesday 10th February 2026 and says Term 1 runs from that Tuesday to Friday 1st May 2026. The announcement does not print a replacement day count. An inclusive count of 10 February 2026 through 1 May 2026 is 81. That 81 is a count of the dates the announcement prints, not a figure the announcement states, and it is not chosen here. The closing date matches the calendar."
+        }
+      ],
+      "holidays": [
+        {
+          "name": "Archbishop Janani Luwum Day",
+          "kind": "public_holiday",
+          "start_date": "2026-02-16",
+          "end_date": "2026-02-16",
+          "date_label": "16th February",
+          "number_of_days": 1,
+          "placement": "inside_term",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Year is not printed on the public-holiday row. Stored as 2026 because the table is in the 2026 calendar. The date falls inside Term I under both recorded opening dates."
+        },
+        {
+          "name": "International Women's Day",
+          "kind": "public_holiday",
+          "start_date": "2026-03-08",
+          "end_date": "2026-03-08",
+          "date_label": "8th March",
+          "number_of_days": 1,
+          "placement": "inside_term",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Year is not printed on the row. Stored as 2026. Inside Term I under both recorded opening dates."
+        },
+        {
+          "name": "Good Friday",
+          "kind": "public_holiday",
+          "start_date": "2026-03-29",
+          "end_date": "2026-03-29",
+          "date_label": "29th March",
+          "number_of_days": 1,
+          "placement": "inside_term",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Printed as 29th March. The year is not on the row and is stored as 2026. That calendar date is a Sunday. Easter Monday is printed as 1st April, which is not the usual spacing from Good Friday. The printed dates are kept and not adjusted."
+        },
+        {
+          "name": "Easter Monday",
+          "kind": "public_holiday",
+          "start_date": "2026-04-01",
+          "end_date": "2026-04-01",
+          "date_label": "1st April",
+          "number_of_days": 1,
+          "placement": "inside_term",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Year is not printed on the row. Stored as 2026. That calendar date is a Wednesday. See the note on Good Friday."
+        },
+        {
+          "name": "Idd El Fitri",
+          "kind": "public_holiday",
+          "start_date": "2026-04-10",
+          "end_date": "2026-04-10",
+          "date_label": "10th April",
+          "number_of_days": 1,
+          "placement": "inside_term",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Year is not printed on the row. Stored as 2026. Inside Term I."
+        },
+        {
+          "name": "Labour Day",
+          "kind": "public_holiday",
+          "start_date": "2026-05-01",
+          "end_date": "2026-05-01",
+          "date_label": "1st May",
+          "number_of_days": 1,
+          "placement": "inside_term",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Year is not printed on the row. Stored as 2026. This is also the printed closing date of Term I, so it is the last day of the term, not part of the holiday that follows."
+        },
+        {
+          "name": "1st Term Holidays",
+          "kind": "term_break",
+          "start_date": "2026-05-02",
+          "end_date": "2026-05-24",
+          "date_label": "2nd May, 2026 to 24th May, 2026",
+          "number_of_days": 23,
+          "placement": "between_terms",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Printed as 23 days. An inclusive count of 2 May 2026 through 24 May 2026 is 23. This is the break between Term I and Term II."
+        }
+      ],
+      "national_activities": [
+        {
+          "name": "School-based MDD Competitions",
+          "start_date": null,
+          "end_date": null,
+          "date_label": "1st Term",
+          "placement": "inside_term",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Secondary schools activities table. No day or month is printed."
+        },
+        {
+          "name": "School-Based Science Fairs",
+          "start_date": null,
+          "end_date": null,
+          "date_label": "1st Term",
+          "placement": "inside_term",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Secondary schools activities table. No day or month is printed."
+        },
+        {
+          "name": "Regional Secondary Schools Science Fair",
+          "start_date": null,
+          "end_date": null,
+          "date_label": "1st Term",
+          "placement": "inside_term",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Secondary schools activities table. No day or month is printed."
+        },
+        {
+          "name": "Secondary Schools District Debate Championships",
+          "start_date": "2026-03-13",
+          "end_date": "2026-03-13",
+          "date_label": "13th March 2026",
+          "placement": "inside_term",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Inside Term I under both recorded opening dates."
+        },
+        {
+          "name": "S1 Reporting for 1st Term 2026",
+          "start_date": "2026-02-16",
+          "end_date": "2026-02-16",
+          "date_label": "16th February 2026",
+          "placement": "inside_term",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "From the table headed PROPOSED DATES FOR S.1 AND S5 START OF TERM 1 2025. The heading prints 2025. The row prints 2026. The row year is kept. The date falls after both recorded Term I openings."
+        },
+        {
+          "name": "Placement of S.5 Students",
+          "start_date": "2026-02-12",
+          "end_date": "2026-02-13",
+          "date_label": "12th – 13th February 2026",
+          "placement": "inside_term",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Same table as the S.1 rows. These two days fall after 10 February, so they sit inside Term I under both recorded openings."
+        },
+        {
+          "name": "S5 Reporting for 1st Term 2026",
+          "start_date": "2026-02-23",
+          "end_date": "2026-02-23",
+          "date_label": "23rd February 2026",
+          "placement": "inside_term",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Same table. Inside Term I under both recorded openings."
+        },
+        {
+          "name": "Regional SESEMAT INSET – Central and North Western Regions",
+          "start_date": null,
+          "end_date": null,
+          "date_label": "1st Term Holidays",
+          "placement": "between_terms",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "No day is printed. Placed with the break after Term I."
+        }
+      ]
+    },
+    {
+      "name": "Term II",
+      "opening_date": "2026-05-25",
+      "closing_date": "2026-08-21",
+      "number_of_days": 89,
+      "conflicts": [],
+      "holidays": [
+        {
+          "name": "Uganda Martyrs' Day",
+          "kind": "public_holiday",
+          "start_date": "2026-06-03",
+          "end_date": "2026-06-03",
+          "date_label": "3rd June",
+          "number_of_days": 1,
+          "placement": "inside_term",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Year is not printed on the row. Stored as 2026. Inside Term II."
+        },
+        {
+          "name": "National Heroes' Day",
+          "kind": "public_holiday",
+          "start_date": "2026-06-09",
+          "end_date": "2026-06-09",
+          "date_label": "9th June",
+          "number_of_days": 1,
+          "placement": "inside_term",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Year is not printed on the row. Stored as 2026. Inside Term II."
+        },
+        {
+          "name": "Idd Al Adhua",
+          "kind": "public_holiday",
+          "start_date": "2026-06-17",
+          "end_date": "2026-06-17",
+          "date_label": "17th June",
+          "number_of_days": 1,
+          "placement": "inside_term",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Year is not printed on the row. Stored as 2026. Inside Term II."
+        },
+        {
+          "name": "2nd Term Holidays",
+          "kind": "term_break",
+          "start_date": null,
+          "end_date": "2026-09-13",
+          "date_label": "22nd August, 2025 to 13th September, 2026",
+          "number_of_days": 23,
+          "placement": "between_terms",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "The primary and secondary holiday table prints the start as 22nd August, 2025 and the end as 13th September, 2026, and prints 23 days. An inclusive count from 22 August 2025 through 13 September 2026 is 388 days, not 23. An inclusive count from 22 August 2026 through 13 September 2026 is 23 days. The start date is left null because the printed year and the printed day count disagree. This file does not pick one. The printed holiday total of 104 matches 23 + 23 + 58, which is consistent with the day count and not with a start in 2025."
+        }
+      ],
+      "national_activities": [
+        {
+          "name": "Inter-schools MDD Competitions – District",
+          "start_date": null,
+          "end_date": null,
+          "date_label": "2nd Term",
+          "placement": "inside_term",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Secondary schools activities table. No day or month is printed."
+        },
+        {
+          "name": "Inter-schools MDD Competitions – Regional",
+          "start_date": null,
+          "end_date": null,
+          "date_label": "2nd Term",
+          "placement": "inside_term",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Secondary schools activities table. No day or month is printed."
+        },
+        {
+          "name": "National Secondary Schools Science Fair",
+          "start_date": null,
+          "end_date": null,
+          "date_label": "July",
+          "placement": "inside_term",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Month only. No day and no year are printed, so no ISO dates are stored. July of the calendar year would fall inside Term II. That year is not written onto the row."
+        },
+        {
+          "name": "National Agriculture Education Show (NAES)",
+          "start_date": null,
+          "end_date": null,
+          "date_label": "7th – 12th July",
+          "placement": "inside_term",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Day and month are printed. The year is not, so no ISO dates are stored."
+        },
+        {
+          "name": "UNSA Midterm Council Meeting",
+          "start_date": "2026-07-24",
+          "end_date": "2026-07-24",
+          "date_label": "24th July 2026",
+          "placement": "inside_term",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Inside Term II."
+        },
+        {
+          "name": "National MDD Festival",
+          "start_date": null,
+          "end_date": null,
+          "date_label": "2nd Term Holidays",
+          "placement": "between_terms",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Placed on the break after Term II. No day is printed."
+        },
+        {
+          "name": "Secondary Schools National Debate Championships",
+          "start_date": "2026-08-24",
+          "end_date": "2026-08-28",
+          "date_label": "24th – 28th August 2026",
+          "placement": "between_terms",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Term II closes on 21 August 2026, so these dates fall after the term. They also fall after 22 August, which is the printed day of the 2nd term holiday start."
+        },
+        {
+          "name": "Regional SESEMAT INSET – Western and Mid-Western Regions",
+          "start_date": null,
+          "end_date": null,
+          "date_label": "2nd Term Holidays",
+          "placement": "between_terms",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "No day is printed."
+        }
+      ]
+    },
+    {
+      "name": "Term III",
+      "opening_date": "2026-09-14",
+      "closing_date": "2026-12-04",
+      "number_of_days": 82,
+      "conflicts": [],
+      "known_check": {
+        "opening_date": "2026-09-14",
+        "closing_date": "2026-12-04",
+        "number_of_days": 82,
+        "label": "Given by the product owner: Monday 14 Sep to Friday 4 Dec, 82 days. The circular prints the same opening, closing and day count. The two agree, so nothing was changed."
+      },
+      "holidays": [
+        {
+          "name": "Independence Day",
+          "kind": "public_holiday",
+          "start_date": "2026-10-09",
+          "end_date": "2026-10-09",
+          "date_label": "9th October",
+          "number_of_days": 1,
+          "placement": "inside_term",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Year is not printed on the row. Stored as 2026. Inside Term III."
+        },
+        {
+          "name": "3rd Term Holidays",
+          "kind": "term_break",
+          "start_date": "2026-12-05",
+          "end_date": "2027-01-31",
+          "date_label": "5th December, 2026 to 31st January, 2027",
+          "number_of_days": 58,
+          "placement": "between_terms",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Printed as 58 days. An inclusive count of 5 December 2026 through 31 January 2027 is 58. This is the break after Term III."
+        },
+        {
+          "name": "Christmas Day",
+          "kind": "public_holiday",
+          "start_date": "2026-12-25",
+          "end_date": "2026-12-25",
+          "date_label": "25th December",
+          "number_of_days": 1,
+          "placement": "between_terms",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Year is not printed on the row. Stored as 2026. Falls inside the printed 3rd term holiday."
+        },
+        {
+          "name": "Boxing Day",
+          "kind": "public_holiday",
+          "start_date": "2026-12-26",
+          "end_date": "2026-12-26",
+          "date_label": "26th December",
+          "number_of_days": 1,
+          "placement": "between_terms",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Year is not printed on the row. Stored as 2026. Falls inside the printed 3rd term holiday."
+        }
+      ],
+      "national_activities": [
+        {
+          "name": "East African Community Essay Writing Competitions",
+          "start_date": null,
+          "end_date": null,
+          "date_label": "3rd Term",
+          "placement": "inside_term",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Secondary schools activities table. No day or month is printed."
+        },
+        {
+          "name": "UNSA District Councils Meetings and Elections",
+          "start_date": "2026-10-03",
+          "end_date": "2026-10-03",
+          "date_label": "3rd October 2026",
+          "placement": "inside_term",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Inside Term III."
+        },
+        {
+          "name": "UNSA AGM and Elections",
+          "start_date": "2026-12-16",
+          "end_date": "2026-12-19",
+          "date_label": "16th – 19th December 2026",
+          "placement": "between_terms",
+          "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+          "note": "Term III closes on 4 December 2026, so these dates fall in the 3rd term holiday."
+        }
+      ]
+    }
+  ],
+  "public_holidays": [
+    {
+      "name": "New Year's Day",
+      "kind": "public_holiday",
+      "start_date": "2026-01-01",
+      "end_date": "2026-01-01",
+      "date_label": "1st January",
+      "number_of_days": 1,
+      "placement": "before_first_term",
+      "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+      "note": "Year is not printed on the row. Stored as 2026. Before both recorded Term I openings. The circular does not print a separate 1 January 2027 row, although that date falls inside the 3rd term holiday."
+    },
+    {
+      "name": "Liberation Day",
+      "kind": "public_holiday",
+      "start_date": "2026-01-26",
+      "end_date": "2026-01-26",
+      "date_label": "26th January",
+      "number_of_days": 1,
+      "placement": "before_first_term",
+      "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+      "note": "Year is not printed on the row. Stored as 2026. Before both recorded Term I openings."
+    },
+    {
+      "name": "Archbishop Janani Luwum Day",
+      "kind": "public_holiday",
+      "start_date": "2026-02-16",
+      "end_date": "2026-02-16",
+      "date_label": "16th February",
+      "number_of_days": 1,
+      "placement": "inside_term",
+      "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+      "note": "Also listed under Term I. The root list is the circular's public-holiday table."
+    },
+    {
+      "name": "International Women's Day",
+      "kind": "public_holiday",
+      "start_date": "2026-03-08",
+      "end_date": "2026-03-08",
+      "date_label": "8th March",
+      "number_of_days": 1,
+      "placement": "inside_term",
+      "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+      "note": "Also listed under Term I."
+    },
+    {
+      "name": "Good Friday",
+      "kind": "public_holiday",
+      "start_date": "2026-03-29",
+      "end_date": "2026-03-29",
+      "date_label": "29th March",
+      "number_of_days": 1,
+      "placement": "inside_term",
+      "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+      "note": "Also listed under Term I. Printed date kept. See the term note."
+    },
+    {
+      "name": "Easter Monday",
+      "kind": "public_holiday",
+      "start_date": "2026-04-01",
+      "end_date": "2026-04-01",
+      "date_label": "1st April",
+      "number_of_days": 1,
+      "placement": "inside_term",
+      "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+      "note": "Also listed under Term I."
+    },
+    {
+      "name": "Idd El Fitri",
+      "kind": "public_holiday",
+      "start_date": "2026-04-10",
+      "end_date": "2026-04-10",
+      "date_label": "10th April",
+      "number_of_days": 1,
+      "placement": "inside_term",
+      "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+      "note": "Also listed under Term I."
+    },
+    {
+      "name": "Labour Day",
+      "kind": "public_holiday",
+      "start_date": "2026-05-01",
+      "end_date": "2026-05-01",
+      "date_label": "1st May",
+      "number_of_days": 1,
+      "placement": "inside_term",
+      "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+      "note": "Also listed under Term I. Closing day of Term I."
+    },
+    {
+      "name": "Uganda Martyrs' Day",
+      "kind": "public_holiday",
+      "start_date": "2026-06-03",
+      "end_date": "2026-06-03",
+      "date_label": "3rd June",
+      "number_of_days": 1,
+      "placement": "inside_term",
+      "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+      "note": "Also listed under Term II."
+    },
+    {
+      "name": "National Heroes' Day",
+      "kind": "public_holiday",
+      "start_date": "2026-06-09",
+      "end_date": "2026-06-09",
+      "date_label": "9th June",
+      "number_of_days": 1,
+      "placement": "inside_term",
+      "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+      "note": "Also listed under Term II."
+    },
+    {
+      "name": "Idd Al Adhua",
+      "kind": "public_holiday",
+      "start_date": "2026-06-17",
+      "end_date": "2026-06-17",
+      "date_label": "17th June",
+      "number_of_days": 1,
+      "placement": "inside_term",
+      "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+      "note": "Also listed under Term II."
+    },
+    {
+      "name": "Independence Day",
+      "kind": "public_holiday",
+      "start_date": "2026-10-09",
+      "end_date": "2026-10-09",
+      "date_label": "9th October",
+      "number_of_days": 1,
+      "placement": "inside_term",
+      "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+      "note": "Also listed under Term III."
+    },
+    {
+      "name": "Christmas Day",
+      "kind": "public_holiday",
+      "start_date": "2026-12-25",
+      "end_date": "2026-12-25",
+      "date_label": "25th December",
+      "number_of_days": 1,
+      "placement": "between_terms",
+      "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+      "note": "Also listed under Term III, inside the 3rd term holiday."
+    },
+    {
+      "name": "Boxing Day",
+      "kind": "public_holiday",
+      "start_date": "2026-12-26",
+      "end_date": "2026-12-26",
+      "date_label": "26th December",
+      "number_of_days": 1,
+      "placement": "between_terms",
+      "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+      "note": "Also listed under Term III, inside the 3rd term holiday."
+    }
+  ],
+  "other_named_days": [
+    {
+      "name": "International Day of Education",
+      "start_date": "2026-01-24",
+      "end_date": "2026-01-24",
+      "date_label": "24th January",
+      "placement": "before_first_term",
+      "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+      "note": "Other important days table. Year is not printed on the row. Stored as 2026."
+    },
+    {
+      "name": "International Menstrual Health and Hygiene day",
+      "start_date": "2026-05-28",
+      "end_date": "2026-05-28",
+      "date_label": "28th May",
+      "placement": "inside_term",
+      "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+      "note": "Year not printed. Stored as 2026. Falls inside Term II."
+    },
+    {
+      "name": "Day of African Child",
+      "start_date": "2026-06-16",
+      "end_date": "2026-06-16",
+      "date_label": "16th June",
+      "placement": "inside_term",
+      "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+      "note": "Printed as Day of African Child. Year not printed. Stored as 2026. Inside Term II."
+    },
+    {
+      "name": "International Teachers' Day",
+      "start_date": "2026-10-05",
+      "end_date": "2026-10-05",
+      "date_label": "5th October",
+      "placement": "inside_term",
+      "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+      "note": "Year not printed. Stored as 2026. Inside Term III."
+    },
+    {
+      "name": "International Day of Sports",
+      "start_date": "2026-10-06",
+      "end_date": "2026-10-06",
+      "date_label": "6th October",
+      "placement": "inside_term",
+      "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+      "note": "Year not printed. Stored as 2026. Inside Term III."
+    },
+    {
+      "name": "International Day for the Girl Child",
+      "start_date": "2026-10-10",
+      "end_date": "2026-10-10",
+      "date_label": "10th October",
+      "placement": "inside_term",
+      "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+      "note": "Year not printed. Stored as 2026. Inside Term III."
+    },
+    {
+      "name": "International Students Day",
+      "start_date": "2026-11-17",
+      "end_date": "2026-11-17",
+      "date_label": "17th November",
+      "placement": "inside_term",
+      "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+      "note": "Year not printed. Stored as 2026. Inside Term III."
+    },
+    {
+      "name": "Sixteen Days of Activism to End Violence against Children",
+      "start_date": "2026-11-25",
+      "end_date": "2026-12-10",
+      "date_label": "25th November to 10th December",
+      "placement": "overlaps_term_and_break",
+      "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+      "note": "Year not printed. Stored as 2026. Runs from inside Term III across the closing date into the 3rd term holiday."
+    }
+  ],
+  "national_activities": [
+    {
+      "name": "Placement of S.1 Students",
+      "start_date": "2026-01-29",
+      "end_date": "2026-01-30",
+      "date_label": "29th – 30th January 2026",
+      "placement": "before_first_term",
+      "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+      "note": "Table headed PROPOSED DATES FOR S.1 AND S5 START OF TERM 1 2025. The heading prints 2025. The row prints 2026. These days are before both recorded Term I openings."
+    },
+    {
+      "name": "Regional SESEMAT INSET – Eastern and North Eastern Regions",
+      "start_date": null,
+      "end_date": null,
+      "date_label": "January School Holidays",
+      "placement": "before_first_term",
+      "source_url": "https://www.education.go.ug/wp-content/uploads/2026/01/2026-SCHOOL-CALENDAR.pdf",
+      "note": "No day is printed. Described as January school holidays, before Term I."
+    }
+  ],
+  "notes": [
+    "Primary source is the scanned circular Schools and Other Institutions Calendar for 2026, dated 24th November 2025, reference ADM/085/157/01, published on the ministry school-calendars page as the file dated 06/01/2026.",
+    "Term dates in this file are the primary and secondary school table only. The same PDF also prints calendars for health training, skills centres, technical institutes, teacher colleges and a national physical education and sports list. Those rows were not copied. The sports pages could not be read row by row with confidence from the scan.",
+    "The circular says the national examination dates are among the activities whose dates are communicated later, and that not every activity is printed. No national examination period is dated in the primary and secondary section, so none is invented here.",
+    "The circular tells headteachers of boarding schools in the Kampala city metropolitan area to stagger starting and closing dates for different classes over two to three days. That is an instruction inside the official term, not a second set of term dates, so it is not entered as a conflict.",
+    "The 6 January 2026 observance letter and the 16 January 2026 reopening announcement are separate official PDFs on the same ministry page. They are cited only where they speak to a term date. Term I opening is the only date on which they disagree with each other or with the calendar.",
+    "Third Term agrees with the product owner's known check: Monday 14 September 2026 to Friday 4 December 2026, 82 days. Nothing was changed to force that check."
+  ]
+}

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Progress report preview</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,600;0,700;1,400&amp;family=Sora:wght@600;700&amp;display=swap">
+<style>
+  @page { size: A4 portrait; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #e7eee9; color: #1E293B; }
+  body { font-family: "DM Sans", "Segoe UI", sans-serif; font-size: 15px; line-height: 1.45; }
+  .page {
+    width: 794px;
+    min-height: 1123px;
+    margin: 0 auto;
+    background: #fff;
+    position: relative;
+    padding: 32px 44px 28px;
+  }
+  .bar { position: absolute; left: 0; top: 0; width: 100%; height: 8px; background: #15803D; }
+  .hdr { display: flex; align-items: center; gap: 16px; }
+  .mono {
+    width: 64px; height: 64px; border-radius: 32px; background: #15803D; color: #fff;
+    text-align: center; font: 700 18px/64px "Sora", "Trebuchet MS", sans-serif; letter-spacing: 0.5px; flex: none;
+  }
+  .school { font: 700 26px/1.15 "Sora", "Trebuchet MS", sans-serif; color: #0F172A; }
+  .motto { margin-top: 4px; font-size: 14px; font-style: italic; color: #475569; }
+  .docblock { margin-left: auto; text-align: right; }
+  .doc { font: 700 13px "Sora", "Trebuchet MS", sans-serif; letter-spacing: 1.6px; color: #15803D; }
+  .term { margin-top: 4px; font-size: 15px; color: #334155; }
+  .rule { height: 3px; background: #15803D; margin: 16px 0 18px; }
+  .who {
+    display: grid; grid-template-columns: 1.4fr 1fr 1fr 1.2fr; gap: 8px 16px;
+    background: #F4F8F5; border: 1px solid #94A3B8; padding: 14px 16px;
+  }
+  .lbl { font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; color: #475569; font-weight: 700; }
+  .val { margin-top: 2px; font-weight: 700; color: #0F172A; font-size: 16px; }
+  .val.big { font: 700 26px/1.15 "Sora", "Trebuchet MS", sans-serif; }
+  h2 {
+    margin: 16px 0 8px; font: 700 18px "Sora", "Trebuchet MS", sans-serif; color: #0F172A;
+  }
+  table.areas { width: 100%; border-collapse: collapse; border: 1px solid #94A3B8; }
+  table.areas th {
+    text-align: left; background: #15803D; color: #fff; font-size: 13px; letter-spacing: 0.4px;
+    padding: 8px 12px; font-weight: 700;
+  }
+  table.areas td { padding: 8px 12px; border-top: 1px solid #CBD5E1; vertical-align: top; }
+  table.areas tr:nth-child(even) td { background: #FAFBFA; }
+  .area { font-weight: 700; font-size: 16px; }
+  .saw { margin-top: 2px; color: #334155; font-size: 14.5px; }
+  .grade {
+    display: inline-block; min-width: 112px; text-align: center; border: 2px solid #1E293B;
+    padding: 4px 8px; font-weight: 700; font-size: 14px; letter-spacing: 0.2px; background: #fff;
+  }
+  .grade.e { background: #E4EFE8; }
+  .grade.v { background: #F4F8F5; }
+  .grade.g { background: #fff; }
+  .grade.d { background: #fff; border-style: dashed; }
+  .grade.n { background: #fff; border-style: dotted; }
+  .key { margin: 8px 0 0; font-size: 12.5px; color: #475569; }
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .box { border: 1px solid #94A3B8; padding: 12px 14px; }
+  .box h3 { margin: 0 0 6px; font: 700 12px "Sora", sans-serif; letter-spacing: 1.2px; text-transform: uppercase; color: #475569; }
+  .box p { margin: 0; font-size: 15.5px; }
+  .sigs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-top: 18px; }
+  .sig { border-top: 1px solid #475569; padding-top: 4px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #475569; font-weight: 700; }
+  .foot { margin-top: 14px; font-size: 13px; color: #334155; }
+  .fn { margin-top: 6px; font-size: 12px; color: #475569; line-height: 1.4; }
+  @media screen and (max-width: 480px) {
+    html, body { background: #fff; }
+    .page { width: auto; min-height: 0; padding: 28px 16px 24px; }
+    .hdr { flex-wrap: wrap; }
+    .docblock { margin-left: 0; text-align: left; width: 100%; }
+    .school { font-size: 22px; }
+    .who { grid-template-columns: 1fr 1fr; }
+    .val.big { font-size: 22px; }
+    table.areas thead { display: none; }
+    table.areas, table.areas tbody, table.areas tr, table.areas td { display: block; width: 100%; }
+    table.areas tr { border-top: 1px solid #CBD5E1; padding: 8px 0 10px; }
+    table.areas td { border-top: 0; padding: 2px 0; background: transparent !important; }
+    .grade { display: inline-block; margin-top: 6px; }
+    .split, .sigs { grid-template-columns: 1fr; }
+    .box, .cmt { min-height: 0; }
+  }
+  @media print {
+    html, body { background: #fff; }
+    .page { width: 210mm; min-height: 297mm; margin: 0; }
+  }
+</style>
+</head>
+<body>
+<article class="page">
+  <div class="bar"></div>
+  <header class="hdr">
+    <div class="mono" aria-hidden="true">MH</div>
+    <div>
+      <div class="school">Meadow Learning House</div>
+      <div class="motto">Curiosity, kindness, and care.</div>
+    </div>
+    <div class="docblock">
+      <div class="doc">PROGRESS REPORT</div>
+      <div class="term">Term Two · 2026</div>
+    </div>
+  </header>
+  <div class="rule"></div>
+  <section class="who" aria-label="Learner">
+    <div>
+      <div class="lbl">Learner</div>
+      <div class="val big">Rowan Ellis</div>
+    </div>
+    <div>
+      <div class="lbl">Class</div>
+      <div class="val">Year Two</div>
+    </div>
+    <div>
+      <div class="lbl">Learner number</div>
+      <div class="val">MH-0142</div>
+    </div>
+    <div>
+      <div class="lbl">Attendance</div>
+      <div class="val">Present on nearly every school day</div>
+    </div>
+  </section>
+
+  <h2>Learning this term</h2>
+  <table class="areas">
+    <thead>
+      <tr>
+        <th scope="col">Area</th>
+        <th scope="col">What we saw</th>
+        <th scope="col">Word</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><div class="area">Language and stories</div></td>
+        <td class="saw">Retells a story in order and asks about the pictures.</td>
+        <td><span class="grade v">Very good</span></td>
+      </tr>
+      <tr>
+        <td><div class="area">Numbers and patterns</div></td>
+        <td class="saw">Matches amounts to objects and notices when a group changes.</td>
+        <td><span class="grade e">Excellent</span></td>
+      </tr>
+      <tr>
+        <td><div class="area">The world around them</div></td>
+        <td class="saw">Names living things they see and asks how they grow.</td>
+        <td><span class="grade g">Good</span></td>
+      </tr>
+      <tr>
+        <td><div class="area">Making and moving</div></td>
+        <td class="saw">Enjoys painting. A firmer pencil hold still takes practice.</td>
+        <td><span class="grade d">Developing</span></td>
+      </tr>
+      <tr>
+        <td><div class="area">Working with others</div></td>
+        <td class="saw">Takes turns, shares materials, and notices when a friend is upset.</td>
+        <td><span class="grade e">Excellent</span></td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="key">The word is the result: Excellent, Very good, Good, Developing, or Needs support. A tint or a border only repeats the word. There is no total, no position, and no rank.</p>
+
+  <div class="split">
+    <section class="box">
+      <h3>Strengths</h3>
+      <p>Notices a pattern, retells a story in order, and looks after friends.</p>
+    </section>
+    <section class="box">
+      <h3>Next steps</h3>
+      <p>A firmer pencil hold, and talking through the start, middle and end of a story.</p>
+    </section>
+  </div>
+
+  <div class="split">
+    <section class="box cmt">
+      <h3>Class teacher's comment</h3>
+      <p>They listen, then try the idea for themself. Story time is a favourite, and sharing materials has become a steady habit. The next stretch is a firmer pencil hold during making time.</p>
+    </section>
+    <section class="box cmt">
+      <h3>Head teacher's comment</h3>
+      <p>A kind and steady term. They are ready to keep building on what they can already do, and the adults around them are glad to see it.</p>
+    </section>
+  </div>
+
+  <div class="sigs" aria-label="Signatures">
+    <div class="sig">Class teacher</div>
+    <div class="sig">Head teacher</div>
+    <div class="sig">Parent or carer</div>
+  </div>
+
+  <p class="foot"><strong>Next term begins</strong> on Monday 4 May 2026.</p>
+  <p class="fn">These words describe this term. They are not a rank, and they do not decide a move to another class. This page is a design preview with a made-up learner and a made-up school. It is not a school record.</p>
+</article>
+</body>
+</html>
