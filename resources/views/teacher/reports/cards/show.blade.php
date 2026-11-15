@@ -18,8 +18,12 @@
                 @endif
             </h1>
             <p class="mt-1 text-sm text-gray-600">
+                @if (!empty($examName)){{ $examName }}. @endif
                 Subjects with marks: {{ $subjectsFilled }} / {{ $subjectsTotal }}
             </p>
+            @if (!empty($compositionLine))
+                <p class="mt-1 text-sm text-gray-600" data-testid="report-made-up-of">{{ $compositionLine }}</p>
+            @endif
         </div>
     </div>
 
