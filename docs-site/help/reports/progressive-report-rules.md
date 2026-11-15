@@ -1,7 +1,7 @@
 ---
 title: Progressive report rules
 role: admin
-draft: PRs #1343, #1347, #1355
+draft: "Draft until #1343, #1347 and #1355 merge"
 ---
 <Role r="admin" />
 

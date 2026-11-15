@@ -1,7 +1,7 @@
 ---
 title: Your first term of reports
 role: admin
-draft: PRs #1356, #1330, #1338
+draft: "Draft until #1356, #1330 and #1338 merge"
 ---
 <Role r="admin" />
 

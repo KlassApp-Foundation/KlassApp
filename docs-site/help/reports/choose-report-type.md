@@ -1,7 +1,7 @@
 ---
 title: Choose a report type
 role: admin
-draft: PR #1342
+draft: "Draft until #1342 merges"
 ---
 <Role r="admin" />
 

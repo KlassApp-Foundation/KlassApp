@@ -1,7 +1,7 @@
 ---
 title: Approvals and release
 role: admin
-draft: PRs #1324, #1325, #1337, #1338, #1352
+draft: "Draft until #1324, #1325, #1337, #1338 and #1352 merge"
 ---
 <Role r="admin" />
 

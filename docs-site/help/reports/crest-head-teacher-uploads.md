@@ -1,7 +1,7 @@
 ---
 title: Crest, head teacher name and uploads
 role: admin
-draft: PR #1357
+draft: "Draft until #1357 merges"
 ---
 <Role r="admin" />
 

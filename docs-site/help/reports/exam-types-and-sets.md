@@ -1,7 +1,7 @@
 ---
 title: Exam types and exam sets
 role: admin
-draft: PRs #1330, #1351
+draft: "Draft until #1330 and #1351 merge"
 ---
 <Role r="admin" />
 

@@ -1,7 +1,7 @@
 ---
 title: Enter marks on a phone
 role: teacher
-draft: PR #1335
+draft: "Draft until #1335 merges"
 ---
 <Role r="teacher" />
 

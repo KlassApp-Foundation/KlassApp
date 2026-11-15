@@ -1,7 +1,7 @@
 ---
 title: Make a term current and link a class
 role: admin
-draft: PR #1356
+draft: "Draft until #1356 merges"
 ---
 <Role r="admin" />
 
