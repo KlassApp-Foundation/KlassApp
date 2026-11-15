@@ -29,7 +29,11 @@ export const helpSidebar = [
     { text: 'Progressive report rules', link: '/help/reports/progressive-report-rules' },
     { text: 'Exam types and exam sets', link: '/help/reports/exam-types-and-sets' },
     { text: 'Crest, head teacher and uploads', link: '/help/reports/crest-head-teacher-uploads' },
+    { text: 'Missing marks and ABS', link: '/help/reports/missing-marks-and-abs' },
+    { text: 'Enter marks on a phone', link: '/help/reports/enter-marks-phone' },
+    { text: 'Approvals and release', link: '/help/reports/approvals-and-release' },
     { text: 'Make a term current and link a class', link: '/help/reports/setup-actions' },
+    { text: 'Your first term of reports', link: '/help/reports/first-term-checklist' },
   { text: 'Teachers', collapsed: true, items: [
     { text: 'Class teacher', link: '/help/teachers/class' },
     { text: 'Subject teacher', link: '/help/teachers/subject' },
