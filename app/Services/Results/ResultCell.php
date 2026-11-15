@@ -10,6 +10,9 @@ final class ResultCell
 
     public const ABSENT = 'absent';
 
+    /** A combined mark is withheld because a weighted set has not been released. */
+    public const WITHHELD = 'withheld';
+
     public function __construct(
         public readonly int $subjectId,
         public readonly ?float $mark,

@@ -173,13 +173,11 @@ class ReportParityFixtureTest extends TestCase
     {
         $none = SyntheticClass::build(['learners' => 3, 'counting_sets' => [], 'suffix' => 'none']);
 
-        try {
-            $data = $none->cardData('KLS9000001');
-        } catch (\RuntimeException $e) {
-            $this->markTestIncomplete('KNOWN GAP: '.$e->getMessage());
-        }
+        $data = $none->cardData('KLS9000001');
 
         $this->assertCount(2, $data['setColumns']);
+        $this->assertTrue($data['noCombinedMark']);
+        $this->assertSame([], $data['termSets']);
     }
 
     private function ordinal(int $n): string

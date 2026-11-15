@@ -48,6 +48,9 @@
         </table>
     </div>
 
+    @if (! empty($withheldSentence))
+        <p data-kind="withheld">{{ $withheldSentence }}</p>
+    @endif
     <table class="ds-table w-full mt-6">
         <thead>
             <tr>

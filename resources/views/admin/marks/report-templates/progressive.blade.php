@@ -317,7 +317,9 @@
                 @endforeach
             </tr>
         </table>
-        @if (count($termSets ?? []) > 1)
+        @if (! empty($withheldSets))
+            <div class="fn" data-kind="withheld">{{ $withheldSentence }}</div>
+        @elseif (count($termSets ?? []) > 1)
             <div class="fn" data-kind="term-total">Term total {{ $number($total ?? null) }}@if (! empty($showAgg)) · Aggregate {{ $number($eotAgg ?? null) }}@endif @if (! empty($showDivision)) · Division {{ $eotDivision }}@endif</div>
         @endif
         <table class="cmt">
@@ -347,7 +349,7 @@
         <table class="sig">
             <tr>
                 <td><div class="sl">Class teacher</div></td>
-                <td><div class="sl">Head teacher</div></td>
+                <td><div class="sl">Head teacher</div>@if (! empty($headTeacherName))<div data-kind="head-teacher">{{ $headTeacherName }}</div>@endif</td>
                 <td><div class="sl">Parent or guardian</div></td>
             </tr>
         </table>
@@ -359,6 +361,12 @@
                     Next term begins: ______________________
                 @endif
             </div>
+            @if (! empty($incompleteSets))
+                <div class="fn" data-kind="incomplete">Incomplete: {{ implode(', ', $incompleteSets) }}.</div>
+            @endif
+            @if (! empty($noCombinedMark))
+                <div class="fn" data-kind="no-combined">No combined mark applies.</div>
+            @endif
             <div class="fn">{{ $blankSentence }}Aggregate is the sum of the grade points. {{ $positionSentence }}</div>
             @if (! empty($sampleForApproval) && ($gradeKey !== [] || $divisionKey !== []))
                 <div class="key" data-kind="grading-key">Grades: {{ implode(' · ', $gradeKey) }}. Division by aggregate: {{ implode(' · ', $divisionKey) }}.</div>
