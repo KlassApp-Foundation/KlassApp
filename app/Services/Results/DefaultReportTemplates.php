@@ -6,7 +6,7 @@ use App\Contracts\Results\ReportTemplates;
 use App\Services\StudentReportCardService;
 
 /**
- * The two views already shipped with the app. StudentReportCardService::TEMPLATES
+ * The views already shipped with the app. StudentReportCardService::TEMPLATES
  * stays the list admin validation reads. A package rebinds ReportTemplates
  * to add a view without editing generatePdf().
  */
