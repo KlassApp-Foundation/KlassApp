@@ -67,9 +67,6 @@ class ReprintAfterRulesEditTest extends TestCase
         $this->editRules($class);
         $after = $this->footnote($this->texts($class)['KLS9000001']);
 
-        if ($before !== $after) {
-            $this->markTestIncomplete("KNOWN GAP: the footnote changed after a rules edit on a released term. Released: \"{$before}\". Reprint: \"{$after}\".");
-        }
         $this->assertSame($before, $after);
     }
 

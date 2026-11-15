@@ -124,7 +124,14 @@ class CrestAndHeadTeacherTest extends TestCase
         $this->assertNull($this->renderCard($class, $learner)['data']['headTeacherName']);
 
         SchoolDetail::create(['school_id' => $class->school->id, 'meta_key' => SchoolIdentity::HEAD_TEACHER_KEY, 'meta_value' => 'Ruth Example']);
-        $this->assertSame('Ruth Example', $this->renderCard($class, $learner)['data']['headTeacherName']);
+        $card = $this->renderCard($class, $learner);
+        $this->assertSame('Ruth Example', $card['data']['headTeacherName']);
+        $this->assertStringContainsString('data-kind="head-teacher"', $card['html']);
+        $this->assertStringContainsString('Ruth Example', $card['html']);
+        foreach (['formal', 'warm'] as $template) {
+            $html = view('admin.marks.report-templates.'.$template, $card['data'])->render();
+            $this->assertStringContainsString('Ruth Example', $html, $template);
+        }
     }
 
     public function test_the_composer_is_registered_for_every_report_template_and_uses_the_views_own_school(): void

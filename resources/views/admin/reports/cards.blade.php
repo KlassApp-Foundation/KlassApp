@@ -135,7 +135,7 @@
                 @foreach($rows as $r)
                     <tr data-testid="rc-row">
                         <td><strong>{{ $r['position'] ?? '—' }}</strong> <span style="color:#475569;">of {{ $r['out_of'] }}</span></td>
-                        <th scope="row">{{ $r['name'] }}</th>
+                        <th scope="row">{{ $r['name'] }}@if (! empty($r['incomplete']))<div data-kind="incomplete">Incomplete: {{ implode(', ', $r['incomplete']) }}.</div>@endif</th>
                         <td>{{ $r['stream'] !== '' ? $r['stream'] : '—' }}</td>
                         @foreach($r['marks'] as $m)<td class="rc-r">{{ $m }}</td>@endforeach
                         <td class="rc-r" style="font-weight:700;">{{ $r['total'] }}</td>
@@ -152,7 +152,7 @@
             @foreach($rows as $r)
                 <div>
                     <span class="rc-pos">{{ $r['position'] ?? '—' }}</span>
-                    <div style="flex:1;min-width:0;"><div style="font-weight:600;">{{ $r['name'] }}</div><div style="font-size:.75rem;color:#475569;">{{ $class['label'] }}{{ $r['stream'] !== '' ? ' '.$r['stream'] : '' }} · total {{ $r['total'] }} · agg {{ $r['aggregate'] }} · Div {{ $r['division'] }}</div></div>
+                    <div style="flex:1;min-width:0;"><div style="font-weight:600;">{{ $r['name'] }}</div>@if (! empty($r['incomplete']))<div data-kind="incomplete">Incomplete: {{ implode(', ', $r['incomplete']) }}.</div>@endif<div style="font-size:.75rem;color:#475569;">{{ $class['label'] }}{{ $r['stream'] !== '' ? ' '.$r['stream'] : '' }} · total {{ $r['total'] }} · agg {{ $r['aggregate'] }} · Div {{ $r['division'] }}</div></div>
                     <a href="{{ $r['download_url'] }}" class="rc-dl" aria-label="Download report card for {{ $r['name'] }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg></a>
                 </div>
             @endforeach

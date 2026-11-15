@@ -34,6 +34,7 @@ class GetStudentsMarks extends Controller
             'subjects' => $subjects,
             'section' => $section,
             'term' => $term,
+            'withheldSentence' => app(ResultsService::class)->withheldSentence($sheet->unreleasedWeightedSets),
         ]);
     }
 

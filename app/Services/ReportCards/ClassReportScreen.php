@@ -173,7 +173,7 @@ class ClassReportScreen
             ? fn ($a, $b) => strcasecmp($a->name, $b->name)
             : fn ($a, $b) => ($a->classPosition ?? PHP_INT_MAX) <=> ($b->classPosition ?? PHP_INT_MAX) ?: strcasecmp($a->name, $b->name));
 
-        $rows = array_map(function ($s) use ($subjects, $streams, $class, $sitting, $linkOf) {
+        $rows = array_map(function ($s) use ($subjects, $streams, $class, $sitting, $linkOf, $sheet) {
             $linkId = $linkOf($s);
 
             return [
@@ -193,6 +193,7 @@ class ClassReportScreen
                 'total' => $s->displayTotal !== null ? $this->number($s->displayTotal) : '—',
                 'aggregate' => $s->aggregate ?? '—',
                 'division' => $s->division !== null ? (self::DIVISION_LABELS[$s->division] ?? $s->division) : '—',
+                'incomplete' => app(\App\Services\StudentReportCardService::class)->incompleteSetNames($sheet, (int) $s->studentId),
                 'download_url' => url('/admin/reports/cards/'.$linkId.'/student/'.$s->studentId.'/download?term='.$sitting['term_id']),
             ];
         }, $shown);
