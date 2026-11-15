@@ -402,7 +402,7 @@ final class MarksSubmissionService
             $entered = $row !== null && ($row->isAbsent() || $row->marks !== null);
             if (! $entered) {
                 throw ValidationException::withMessages([
-                    'submission' => 'Every student needs a mark or AB before you submit for approval.',
+                    'submission' => 'Every student needs a mark or ABS before you submit for approval.',
                 ]);
             }
         }

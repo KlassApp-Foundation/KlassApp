@@ -535,12 +535,21 @@ class ParentPortalService
             $subjects = [];
             foreach ($typeExams as $exam) {
                 foreach ($exam->marks as $mark) {
-                    $subjects[] = [
-                        'name' => $mark->subject?->name ?? $exam->subject?->name ?? 'Subject',
-                        'score' => (float) ($mark->marks ?? 0),
-                        'total' => 100,
-                        'grade' => $mark->grade ?? '-',
-                    ];
+                    $subjects[] = $mark->isAbsent()
+                        ? [
+                            'name' => $mark->subject?->name ?? $exam->subject?->name ?? 'Subject',
+                            'score' => 0.0,
+                            'total' => 100,
+                            'grade' => '—',
+                            'shown' => 'ABS',
+                        ]
+                        : [
+                            'name' => $mark->subject?->name ?? $exam->subject?->name ?? 'Subject',
+                            'score' => (float) ($mark->marks ?? 0),
+                            'total' => 100,
+                            'grade' => $mark->grade ?? '-',
+                            'shown' => null,
+                        ];
                 }
             }
 

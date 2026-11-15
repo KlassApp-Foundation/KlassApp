@@ -181,7 +181,7 @@ public function enterExamMarks(Exam $exam)
              $query->whereNotNull('marks')->orWhere('absent', true);
          })
          ->get(['student_id', 'marks', 'absent', 'grade'])
-         ->mapWithKeys(fn ($row) => [(int) $row->student_id => ($row->isAbsent() ? 'AB' : $this->markForInput($row->marks))])
+         ->mapWithKeys(fn ($row) => [(int) $row->student_id => ($row->isAbsent() ? 'ABS' : $this->markForInput($row->marks))])
          ->all();
      $savedMarkCount = count($savedMarks);
 

@@ -10,6 +10,7 @@ use App\Models\Section;
 use App\Models\StandardLink;
 use App\Models\StudentAcademic;
 use App\Models\User;
+use App\Services\Results\ResultCell;
 use App\Services\Results\ResultsQuery;
 use App\Services\Results\ResultsService;
 use Illuminate\Support\Collection;
@@ -181,7 +182,14 @@ class ClassReportScreen
                 'position' => $s->classPosition,
                 'out_of' => $s->classOutOf,
                 'stream' => $streams[$linkId] ?? '',
-                'marks' => array_map(fn (array $sub) => ($c = $s->cell($sub['id'])) && $c->mark !== null ? $this->number($c->mark) : '—', $subjects),
+                'marks' => array_map(function (array $sub) use ($s) {
+                    $cell = $s->cell($sub['id']);
+                    if ($cell !== null && $cell->status === ResultCell::ABSENT) {
+                        return 'ABS';
+                    }
+
+                    return ($cell !== null && $cell->mark !== null) ? $this->number($cell->mark) : '—';
+                }, $subjects),
                 'total' => $s->displayTotal !== null ? $this->number($s->displayTotal) : '—',
                 'aggregate' => $s->aggregate ?? '—',
                 'division' => $s->division !== null ? (self::DIVISION_LABELS[$s->division] ?? $s->division) : '—',
