@@ -416,6 +416,12 @@ class StudentReportCardService
         $subjects = \App\Models\Subject::sortByReportOrder($subjects);
         $exams = $helper->exam($schoolId, $exam);
         $exams = $exams->filter(fn ($e) => $this->typeIncluded($schoolId, $e));
+        $countMissingAsZero = app(\App\Services\Reports\ReportScoring::class)->countsMissingAsZero(
+            $schoolId,
+            (int) $stdLink->section_id,
+            $exam->academic_term_id ? (int) $exam->academic_term_id : null,
+        );
+        $exams = $this->examsOnStartedSets($schoolId, $exams, $countMissingAsZero);
 
         $midExams = $exams->filter(fn ($e) => $e->examType->code === 'MID')->sortBy('scheduled_at')->values();
         $eotExams = $exams->filter(fn ($e) => $e->examType->code !== 'MID')->values();
@@ -573,7 +579,11 @@ class StudentReportCardService
             $streamTotal = $resultRow->streamOutOf > 0 ? $resultRow->streamOutOf : null;
             $midSittings = $this->midSittings($sheet, (int) $learner->id, $midExams);
         }
+        $eotCells = $resultRow?->cells ?? [];
         $examinedSubjectCount = $subjects->filter(fn ($s) => $learner->marks->where('subject_id', $s->id)->isNotEmpty())->count();
+        if ($countMissingAsZero && $resultRow !== null && $resultRow->subjectsCounted > $examinedSubjectCount) {
+            $examinedSubjectCount = $resultRow->subjectsCounted;
+        }
         $grade = $helper->grade($learner, $exam);
         $teacherComment = $standard
             ? $svc->commentFor((int) $total, $standard->name, $learner->id, $exam->id)
@@ -629,6 +639,8 @@ class StudentReportCardService
             'streamTotal' => $streamTotal,
             'midSittings' => $midSittings,
             'logoPath' => $logoPath,
+            'countMissingAsZero' => $countMissingAsZero,
+            'eotCells' => $eotCells,
         ]);
         $pdf->setPaper('a4', 'portrait');
 
@@ -648,7 +660,7 @@ class StudentReportCardService
                 academicTermId: $academicTermId,
                 studentId: $studentId,
             ),
-            $this->resultsPolicy($schoolId, $standardId),
+            $this->resultsPolicy($schoolId, $standardId, $sectionId, $academicTermId),
         );
     }
 
@@ -656,18 +668,43 @@ class StudentReportCardService
      * Same basis the class list already used: points when the school has
      * them, otherwise the mark total. A package replaces the scale and the
      * division rule. This choice does not add a curriculum.
+     *
+     * An unreleased card counts a blank as zero. A release stamped with the
+     * older rule keeps that card on the older maths.
      */
-    private function resultsPolicy(int $schoolId, int $standardId): ResultsPolicy
+    private function resultsPolicy(int $schoolId, int $standardId, int $sectionId, int $academicTermId): ResultsPolicy
     {
-        $rules = app(\App\Services\Reports\ProgressiveRules::class);
-        [$basis, $higherIsBetter] = $rules->ranking($schoolId, $standardId);
+        $scoring = app(\App\Services\Reports\ReportScoring::class);
 
-        return new ResultsPolicy(
-            app(GradingScale::class),
-            $rules->divisionRule($schoolId, $standardId),
-            $basis,
-            higherIsBetter: $higherIsBetter,
+        return $scoring->policy(
+            $schoolId,
+            $standardId,
+            $scoring->countsMissingAsZero($schoolId, $sectionId, $academicTermId),
         );
+    }
+
+    /**
+     * Drop an exam set that nobody in the class has a mark or an absence for.
+     * A subject inside a set that has started stays, so its blank can show.
+     *
+     * @param  Collection<int, Exam>  $exams
+     * @return Collection<int, Exam>
+     */
+    private function examsOnStartedSets(int $schoolId, Collection $exams, bool $countMissingAsZero): Collection
+    {
+        if (! $countMissingAsZero || $exams->isEmpty()) {
+            return $exams;
+        }
+
+        $marks = Marks::query()
+            ->where('school_id', $schoolId)
+            ->whereIn('exam_id', $exams->pluck('id'))
+            ->get();
+        $active = \App\Services\Results\CountedExamTypes::typeIds($exams, $marks);
+
+        return $exams
+            ->filter(fn ($row) => isset($active[(int) $row->exam_type_id]))
+            ->values();
     }
 
     /**

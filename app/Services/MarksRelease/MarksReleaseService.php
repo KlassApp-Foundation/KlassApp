@@ -745,9 +745,10 @@ final class MarksReleaseService
                     'result' => $result,
                 ])->save();
 
-                // The type in force at release time. A later change on the school
-                // does not rewrite this row or the snapshots written below.
+                // The type and the scoring rule in force at release time. A later
+                // change on the school does not rewrite this row or the snapshots.
                 app(\App\Services\Reports\ReportKindSetting::class)->freeze($release);
+                app(\App\Services\Reports\ReportScoring::class)->freeze($release);
 
                 app(\App\Services\Records\SnapshotService::class)->capture($release, $release->release_reason);
 

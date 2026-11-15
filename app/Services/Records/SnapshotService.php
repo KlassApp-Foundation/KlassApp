@@ -53,12 +53,17 @@ class SnapshotService
                 continue;
             }
 
+            $scoring = app(\App\Services\Reports\ReportScoring::class);
             $sheet = $this->results->sheet(new ResultsQuery(
                 schoolId: (int) $release->school_id,
                 sectionId: (int) $link->section_id,
                 academicTermId: $termId,
                 standardLinkId: (int) $link->id,
                 examTypeId: (int) $exam->exam_type_id,
+            ), $scoring->policy(
+                (int) $release->school_id,
+                (int) $link->standard_id,
+                (string) ($release->scoring_rule ?? '') === \App\Services\Reports\ReportScoring::MISSING_AS_ZERO,
             ));
 
             foreach ($studentIds as $studentId) {
@@ -180,6 +185,7 @@ class SnapshotService
             'position' => $row->classPosition,
             'of' => $row->classOutOf,
             'report_kind' => app(\App\Services\Reports\ReportKindSetting::class)->forRelease($release, $release->school),
+            'scoring_rule' => $release->scoring_rule,
             'released_at' => now()->toIso8601String(),
         ];
     }
