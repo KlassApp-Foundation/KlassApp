@@ -226,9 +226,9 @@ class GradingSettingsScreenTest extends TestCase
             'out of order' => [['label' => '2', 'min' => '11', 'max' => ''], ['label' => '1', 'min' => '', 'max' => '10']],
             'closed at the bottom' => [['label' => '1', 'min' => '3', 'max' => '10'], ['label' => '2', 'min' => '11', 'max' => '']],
         ];
-        foreach ($cases as $name => $ranges) {
+        foreach ($cases as $ranges) {
             $this->actingAs($this->admin)->post(self::URL, ['ranking_basis' => 'automatic', 'ranges' => $ranges])
-                ->assertSessionHasErrors('ranges', null, $name);
+                ->assertSessionHasErrors('ranges');
         }
         $this->assertSame(0, ReportDivisionRange::query()->count());
     }
