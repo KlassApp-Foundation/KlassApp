@@ -33,7 +33,7 @@ export const helpSidebar = [
     { text: 'Enter marks on a phone', link: '/help/reports/enter-marks-phone' },
     { text: 'Approvals and release', link: '/help/reports/approvals-and-release' },
     { text: 'Make a term current and link a class', link: '/help/reports/setup-actions' },
-    { text: 'Your first term of reports', link: '/help/reports/first-term-checklist' },
+    { text: 'Your first term of reports', link: '/help/reports/first-term-checklist' } ] },
   { text: 'Teachers', collapsed: true, items: [
     { text: 'Class teacher', link: '/help/teachers/class' },
     { text: 'Subject teacher', link: '/help/teachers/subject' },
