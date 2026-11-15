@@ -16,7 +16,7 @@ Draft work. Nothing here is merged or deployed.
 | #1350 | An absence is shown as ABS. The combined marksheet names each sheet after the school's exam set. https://github.com/KlassApp-Foundation/KlassApp/pull/1350 |
 | #1351 | Exam-set columns follow the exam date. The term's start date is the tie-break. https://github.com/KlassApp-Foundation/KlassApp/pull/1351 |
 | #1352 | A pilot release tells only the parents or learners the school chooses. https://github.com/KlassApp-Foundation/KlassApp/pull/1352 |
-| next | A template option, Progressive (new look). Formal stays the default. |
+| #1353 | A template option, Progressive (new look). Formal stays the default. https://github.com/KlassApp-Foundation/KlassApp/pull/1353 |
 
 ## 2026-11-15 — rules stored on the release
 
@@ -32,7 +32,7 @@ Clicked through Report cards as a school admin and a head teacher at 375px and 1
 
 Report Cards, under **Report Card Template**, gains **Progressive (new look)**. **Formal** stays selected until a school admin or a head teacher chooses the new look and presses **Save**. **Open full preview** is the final card. **Open sample** adds the tag SAMPLE FOR APPROVAL and a grading key built from that school's bands and division ranges.
 
-The new card is one table. Each exam set is a Marks and Grade group, in exam-date order. It shows the total, the aggregate, the division and the position for each set, then the comment boxes and the three signature lines. A blank prints Missing and an absence prints ABS. The old Formal and Warm cards are unchanged, including their MONTHLY RESULTS and END OF TERM headings.
+The new card is one table. Each exam set is a Marks and Grade group, in exam-date order. It shows the total, the aggregate, the division and the position for each set, then the comment boxes and the three signature lines. A blank prints Missing and an absence prints ABS. The old Formal and Warm cards are unchanged, including their MONTHLY RESULTS and END OF TERM headings. Draft pull request: https://github.com/KlassApp-Foundation/KlassApp/pull/1353
 
 ## 2026-11-15 — a pilot release tells only the people who were chosen
 
