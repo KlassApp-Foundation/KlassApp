@@ -4,7 +4,7 @@ Updated 15 November 2026. This file is the living handoff for the report-card wo
 
 ## Where the code is
 
-Worktree `/Users/mac/projects/KlassApp-wt-report-type`, branch `feat/report-card-defects`, based on the tip of draft pull request 1358. The local UI is `http://127.0.0.1:8148` with the sqlite file `database/report-cards-ui.sqlite`. Do not use ports 8000 or 8126. Do not start a queue worker. Do not write `knowledge.md`. Do not commit `storage/fonts/`.
+Worktree `/Users/mac/projects/KlassApp-wt-report-type`, branch `feat/report-card-defects`. Draft pull request 1359 is stacked on draft pull request 1358. The local UI is `http://127.0.0.1:8148` with the sqlite file `database/report-cards-ui.sqlite`. Do not use ports 8000 or 8126. Do not start a queue worker. Do not write `knowledge.md`. Do not commit `storage/fonts/`.
 
 ## Done in this branch
 

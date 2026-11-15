@@ -73,7 +73,7 @@ The progressive card, the class mark sheet, the class marks page, the student re
 
 ## 2026-11-15 — report card defects
 
-Branch `feat/report-card-defects`, on top of the test-suite tip. Not merged. Not deployed.
+Draft pull request: https://github.com/KlassApp-Foundation/KlassApp/pull/1359 on branch `feat/report-card-defects`, stacked on #1358. Not merged. Not deployed.
 
 A learner who is absent or missing in a set that counts toward the term total still scores 0. The card and the report list say Incomplete and name that set. A set that does not count is not named.
 
