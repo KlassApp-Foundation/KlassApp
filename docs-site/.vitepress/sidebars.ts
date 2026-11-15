@@ -23,6 +23,13 @@ export const helpSidebar = [
     { text: 'Google tools', link: '/help/admins/google' },
     { text: 'Book a setup session', link: '/help/admins/book-onboarding' },
     { text: 'Classes and streams', link: '/help/concepts/classes-and-streams' } ] },
+  { text: 'Reports and marks', collapsed: false, items: [
+    { text: 'Reports and marks', link: '/help/reports/' },
+    { text: 'Choose a report type', link: '/help/reports/choose-report-type' },
+    { text: 'Progressive report rules', link: '/help/reports/progressive-report-rules' },
+    { text: 'Exam types and exam sets', link: '/help/reports/exam-types-and-sets' },
+    { text: 'Crest, head teacher and uploads', link: '/help/reports/crest-head-teacher-uploads' },
+    { text: 'Make a term current and link a class', link: '/help/reports/setup-actions' },
   { text: 'Teachers', collapsed: true, items: [
     { text: 'Class teacher', link: '/help/teachers/class' },
     { text: 'Subject teacher', link: '/help/teachers/subject' },
