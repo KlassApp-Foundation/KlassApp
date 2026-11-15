@@ -17,7 +17,7 @@ Draft work. Nothing here is merged or deployed.
 | #1351 | Exam-set columns follow the exam date. The term's start date is the tie-break. https://github.com/KlassApp-Foundation/KlassApp/pull/1351 |
 | #1352 | A pilot release tells only the parents or learners the school chooses. https://github.com/KlassApp-Foundation/KlassApp/pull/1352 |
 | #1353 | New look template. The screen calls it New look, the older card Standard, and Warm stays Warm. https://github.com/KlassApp-Foundation/KlassApp/pull/1353 |
-| #1354 | How a new school prints with the defaults. No calculation change. |
+| #1354 | How a new school prints with the defaults. No calculation change. https://github.com/KlassApp-Foundation/KlassApp/pull/1354 |
 
 ## 2026-11-15 — a new school and the defaults
 
@@ -31,7 +31,7 @@ When two or more counting types already have a weight, the Progressive term tota
 
 A new primary standard is seeded from the product bands. The second band is 85 to 94 and 2 points, and the card shows it as D2. A later handoff sheet uses 90 to 94 for D2. The school confirms that on Progressive report rules. This stack does not write those cutoffs in. Division stays 1 for an aggregate of 12 or less, 2 for 13 to 24, 3 for 25 to 28, 4 for 29 to 32, and U from 33. A primary standard ranks by aggregate, lowest first, until someone saves another choice.
 
-A school admin who is happy with this does nothing. To move a type into or out of the term total, they open Exam Type Settings, change Contributes to Report Total, and press Save Preferences. Grade bands and division ranges are edited from the Progressive report rules link on Report cards. A head teacher opens the same Report cards screen and sees the card those defaults produce. A released term keeps the copy stored on that release.
+A school admin who is happy with this does nothing. To move a type into or out of the term total, they open Exam Type Settings, change Contributes to Report Total, and press Save Preferences. Grade bands and division ranges are edited from the Progressive report rules link on Report cards. A head teacher opens the same Report cards screen and sees the card those defaults produce. A released term keeps the copy stored on that release. Draft pull request: https://github.com/KlassApp-Foundation/KlassApp/pull/1354
 
 ## 2026-11-15 — rules stored on the release
 
