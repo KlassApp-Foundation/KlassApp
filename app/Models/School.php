@@ -62,6 +62,7 @@ class School extends Model
         'onboarding_skipped_steps',
         'report_template',
         'report_kind',
+        'ranking_basis',
     ];
 
     protected $attributes = [

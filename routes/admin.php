@@ -667,6 +667,8 @@ Route::get( '/magazine/download/{id}', 'BulletinsController@downloadattachments'
 Route::prefix('reports/cards')->name('admin.reports.cards.')->group(function () {
     Route::get('/', 'ReportCardsController@index')->name('index');
     Route::post('/report-kind', 'ReportCardsController@updateReportKind')->name('report-kind');
+    Route::get('/progressive-rules', 'ProgressiveReportRulesController@edit')->name('progressive-rules');
+    Route::post('/progressive-rules', 'ProgressiveReportRulesController@update')->name('progressive-rules.update');
     Route::get('/history', 'ReportCardsController@history')->name('history');
     Route::post('/template', 'ReportCardsController@updateTemplate')->name('template');
     Route::get('/preview/{template}', 'ReportCardsController@previewTemplate')->name('preview');
