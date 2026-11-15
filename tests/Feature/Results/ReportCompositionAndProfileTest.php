@@ -9,7 +9,6 @@ use App\Models\Academics\Marks;
 use App\Models\Academics\Exam;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
-use App\Models\MarksRelease;
 use App\Models\School;
 use App\Models\Section;
 use App\Models\Standard;
