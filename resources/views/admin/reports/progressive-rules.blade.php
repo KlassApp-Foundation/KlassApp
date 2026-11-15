@@ -24,13 +24,14 @@
         [data-testid="grade-bands"] .rules-field { display: block; width: 100%; max-width: none; }
     }
 </style>
+<script src="{{ asset('js/progressive-rules.js') }}?v={{ filemtime(public_path('js/progressive-rules.js')) }}" defer></script>
 @endsection
 
 @section('content')
 <div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4" style="background:#f8fafc;color:#0f172a;min-width:0;max-width:100%;">
     @include('layouts.partials.page-header', [
         'title' => 'Progressive report rules',
-        'subtitle' => 'Grade bands, division ranges and how a class is ranked. Empty choices keep the ranges and ranking the card already uses. A report already released is not recalculated.',
+        'subtitle' => 'Grade bands and points, division ranges, and how a class is ranked, on one screen.',
     ])
     @include('partials.message')
 
@@ -44,10 +45,78 @@
         </select>
     </form>
 
+    <p data-testid="rules-apply-note" style="margin:0 0 12px;padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;color:#14532d;font-size:.9rem;">
+        Changes you save here apply from the next release. A report that has already been released keeps the rules it was released with and never changes.
+    </p>
+
+    <p data-testid="rules-last-changed" style="margin:0 0 12px;color:#475569;font-size:.9rem;">
+        @if ($lastChange)
+            Last changed by {{ $lastChange->user?->name ?? 'a former user' }} on {{ $lastChange->created_at->format('j M Y, H:i') }}@if ($lastChange->summary) ({{ $lastChange->summary }})@endif.
+        @else
+            Not changed yet. This screen is showing the app defaults.
+        @endif
+    </p>
+
+    <form method="GET" action="{{ route('admin.reports.cards.progressive-rules') }}" data-testid="rules-presets" style="margin:0 0 12px;display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;">
+        @if ($standard)<input type="hidden" name="standard" value="{{ $standard->id }}">@endif
+        <div style="min-width:0;flex:1 1 260px;">
+            <label for="rules-preset" style="display:block;color:#0f172a;">Start from a preset</label>
+            <select id="rules-preset" name="preset" class="ds-input" style="width:100%;background:#fff;color:#0f172a;min-height:44px;">
+                @foreach ($presets as $key => $label)
+                    <option value="{{ $key }}" @selected($preset === $key)>{{ $label }}</option>
+                @endforeach
+            </select>
+        </div>
+        <button type="submit" class="ds-btn" style="min-height:44px;" data-testid="rules-load-preset">Load preset</button>
+    </form>
+    @if ($presetLoaded)
+        <p data-testid="rules-preset-note" style="margin:0 0 12px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 12px;font-size:.9rem;">
+            "{{ $presetLoaded }}" is filled in below but not saved yet. Check it, then press Save.
+        </p>
+    @endif
+
+    <div data-testid="rules-live" style="display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin:0 0 12px;">
+        <form method="GET" action="{{ route('admin.reports.cards.progressive-rules') }}" style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px;min-width:0;" data-testid="try-mark-form">
+            @if ($standard)<input type="hidden" name="standard" value="{{ $standard->id }}">@endif
+            @if ($presetLoaded)<input type="hidden" name="preset" value="{{ $preset }}">@endif
+            <label for="try-mark" style="display:block;color:#0f172a;font-weight:600;">Try a mark</label>
+            <p style="margin:2px 0 6px;color:#475569;font-size:.85rem;">Type a mark from 0 to 100 to see its grade and points.</p>
+            <div style="display:flex;gap:8px;"><input id="try-mark" name="try_mark" type="number" min="0" max="100" inputmode="numeric" value="{{ $tryMark }}" class="ds-input" style="min-height:44px;width:7rem;background:#fff;color:#0f172a;" data-testid="try-mark"><button type="submit" class="ds-btn" style="min-height:44px;">Show</button></div>
+            <p data-testid="try-mark-result" aria-live="polite" style="margin:8px 0 0;color:#0f172a;">
+                @if ($tryMark !== null)
+                    @if ($tryBand)
+                        {{ $tryMark }} is grade <strong>{{ $tryBand['grade'] }}</strong>@if ($tryBand['points'] !== null), <strong>{{ $tryBand['points'] }}</strong> {{ $tryBand['points'] === 1 ? 'point' : 'points' }}@endif.
+                    @else
+                        {{ $tryMark }} is not in any band. Marks run from 0 to 100.
+                    @endif
+                @endif
+            </p>
+        </form>
+        <form method="GET" action="{{ route('admin.reports.cards.progressive-rules') }}" style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px;min-width:0;" data-testid="try-aggregate-form">
+            @if ($standard)<input type="hidden" name="standard" value="{{ $standard->id }}">@endif
+            @if ($presetLoaded)<input type="hidden" name="preset" value="{{ $preset }}">@endif
+            <label for="try-aggregate" style="display:block;color:#0f172a;font-weight:600;">Try an aggregate</label>
+            <p style="margin:2px 0 6px;color:#475569;font-size:.85rem;">Type an aggregate to see the division it gets.</p>
+            <div style="display:flex;gap:8px;"><input id="try-aggregate" name="try_aggregate" type="number" min="0" inputmode="numeric" value="{{ $tryAggregate }}" class="ds-input" style="min-height:44px;width:7rem;background:#fff;color:#0f172a;" data-testid="try-aggregate"><button type="submit" class="ds-btn" style="min-height:44px;">Show</button></div>
+            <p data-testid="try-aggregate-result" aria-live="polite" style="margin:8px 0 0;color:#0f172a;">
+                @if ($tryAggregate !== null)
+                    @if ($tryDivision !== null)
+                        Aggregate {{ $tryAggregate }} is division <strong>{{ $tryDivision }}</strong>.
+                    @else
+                        Aggregate {{ $tryAggregate }} is not in any division range.
+                    @endif
+                @endif
+            </p>
+        </form>
+    </div>
+
     <form method="POST" action="{{ route('admin.reports.cards.progressive-rules.update') }}" data-testid="progressive-rules" style="background:#fff;color:#0f172a;border:1px solid #e2e8f0;border-radius:12px;padding:16px;max-width:100%;min-width:0;">
         @csrf
         @if ($standard)
             <input type="hidden" name="standard_id" value="{{ $standard->id }}">
+        @endif
+        @if ($presetLoaded)
+            <input type="hidden" name="preset" value="{{ $preset }}">
         @endif
 
         <h2 style="font-size:1rem;margin:0 0 8px;">How this class is ranked</h2>
@@ -106,6 +175,15 @@
         @endif
 
         <button type="submit" class="ds-btn ds-btn-primary" style="margin-top:16px;min-height:44px;" data-testid="rules-save">Save progressive report rules</button>
+    </form>
+
+    <form method="POST" action="{{ route('admin.reports.cards.progressive-rules.reset') }}" data-testid="rules-reset-form" style="margin-top:12px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;">
+        @csrf
+        @if ($standard)<input type="hidden" name="standard_id" value="{{ $standard->id }}">@endif
+        <h2 style="font-size:1rem;margin:0 0 8px;">Go back to the app defaults</h2>
+        <p style="color:#475569;font-size:.9rem;margin:0 0 8px;">Puts the grade bands, the division ranges and the ranking {{ $standard ? 'for this class level' : 'for all classes' }} back to what the app starts with. This applies from the next release.</p>
+        <label style="display:block;margin:0 0 8px;color:#0f172a;"><input type="checkbox" name="confirm" value="1" data-testid="rules-reset-confirm"> Yes, reset these rules to the app defaults</label>
+        <button type="submit" class="ds-btn" style="min-height:44px;" data-testid="rules-reset">Reset to defaults</button>
     </form>
 </div>
 @endsection
