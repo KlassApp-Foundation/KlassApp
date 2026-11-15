@@ -72,7 +72,7 @@
             </div>
         </div>
 
-        <form class="mr-go" method="POST" action="{{ route($area.'.marks.releases.store') }}" style="display:contents">
+        <form class="mr-go" method="POST" action="{{ ($confirming ?? false) || (($old['pilot'] ?? 'class') !== 'chosen') ? route($area.'.marks.releases.store') : route($area.'.marks.releases.preview') }}" data-store-action="{{ route($area.'.marks.releases.store') }}" data-preview-action="{{ route($area.'.marks.releases.preview') }}" data-confirming="{{ ($confirming ?? false) ? '1' : '0' }}" style="display:contents">
             @csrf
             <div class="mr-reason">
                 <input type="hidden" name="exam_id" value="{{ $examId }}">
@@ -94,13 +94,71 @@
 
             <aside class="mr-aside" data-testid="release-aside">
                 <h2 class="ka-h2">Who will be told</h2>
+                <fieldset class="mr-pilot" data-testid="release-pilot">
+                    <legend>Who receives this release</legend>
+                    <label><input type="radio" name="pilot" value="class" @checked(($old['pilot'] ?? 'class') !== 'chosen')> Everyone in this class</label>
+                    <label><input type="radio" name="pilot" value="chosen" @checked(($old['pilot'] ?? 'class') === 'chosen')> Only the people I choose</label>
+                </fieldset>
+                <div data-testid="release-pilot-list" @if(($old['pilot'] ?? 'class') !== 'chosen') hidden @endif @if($confirming ?? false) hidden @endif>
+                @if(!($confirming ?? false))
+                    <p class="mr-sub" style="margin:0" data-testid="release-pilot-scope">Only the people you choose are told. The rest of the class is not.</p>
+                    @forelse(($pilotChoices ?? []) as $choice)
+                        <div class="mr-pilot-learner">
+                            <strong>{{ $choice['name'] }}</strong>
+                            @if($choice['parents'] === [])
+                                <label>
+                                    <input type="checkbox" name="pilot_parents[]" value="{{ $choice['student_id'] }}:0" @checked(in_array($choice['student_id'].':0', $old['pilot_parents'] ?? [], true) || in_array($choice['student_id'], $old['pilot_learners'] ?? [], true))>
+                                    This learner has no linked parent
+                                </label>
+                            @else
+                                <label>
+                                    <input type="checkbox" name="pilot_learners[]" value="{{ $choice['student_id'] }}" @checked(in_array($choice['student_id'], array_map('intval', $old['pilot_learners'] ?? []), true))>
+                                    Every linked parent of this learner
+                                </label>
+                                @foreach($choice['parents'] as $parent)
+                                    <label>
+                                        <input type="checkbox" name="pilot_parents[]" value="{{ $choice['student_id'] }}:{{ $parent['id'] }}" @checked(in_array($choice['student_id'].':'.$parent['id'], $old['pilot_parents'] ?? [], true))>
+                                        {{ $parent['name'] }} · {{ $parent['number'] }}
+                                    </label>
+                                @endforeach
+                            @endif
+                        </div>
+                    @empty
+                        <p class="mr-sub" style="margin:0">No learners in this class yet.</p>
+                    @endforelse
+                @endif
+                </div>
+                @error('pilot')<p class="mr-error" data-testid="release-pilot-error">{{ $message }}</p>@enderror
+                @if($confirming && ($old['pilot'] ?? 'class') === 'chosen')
+                    <input type="hidden" name="pilot_confirmed" value="1">
+                    @foreach(($old['pilot_learners'] ?? []) as $learnerId)
+                        <input type="hidden" name="pilot_learners[]" value="{{ (int) $learnerId }}">
+                    @endforeach
+                    @foreach(($old['pilot_parents'] ?? []) as $token)
+                        <input type="hidden" name="pilot_parents[]" value="{{ $token }}">
+                    @endforeach
+                    <div data-testid="release-pilot-preview">
+                        <p class="mr-sub" style="margin:0">The rest of the class is not told.</p>
+                        @foreach(($pilotLines ?? []) as $line)
+                            <article data-testid="release-pilot-person">
+                                <p><strong>{{ $line['learner'] }}</strong> · {{ $line['parent'] }} · {{ $line['number'] }}</p>
+                                <p>{{ $line['told'] ? 'Will be told' : 'Will not be told' }}@if($line['reason']) — {{ $line['reason'] }}@endif</p>
+                                @if($line['message'] !== '')
+                                    <div data-testid="release-pilot-message">{!! \App\Support\WhatsAppMessagePreview::html($line['message']) !!}</div>
+                                @endif
+                            </article>
+                        @endforeach
+                    </div>
+                @endif
                 <p class="mr-sub" style="margin:0" data-testid="release-audience">Nothing is sent until you release, and KlassApp does not message a parent first.</p>
+                @if(($old['pilot'] ?? 'class') !== 'chosen')
                 @forelse(($audience['classes'] ?? []) as $classRow)
                     <div data-testid="release-audience-class">{{ $classRow['name'] }} · {{ $classRow['parents'] }} {{ \Illuminate\Support\Str::plural('parent', $classRow['parents']) }}</div>
                 @empty
                     <div>No students in this selection yet.</div>
                 @endforelse
                 <div><strong>{{ $audience['parents'] ?? 0 }}</strong> parents · <strong>{{ $audience['whatsapp'] ?? 0 }}</strong> on WhatsApp</div>
+                @endif
                 <details class="mr-wa" data-testid="what-parents-receive">
                     <summary>What parents receive</summary>
                     @if($confirming)
@@ -128,7 +186,7 @@
                     <span><input type="checkbox" name="whatsapp_send" value="1" @checked(old('whatsapp_send', $old['whatsapp_send'] ?? false))> Send these results on WhatsApp</span>
                 </label>
                 <p class="mr-sub" style="margin:0">Off by default. With it off, the release still happens and opens the portal, Toshi and the report cards, and nothing is sent. A send also waits until <code>results_released</code> is approved by Meta.</p>
-                <button type="submit" class="mr-btn" data-testid="release-marks-confirm" data-release-to="{{ $releaseTo }}">{{ $confirming ? ($when === 'schedule' ? 'Confirm schedule' : 'Confirm and release') : $buttonLabel }}</button>
+                <button type="submit" class="mr-btn" data-testid="release-marks-confirm" data-release-to="{{ $releaseTo }}">{{ $confirming ? ($when === 'schedule' ? 'Confirm schedule' : 'Confirm and release') : ((($old['pilot'] ?? 'class') === 'chosen') ? 'Preview who will be told' : $buttonLabel) }}</button>
                 @error('scheduled_for')<p class="mr-error">{{ $message }}</p>@enderror
                 @error('exam_id')<p class="mr-error">{{ $message }}</p>@enderror
                 @error('standard_link_id')<p class="mr-error">{{ $message }}</p>@enderror
@@ -221,13 +279,27 @@
             var keep = document.getElementById('mr-when-keep');
             if (keep) { keep.value = input.value; }
             var button = document.querySelector('[data-testid="release-marks-confirm"]');
-            if (button && button.getAttribute('data-release-to') && !button.textContent.startsWith('Confirm')) {
+            var pilotChosen = document.querySelector('input[name="pilot"][value="chosen"]');
+            if (button && button.getAttribute('data-release-to') && !button.textContent.startsWith('Confirm') && !(pilotChosen && pilotChosen.checked)) {
                 button.textContent = (schedule ? 'Schedule for ' : 'Release to ') + button.getAttribute('data-release-to');
             }
         }
         if (input.matches('label.mr-when-at input')) {
             var keepAt = document.getElementById('mr-when-at');
             if (keepAt) { keepAt.value = input.value; }
+        }
+        if (input.matches('input[name="pilot"]')) {
+            var chosen = input.value === 'chosen' && input.checked;
+            var list = document.querySelector('[data-testid="release-pilot-list"]');
+            if (list) { list.hidden = !chosen; }
+            var form = input.closest('form');
+            if (form && form.getAttribute('data-confirming') !== '1') {
+                form.action = chosen ? form.getAttribute('data-preview-action') : form.getAttribute('data-store-action');
+            }
+            var pilotButton = document.querySelector('[data-testid="release-marks-confirm"]');
+            if (pilotButton && !pilotButton.textContent.startsWith('Confirm')) {
+                pilotButton.textContent = chosen ? 'Preview who will be told' : ('Release to ' + (pilotButton.getAttribute('data-release-to') || ''));
+            }
         }
     });
 
