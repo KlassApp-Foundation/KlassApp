@@ -1,62 +1,68 @@
 # n8n operations runbook
 
 **Audience:** the n8n owner and anyone covering for them.
-**Scope:** the internal automations in the n8n workspace. These are not the WhatsApp conversation path and they do not send school messages.
+**Workspace:** `https://klassapp.app.n8n.cloud`
 
-> **Confirm before relying on this page:** the workspace URL, each workflow's id, its schedule, its destination, and the credential names. Those details live in n8n and in the credential store, not in this repository. The table below records what each workflow is for; treat every "Confirm" cell as a task for the owner.
+These are internal automations. They send internal email and post to the owner's connected LinkedIn account. They send nothing to schools, parents or learners.
+
+> **Still to confirm:** the **PR review** workflow. Its details are not in the 15 Nov report; every cell for it stays **Confirm** until the owner fills it in.
 
 ## The workflows
 
-| Workflow | What it does | Typical trigger | Owner |
-|---|---|---|---|
-| **Weekly brief** | Sends the team a weekly summary of the week's work and numbers | Weekly schedule — confirm day and time | n8n owner |
-| **Daily digest** | Sends a short daily digest of activity | Daily schedule — confirm time | n8n owner |
-| **Error alert** | Posts an alert when a workflow or a watched service fails | Error trigger or schedule — confirm | n8n owner |
-| **GitHub to tracker** | Copies new or changed GitHub issues and pull requests into the tracker | GitHub webhook or poll — confirm | Tracker owner |
-| **PR backfill** | Fills the tracker with older pull requests that predate the sync | Manual, run once per backfill | Tracker owner |
-| **Social posts** | Publishes or queues scheduled social posts | Schedule or manual — confirm | n8n owner |
-| **PR review** | Reminds the team about pull requests waiting for review | Daily schedule — confirm | n8n owner |
+| Workflow | When | What it does |
+|---|---|---|
+| **Weekly brief** | Monday 07:00 | Sends one email per active contributor who has an email on file. Each copy has **Your tasks** plus the team section: completed this week, moved to In review, PRs merged and open, unlinked PRs, and overdue tasks with owners. The owner is copied. People with no email are listed in the footer. A failed send raises a one-line alert. A preview run sends every copy to the owner only. |
+| **Daily digest** | Daily — time **Confirm** | Sends only to the owner. Includes a Social line. |
+| **Error alert** | On error | Sends a one-line error to the owner. It also covers errors in the early-adopters workflow. |
+| **GitHub to tracker** | On a signed webhook from a GitHub Action | Matches `T-` numbers in PR text to Tasks rows and sets Status, PRs, PR state, Progress and Last activity. Unlinked PRs go to the **Unlinked PRs** tab. A PR closed without merging never moves a task to Done by itself. A forged or unsigned request gets **401**. Has a dry-run switch; with dry run on it writes nothing. |
+| **PR backfill** | Manual, run once | Fills the tracker with older pull requests. Dry run first; compare the plan with the real rows before turning dry run off. |
+| **Social posts** | Daily 08:00 | An **Idea** row with an empty **Draft** gets an AI draft and becomes **Draft**. A row posts only when **Status** is **Approved** and its date is today or earlier. LinkedIn posts go out; other channels are emailed to the owner to paste, and the row stays **Approved** with a note until the owner sets **Posted**. Posted links go in the **Posted link** column. Nothing posts without a row set to **Approved**. |
+| **PR review** | **Confirm** | **Confirm.** The 15 Nov report does not describe this workflow. Do not guess its trigger or destination; ask the owner. |
 
-Do not rename a workflow without updating this table. Do not change a trigger's schedule without telling the people who read its output.
+Do not rename a workflow without updating this table.
 
 ## Dry run
 
-Every workflow can be run without publishing:
+Dry run is a switch inside each workflow, the `DRY_RUN` setting, plus the editor's own test run. It is not "disable the send node".
 
-1. Open the workflow in n8n.
-2. Use **Execute workflow** with test data, or open the trigger node and use **Test step**. Pin the sample data you used.
-3. Read every node's output. Check the destination: the right channel, the right repository, the right tracker project.
-4. For **Social posts**, do not execute a publish node against a live account. Stop before the publish step, or use the provider's test mode.
-5. For **GitHub to tracker**, run against a test repository or a dry-run copy of the tracker project first.
-6. For **PR backfill**, run with a small limit first and compare the created items with GitHub.
+1. Open the workflow and check `DRY_RUN` is on.
+2. Use **Execute workflow** or **Test step**, with pinned test data.
+3. Read every node's output. Confirm the destination: right mailbox, right repository, right tracker project, right social account.
+4. With dry run on, the workflow writes nothing to the destination. Check the run's output says so, rather than assuming.
+5. For **Social posts**, dry run must not publish. Confirm no live post was created.
+6. For **GitHub to tracker**, a dry run still receives the signed request; check that the plan lists the right rows and that no cell changed.
+7. For **PR backfill**, run with a small limit, compare the plan with the tracker's real rows, then turn dry run off.
 
-A dry run writes nothing to the destination when the publish or send node is disabled. Check that the node is disabled before you run.
+A workflow may be published and active while it is still in dry-run mode. That is allowed for testing.
 
-## Publish
+## Publishing and turning dry run off
 
 1. Save the workflow.
-2. Confirm the credential selected on every node is the production one, not a personal token.
-3. Turn the workflow **Active**.
-4. Watch the first scheduled run in **Executions**. A green first run is not proof; read the output.
-5. Record the change: workflow name, what changed, who approved, time.
+2. Confirm the credential on every node is the production one, not a personal token.
+3. Activate it — still with `DRY_RUN` on — and watch the first run in **Executions**.
+4. Read the output. A green run is not proof.
+5. **Turning `DRY_RUN` off needs the owner's explicit approval, one workflow at a time.** Never turn it off for several workflows in one go.
+6. Record: workflow, what changed, who approved, time.
 
 ## When a workflow fails
 
-1. Open **Executions** and find the failed run. Read the node and the error, not just the red status.
+1. Open **Executions** and read the failing node and its error.
 2. If the failure is a credential, rotate it (see `secrets-and-webhooks.md`) and re-run.
-3. If the failure is a destination (channel, repository, tracker), fix the destination and re-run.
+3. If the failure is a destination (mailbox, repository, tracker, social account), fix the destination and re-run.
 4. If the failure is data, correct the input and re-run from the failed node where n8n allows it.
-5. Tell the owner of the destination:
-   - **Weekly brief / daily digest** — the team channel's owner.
+5. Tell the owner:
+   - **Weekly brief / daily digest** — the owner named in the workflow; the brief already sends a one-line alert on a failed send.
    - **Error alert** — the platform owner, if the alert itself is failing.
    - **GitHub to tracker / PR backfill** — the tracker owner.
-   - **Social posts / PR review** — the n8n owner.
+   - **Social posts** — the owner of the connected LinkedIn account.
+   - **PR review** — **Confirm** with the n8n owner.
 
 If an automation has been failing for more than a day, say so in the team channel rather than silently retrying.
 
 ## Safety
 
-- Nothing in this workspace sends school or parent messages.
+- These workflows send **internal email** and post to the **owner's connected LinkedIn account**. They send nothing to schools or parents.
 - Never put a token in a workflow's plain field; use the credential entry.
-- A workflow that posts publicly (social posts) needs a person to approve the content before it is activated.
+- A LinkedIn post is public. Only an **Approved** row posts, and only its owner can approve it.
 - Keep the error alert working: it is the only signal that another workflow stopped.
+- No email address, token or account id belongs in this page.
