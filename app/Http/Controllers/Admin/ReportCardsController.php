@@ -8,7 +8,10 @@ use App\Models\Section;
 use App\Models\StandardLink;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
+use App\Models\School;
+use App\Models\SchoolReportKindChange;
 use App\Services\ReportCardCommentService;
+use App\Services\Reports\ReportKindSetting;
 use App\Services\StudentReportCardService;
 use App\Support\ClassListOrder;
 use App\Exports\CombinedMarksheetExport;
@@ -44,6 +47,8 @@ class ReportCardsController extends Controller
         $sort = $request->query('sort') === 'name' ? 'name' : 'position';
         $data = ($class && $sitting) ? $screen->build($schoolId, $class, $sitting, $streamId, $sort) : null;
 
+        $school = School::query()->find($schoolId);
+
         return view('admin.reports.cards', [
             'classes' => $classes,
             'class' => $class,
@@ -53,7 +58,37 @@ class ReportCardsController extends Controller
             'sort' => $sort,
             'data' => $data,
             'links' => $class['links'] ?? [],
+            'reportKind' => app(ReportKindSetting::class)->current($school),
+            'reportKindChanges' => $this->reportKindChanges($schoolId),
         ]);
+    }
+
+    public function updateReportKind(Request $request, ReportKindSetting $setting)
+    {
+        $user = Auth::user();
+        $school = School::query()->findOrFail((int) $user->school_id);
+
+        $data = $request->validate([
+            'report_kind' => ['required', 'string', 'in:'.implode(',', array_keys(ReportKindSetting::OPTIONS))],
+        ]);
+
+        $setting->change($school, $user, $data['report_kind']);
+
+        return back()->with(
+            'successmessage',
+            'Report type saved as '.$setting->label($data['report_kind']).'. This applies from the next release. Reports already released stay as they are.'
+        );
+    }
+
+    /** @return \Illuminate\Support\Collection<int, SchoolReportKindChange> */
+    private function reportKindChanges(int $schoolId)
+    {
+        return SchoolReportKindChange::query()
+            ->where('school_id', $schoolId)
+            ->with('user')
+            ->orderByDesc('id')
+            ->limit(5)
+            ->get();
     }
 
     /** The earlier per-term page: report template, recent PDFs, and every class at once. */
@@ -109,8 +144,10 @@ class ReportCardsController extends Controller
 
         $school = \App\Models\School::find($schoolId);
         $reportTemplate = $school->report_template ?? 'formal';
+        $reportKind = app(ReportKindSetting::class)->current($school);
+        $reportKindChanges = $this->reportKindChanges((int) $schoolId);
 
-        return view('admin.reports.cards-history', compact('stdLinks', 'terms', 'selectedTerm', 'eotKpis', 'recentGenerations', 'reportTemplate', 'school'));
+        return view('admin.reports.cards-history', compact('stdLinks', 'terms', 'selectedTerm', 'eotKpis', 'recentGenerations', 'reportTemplate', 'school', 'reportKind', 'reportKindChanges'));
     }
 
     public function updateTemplate(Request $request)

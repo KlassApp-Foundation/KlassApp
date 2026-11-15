@@ -179,6 +179,7 @@ class SnapshotService
             'division' => $row->division,
             'position' => $row->classPosition,
             'of' => $row->classOutOf,
+            'report_kind' => app(\App\Services\Reports\ReportKindSetting::class)->forRelease($release, $release->school),
             'released_at' => now()->toIso8601String(),
         ];
     }

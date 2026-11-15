@@ -12,6 +12,14 @@
 
 @include('partials.message')
 
+@include('admin.reports.partials.report-kind')
+
+@if (($reportKind ?? 'progressive') !== 'set_based')
+    <p data-testid="composition-hidden" style="margin:0 0 12px;color:#334155;font-size:.9rem;">
+        Show on report cards and weight are for set-based reports. This school uses the Progressive report, so those columns stay hidden. Choose Set-based reports above to edit them.
+    </p>
+@endif
+
 <div class="relative mt-4">
 <div class="w-full main-content">
     <form method="POST" action="{{ route('admin.settings.exam-types.update') }}">
@@ -23,8 +31,10 @@
                         <th class="py-3 px-4 font-semibold text-sm">Exam Type</th>
                         <th class="py-3 px-4 font-semibold text-sm">Code</th>
                         <th class="py-3 px-4 font-semibold text-sm">Contributes to Report Total</th>
+                        @if (($reportKind ?? 'progressive') === 'set_based')
                         <th class="py-3 px-4 font-semibold text-sm">Show on Report Cards</th>
                         <th class="py-3 px-4 font-semibold text-sm">Weight %</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -55,12 +65,14 @@
                                     </span>
                                 </label>
                             </td>
+                            @if (($reportKind ?? 'progressive') === 'set_based')
                             <td class="py-3 px-4">
                                 <label class="inline-flex items-center cursor-pointer">
                                     <input type="hidden" name="include[{{ $type->id }}]" value="0">
                                     <input type="checkbox" name="include[{{ $type->id }}]" value="1"
                                         class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500"
-                                        {{ $included ? 'checked' : '' }}>
+                                        {{ $included ? 'checked' : '' }}
+                                        data-testid="exam-type-include-{{ $type->id }}">
                                     <span class="ml-2 text-sm {{ $included ? 'text-green-700 font-medium' : 'text-gray-400' }}">
                                         {{ $included ? 'Shown' : 'Hidden' }}
                                     </span>
@@ -69,8 +81,10 @@
                             <td class="py-3 px-4">
                                 <input type="number" name="weight[{{ $type->id }}]" min="1" max="100" step="any"
                                     value="{{ $weight !== null ? $weight : '' }}" placeholder="—"
-                                    class="ds-form-input" style="width: 84px;">
+                                    class="ds-form-input" style="width: 84px;"
+                                    data-testid="exam-type-weight-{{ $type->id }}">
                             </td>
+                            @endif
                         </tr>
                     @endforeach
                 </tbody>

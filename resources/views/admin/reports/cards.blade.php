@@ -22,6 +22,7 @@
 
 <div class="rc" data-testid="report-cards-screen" @if($pending) data-pending="1" @endif>
     @include('partials.message')
+    @include('admin.reports.partials.report-kind')
 
     <div class="rc-head">
         <div>
