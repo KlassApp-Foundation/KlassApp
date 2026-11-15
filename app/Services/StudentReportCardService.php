@@ -457,13 +457,25 @@ class StudentReportCardService
             $showAgg = ! $isNursery && ! in_array($standardName, ['primary_lower'], true);
         }
 
-        $gradingSystem = \App\Models\Academics\SchoolGradingSystem::where('school_id', $schoolId)
-            ->where('standard_id', $stdLink->standard_id)
-            ->orderBy('min_score', 'desc')
-            ->get();
+        $appliedRules = app(\App\Services\Reports\ProgressiveRulesStamp::class)->applied(
+            $schoolId,
+            (int) $stdLink->section_id,
+            $exam->academic_term_id ? (int) $exam->academic_term_id : null,
+            (int) $stdLink->standard_id,
+        );
+        $gradingSystem = $appliedRules['mode'] === \App\Services\Reports\ProgressiveRulesStamp::MODE_STORED
+            ? $this->storedGradingRows($schoolId, (int) $stdLink->standard_id, $appliedRules['rules']['bands'] ?? [])
+            : \App\Models\Academics\SchoolGradingSystem::where('school_id', $schoolId)
+                ->where('standard_id', $stdLink->standard_id)
+                ->orderBy('min_score', 'desc')
+                ->get();
 
-        $division = app(\App\Services\Reports\ProgressiveRules::class)
-            ->divisionRule($schoolId, (int) $stdLink->standard_id);
+        $division = $this->resultsPolicy(
+            $schoolId,
+            (int) $stdLink->standard_id,
+            (int) $stdLink->section_id,
+            $exam->academic_term_id ? (int) $exam->academic_term_id : 0,
+        )->divisionRule;
         $divisionLabel = static function (?array $points) use ($division): string {
             if ($points === null) {
                 return '-';
@@ -647,11 +659,29 @@ class StudentReportCardService
     {
         $scoring = app(\App\Services\Reports\ReportScoring::class);
 
-        return $scoring->policy(
-            $schoolId,
-            $standardId,
-            $scoring->countsMissingAsZero($schoolId, $sectionId, $academicTermId),
-        );
+        return $scoring->policyForTerm($schoolId, $standardId, $sectionId, $academicTermId);
+    }
+
+    /**
+     * Grade rows copied onto the release, so the printed grade uses the
+     * bands from release day.
+     *
+     * @param  list<array<string, mixed>>  $bands
+     * @return \Illuminate\Support\Collection<int, \App\Models\Academics\SchoolGradingSystem>
+     */
+    private function storedGradingRows(int $schoolId, int $standardId, array $bands): \Illuminate\Support\Collection
+    {
+        return collect($bands)->map(function (array $band) use ($schoolId, $standardId) {
+            return new \App\Models\Academics\SchoolGradingSystem([
+                'school_id' => $schoolId,
+                'standard_id' => $standardId,
+                'grade' => $band['grade'] ?? '',
+                'points' => $band['points'] ?? null,
+                'min_score' => $band['min_score'] ?? null,
+                'max_score' => $band['max_score'] ?? null,
+                'remark' => $band['remark'] ?? null,
+            ]);
+        });
     }
 
     /**
