@@ -29,18 +29,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | PRIMARY (P1-P7) — P.7 Nine-Band Percentage Scale
+    | PRIMARY — nine bands, the default for a new primary standard
     |--------------------------------------------------------------------------
-    | Uganda P.7-style termly grading bands (confirmed with the school operator,
-    | Kabale reference school 104). This is the ONE primary scale seeded as the
-    | onboarding smart default (schema decision: one default scale per
-    | standard). Per-section P.4-P6 / P.1-P3 / Nursery band variants are logged
-    | in knowledge.md as a future per-section grading enhancement — not seeded.
+    | A mark of 90 to 94 is 2 points. A mark of 75 to 89 is 3 points. The
+    | printed aggregate label is D1 through F9 from those points. A school
+    | edits this table on the grading settings screen. Reset puts this table
+    | back. Reading the default does not rewrite bands a school already stored.
+    | This table is not a confirmation of any one school's own scale.
     */
     'primary' => [
         ['grade' => '1', 'points' => 1, 'min_score' => 95, 'max_score' => 100, 'remark' => 'Excellent'],
-        ['grade' => '2', 'points' => 2, 'min_score' => 85, 'max_score' => 94,  'remark' => 'V.Good'],
-        ['grade' => '3', 'points' => 3, 'min_score' => 75, 'max_score' => 84,  'remark' => 'Good'],
+        ['grade' => '2', 'points' => 2, 'min_score' => 90, 'max_score' => 94,  'remark' => 'V.Good'],
+        ['grade' => '3', 'points' => 3, 'min_score' => 75, 'max_score' => 89,  'remark' => 'Good'],
         ['grade' => '4', 'points' => 4, 'min_score' => 65, 'max_score' => 74,  'remark' => 'F.Good/Q.Good'],
         ['grade' => '5', 'points' => 5, 'min_score' => 60, 'max_score' => 64,  'remark' => 'Promising'],
         ['grade' => '6', 'points' => 6, 'min_score' => 50, 'max_score' => 59,  'remark' => 'Fair'],

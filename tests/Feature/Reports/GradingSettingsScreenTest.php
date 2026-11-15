@@ -114,7 +114,11 @@ class GradingSettingsScreenTest extends TestCase
             ->get(self::URL.'?standard='.$this->standard->id.'&preset='.GradingPresets::DEFAULT)
             ->assertOk()->getContent();
 
+        $this->assertStringContainsString('name="bands[1][min_score]" value="90"', $html);
         $this->assertStringContainsString('name="bands[2][min_score]" value="75"', $html);
+        $this->assertStringContainsString('name="bands[2][max_score]" value="89"', $html);
+        $this->assertStringContainsString('Nothing is saved until you save.', $html);
+        $this->assertStringNotContainsString('These are the bands saved for this class level.', $html);
     }
 
     public function test_try_a_mark_shows_its_grade_and_points_from_the_bands_on_screen(): void
@@ -131,14 +135,20 @@ class GradingSettingsScreenTest extends TestCase
 
     public function test_try_a_mark_follows_a_loaded_preset(): void
     {
-        // 80 is grade 3 in the older table and grade 3 in the default too, but 70 differs: 4 in older, 4 in default;
-        // 85 is grade 2 in the app default and 3 in the older table.
+        // 90 is 2 points on the app default. 89 is 3 points. 78 is 3 points on the app default
+        // and 4 points on the older seeded table, so the two presets still disagree.
         $this->actingAs($this->admin)
-            ->get(self::URL.'?standard='.$this->standard->id.'&preset='.GradingPresets::OLDER_SEEDED.'&try_mark=85')
-            ->assertOk()->assertSee('85 is grade <strong>3</strong>', false);
+            ->get(self::URL.'?standard='.$this->standard->id.'&preset='.GradingPresets::DEFAULT.'&try_mark=90')
+            ->assertOk()->assertSee('90 is grade <strong>2</strong>', false);
         $this->actingAs($this->admin)
-            ->get(self::URL.'?standard='.$this->standard->id.'&preset='.GradingPresets::DEFAULT.'&try_mark=85')
-            ->assertOk()->assertSee('85 is grade <strong>2</strong>', false);
+            ->get(self::URL.'?standard='.$this->standard->id.'&preset='.GradingPresets::DEFAULT.'&try_mark=89')
+            ->assertOk()->assertSee('89 is grade <strong>3</strong>', false);
+        $this->actingAs($this->admin)
+            ->get(self::URL.'?standard='.$this->standard->id.'&preset='.GradingPresets::OLDER_SEEDED.'&try_mark=78')
+            ->assertOk()->assertSee('78 is grade <strong>4</strong>', false);
+        $this->actingAs($this->admin)
+            ->get(self::URL.'?standard='.$this->standard->id.'&preset='.GradingPresets::DEFAULT.'&try_mark=78')
+            ->assertOk()->assertSee('78 is grade <strong>3</strong>', false);
     }
 
     public function test_try_an_aggregate_shows_the_division_from_the_ranges_on_screen(): void
@@ -266,8 +276,29 @@ class GradingSettingsScreenTest extends TestCase
 
         $this->assertNull($this->standard->fresh()->ranking_basis);
         $this->assertSame(0, ReportDivisionRange::query()->where('school_id', $this->school->id)->count());
-        $this->assertSame(85, (int) SchoolGradingSystem::query()->where('school_id', $this->school->id)->where('standard_id', $this->standard->id)->where('grade', '2')->value('min_score'));
+        $this->assertSame(90, (int) SchoolGradingSystem::query()->where('school_id', $this->school->id)->where('standard_id', $this->standard->id)->where('grade', '2')->value('min_score'));
+        $this->assertSame(89, (int) SchoolGradingSystem::query()->where('school_id', $this->school->id)->where('standard_id', $this->standard->id)->where('grade', '3')->value('max_score'));
         $this->assertSame('reset', ProgressiveRulesChange::query()->latest('id')->value('action'));
+    }
+
+    public function test_opening_the_screen_does_not_rewrite_bands_a_school_already_stored(): void
+    {
+        SchoolGradingSystem::query()
+            ->where('school_id', $this->school->id)
+            ->where('standard_id', $this->standard->id)
+            ->where('grade', '2')
+            ->update(['min_score' => 85, 'max_score' => 94]);
+        SchoolGradingSystem::query()
+            ->where('school_id', $this->school->id)
+            ->where('standard_id', $this->standard->id)
+            ->where('grade', '3')
+            ->update(['min_score' => 75, 'max_score' => 84]);
+
+        $this->actingAs($this->admin)->get(self::URL.'?standard='.$this->standard->id)->assertOk();
+
+        $this->assertSame(85, (int) SchoolGradingSystem::query()->where('school_id', $this->school->id)->where('standard_id', $this->standard->id)->where('grade', '2')->value('min_score'));
+        $this->assertSame(84, (int) SchoolGradingSystem::query()->where('school_id', $this->school->id)->where('standard_id', $this->standard->id)->where('grade', '3')->value('max_score'));
+        $this->assertSame(0, ProgressiveRulesChange::query()->count());
     }
 
     public function test_reset_without_the_confirmation_does_nothing(): void
