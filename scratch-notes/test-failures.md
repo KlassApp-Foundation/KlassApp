@@ -17,6 +17,10 @@ The full run died before it could write a JUnit file.
 
 ## Second run
 
-A second run with `--exclude-group scale` was started so the other failures could be named. If that run finished, its list is below. If this file still says the run is open, the names were not available when the branch was pushed.
+A second run with `--exclude-group scale` was started so the other failures could be named. When this note was written it was still inside the demo-school seeders, at 915 / 3880 (23%), and had not printed a failure summary. The JUnit file is written at the end, so the names of the red tests are not in this file.
 
-Second run: see the end of this file.
+What is known:
+
+- The suite does not boot until the duplicate `use App\Models\MarksRelease` is removed (#1330).
+- The 800-learner scale test ends the PHP process on this machine (#1358).
+- The dot log from the first run shows failures before that crash. Their names were not printed.
