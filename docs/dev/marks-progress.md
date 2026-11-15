@@ -97,4 +97,4 @@ Sections 14 and 15 were added to the living handoff. The production check stays 
 
 The progressive card snapshot differed only by spacing. The captured marks, aggregate 7, and division 1 are unchanged.
 
-A head teacher can open Marks Release and release every class in their own school. A head teacher of another school gets 404 for this school's release. A class teacher still cannot release another class or the whole school, and a head teacher still cannot open the teacher release route. A site admin is not treated as a school admin by this check. Branch `feat/head-teacher-marks-release`, stacked on #1361. Not merged. Not deployed.
+A head teacher can open Marks Release and release every class in their own school. A head teacher of another school gets 404 for this school's release. A class teacher still cannot release another class or the whole school, and a head teacher still cannot open the teacher release route. A site admin is not treated as a school admin by this check. Draft pull request: https://github.com/KlassApp-Foundation/KlassApp/pull/1362 on branch `feat/head-teacher-marks-release`, stacked on #1361. Not merged. Not deployed.
