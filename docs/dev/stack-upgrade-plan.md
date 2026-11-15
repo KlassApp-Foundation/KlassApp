@@ -12,15 +12,25 @@ Versions checked on **16 November 2026**. Sources are listed at the end. Where a
 
 | Phase | What moves | Why this position |
 |---|---|---|
-| **0. Baseline** | No version change: add a PHP 8.5 job and a Node 26 job to CI, record the current test and PDF baselines | Proves the target runtimes before any package moves |
-| **1. PHP 8.5 + Laravel 13.42 + patch-level Composer packages** | PHP 8.4 → 8.5; `laravel/framework` 13.38 → 13.42; Sanctum, Tinker, Socialite, Nightwatch, Backup, Medialibrary, Model States, Predis, Dompdf, PHPUnit toolchain | Everything else requires the runtime and framework to be current first. Low risk, one lockfile change |
-| **2. Front end and Node** | Node 24 → 26 LTS; Vite 8.1 → 8.3; laravel-vite-plugin 3.1 → 3.2; plugin-vue 6.0.8 → 6.0.11; Vue 3.5.40 → 3.5.45; Tailwind 4.3.3 → 4.3.5; PostCSS; **remove the unused `vue-router` 3**; Playwright 1.62 → 1.65 | Independent of PHP. Doing it before Livewire means asset builds are settled before the biggest UI change |
-| **3. Laravel AI 1.4 + Laravel MCP 1.2** | AI 0.10.2 → 1.4.0; MCP 0.8.2 → 1.2.0; the conversation-table migration | AI 1.0 **requires** MCP ^1.0 (`High` impact in its upgrade guide). They move together, before Toshi is exercised again |
-| **4. Livewire 4.4** | Livewire 3.8.10 → 4.4.8; config keys; `wire:model` behaviour; `stream()` signature; endpoint prefix | Touches 52 components and 77 component tags. It is independent of AI, and doing it after the AI move keeps one large change per phase |
-| **5. Filament Tables 5 and Laravel Excel 4** | `filament/tables` 3.3.54 → 5.11.4; `maatwebsite/excel` 3.1.x-dev → 4.0.6 (PhpSpreadsheet 5) | Isolated to four superadmin screens and the import/export classes. Highest per-file risk, lowest blast radius |
-| **6. Database** | Stay on MySQL 8.4 LTS (latest 8.4.13); evaluate 9.7 LTS separately | The app and CI are on 8.4. 8.4 is supported to 2029 (premier) / 2032 (extended). No upgrade is needed for this stack move |
+| **0. Baseline** | No version change: add a PHP 8.5 CI job, a Node 26 build job **only if Laravel Cloud confirms a Node 26 image**, and record the current test and PDF baselines | Proves the target runtimes before any package moves |
+| **1. PHP 8.5 + Laravel 13.42 + patch-level Composer packages** | PHP 8.4 → 8.5; `laravel/framework` 13.38 → 13.42; Sanctum, Tinker, Socialite, Nightwatch, Backup, Medialibrary, Model States, Predis, Dompdf, PHPUnit toolchain; **`maatwebsite/excel` 3.1.x-dev → the latest tagged 3.1 release** | Everything else requires the runtime and framework to be current first. Low risk, one lockfile change. The Excel branch pin is replaced by a tag now, without changing the major |
+| **2. Front end (no Node move)** | Vite 8.1 → 8.3; laravel-vite-plugin 3.1 → 3.2; plugin-vue 6.0.8 → 6.0.11; Vue 3.5.40 → 3.5.45; Tailwind 4.3.3 → 4.3.5; PostCSS; **remove the unused `vue-router` 3**; Playwright 1.62 → 1.65 | Independent of PHP. Asset builds are settled before the biggest UI change |
+| **3. Node 26 — conditional** | Node 24 → 26 LTS **after staging passes, and only if Laravel Cloud offers a Node 26 build image**. Otherwise stay on 24, supported to April 2028 | The Cloud build image is the constraint, not the code. Ask the Cloud owner and record the answer before this phase |
+| **4. Laravel AI 1.x + MCP 1.x, with T-013** | AI 0.10.2 → 1.4.0; MCP 0.8.2 → 1.2.0; the conversation-table migration; Claude on Bedrock | AI 1.0 **requires** MCP ^1.0. T-013 needs the provider work, so the three move as one phase |
+| **5. Livewire 4.4** | Livewire 3.8.10 → 4.4.8; config keys; `wire:model` behaviour; `stream()` signature; endpoint prefix | Its own phase, **after the report stack is live and the first school's reports are delivered**. Touches 52 components and 77 tags |
+| **6. Filament Tables removal + Laravel Excel 4** | Remove `filament/tables` and its published view; rebuild the four superadmin tables as plain Livewire tables **inside the Livewire 4 phase, after Livewire 4 lands**; then `maatwebsite/excel` 3.1 → 4.0.6 | Filament is replaced, not upgraded. The rebuild sits with the Livewire work because it uses Livewire components; Excel 4 follows in the same later phase. One screen may be upgraded instead only if its rebuild would take more than about a day |
+| **7. Database** | Stay on MySQL 8.4 LTS (latest 8.4.13); no 9.7 move | 8.4 is supported to 2029 (premier) / 2032 (extended). Ask the Cloud owner for the production engine version and record it |
 
-**Why not one big jump:** the AI/MCP move needs its own migration and its own test pass; Livewire 4 changes request behaviour on every Livewire screen; Filament 5 and Excel 4 are two and one major versions ahead of code that uses them lightly. Keeping them in separate phases means a failure has one cause and one rollback.
+**Why not one big jump:** the AI/MCP move needs its own migration and its own test pass; Livewire 4 changes request behaviour on every Livewire screen; the Filament rebuild is four internal screens but changes their code completely; Excel 4 is a separate major. Keeping them in separate phases means a failure has one cause and one rollback.
+
+## Decisions (16 Nov)
+
+1. **Filament Tables: replace, do not upgrade.** Remove the `filament/tables` dependency and its published view. Rebuild the four superadmin tables — Cities, Plan list, Countries, Subscriptions — as plain Livewire tables with the app's own components, inside the Livewire 4 phase, after Livewire 4 lands. Exception: upgrade a single screen only if its rebuild would take more than about a day.
+2. **Node 26: conditional.** Move after staging passes, and only if Laravel Cloud offers a Node 26 build image. Otherwise stay on Node 24, supported to April 2028. The Cloud owner is asked; the answer is recorded when it arrives.
+3. **Livewire 4: its own phase,** after the report stack is live and the first school's reports are delivered.
+4. **Laravel AI 1.x and MCP 1.x: one phase, together with T-013** (Claude on Bedrock).
+5. **MySQL: stay on 8.4 LTS.** The Cloud owner is asked for the production engine version; it is recorded when it arrives.
+6. **Laravel Excel:** replace the `3.1.x-dev` branch pin with a tagged 3.1 release in Phase 1; move to 4.0.6 as its own later phase, together with the Filament removal.
 
 ---
 
@@ -61,7 +71,7 @@ Versions checked on **16 November 2026**. Sources are listed at the end. Where a
 | Laravel AI | 0.10.2 | **1.4.0** (1.0 on 23 Sep 2026) | Latest major only; supports Laravel 12–13, PHP ^8.3 | [laravel/ai releases](https://github.com/laravel/ai/releases), [UPGRADE.md](https://github.com/laravel/ai/blob/1.x/UPGRADE.md) |
 | Laravel MCP | 0.8.2 | **1.2.0** | Latest major only; supports Laravel 12.41+/13, PHP ^8.2 | [laravel/mcp releases](https://github.com/laravel/mcp/releases), [UPGRADE.md](https://github.com/laravel/mcp/blob/main/UPGRADE.md) |
 | Livewire | 3.8.10 | **4.4.8** | 4.x supported; Laravel 10–13, PHP ^8.1 | [Livewire releases](https://github.com/livewire/livewire/releases), [upgrade guide](https://livewire.laravel.com/docs/4.x/upgrading) |
-| Filament Tables | 3.3.54 | **5.11.4** | 5.x supported; Laravel 11.28+/12/13, PHP ^8.2 | [Packagist filament/tables](https://packagist.org/packages/filament/tables) |
+| Filament Tables | 3.3.54 | 5.11.4 (not adopted; replaced) | 5.x supported; Laravel 11.28+/12/13, PHP ^8.2 | [Packagist filament/tables](https://packagist.org/packages/filament/tables) |
 | Laravel Excel | 3.1.x-dev | **4.0.6** | 4.x requires PHP 8.3+, Laravel 12+, PhpSpreadsheet 5.3+ | [Upgrade to 4.0](https://docs.laravel-excel.com/4.x/getting-started/upgrade.html) |
 | PHPUnit | 12.5.40 | **13.4.7** | 13.x requires PHP >= 8.4.1 | [Packagist phpunit/phpunit](https://packagist.org/packages/phpunit/phpunit) |
 | Vue | 3.5.40 | **3.5.45** | 3.5 line; no newer major | [vuejs/core releases](https://github.com/vuejs/core/releases) |
@@ -85,16 +95,16 @@ Versions checked on **16 November 2026**. Sources are listed at the end. Where a
 | Package | Current | Latest | Abandoned | Supports target (L13 / PHP 8.5) | Action |
 |---|---|---|---|---|---|
 | laravel/framework | 13.38.0 | 13.42.0 | no | yes / yes | Patch bump |
-| laravel/ai | 0.10.2 | 1.4.0 | no | yes / yes | **Major**; needs MCP 1.x and conversation migration |
-| laravel/mcp | 0.8.2 | 1.2.0 | no | yes / yes | **Major**; protocol headers, session ids |
+| laravel/ai | 0.10.2 | 1.4.0 | no | yes / yes | **Major**; one phase with MCP 1.x and T-013 |
+| laravel/mcp | 0.8.2 | 1.2.0 | no | yes / yes | **Major**; one phase with AI 1.x and T-013 |
 | laravel/sanctum | 4.3.2 | 4.4.0 | no | yes / yes | Patch bump |
 | laravel/tinker | 3.0.2 | 3.1.0 | no | yes / yes | Minor bump |
 | laravel/socialite | 5.28.0 | 5.32.0 | no | yes / yes | Minor bump |
 | laravel/nightwatch | 1.30.0 | 1.30.6 | no | yes / yes | Patch bump |
 | laravel/ui | 4.6.3 | 4.6.3 | no | yes (no Laravel constraint change) / yes | None |
 | livewire/livewire | 3.8.10 | 4.4.8 | no | yes / yes | **Major**; see §5 |
-| filament/tables | 3.3.54 | 5.11.4 | no | yes / yes | **Two majors**; four screens |
-| maatwebsite/excel | 3.1.x-dev | 4.0.6 | no | yes / yes | **Major**; typed signatures, PhpSpreadsheet 5 |
+| filament/tables | 3.3.54 | 5.11.4 (not used) | no | yes / yes | **Remove** the dependency and its published view; rebuild the four screens as plain Livewire in the Livewire 4 phase |
+| maatwebsite/excel | 3.1.x-dev | 4.0.6 | no | yes / yes | **Phase 1:** pin to the latest tagged 3.1. **Later:** 4.0.6 with the Filament removal |
 | barryvdh/laravel-dompdf | 3.1.2 | 3.1.2 | no | yes / yes | None |
 | spatie/laravel-backup | 10.3.0 | 10.4.0 | no | yes (PHP ^8.4) / yes | Patch bump |
 | spatie/laravel-medialibrary | 11.23.2 | 11.23.13 | no | yes / yes | Patch bump |
@@ -180,20 +190,22 @@ From the [Livewire 4 upgrade guide](https://livewire.laravel.com/docs/4.x/upgrad
 - `stream()` signature changes: `to:` → `el:`, and positional order changes. **One call:** `app/Livewire/AgentToshi.php:1714` uses `$this->stream($this->streamingMessageId, $chunk, false)` — positional; must become `stream($chunk, el: ...)`.
 - 52 Livewire components under `app/Livewire` need their tests re-run.
 
-### 5.4 Filament Tables 3.3 → 5.11 — **High**
+### 5.4 Filament Tables: remove, do not upgrade — **Medium**
 
-Two major jumps. Only four files use `Filament\Tables`:
+The decision is to remove the package, not to follow two major versions. Only four files use `Filament\Tables`:
 
 - `app/Livewire/Superadmin/Setting/Cities.php`
 - `app/Livewire/Superadmin/Setting/PlanList.php`
 - `app/Livewire/Superadmin/Setting/Countries.php`
 - `app/Livewire/Superadmin/Reports/Subscriptions.php`
 
-Plus the published view `resources/views/vendor/filament-actions/components/modals.blade.php`, which is tied to the Filament version and must be republished. The published upgrade guides for 4 and 5 must be read before work; **could not confirm** their exact breaking list from here. Treat the four screens as "upgrade or replace"; they are internal admin screens, not school-facing.
+Plus the published view `resources/views/vendor/filament-actions/components/modals.blade.php`, which is tied to the Filament version and is deleted with the package. The four screens — Cities, Plan list, Countries, Subscriptions — are rebuilt as plain Livewire tables with the app's own components, inside the Livewire 4 phase, after Livewire 4 lands. One screen may be upgraded instead only if its rebuild would take more than about a day. They are internal admin screens, not school-facing.
 
-### 5.5 Laravel Excel 3.1 → 4.0 — **Medium**
+### 5.5 Laravel Excel: tag now, 4.0 later — **Medium**
 
-From the [4.0 upgrade guide](https://docs.laravel-excel.com/4.x/getting-started/upgrade.html):
+**Phase 1:** replace the `3.1.x-dev` branch pin with the latest tagged 3.1 release. Same major, no API change.
+
+**Later, with the Filament removal:** move to 4.0.6. From the [4.0 upgrade guide](https://docs.laravel-excel.com/4.x/getting-started/upgrade.html):
 
 - PHP 8.3+, Laravel 12+, PhpSpreadsheet `^5.3` (from `^1.30`).
 - Fully typed interfaces: implementers must add native return types (`array(): array`, `headings(): array`, etc.). The app's exports already declare them; the import classes must be checked one by one.
@@ -207,7 +219,7 @@ Files: `app/Imports/*` (UsersImport, QuestionImport, ParentsImport, MarksSheetRe
 - Blade itself has no version and no breaking change in Laravel 13.x. `laravel/framework` 13.38 → 13.42 is minor and patch only.
 - Packages that touch Blade: `livewire/livewire` (components and directives), `jantinnerezo/livewire-alert` (the `alert()` trait, replaced in v4), `mallardduck/blade-lucide-icons` (icon components), `stevebauman/purify` (sanitising rendered HTML), `filament/tables` (published actions view under `resources/views/vendor`), and the app's own 20 anonymous components.
 - Laravel 13 features that are optional, not required: JSON:API resources, `PreventRequestForgery` origin checks, queue routing by class, controller/job attributes, `Cache::touch`, vector search. Adopting any of them is a separate decision; the upgrade does not need them.
-- What to check: Blade component tags close correctly (Livewire 4 is stricter), the published Filament view is republished with Filament 5, and the icon package still resolves its component namespace.
+- What to check: Blade component tags close correctly (Livewire 4 is stricter), the published Filament view is **deleted** with the package, and the icon package still resolves its component namespace.
 
 ### 5.7 PHP 8.5 — **Low**
 
@@ -231,12 +243,12 @@ Files: `app/Imports/*` (UsersImport, QuestionImport, ParentsImport, MarksSheetRe
 - Vue 3.5.40 → 3.5.45 is a patch in the same minor. `@vue/compat` MODE 2 stays; dropping compat is a separate, larger project (242 components).
 - `vue-router` 3.6.5 is in `package.json` but not imported anywhere. Remove it rather than upgrade to 5.
 - Vite 8.1 → 8.3, plugin and Tailwind are minor. `vite.config.js` uses `laravel-vite-plugin`, `@vitejs/plugin-vue`, `@tailwindcss/vite`; no removed options seen.
-- Node 24 → 26 LTS. CI does not build assets today, so add a Node 26 build job; Laravel Cloud's build uses Node 24 and must be switched in the environment (not in this repo).
+- Node 24 → 26 LTS, **conditional**. CI does not build assets today, so add a Node 26 build job only if Laravel Cloud offers a Node 26 image; otherwise stay on 24 (supported to April 2028). The Cloud build image is the constraint and is switched in the environment, not in this repo.
 
 ### 5.10 MySQL — **No change**
 
 - CI and the workflow use `mysql:8.4`; the app's queries are ordinary MySQL 8 SQL. No 9.x-only syntax.
-- Laravel Cloud's managed MySQL engine version is not exposed by the API or the repo — **could not confirm**. Ask the Cloud owner before planning 9.7.
+- Laravel Cloud's managed MySQL engine version is not exposed by the API or the repo — **could not confirm**. The Cloud owner is asked; record the answer. The decision is to stay on 8.4 LTS either way.
 - 8.4 LTS is supported to 2029 (premier) / 2032 (extended), so there is no deadline pressure.
 
 ### 5.11 PDF and fonts path — **Low**
@@ -254,17 +266,18 @@ Files: `app/Imports/*` (UsersImport, QuestionImport, ParentsImport, MarksSheetRe
 |---|---|---|---|---|---|---|
 | PHP 8.4 → 8.5 | Active support through 2027; faster runtime; deprecations cleared | S | Low | Laravel 13.42; PHPUnit 13 | Full suite on 8.5; PHPStan; deprecations log |
 | Laravel 13.38 → 13.42 | Bug and security fixes; Laravel 13 support window | S | Low | PHP 8.5 | Full suite; `php artisan about`; migration status |
-| Laravel AI 0.10 → 1.4 | Streaming, tool approval across turns, provider coverage incl. Bedrock/Claude | L | **High** | MCP 1.x | Toshi conversation tests, approval gate, PlatformOps, one real provider call in staging |
-| Laravel MCP 0.8 → 1.2 | Current protocol, no session affinity, proxy-safe metadata | M | **High** | AI 1.x | MCP client tests with the new headers; Slack connector tests; 400/`-32020` cases |
-| Livewire 3.8 → 4.4 | Parallel live updates, non-blocking polls, smaller payloads | L | Medium–High | Nothing | Every Livewire screen; 52 component tests; endpoint prefix check; `stream()` call |
-| Filament Tables 3.3 → 5.11 | Supported admin tables; current Livewire compatibility | M | **High** | Nothing | Four superadmin screens; republished view |
-| Laravel Excel 3.1 → 4.0 | Supported PhpSpreadsheet 5; typed API; batch marker | M | Medium | PhpSpreadsheet 5 | Import/export tests; a real marks workbook and a learner list |
+| Laravel AI 0.10 → 1.4 | Streaming, tool approval across turns, provider coverage incl. Bedrock/Claude | L | **High** | MCP 1.x; T-013 | Toshi conversation tests, approval gate, PlatformOps, one real provider call in staging |
+| Laravel MCP 0.8 → 1.2 | Current protocol, no session affinity, proxy-safe metadata | M | **High** | AI 1.x; T-013 | MCP client tests with the new headers; Slack connector tests; 400/`-32020` cases |
+| Livewire 3.8 → 4.4 | Parallel live updates, non-blocking polls, smaller payloads | L | Medium–High | Report stack live; first reports delivered | Every Livewire screen; 52 component tests; endpoint prefix check; `stream()` call |
+| Filament Tables removal + four rebuilt tables | One less third-party admin dependency; tables use the app's components | M | Medium | Livewire 4 phase | Four superadmin screens; no `filament/tables` in the lockfile; published view deleted |
+| Laravel Excel 3.1.x-dev → tagged 3.1 (Phase 1) | A tag instead of a branch pin; same major | S | Low | Nothing | Full suite; import/export tests |
+| Laravel Excel 3.1 → 4.0.6 (later) | Supported PhpSpreadsheet 5; typed API; batch marker | M | Medium | Filament removal phase; PhpSpreadsheet 5 | Import/export tests; a real marks workbook and a learner list |
 | PHPUnit 12 → 13 | Supported runner on PHP 8.5; attributes only | S | Low | PHP 8.5 | Convert five annotated files; full suite |
 | Vue 3.5 patch + remove vue-router | Patch fixes; one less unused dependency | S | Low | Nothing | `npm run build`; every Vue page; no router imports |
-| Vite 8.1 → 8.3 + plugins | Build fixes; current plugin compatibility | S | Low | Node 26 | `npm run build`; asset manifest; dev server |
+| Vite 8.1 → 8.3 + plugins | Build fixes; current plugin compatibility | S | Low | Nothing (Node 26 is separate and conditional) | `npm run build`; asset manifest; dev server |
 | Tailwind 4.3.3 → 4.3.5 / PostCSS | Patch fixes in the utility engine | S | Low | Nothing | Visual check of 10 screens; build |
-| Node 24 → 26 | Supported LTS to 2029; current build toolchain | M | Low–Medium | Vite build; Cloud build image | Build on 26; Cloud deploy to staging; Playwright |
-| MySQL 8.4 → 9.7 | Newer LTS, longer support; no feature this app needs | L | High | — | Separate project; not in this plan |
+| Node 24 → 26 (conditional) | Supported LTS to 2029; current build toolchain | M | Low–Medium | Cloud Node 26 image; staging passes | Build on 26; Cloud deploy to staging; Playwright |
+| MySQL 8.4 → 9.7 (not planned) | Newer LTS, longer support; no feature this app needs | L | High | — | Stay on 8.4; ask the Cloud owner for the production engine version |
 
 ---
 
@@ -339,6 +352,9 @@ No upgrade work starts until **all** of these are true:
 3. The demo is done.
 4. A verified backup exists (snapshot taken, restored to scratch, row counts checked).
 5. The owner says go.
+6. For **Livewire 4**: the report stack is live and the first school's reports are delivered.
+7. For **Node 26**: staging has passed and Laravel Cloud confirms a Node 26 build image.
+8. For **AI/MCP 1.x**: T-013 is scheduled; they move together.
 
 **Why the lockfiles force this order:** an upgrade changes `composer.lock` and `package-lock.json`. Every open PR is based on the current lockfiles, so the moment an upgrade lands, every one of them conflicts on both files and has to rebase and re-resolve. With the report and marks PRs still open, that is dozens of conflicts for no benefit. Merge the feature work first, then upgrade once.
 
