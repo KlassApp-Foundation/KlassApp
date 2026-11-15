@@ -222,7 +222,7 @@ class CombinedMarksheetExportTest extends TestCase
         $eotRows = $eot->toArray();
 
         $this->assertSame(['STUDENT NAME', 'MONTH', 'ENGLISH', 'MATHEMATICS'], $monthlyRows[0]);
-        $this->assertSame(['STUDENT NAME', 'ENGLISH', 'MATHEMATICS'], $eotRows[0]);
+        $this->assertSame(['STUDENT NAME', 'ENGLISH', 'MATHEMATICS', 'DIVISION'], $eotRows[0]);
 
         // Monthly: 3 active students x 2 MID months = 6 data rows.
         $this->assertCount(7, $monthlyRows);
@@ -258,8 +258,8 @@ class CombinedMarksheetExportTest extends TestCase
 
         // EOT: 3 active students, one row each; Dave (inactive) excluded.
         $this->assertCount(4, $eotRows);
-        $this->assertEquals(['Alice A', 60, 65], $eotRows[1]);
-        $this->assertEquals(['Bob B', 58, 61], $eotRows[2]);
+        $this->assertEquals(['Alice A', 60, 65], array_slice($eotRows[1], 0, 3));
+        $this->assertEquals(['Bob B', 58, 61], array_slice($eotRows[2], 0, 3));
         $this->assertSame('Charlie C', $eotRows[3][0]);
         $this->assertBlank($eotRows[3][1]);
         $this->assertBlank($eotRows[3][2]);
