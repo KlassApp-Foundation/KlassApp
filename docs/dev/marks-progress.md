@@ -83,4 +83,8 @@ A set that has a weight and has not been released is named. The combined mark is
 
 Clicked Report cards as the school admin at 375 and at 1280. Closing paper shows Incomplete under the learner, and the downloaded card says the same. The class teacher page is covered by the test. Nothing was sent. Nothing was written to production.
 
-Still to do, in order: the primary default grade table, the report builder, the comment bank, the calendar import, the read-only production check, the full rehearsal, then the named merge order. Sections 14 and 15 are not in the re-delivered handoff.
+## 2026-11-16 — primary default grade table
+
+A new primary standard is seeded with 2 points from 90 to 94 and 3 points from 75 to 89. The other seven bands are unchanged. The printed aggregate label is still D1 through F9 from the points. The grading screen preset stays "App default". Opening that screen does not rewrite bands a school already stored. Reset puts the new table back, and the school can still edit every band. No school has confirmed its own scale.
+
+Still to do, in order: the report builder, the comment bank, the calendar import, the read-only production check, the full rehearsal, then the named merge order. Sections 14 and 15 are not in the re-delivered handoff.

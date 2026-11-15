@@ -93,7 +93,7 @@ class ProgressiveReportRulesController extends Controller
             'ranges' => $ranges,
             'usingAutomaticDivision' => $usingAutomaticDivision,
             'bands' => $bands,
-            'bandsAreStored' => $standard !== null && SchoolGradingSystem::query()
+            'bandsAreStored' => $presetLoaded === null && $standard !== null && SchoolGradingSystem::query()
                 ->where('school_id', $schoolId)
                 ->where('standard_id', $standard->id)
                 ->exists(),
