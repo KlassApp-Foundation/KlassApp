@@ -84,7 +84,7 @@ final class SyntheticClass
         }
 
         $self->school = School::create([
-            'name' => $self->fixture['school'], 'slug' => 'synthetic-'.$suffix, 'email' => $suffix.'@synthetic.test',
+            'name' => $self->fixture['school'].$nameSuffix, 'slug' => 'synthetic-'.$suffix, 'email' => $suffix.'@synthetic.test',
             'phone' => '073'.random_int(1000000, 9999999), 'status' => 1, 'report_template' => $options['template'] ?? 'progressive',
         ]);
         $self->year = AcademicYear::create([
