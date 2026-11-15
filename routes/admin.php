@@ -961,6 +961,8 @@ Route::post('/marks/submissions/{exam}/reject', 'ExamMarksSubmissionController@r
 // Route::resource('exams', 'Admin\ExamController')->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
 // handle classes — same hidden Classes and streams item.
 Route::middleware('can:full-school-admin')->group(function () {
+Route::get("/classes/link-section/{section}", "ClassLinkController@confirm")->whereNumber('section')->name("admin.classes.link-section");
+Route::post("/classes/link-section/{section}", "ClassLinkController@store")->whereNumber('section')->name("admin.classes.link-section.store");
 Route::get("/classes/add", "ClassesController@create")->name("admin.classes.add");
 Route::post("/classes/store", "ClassesController@store")->name("admin.classes.store");
 });
@@ -974,6 +976,8 @@ Route::post("/academic-term/store", "Academics\AcademicTermController@store")->n
 Route::get("/academic-term/{term}/edit", "Academics\AcademicTermController@edit")->name("admin.academic-term.edit");
 Route::patch("/academic-term/{termId}/update", "Academics\AcademicTermController@update")->name("admin.academic-term.update");
 Route::delete("/academic-term/{termId}/destroy", "Academics\AcademicTermController@destroy")->name("admin.academic-term.destroy");
+Route::get("/academic-term/{termId}/make-current", "Academics\AcademicTermController@confirmCurrent")->whereNumber('termId')->name("admin.academic-term.make-current");
+Route::post("/academic-term/{termId}/make-current", "Academics\AcademicTermController@makeCurrent")->whereNumber('termId')->name("admin.academic-term.make-current.store");
 });
 
 // ============== FEES STRUCTURE =================
