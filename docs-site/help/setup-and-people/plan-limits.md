@@ -14,6 +14,10 @@ Open **Settings**, then **Plan & subscription** (`/admin/subscriptions`). The pa
 
 Administrator seats count toward the same people limit as teachers.
 
+## What a plan carries
+
+The plan record also stores numbers for events, folders, files, videos, audio, bulletins and groups. The two limits that gate adding people today are **teachers** (which also covers administrator seats) and **students**.
+
 ## What happens when you reach a limit
 
 ### Adding one person
