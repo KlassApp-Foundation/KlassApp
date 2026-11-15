@@ -61,18 +61,33 @@
                     <p data-testid="teacher-corrections-empty">No returned work needs fixing.</p>
                 @endforelse
             </section>
-            <section class="family-table-card" data-testid="teacher-attention">
+            <section class="family-table-card ka-marks-groups" data-testid="teacher-attention">
                 <h2>Marks needing attention</h2>
-                @forelse($board['rows'] as $row)
-                    <article class="teacher-row">
-                        <p class="family-kicker">{{ $row['state'] }}</p>
-                        <h3>{{ $row['title'] }}</h3>
-                        <p>{{ $row['detail'] }}</p>
-                        <a href="{{ $row['url'] }}">{{ $row['action'] }}</a>
-                    </article>
-                @empty
+                @php
+                    $markGroups = ['Returned' => [], 'In progress' => [], 'Not started' => []];
+                    foreach ($board['rows'] as $markRow) {
+                        $markState = (string) ($markRow['state'] ?? '');
+                        if (array_key_exists($markState, $markGroups)) {
+                            $markGroups[$markState][] = $markRow;
+                        }
+                    }
+                @endphp
+                @if($board['rows'] === [])
                     <p>Nothing is waiting.</p>
-                @endforelse
+                @else
+                    @foreach($markGroups as $markState => $markRows)
+                        @foreach($markRows as $row)
+                            <article class="ka-marks-row teacher-row" data-testid="teacher-marks-row" data-state="{{ $markState }}">
+                                <span class="ka-pill {{ $markState === 'Returned' ? 'ka-pill-red' : ($markState === 'In progress' ? 'ka-pill-blue' : 'ka-pill-muted') }}">{{ $markState }}</span>
+                                <div class="ka-marks-copy">
+                                    <h3>{{ $row['title'] }}</h3>
+                                    <p class="{{ $markState === 'Returned' ? 'ka-marks-note' : 'ka-marks-detail' }}" @if($markState === 'Returned') data-testid="teacher-return-note" @endif>{{ $row['detail'] }}</p>
+                                </div>
+                                <a href="{{ $row['url'] }}" @if($markState === 'In progress') data-testid="teacher-marks-continue" @endif @if($markState === 'Not started') data-testid="teacher-marks-enter" @endif>{{ $row['action'] }}</a>
+                            </article>
+                        @endforeach
+                    @endforeach
+                @endif
             </section>
             @if($board['subjects'] !== [])
                 <section class="family-table-card" data-testid="teacher-performance">
