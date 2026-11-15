@@ -89,4 +89,12 @@ Draft pull request: https://github.com/KlassApp-Foundation/KlassApp/pull/1361 on
 
 A new primary standard is seeded with 2 points from 90 to 94 and 3 points from 75 to 89. The other seven bands are unchanged. The printed aggregate label is still D1 through F9 from the points. The grading screen preset stays "App default". Opening that screen does not rewrite bands a school already stored. Reset puts the new table back, and the school can still edit every band. No school has confirmed its own scale.
 
-Still to do, in order: the report builder, the comment bank, the calendar import, the read-only production check, the full rehearsal, then the named merge order. Sections 14 and 15 are not in the re-delivered handoff.
+Still to do, in order: the report builder, the comment bank, the calendar import, the read-only production check, the full rehearsal, then the named merge order.
+
+## 2026-11-16 — handoff sections 14 and 15, snapshot spacing, head teacher release
+
+Sections 14 and 15 were added to the living handoff. The production check stays read-only. School names and production row ids are not copied into this file.
+
+The progressive card snapshot differed only by spacing. The captured marks, aggregate 7, and division 1 are unchanged.
+
+A head teacher can open Marks Release and release every class in their own school. A head teacher of another school gets 404 for this school's release. A class teacher still cannot release another class or the whole school, and a head teacher still cannot open the teacher release route. A site admin is not treated as a school admin by this check. Branch `feat/head-teacher-marks-release`, stacked on #1361. Not merged. Not deployed.

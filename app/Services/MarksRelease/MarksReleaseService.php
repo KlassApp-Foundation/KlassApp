@@ -69,6 +69,8 @@ final class MarksReleaseService
 {
     public const USERGROUP_SCHOOL_ADMIN = 3;
 
+    public const USERGROUP_HEAD_TEACHER = 4;
+
     public const USERGROUP_TEACHER = 5;
 
     /** @var array<int, true> release ids whose demo webhook was already posted */
@@ -83,9 +85,14 @@ final class MarksReleaseService
         return $user !== null && $this->links($user)->isNotEmpty();
     }
 
+    /**
+     * A school admin or a head teacher who belongs to a school.
+     * The class list is still limited to that school. A site admin is not included.
+     */
     public function isSchoolAdmin(User $user): bool
     {
-        return (int) $user->usergroup_id === self::USERGROUP_SCHOOL_ADMIN && $user->school_id !== null;
+        return in_array((int) $user->usergroup_id, [self::USERGROUP_SCHOOL_ADMIN, self::USERGROUP_HEAD_TEACHER], true)
+            && $user->school_id !== null;
     }
 
     /**

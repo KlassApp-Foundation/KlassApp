@@ -48,6 +48,35 @@ trait ReleaseRulesFixtures
         return $admin;
     }
 
+    /** A head teacher of the fixture school. Not a class teacher. */
+    protected function headTeacher(string $which = 'demo'): User
+    {
+        DB::table('usergroups')->upsert([
+            ['id' => 4, 'name' => 'SchoolSubadmin', 'created_at' => now(), 'updated_at' => now()],
+        ], 'id');
+
+        $school = $this->fx[$which]['school'];
+        $head = User::create([
+            'school_id' => $school->id,
+            'usergroup_id' => 4,
+            'name' => 'Head '.$which,
+            'email' => 'head-phase6-'.$which.'-'.$school->id.'@example.com',
+            'password' => bcrypt('x'),
+            'status' => 'active',
+            'email_verified' => 1,
+        ]);
+        Userprofile::create([
+            'user_id' => $head->id,
+            'school_id' => $school->id,
+            'usergroup_id' => 4,
+            'firstname' => 'Head',
+            'lastname' => ucfirst($which),
+            'status' => 'active',
+        ]);
+
+        return $head;
+    }
+
     /** The fixture teacher, made the class teacher of the fixture class. */
     protected function classTeacher(string $which = 'demo'): User
     {
