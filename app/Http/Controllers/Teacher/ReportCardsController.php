@@ -47,7 +47,7 @@ class ReportCardsController extends Controller
             $fill = $this->reports->subjectFillCounts($schoolId, $sl);
             $studentCount = 0;
             if ($exam) {
-                $studentCount = $this->reports->studentIds($exam)->count();
+                $studentCount = $this->reports->reportLearners($schoolId, $sl)->count();
             }
 
             return [
@@ -73,15 +73,7 @@ class ReportCardsController extends Controller
         $exam = $this->reports->resolveExam($schoolId, $stdLink);
         $fill = $this->reports->subjectFillCounts($schoolId, $stdLink);
 
-        $students = collect();
-        if ($exam) {
-            $ids = $this->reports->studentIds($exam);
-            $students = User::whereIn('id', $ids)
-                ->where('usergroup_id', 6)
-                ->where('status', 'active')
-                ->orderBy('name')
-                ->get(['id', 'name']);
-        }
+        $students = $exam ? $this->reports->reportLearners($schoolId, $stdLink) : collect();
 
         $stdLink->load(['section', 'standard']);
 
@@ -95,6 +87,7 @@ class ReportCardsController extends Controller
         return view('teacher.reports.cards.show', [
             'stdLink' => $stdLink,
             'students' => $students,
+            'incompleteSets' => $exam ? $this->reports->incompleteSetsForClass($schoolId, $stdLink) : [],
             'hasExam' => $exam !== null,
             'subjectsFilled' => $fill['filled'] ?? 0,
             'subjectsTotal' => $fill['total'] ?? 0,
@@ -140,11 +133,11 @@ class ReportCardsController extends Controller
         try {
             $exam = $this->reports->resolveExam($schoolId, $stdLink);
             if (! $exam) {
-                return back()->with('failmessage', 'No EOT exam found for this class.');
+                return back()->with('failmessage', 'No exam set found for this class.');
             }
 
-            if (! $this->reports->studentIds($exam)->contains($learner->id)) {
-                return back()->with('failmessage', 'This student has no marks for the report exam.');
+            if (! $this->reports->reportLearners($schoolId, $stdLink)->contains('id', $learner->id)) {
+                abort(404);
             }
 
             // Inherit school template (null) — CTs do not pick formal/warm.

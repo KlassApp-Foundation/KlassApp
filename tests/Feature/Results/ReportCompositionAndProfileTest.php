@@ -4,6 +4,7 @@ namespace Tests\Feature\Results;
 
 use App\Helpers\GradingHelper;
 use App\Models\Academics\SchoolGradingSystem;
+use App\Models\MarksRelease;
 use App\Models\Academics\Marks;
 use App\Models\Academics\Exam;
 use App\Models\AcademicTerm;
@@ -63,10 +64,59 @@ class ReportCompositionAndProfileTest extends TestCase
         $eot = $this->exam($ctx, $term, $ctx['maths'], '2026-04-20', 2);
         $this->mark($ctx, $mid, $ctx['maths'], $student, 60, '');
         $this->mark($ctx, $eot, $ctx['maths'], $student, 80, '');
+        $this->release($ctx, $mid);
+        $this->release($ctx, $eot);
 
         $row = $this->sheet($ctx, $term)->student($student->id);
         $this->assertNotNull($row);
         $this->assertSame(74.0, $row->cell($ctx['maths']->id)?->mark);
+    }
+
+    public function test_an_unreleased_weighted_set_is_named_and_no_combined_mark_is_shown(): void
+    {
+        $ctx = $this->school();
+        $term = $this->term($ctx);
+        $this->bands($ctx, [['grade' => 'C', 'points' => null, 'min' => 50, 'max' => 100]]);
+        $ctx['school']->forceFill([
+            'exam_type_preferences' => ['1' => '1', '2' => '1'],
+            'report_composition' => ['1' => ['include' => true, 'weight' => 30.0], '2' => ['include' => true, 'weight' => 70.0]],
+        ])->save();
+
+        $student = $this->student($ctx, 'Partial Student');
+        $mid = $this->exam($ctx, $term, $ctx['maths'], '2026-03-01', 1);
+        $eot = $this->exam($ctx, $term, $ctx['maths'], '2026-04-20', 2);
+        $this->mark($ctx, $mid, $ctx['maths'], $student, 60, '');
+        $this->mark($ctx, $eot, $ctx['maths'], $student, 80, '');
+        $this->release($ctx, $eot);
+
+        $sheet = $this->sheet($ctx, $term);
+        $row = $sheet->student($student->id);
+
+        $this->assertSame(['Mid Term'], $sheet->unreleasedWeightedSets);
+        $this->assertSame('Mid Term has not been released. No combined mark is shown.', app(ResultsService::class)->withheldSentence($sheet->unreleasedWeightedSets));
+        $this->assertNull($row->cell($ctx['maths']->id)?->mark);
+        $this->assertNull($row->displayTotal);
+        $midSitting = collect($sheet->sittings)->first(fn ($sitting) => $sitting->name === 'Mid Term');
+        $this->assertNotNull($midSitting);
+        $this->assertSame(60.0, $midSitting->student($student->id)?->cell($ctx['maths']->id)?->mark);
+
+        $captured = null;
+        $pdf = \Mockery::mock(\Barryvdh\DomPDF\PDF::class);
+        $pdf->shouldReceive('loadView')->andReturnUsing(function (string $view, array $data) use (&$captured, $pdf) {
+            $captured = $data;
+
+            return $pdf;
+        });
+        $pdf->shouldReceive('setPaper')->andReturnSelf();
+        $pdf->shouldReceive('output')->andReturn('%PDF');
+        $this->app->instance('dompdf.wrapper', $pdf);
+        app(\App\Services\StudentReportCardService::class)->pdfForStudent((int) $ctx['school']->id, $ctx['link'], $student);
+
+        $this->assertNull($captured['total']);
+        $this->assertSame(['Mid Term'], $captured['withheldSets']);
+        $html = view('admin.marks.report-templates.progressive', $captured)->render();
+        $this->assertStringContainsString('Mid Term has not been released. No combined mark is shown.', $html);
+        $this->assertStringNotContainsString('>74<', $html);
     }
 
     public function test_without_weights_the_latest_mark_still_wins(): void
@@ -356,6 +406,20 @@ class ReportCompositionAndProfileTest extends TestCase
                 'remark' => $row['grade'],
             ]);
         }
+    }
+
+    private function release(array $ctx, Exam $exam): void
+    {
+        MarksRelease::create([
+            'school_id' => $ctx['school']->id,
+            'exam_id' => $exam->id,
+            'scope' => 'class',
+            'standard_link_id' => $ctx['link']->id,
+            'scheduled_at' => now(),
+            'released_at' => now(),
+            'status' => MarksRelease::STATUS_RELEASED,
+            'timezone' => 'UTC',
+        ]);
     }
 
     private function sheet(

@@ -59,9 +59,9 @@
 
         <div class="p-6">
             @if (! $hasExam)
-                <p class="text-center py-12 text-gray-500">No EOT exam found for this class yet.</p>
+                <p class="text-center py-12 text-gray-500">No exam set found for this class yet.</p>
             @elseif ($students->isEmpty())
-                <p class="text-center py-12 text-gray-500">No students with marks on the report exam yet.</p>
+                <p class="text-center py-12 text-gray-500">No learners in this class yet.</p>
             @else
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-sm">
@@ -74,7 +74,12 @@
                         <tbody>
                             @foreach ($students as $student)
                                 <tr class="border-b border-gray-100">
-                                    <td class="py-3 pr-4 text-gray-900 font-medium">{{ $student->displayName ?: $student->name }}</td>
+                                    <td class="py-3 pr-4 text-gray-900 font-medium">
+                                        {{ $student->displayName ?: $student->name }}
+                                        @if (! empty($incompleteSets[$student->id]))
+                                            <div data-kind="incomplete">Incomplete: {{ implode(', ', $incompleteSets[$student->id]) }}.</div>
+                                        @endif
+                                    </td>
                                     <td class="py-3 text-right space-x-2">
                                         <a href="{{ route('teacher.reports.cards.student.preview', [$stdLink, $student]) }}"
                                            target="_blank"

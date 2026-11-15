@@ -194,6 +194,10 @@ class ProgressiveHeadingsTest extends TestCase
                 'subject_id' => $english->id, 'teacher_id' => $teacher->id, 'section_id' => $section->id,
                 'marks' => $score, 'grade' => '',
             ]);
+            \App\Models\MarksRelease::create([
+                'school_id' => $school->id, 'exam_id' => $exam->id, 'scope' => 'class', 'standard_link_id' => $link->id,
+                'scheduled_at' => now(), 'released_at' => now(), 'status' => \App\Models\MarksRelease::STATUS_RELEASED, 'timezone' => 'UTC',
+            ]);
         }
 
         $captured = null;

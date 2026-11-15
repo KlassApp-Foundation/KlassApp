@@ -108,17 +108,23 @@ class ExamCrossSchoolTest extends TestCase
     #[Test]
     public function admin_cannot_update_another_schools_exam()
     {
-        // Admin A tries to update School B's exam
-        $response = $this->actingAs($this->adminA)
+        $this->actingAs($this->adminA)
             ->withoutMiddleware(\App\Http\Middleware\MustBePrivilege::class)
             ->put("/admin/exams/{$this->examBId}/update", [
                 'name' => 'Hacked Exam',
-            ]);
+            ])
+            ->assertNotFound();
 
-        // The controller returns a redirect on "success" (0 rows matched is
-        // indistinguishable from a successful update of 0 fields), but the
-        // school_id scope means the School B exam is untouched.
-        $response->assertRedirect();
+        $missing = $this->examBId + 500;
+        $this->actingAs($this->adminA)
+            ->withoutMiddleware(\App\Http\Middleware\MustBePrivilege::class)
+            ->get('/admin/exams/'.$missing.'/edit')
+            ->assertNotFound();
+
+        $this->actingAs($this->adminA)
+            ->withoutMiddleware(\App\Http\Middleware\MustBePrivilege::class)
+            ->get('/admin/exams/'.$this->examBId.'/edit')
+            ->assertNotFound();
 
         $this->assertDatabaseHas('exams', [
             'id' => $this->examBId,

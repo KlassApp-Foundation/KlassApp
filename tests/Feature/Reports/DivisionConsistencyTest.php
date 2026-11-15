@@ -97,10 +97,9 @@ class DivisionConsistencyTest extends TestCase
             $position += $row->classPosition !== $want['position'] ? 1 : 0;
         }
 
-        if ($aggregate + $division + $position > 0) {
-            $this->markTestIncomplete("KNOWN GAP: with the default policy, {$aggregate} of 76 learners get a different aggregate, {$division} a different division and {$position} a different position than on the card.");
-        }
-        $this->assertSame(0, $aggregate + $division + $position);
+        $this->assertSame(0, $aggregate, 'the sheet counts a blank the same way the card does');
+        $this->assertSame(0, $division);
+        $this->assertSame(0, $position);
     }
 
     public function test_the_division_in_the_pdf_text_is_the_schools_own(): void
