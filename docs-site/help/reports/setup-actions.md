@@ -29,20 +29,3 @@ A term that is already current says so and changes nothing. A term that starts e
 6. Press **Link section to class**.
 
 Linking twice does nothing the second time.
-
-## If you run the server
-
-Both actions have a command. Without `--apply` they print what would change and write nothing.
-
-```bash
-php artisan terms:set-current {school} {term} [--apply]
-php artisan classes:link-section {school} {section} {standard} [--year=] [--apply]
-```
-
-With `--apply` they write and add one log line (`setup.current-term`, `setup.link-section`) with the school, the ids, the actor and `via`. The screens write the same line plus an activity-log entry under `setup`.
-
-Before any write: take a verified backup, run the dry run, and have the person who owns the deployment approve it.
-
-## Safety
-
-Every lookup is scoped to your school. A term, section, class level or year from another school gets the same answer as a missing one, and nothing changes.

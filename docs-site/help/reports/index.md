@@ -28,12 +28,16 @@ These guides describe draft work. Each page names the pull request it waits on i
 
 - [Your first term of reports](/help/reports/first-term-checklist) — the order to do everything in.
 
-## Not written yet
+## For support
 
-Three guides wait on work that has no pull request describing a screen:
+- [Answers for support](/help/reports/answers-for-support) — short questions and answers to use in chat or on WhatsApp, each linked to a guide.
 
-- **Report builder** — a report for any set or any combination of sets.
-- **Comment bank** — at least five options per section, editable and disableable by the school, never below five.
-- **School calendar** — official calendar import, automatic current term, and a school override with a reason.
+## In preparation
 
-They will be written when the screens exist. This page will link them then.
+Placeholder pages exist, with headings only. They will be written when a pull request or the code names the screen:
+
+- [Report builder](/help/reports/report-builder) — a report for any set or any combination of sets.
+- [Comment bank](/help/reports/comment-bank) — comments a school can edit and disable, with a minimum number of options.
+- [School calendar](/help/reports/school-calendar) — the official calendar, the current term, and a school override with a reason.
+
+Do not walk a school through any of these until the screen exists.
