@@ -154,6 +154,7 @@ public function sections(){
     // To add edit/update/destroy later...
 
     public function edit(Exam $exam){
+        // A missing id and another school's id are the same 404. Do not render the form first.
         $this->examInSchool($exam->getKey());
 
         $school_id = Auth::user()->school_id;
