@@ -28,7 +28,7 @@ class GenerateClassReportsJob implements ShouldQueue
 
     public function handle(): void
     {
-        @ini_set('memory_limit', '1024M');
+        $this->raiseMemoryCeiling('1024M');
 
         $generation = ReportGeneration::find($this->generationId);
         if (!$generation) {
@@ -134,6 +134,37 @@ class GenerateClassReportsJob implements ShouldQueue
             ]);
             throw $e;
         }
+    }
+
+    /**
+     * A class PDF needs room. Never lower a limit the caller already raised:
+     * the suite runs this job inside a process that may already be above 1024M.
+     */
+    private function raiseMemoryCeiling(string $floor): void
+    {
+        $current = $this->memoryLimitBytes((string) ini_get('memory_limit'));
+        $needed = $this->memoryLimitBytes($floor);
+        if ($needed !== -1 && $current !== -1 && $current < $needed) {
+            @ini_set('memory_limit', $floor);
+        }
+    }
+
+    private function memoryLimitBytes(string $limit): int
+    {
+        $limit = trim($limit);
+        if ($limit === '' || $limit === '-1') {
+            return -1;
+        }
+
+        $unit = strtolower(substr($limit, -1));
+        $number = (int) $limit;
+
+        return match ($unit) {
+            'g' => $number * 1024 * 1024 * 1024,
+            'm' => $number * 1024 * 1024,
+            'k' => $number * 1024,
+            default => (int) $limit,
+        };
     }
 
 }

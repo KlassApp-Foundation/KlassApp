@@ -336,9 +336,22 @@ class StudentReportCardService
     }
 
     /**
-     * One PDF, one report card per student. Each card is pdfForStudent(),
-     * the same view and data as the single-student download, including that
-     * student's own class and stream fees.
+     * While a class PDF is being built, each card is rendered to HTML and the
+     * class sheet is built once. The finished file is one Dompdf document, so
+     * the fonts are embedded once for the class instead of once per page.
+     */
+    private bool $collectingClassCards = false;
+
+    /** @var list<string> */
+    private array $classCardHtml = [];
+
+    /** @var array<string, ResultSheet|null>|null */
+    private ?array $classSheetCache = null;
+
+    /**
+     * One PDF, one report card per student. Each card uses the same view and
+     * data as the single-student download, including that student's own class
+     * and stream fees. The pages share one font embed.
      *
      * @param  Collection<int, User>  $learners
      */
@@ -348,12 +361,68 @@ class StudentReportCardService
         Collection $learners,
         ?int $academicTermId = null
     ): string {
-        $merger = new \iio\libmergepdf\Merger;
-        foreach ($learners as $learner) {
-            $merger->addRaw($this->pdfForStudent($schoolId, $stdLink, $learner, null, $academicTermId));
+        if ($learners->isEmpty()) {
+            throw new \RuntimeException('No learners in this class.');
         }
 
-        return $merger->merge();
+        $this->collectingClassCards = true;
+        $this->classCardHtml = [];
+        $this->classSheetCache = [];
+        try {
+            foreach ($learners as $learner) {
+                $this->pdfForStudent($schoolId, $stdLink, $learner, null, $academicTermId);
+            }
+            $cards = $this->classCardHtml;
+        } finally {
+            $this->collectingClassCards = false;
+            $this->classCardHtml = [];
+            $this->classSheetCache = null;
+        }
+
+        return $this->pdfForCards($cards);
+    }
+
+    /**
+     * @param  list<string>  $documents
+     */
+    private function pdfForCards(array $documents): string
+    {
+        $html = count($documents) === 1
+            ? $documents[0]
+            : $this->classDocument($documents);
+        unset($documents);
+
+        $pdf = Pdf::loadHTML($html);
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->output();
+    }
+
+    /**
+     * One HTML document. Each card keeps the markup the single-student view
+     * rendered. A later card starts on the next page. The card templates
+     * themselves are unchanged.
+     *
+     * @param  list<string>  $documents
+     */
+    private function classDocument(array $documents): string
+    {
+        $head = '';
+        if (preg_match('/<head\b[^>]*>(.*)<\/head>/is', $documents[0], $match) === 1) {
+            $head = $match[1];
+        }
+
+        $sheets = '';
+        foreach ($documents as $index => $document) {
+            $body = $document;
+            if (preg_match('/<body\b[^>]*>(.*)<\/body>/is', $document, $match) === 1) {
+                $body = $match[1];
+            }
+            $break = $index === 0 ? '' : 'page-break-before:always;';
+            $sheets .= '<div class="report-card-sheet" style="position:relative;'.$break.'">'.$body.'</div>';
+        }
+
+        return '<!DOCTYPE html><html lang="en"><head>'.$head.'</head><body>'.$sheets.'</body></html>';
     }
 
     public function classPdfFilename(StandardLink $stdLink): string
@@ -652,7 +721,7 @@ class StudentReportCardService
         $logoPath = $this->resolveLogoPath($schoolId);
         $schoolIdentity = $this->resolveSchoolIdentity($school);
 
-        $pdf = Pdf::loadView($view['view'], [
+        $data = [
             'subjects' => $subjects, 'learner' => $learner, 'controls' => $controls,
             'class_name' => Section::find($stdLink->section_id)->name,
             'grading_system' => $gradingSystem,
@@ -706,7 +775,14 @@ class StudentReportCardService
             'withheldSentence' => $withheldSentence,
             'sampleForApproval' => $sample,
             'printBlackAndWhite' => $printBlackAndWhite,
-        ]);
+        ];
+        if ($this->collectingClassCards) {
+            $this->classCardHtml[] = view($view['view'], $data)->render();
+
+            return '';
+        }
+
+        $pdf = Pdf::loadView($view['view'], $data);
         $pdf->setPaper('a4', 'portrait');
 
         return $pdf->output();
@@ -776,7 +852,16 @@ class StudentReportCardService
             return null;
         }
 
-        return app(ResultsService::class)->sheet(
+        $cacheKey = null;
+        if ($this->classSheetCache !== null) {
+            $cacheKey = $schoolId.'|'.$sectionId.'|'.$academicTermId.'|'.$standardId.'|'.json_encode($onlyExamTypeIds);
+            if (array_key_exists($cacheKey, $this->classSheetCache)) {
+                return $this->classSheetCache[$cacheKey];
+            }
+            $studentId = null;
+        }
+
+        $sheet = app(ResultsService::class)->sheet(
             new ResultsQuery(
                 schoolId: $schoolId,
                 sectionId: $sectionId,
@@ -786,6 +871,11 @@ class StudentReportCardService
             ),
             $this->resultsPolicy($schoolId, $standardId, $sectionId, $academicTermId),
         );
+        if ($cacheKey !== null) {
+            $this->classSheetCache[$cacheKey] = $sheet;
+        }
+
+        return $sheet;
     }
 
     /**

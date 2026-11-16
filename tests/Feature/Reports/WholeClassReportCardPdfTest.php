@@ -21,11 +21,11 @@ use App\Models\StudentAcademic;
 use App\Models\Subject;
 use App\Models\User;
 use App\Services\StudentReportCardService;
-use Dompdf\Dompdf;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\View;
 use Mockery;
 use Tests\TestCase;
 
@@ -83,6 +83,22 @@ class WholeClassReportCardPdfTest extends TestCase
             MustBeSchoolAdmin::class,
             MustBePrivilege::class,
         ]);
+
+        View::composer([
+            'admin.marks.report-templates.formal',
+            'admin.marks.report-templates.warm',
+            'admin.marks.report-templates.progressive',
+        ], function ($view): void {
+            $data = $view->getData();
+            if (! isset($data['learner'])) {
+                return;
+            }
+            $this->rendered[] = [
+                'view' => $view->name(),
+                'learner_id' => (int) $data['learner']->id,
+                'fee_names' => collect($data['fees'] ?? [])->pluck('name')->all(),
+            ];
+        });
 
         DB::table('usergroups')->upsert([
             ['id' => 3, 'name' => 'schooladmin', 'created_at' => now(), 'updated_at' => now()],
@@ -384,7 +400,7 @@ class WholeClassReportCardPdfTest extends TestCase
     private function bindReportRenderer(): void
     {
         $this->rendered = [];
-        $tiny = $this->onePagePdf();
+        $sheets = 1;
         $pdf = Mockery::mock(\Barryvdh\DomPDF\PDF::class);
         $pdf->shouldReceive('loadView')->andReturnUsing(function (string $view, array $data) use ($pdf) {
             $this->rendered[] = [
@@ -395,19 +411,29 @@ class WholeClassReportCardPdfTest extends TestCase
 
             return $pdf;
         });
+        $pdf->shouldReceive('loadHTML')->andReturnUsing(function (string $html, ?string $encoding = null) use ($pdf, &$sheets) {
+            $counted = preg_match_all('/class="report-card-sheet"/', $html);
+            $sheets = max(1, $counted);
+
+            return $pdf;
+        });
         $pdf->shouldReceive('setPaper')->andReturnSelf();
-        $pdf->shouldReceive('output')->andReturn($tiny);
+        $pdf->shouldReceive('output')->andReturnUsing(function () use (&$sheets) {
+            return $this->pdfWithPages($sheets);
+        });
         $this->app->instance('dompdf.wrapper', $pdf);
     }
 
     private function onePagePdf(): string
     {
-        $dompdf = new Dompdf;
-        $dompdf->loadHtml('<html><body><p>Report card</p></body></html>');
-        $dompdf->setPaper('A4', 'portrait');
-        $dompdf->render();
+        return $this->pdfWithPages(1);
+    }
 
-        return $dompdf->output();
+    private function pdfWithPages(int $pages): string
+    {
+        $pages = max(1, $pages);
+
+        return "%PDF-1.4\n".str_repeat("/Type /Page\n", $pages);
     }
 
     private function pageCount(string $pdf): int

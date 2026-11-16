@@ -95,6 +95,7 @@ class ReportScaleSmokeTest extends TestCase
             $path = storage_path('app/'.$generation->file_path);
             $this->assertFileExists($path);
             $this->assertGreaterThan(20000, filesize($path));
+            $this->assertLessThan(10 * 1024 * 1024, filesize($path), 'the class PDF stays under 10 MB');
             $pages = count((new Parser)->parseFile($path)->getPages());
             $this->assertSame(self::PER_CLASS, $pages, "the whole-class PDF for {$class['section']->name} has a page for every learner");
             @unlink($path);
