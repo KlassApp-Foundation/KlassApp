@@ -69,7 +69,7 @@ class OneDivisionTableTest extends TestCase
             'examType' => 2,
         ]))->assertOk()->getContent();
         $this->assertMatchesRegularExpression('/data-testid="marks-division">\s*Q\s*</', $sheet);
-        $this->assertMatchesRegularExpression('/data-testid="marks-phone-division">\s*Division Q\s*</', $sheet);
+        $this->assertMatchesRegularExpression('/data-testid="marks-phone-division">\s*Q\s*</', $sheet);
 
         $classMarks = $admin->get(route('admin.marks.classes', $ctx['section']))->assertOk()->getContent();
         $this->assertMatchesRegularExpression('/data-testid="class-marks-division">\s*Division Q\s*</', $classMarks);

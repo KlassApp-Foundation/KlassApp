@@ -227,9 +227,9 @@ class SchoolExamSetTabsTest extends TestCase
         $open = $this->cells($this->page((int) $this->sets['South Paper']->id));
         $this->assertNotEmpty($open);
         foreach ($open as $cell) {
-            $this->assertStringContainsString('—', $cell);
-            $this->assertStringNotContainsString('marks-cell-missing', $cell);
-            $this->assertStringNotContainsString('Missing', $cell);
+            $this->assertStringContainsString('data-testid="marks-cell-missing"', $cell);
+            $this->assertStringContainsString('Missing', $cell);
+            $this->assertStringNotContainsString('—', $cell);
         }
 
         $quiz = $this->cells($this->page((int) $this->sets['Quiz Hour']->id));

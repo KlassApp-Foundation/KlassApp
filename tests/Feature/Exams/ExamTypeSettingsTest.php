@@ -165,6 +165,8 @@ class ExamTypeSettingsTest extends TestCase
 
     public function test_weights_that_do_not_total_100_are_refused(): void
     {
+        $this->riverside->forceFill(['report_kind' => 'set_based'])->save();
+
         $this->actingAs($this->admin)
             ->from('/admin/settings/exam-types')
             ->post('/admin/settings/exam-types', [
@@ -181,6 +183,8 @@ class ExamTypeSettingsTest extends TestCase
 
     public function test_the_unset_form_starts_with_the_last_set_counting(): void
     {
+        $this->riverside->forceFill(['report_kind' => 'set_based'])->save();
+
         $raw = $this->actingAs($this->admin)->get('/admin/settings/exam-types')->assertOk()->getContent();
         $scripts = strpos($raw, '<!-- Scripts -->');
         $listener = strpos($raw, "document.addEventListener('DOMContentLoaded', function () {\n    var form = document.querySelector('[data-testid=\"report-composition-form\"]');");
@@ -220,6 +224,8 @@ class ExamTypeSettingsTest extends TestCase
 
     public function test_a_school_renames_a_starter_set_and_the_catalog_row_stays(): void
     {
+        $this->riverside->forceFill(['report_kind' => 'set_based'])->save();
+
         $this->actingAs($this->admin)
             ->get('/admin/settings/exam-types')
             ->assertOk()
@@ -259,9 +265,12 @@ class ExamTypeSettingsTest extends TestCase
         $head = $this->makeUser($this->riverside, 4, 'Riverside Head');
         $otherHead = $this->makeUser($this->other, 4, 'Other Head');
         $teacher = $this->makeUser($this->riverside, 5, 'Riverside Teacher');
+        $this->riverside->forceFill(['report_kind' => 'set_based'])->save();
+        $this->other->forceFill(['report_kind' => 'set_based'])->save();
 
         $this->actingAs($teacher)->get('/admin/settings/exam-types')->assertNotFound();
-        $this->actingAs($head)->get('/admin/settings/generalsettings')->assertNotFound();
+        // Platform branding is closed for every role. Exam-type settings stay open.
+        $this->actingAs($head)->get('/admin/settings/generalsettings')->assertForbidden();
 
         $this->actingAs($head)
             ->post('/admin/settings/exam-types', [

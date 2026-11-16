@@ -75,7 +75,17 @@ final class ResultsService
 
         $school = School::query()->find($query->schoolId);
         $preferences = $school?->exam_type_preferences;
-        $composition = $school?->report_composition;
+        // A released class keeps the mix stored on that release. A school
+        // that has not saved one, and has no release yet, keeps each set's flag.
+        $composer = app(ReportComposition::class);
+        $releasedMix = $composer->forTermReport(
+            $query->schoolId,
+            $query->sectionId,
+            (int) $term->id,
+        );
+        $schoolMix = $composer->resolved($school);
+        $mixIsFromRelease = $releasedMix !== [] && $releasedMix !== $schoolMix;
+        $composition = $releasedMix === [] ? null : $releasedMix;
         $typeMeta = $this->typeMeta($exams, $preferences, $composition);
         $marks = $this->marksFor($query->schoolId, $exams);
         $chosen = $this->choose($exams, $marks);
@@ -113,7 +123,7 @@ final class ResultsService
 
         // A weighted set that has not been released must not leak into the
         // combined mark. The screen and the card name it and show no partial.
-        $unreleasedWeightedSets = $weights === []
+        $unreleasedWeightedSets = ($weights === [] || $mixIsFromRelease)
             ? []
             : $this->unreleasedWeightedNames($query, $typeMeta, $weights, $exams);
         $withholdCombined = $unreleasedWeightedSets !== [];
@@ -131,9 +141,6 @@ final class ResultsService
 
         $sittings = [];
         foreach ($this->sittingPlans($exams, $policy->splitMidTermByMonth, $preferences, $term) as $plan) {
-            if ($query->examTypeId === null && ! ($typeMeta[$plan['typeId']]['included'] ?? true)) {
-                continue;
-            }
             if ($policy->countMissingAsZero && ! isset($activeTypes[$plan['typeId']])) {
                 continue;
             }
@@ -208,6 +215,7 @@ final class ResultsService
      */
     private function typeMeta(Collection $exams, ?array $preferences, ?array $composition = null): array
     {
+        $composer = app(ReportComposition::class);
         $types = [];
         foreach ($exams as $exam) {
             $type = $exam->examType;
@@ -215,12 +223,17 @@ final class ResultsService
                 continue;
             }
             $settings = $composition[(string) $type->id] ?? $composition[(int) $type->id] ?? [];
+            $catalog = $this->examTypeContribution->contributes($type, $preferences);
+            $contributes = ($composition === null || $composition === [])
+                ? $catalog
+                : $composer->countsToward($composition, (int) $type->id, $catalog);
             $types[(int) $type->id] = [
                 'id' => (int) $type->id,
                 'name' => (string) $type->name,
                 'code' => (string) ($type->code ?? ''),
-                'contributes' => $this->examTypeContribution->contributes($type, $preferences),
-                'included' => ($settings['include'] ?? true) === false ? false : (bool) ($settings['include'] ?? true),
+                'contributes' => $contributes,
+                // A set that stands alone stays on the sheet. It is out of the total.
+                'included' => true,
                 'weight' => isset($settings['weight']) && is_numeric($settings['weight']) && (float) $settings['weight'] > 0
                     ? (float) $settings['weight']
                     : null,

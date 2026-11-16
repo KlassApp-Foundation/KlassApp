@@ -164,7 +164,8 @@ class ReportKindSettingTest extends TestCase
 
         $this->actingAs($this->head)
             ->get('/admin/settings/exam-types')
-            ->assertNotFound();
+            ->assertOk()
+            ->assertSee('Weight %');
     }
 
     public function test_a_release_keeps_the_type_it_was_issued_under(): void

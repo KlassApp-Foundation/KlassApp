@@ -106,7 +106,7 @@ class MarksReleaseController extends Controller
         }
     }
 
-    private function storeRelease(Request $request): RedirectResponse
+    private function storeRelease(Request $request): RedirectResponse|View
     {
         $user = $this->user();
         $data = $this->validated($request);

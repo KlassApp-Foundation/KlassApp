@@ -135,12 +135,12 @@ class ClassReportScreen
             'blocked_sets' => $blocked,
         ];
 
-        if ($blocked !== []) {
-            return $base + ['state' => 'blocked', 'rows' => [], 'subjects' => [], 'kpis' => null, 'divisions' => [], 'subject_averages' => [], 'generations' => []];
-        }
-
         if ($releasedLinks === []) {
             return $base + ['state' => 'unreleased', 'rows' => [], 'subjects' => [], 'kpis' => null, 'divisions' => [], 'subject_averages' => [], 'generations' => []];
+        }
+
+        if ($blocked !== []) {
+            return $base + ['state' => 'blocked', 'rows' => [], 'subjects' => [], 'kpis' => null, 'divisions' => [], 'subject_averages' => [], 'generations' => []];
         }
 
         $sheet = $this->results->sheet(new ResultsQuery(

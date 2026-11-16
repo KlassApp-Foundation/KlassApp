@@ -76,7 +76,7 @@ class ResultsServiceTest extends TestCase
             $row = $sheet->student($student->id);
             $this->assertNotNull($row);
             $this->assertSame(70.0, $row->cell($ctx['english']->id)->mark);
-            $this->assertSame('9', $row->cell($ctx['english']->id)->grade);
+            $this->assertSame('F9', $row->cell($ctx['english']->id)->grade);
             $this->assertSame(9, $row->cell($ctx['english']->id)->points);
             $this->assertSame('marked', $row->cell($ctx['maths']->id)->status);
             $this->assertSame(125.0, $row->total);
@@ -103,7 +103,7 @@ class ResultsServiceTest extends TestCase
         $this->mark($ctx, $english, $ctx['english'], $absent, 80, 'stored');
         $this->mark($ctx, $maths, $ctx['maths'], $absent, 0, 'ABS');
 
-        $sheet = $this->sheet($ctx, $term, $this->policy(absent: ['ABS']));
+        $sheet = $this->sheet($ctx, $term, $this->policy(absent: ['ABS'], countMissingAsZero: true));
 
         $partialRow = $sheet->student($partial->id);
         $this->assertSame('missing', $partialRow->cell($ctx['maths']->id)->status);
@@ -746,7 +746,7 @@ class ResultsServiceTest extends TestCase
         }
     }
 
-    private function policy(?string $basis = null, ?bool $higher = null, int $decimals = 0, array $absent = [], bool $splitMidTermByMonth = false): ResultsPolicy
+    private function policy(?string $basis = null, ?bool $higher = null, int $decimals = 0, array $absent = [], bool $splitMidTermByMonth = false, bool $countMissingAsZero = false): ResultsPolicy
     {
         return new ResultsPolicy(
             app(GradingScale::class),
@@ -757,6 +757,7 @@ class ResultsServiceTest extends TestCase
             $decimals,
             $absent,
             $splitMidTermByMonth,
+            $countMissingAsZero,
         );
     }
 

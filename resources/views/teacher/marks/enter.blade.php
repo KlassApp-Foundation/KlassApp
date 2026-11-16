@@ -203,10 +203,7 @@
                         $learnerName = (string) $student->name;
                     }
                     $streamLabel = (string) ($student->stream_label ?? '');
-                    $meta = trim((string) ($student->registration_number ?? ''));
-                    if ($streamLabel !== '') {
-                        $meta = $meta === '' ? $streamLabel : $meta.' · '.$streamLabel;
-                    }
+                    $registrationNumber = trim((string) ($student->registration_number ?? ''));
                     if ($isBlank) {
                         $entryState = 'blank';
                         $statusLabel = 'Not entered';
@@ -228,8 +225,15 @@
                 <div class="ka-entry-row" data-state="{{ $entryState }}" data-learner="{{ $student->id }}" data-testid="mark-student-{{ $student->id }}">
                     <div class="ka-entry-who">
                         <div class="ka-learner-name">{{ $learnerName }}</div>
-                        @if($meta !== '')
-                            <div class="ka-entry-meta" data-testid="mark-kls">{{ $meta }}</div>
+                        @if($registrationNumber !== '' || $streamLabel !== '')
+                            <div class="ka-entry-meta" data-testid="mark-kls">
+                                @if($registrationNumber !== '')
+                                    {{ $registrationNumber }}@if($streamLabel !== '') · @endif
+                                @endif
+                                @if($streamLabel !== '')
+                                    <span data-testid="mark-stream-{{ $student->id }}">{{ $streamLabel }}</span>
+                                @endif
+                            </div>
                         @endif
                         <div class="ka-entry-status" data-entry-status>
                             @if($entryState === 'saved' || $entryState === 'absent')

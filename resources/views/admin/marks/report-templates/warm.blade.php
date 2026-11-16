@@ -245,6 +245,9 @@
         </tr>
     </table>
     <div class="ribbon">PROGRESSIVE REPORT</div>
+    @if (!empty($compositionLine ?? null))
+    <div class="doc-sub" data-testid="eot-composition">{{ $compositionLine }}</div>
+    @endif
 </div>
 
 <div class="page">

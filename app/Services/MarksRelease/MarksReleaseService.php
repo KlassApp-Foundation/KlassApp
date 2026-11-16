@@ -73,8 +73,6 @@ final class MarksReleaseService
 
     public const USERGROUP_TEACHER = 5;
 
-    public const USERGROUP_HEAD_TEACHER = 4;
-
     /** @var array<int, true> release ids whose demo webhook was already posted */
     private array $demoWebhookRecorded = [];
 

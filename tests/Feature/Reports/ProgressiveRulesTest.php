@@ -152,7 +152,7 @@ class ProgressiveRulesTest extends TestCase
         foreach ($bands as $index => $band) {
             $payload[$index] = [
                 'grade' => $band->grade,
-                'points' => (string) $band->grade === '3' ? 1 : $band->points,
+                'points' => (string) $band->grade === 'C3' ? 1 : $band->points,
                 'min_score' => $band->min_score,
                 'max_score' => $band->max_score,
                 'remark' => $band->remark,
@@ -171,7 +171,7 @@ class ProgressiveRulesTest extends TestCase
         $this->assertSame(1, (int) SchoolGradingSystem::query()
             ->where('school_id', $this->school->id)
             ->where('standard_id', $this->standard->id)
-            ->where('grade', '3')
+            ->where('grade', 'C3')
             ->value('points'));
         $this->assertNull($this->standard->fresh()->ranking_basis);
     }

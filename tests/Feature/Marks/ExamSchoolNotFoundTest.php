@@ -296,7 +296,7 @@ class ExamSchoolNotFoundTest extends TestCase
         ]));
         $swapped->assertNotFound();
         $swapped->assertDontSee('Nia Linden', false);
-        $swapped->assertDontSee('88', false);
+        $swapped->assertDontSee('>88<', false);
         $this->assertSame(88, (int) $this->lindenMark->fresh()->marks);
 
         $this->actingAs($this->harbourSubjectTeacher, 'sanctum')

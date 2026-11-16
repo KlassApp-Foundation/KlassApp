@@ -4,6 +4,7 @@ namespace Tests\Support;
 
 use App\Models\Academics\Exam;
 use App\Models\MarksRelease;
+use App\Services\Reports\ReportScoring;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -22,6 +23,7 @@ final class ReleasedExam
             'released_at' => now(),
             'status' => MarksRelease::STATUS_RELEASED,
             'timezone' => 'UTC',
+            'scoring_rule' => ReportScoring::MISSING_AS_ZERO,
         ]);
     }
 
@@ -36,6 +38,7 @@ final class ReleasedExam
             'released_at' => now(),
             'status' => MarksRelease::STATUS_RELEASED,
             'timezone' => 'UTC',
+            'scoring_rule' => ReportScoring::MISSING_AS_ZERO,
         ]);
     }
 

@@ -108,10 +108,10 @@ class ProgressiveHeadingsTest extends TestCase
 
         $html = view('admin.marks.report-templates.formal', $captured)->render();
         $monthly = strpos($html, 'MONTHLY RESULTS');
-        $opening = strpos($html, 'Opening paper');
-        $practice = strpos($html, 'Practice paper');
+        $opening = $monthly === false ? false : strpos($html, '<th>Opening paper</th>', $monthly);
+        $practice = $monthly === false ? false : strpos($html, '<th>Practice paper</th>', $monthly);
         $end = strpos($html, 'END OF TERM');
-        $closing = strpos($html, 'Closing paper');
+        $closing = $end === false ? false : strpos($html, '<th>Closing paper</th>', $end);
         $this->assertNotFalse($monthly);
         $this->assertNotFalse($opening);
         $this->assertTrue($monthly < $opening && $opening < $practice && $practice < $end && $end < $closing);
@@ -324,9 +324,9 @@ class ProgressiveHeadingsTest extends TestCase
         $this->assertSame(['Closing paper'], array_column($captured['termSets'], 'label'));
 
         $html = view('admin.marks.report-templates.formal', $captured)->render();
-        $earlier = strpos($html, 'Earlier paper');
-        $twin = strpos($html, 'Twin paper');
-        $later = strpos($html, 'Later paper');
+        $earlier = strpos($html, '<th>Earlier paper</th>');
+        $twin = strpos($html, '<th>Twin paper</th>');
+        $later = strpos($html, '<th>Later paper</th>');
         $this->assertNotFalse($earlier);
         $this->assertTrue($earlier < $twin && $twin < $later);
 

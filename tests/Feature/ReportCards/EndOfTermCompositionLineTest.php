@@ -7,6 +7,7 @@ use App\Models\Academics\Marks;
 use App\Models\MarksRelease;
 use App\Models\Subject;
 use App\Services\ReportCards\EndOfTermCompositionLine;
+use App\Services\Results\ResultCell;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -231,6 +232,16 @@ class EndOfTermCompositionLineTest extends TestCase
             'headTeacherComment' => '',
             'nextTerm' => null,
             'compositionLine' => 'Made up of: Mid Term 30% · End of Term 70%',
+            'countMissingAsZero' => true,
+            'monthlySets' => [],
+            'termSets' => [[
+                'label' => 'End of Term',
+                'total' => null,
+                'aggregate' => null,
+                'cells' => [
+                    $subject->id => new ResultCell((int) $subject->id, null, 'F9', 9, ResultCell::ABSENT),
+                ],
+            ]],
         ];
 
         foreach (['admin.marks.report-templates.formal', 'admin.marks.report-templates.warm'] as $view) {

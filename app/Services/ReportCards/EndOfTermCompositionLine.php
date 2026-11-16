@@ -7,6 +7,7 @@ use App\Models\Academics\ExamType;
 use App\Models\Academics\Marks;
 use App\Models\MarksRelease;
 use App\Models\School;
+use App\Models\Section;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -91,16 +92,28 @@ final class EndOfTermCompositionLine
             ->get()
             ->keyBy(fn (ExamType $type): int => (int) $type->id);
 
-        $released = array_fill_keys(
-            MarksRelease::query()
-                ->where('school_id', $schoolId)
-                ->where('status', MarksRelease::STATUS_RELEASED)
-                ->whereIn('exam_id', $exams->pluck('id')->all() ?: [0])
-                ->pluck('exam_id')
-                ->map(fn ($id) => (int) $id)
-                ->all(),
-            true,
-        );
+        // One release covers the whole exam set (every subject), not the single
+        // subject exam it is anchored on. A school release covers every class.
+        // A class release covers that class, including its streams.
+        $releasedTypes = [];
+        $releases = MarksRelease::query()
+            ->where('school_id', $schoolId)
+            ->where('status', MarksRelease::STATUS_RELEASED)
+            ->whereHas('exam', function ($query) use ($schoolId, $termId): void {
+                $query->where('school_id', $schoolId)
+                    ->where('academic_term_id', $termId)
+                    ->whereNull('deleted_at')
+                    ->whereNotNull('exam_type_id');
+            })
+            ->with(['exam:id,school_id,exam_type_id,academic_term_id,section_id', 'standardLink:id,section_id'])
+            ->get();
+        foreach ($releases as $release) {
+            $anchor = $release->exam;
+            if ($anchor === null || ! $this->releaseCoversSection($release, $schoolId, $sectionId)) {
+                continue;
+            }
+            $releasedTypes[(int) $anchor->exam_type_id] = true;
+        }
 
         $blocked = [];
         $seen = [];
@@ -109,23 +122,21 @@ final class EndOfTermCompositionLine
             if (isset($seen[$typeId]) || ! $types->has($typeId)) {
                 continue;
             }
+            $seen[$typeId] = true;
             $type = $types->get($typeId);
-            if (! $this->countsToward($type, $mix)) {
-                $seen[$typeId] = true;
-
+            if (! $this->countsToward($type, $mix) || isset($releasedTypes[$typeId])) {
                 continue;
             }
-            $seen[$typeId] = true;
-            $openIds = $exams
-                ->filter(fn (Exam $row): bool => (int) $row->exam_type_id === $typeId && ! isset($released[(int) $row->id]))
+            $typeExamIds = $exams
+                ->filter(fn (Exam $row): bool => (int) $row->exam_type_id === $typeId)
                 ->map(fn (Exam $row): int => (int) $row->id)
                 ->all();
-            if ($openIds === []) {
+            if ($typeExamIds === []) {
                 continue;
             }
             $hasMark = Marks::query()
                 ->where('school_id', $schoolId)
-                ->whereIn('exam_id', $openIds)
+                ->whereIn('exam_id', $typeExamIds)
                 ->where(function ($query): void {
                     $query->whereNotNull('marks')->orWhere('absent', true);
                 })
@@ -136,6 +147,39 @@ final class EndOfTermCompositionLine
         }
 
         return $blocked;
+    }
+
+    /**
+     * A school release covers this class. A class release covers this class
+     * when its link is this section or a stream of the same class.
+     */
+    private function releaseCoversSection(MarksRelease $release, int $schoolId, int $sectionId): bool
+    {
+        if ($release->scope === 'school') {
+            return true;
+        }
+        if ($release->scope !== 'class') {
+            return false;
+        }
+
+        $linkSection = (int) ($release->standardLink?->section_id ?? 0);
+        if ($linkSection < 1) {
+            return false;
+        }
+        if ($linkSection === $sectionId) {
+            return true;
+        }
+
+        $sections = Section::query()->where('school_id', $schoolId)->whereIn('id', [$linkSection, $sectionId])->get();
+        if ($sections->count() < 2) {
+            return false;
+        }
+
+        $structure = app(\App\Services\ClassStructureService::class);
+        $linkBase = (int) $structure->resolveBaseSection($sections->firstWhere('id', $linkSection))->id;
+        $classBase = (int) $structure->resolveBaseSection($sections->firstWhere('id', $sectionId))->id;
+
+        return $linkBase === $classBase;
     }
 
     /**
@@ -407,8 +451,26 @@ final class EndOfTermCompositionLine
             ->unique()
             ->values();
 
+        $startedTypeIds = Exam::query()
+            ->where('school_id', $schoolId)
+            ->where('section_id', $exam->section_id)
+            ->where('academic_term_id', $exam->academic_term_id)
+            ->whereNull('deleted_at')
+            ->whereIn('id', Marks::query()
+                ->where('school_id', $schoolId)
+                ->where(function ($query): void {
+                    $query->whereNotNull('marks')->orWhere('absent', true);
+                })
+                ->select('exam_id'))
+            ->pluck('exam_type_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
         $names = [];
         foreach ($typeIds as $typeId) {
+            if (! in_array($typeId, $startedTypeIds, true)) {
+                continue;
+            }
             $type = ExamType::query()->visibleToSchool($schoolId)->whereKey($typeId)->first();
             if ($type !== null && (bool) $type->contributes_to_report_total) {
                 $names[] = trim((string) $type->name);

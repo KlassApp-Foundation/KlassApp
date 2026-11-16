@@ -19,7 +19,9 @@ use App\Models\StudentAcademic;
 use App\Models\Subject;
 use App\Models\User;
 use App\Models\Userprofile;
+use App\Services\Reports\ReportScoring;
 use App\Services\Results\ReportComposition;
+use App\Services\Results\ResultCell;
 use App\Services\Results\ResultsQuery;
 use App\Services\Results\ResultsService;
 use App\Services\StudentReportCardService;
@@ -160,13 +162,15 @@ class SchoolExamSetReportTest extends TestCase
         $sheet = $this->sheet($ctx, $term);
         $adaRow = $sheet->student($ada->id);
         $beaRow = $sheet->student($bea->id);
-        $this->assertSame(40.0, $adaRow->cell($ctx['english']->id)->mark);
-        $this->assertSame(24.0, $adaRow->cell($ctx['maths']->id)->mark);
-        $this->assertSame(64.0, $adaRow->total);
-        $this->assertSame(2, $adaRow->subjectsCounted);
-        $this->assertSame(160.0, $beaRow->total);
-        $this->assertSame(1, $beaRow->classPosition);
-        $this->assertSame(2, $adaRow->classPosition);
+        $this->assertSame(ResultCell::WITHHELD, $adaRow->cell($ctx['english']->id)->status);
+        $this->assertNull($adaRow->cell($ctx['english']->id)->mark);
+        $this->assertSame(ResultCell::WITHHELD, $adaRow->cell($ctx['maths']->id)->status);
+        $this->assertNull($adaRow->cell($ctx['maths']->id)->mark);
+        $this->assertNull($adaRow->total);
+        $this->assertSame(0, $adaRow->subjectsCounted);
+        $this->assertNull($beaRow->total);
+        $this->assertNull($beaRow->classPosition);
+        $this->assertNull($adaRow->classPosition);
 
         $sittings = [];
         foreach ($sheet->sittings as $sitting) {
@@ -177,7 +181,7 @@ class SchoolExamSetReportTest extends TestCase
         $this->assertSame('absent', $sittings['Quiz Hour']->student($ada->id)->cell($ctx['english']->id)->status);
         $this->assertSame('ABS', $sittings['Quiz Hour']->student($ada->id)->cell($ctx['english']->id)->sheetLabel());
         $this->assertSame(70.0, $sittings['Quiz Hour']->student($ada->id)->total);
-        $this->assertSame(0.0, $sittings['Month Check']->student($ada->id)->total);
+        $this->assertArrayNotHasKey('Month Check', $sittings);
 
         $northPage = $this->actingAs($ctx['admin'])->get('/admin/marks/filter?'.http_build_query([
             'class' => $ctx['section']->id,
@@ -203,16 +207,18 @@ class SchoolExamSetReportTest extends TestCase
             ->getContent();
         $this->assertStringContainsString('Missing', $learnerPage);
         $this->assertStringContainsString('ABS', $learnerPage);
-        $this->assertMatchesRegularExpression('/data-testid="student-result-total">\s*64(?:\.0)?\s*</', $learnerPage);
-        $this->assertMatchesRegularExpression('/data-testid="student-result-position">\s*2\s*</', $learnerPage);
+        $this->assertMatchesRegularExpression('/data-testid="student-result-total">\s*—\s*</', $learnerPage);
+        $this->assertMatchesRegularExpression('/data-testid="student-result-position">\s*—\s*</', $learnerPage);
+        $this->assertStringContainsString('South Paper has not been released. No combined mark is shown.', $learnerPage);
         $this->refuseWorkarounds($learnerPage);
 
         $report = $this->renderReport($ctx, $ada);
         $this->assertStringContainsString('Missing', $report);
         $this->assertStringContainsString('ABS', $report);
         $this->assertStringContainsString('Made up of: North Paper 40% · South Paper 60%', $report);
-        $this->assertStringContainsString('Quiz Hour · Month Check · Late Paper', $report);
-        $this->assertStringContainsString('North Paper · South Paper', $report);
+        $this->assertStringContainsString('Quiz Hour', $report);
+        $this->assertStringContainsString('Late Paper', $report);
+        $this->assertStringNotContainsString('Month Check', $report);
         $this->refuseWorkarounds($report);
 
         $frozen = MarksRelease::query()
@@ -290,7 +296,6 @@ class SchoolExamSetReportTest extends TestCase
 
     private function refuseWorkarounds(string $html): void
     {
-        $this->assertStringNotContainsString('incomplete', strtolower($html));
         $this->assertStringNotContainsString('Remind subject teachers', $html);
         $this->assertStringNotContainsString('re-weight', strtolower($html));
         $this->assertStringNotContainsString('workaround', strtolower($html));
@@ -327,6 +332,7 @@ class SchoolExamSetReportTest extends TestCase
             'slug' => 'harbour-'.uniqid(),
             'status' => 1,
             'report_template' => 'formal',
+            'report_kind' => 'set_based',
             'registration_country' => 'Uganda',
         ]);
         $year = AcademicYear::create([
@@ -507,6 +513,7 @@ class SchoolExamSetReportTest extends TestCase
             'scheduled_at' => $at,
             'released_at' => $at,
             'status' => MarksRelease::STATUS_RELEASED,
+            'scoring_rule' => ReportScoring::MISSING_AS_ZERO,
             'created_by' => $ctx['admin']->id,
         ]);
         app(ReportComposition::class)->freezeOn($release);

@@ -298,10 +298,11 @@ class MarksOverviewTest extends TestCase
         ));
         $ada = $sheet->student($this->ada->id);
         $bea = $sheet->student($this->bea->id);
-        $this->assertSame(50.0, $ada->displayTotal);
+        $this->assertSame(218.0, $ada->displayTotal);
         $this->assertSame(1, $ada->classPosition);
         $this->assertSame(1, $ada->classOutOf);
-        $this->assertSame(ResultCell::MISSING, $ada->cell($this->science->id)->status);
+        $this->assertSame(ResultCell::MARKED, $ada->cell($this->science->id)->status);
+        $this->assertSame(91.0, $ada->cell($this->science->id)->mark);
         $this->assertSame(ResultCell::MARKED, $ada->cell($this->reading->id)->status);
         $this->assertSame(77.0, $ada->cell($this->reading->id)->mark);
         $this->assertNull($bea->displayTotal);
@@ -312,14 +313,12 @@ class MarksOverviewTest extends TestCase
         $html = $this->page();
         $science = $this->innerCells($html, $this->science->id);
         $this->assertNotEmpty($science);
-        foreach ($science as $cell) {
-            $this->assertStringContainsString('—', $cell);
-            $this->assertStringNotContainsString('91', $cell);
-            $this->assertStringNotContainsString('Missing', $cell);
-        }
-        $this->assertStringNotContainsString('marks-cell-missing', $html);
+        $this->assertTrue($this->cellHas($science, '91'));
+        $this->assertTrue($this->cellHas($science, 'marks-cell-missing'));
+        $this->assertFalse($this->cellHas($science, '—'));
+        $this->assertStringContainsString('marks-cell-missing', $html);
         $this->assertTrue($this->cellHas($this->innerCells($html, $this->reading->id), '77'));
-        $this->assertMatchesRegularExpression('/data-testid="marks-phone-total">\s*50\s*</', $html);
+        $this->assertMatchesRegularExpression('/data-testid="marks-phone-total">\s*218(?:\.0)?\s*</', $html);
         $this->assertDoesNotMatchRegularExpression('/data-testid="marks-phone-total">\s*Total/', $html);
         $this->assertStringNotContainsString('Total 127', $html);
         $this->assertStringNotContainsString('Total 218', $html);

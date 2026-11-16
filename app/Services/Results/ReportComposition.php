@@ -683,6 +683,73 @@ final class ReportComposition
     }
 
     /**
+     * One combined-report row for the current term, with a component for
+     * each exam set. A later save replaces the components. It does not
+     * add a second report.
+     *
+     * @param  array<int|string, mixed>  $composition
+     */
+    public function syncCombinedReport(School $school, array $composition): void
+    {
+        if (! \Illuminate\Support\Facades\Schema::hasTable('combined_reports')
+            || ! \Illuminate\Support\Facades\Schema::hasTable('combined_report_components')) {
+            return;
+        }
+
+        $termId = DB::table('academic_terms')
+            ->where('school_id', $school->id)
+            ->where('status', 'current')
+            ->orderByDesc('id')
+            ->value('id');
+        $termId = $termId === null ? null : (int) $termId;
+        $now = now();
+        $existing = DB::table('combined_reports')
+            ->where('school_id', $school->id)
+            ->where('name', 'Term report')
+            ->when(
+                $termId === null,
+                fn ($query) => $query->whereNull('academic_term_id'),
+                fn ($query) => $query->where('academic_term_id', $termId),
+            )
+            ->orderByDesc('id')
+            ->first();
+
+        if ($existing === null) {
+            $reportId = DB::table('combined_reports')->insertGetId([
+                'school_id' => $school->id,
+                'academic_term_id' => $termId,
+                'name' => 'Term report',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        } else {
+            $reportId = (int) $existing->id;
+            DB::table('combined_reports')->where('id', $reportId)->update(['updated_at' => $now]);
+            DB::table('combined_report_components')->where('combined_report_id', $reportId)->delete();
+        }
+
+        $rows = [];
+        foreach ($composition as $key => $settings) {
+            if (! is_numeric($key) || ! is_array($settings)) {
+                continue;
+            }
+            $counts = ($settings['include'] ?? false) === true;
+            $weight = $settings['weight'] ?? null;
+            $rows[] = [
+                'combined_report_id' => $reportId,
+                'exam_type_id' => (int) $key,
+                'mode' => $counts ? 'count' : 'alone',
+                'weight' => $counts && is_numeric($weight) ? $weight : null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+        if ($rows !== []) {
+            DB::table('combined_report_components')->insert($rows);
+        }
+    }
+
+    /**
      * Copy of each set's contributes flag at the moment of release.
      * Locked so a later settings change does not move a released report.
      * Weights stay empty: several counting sets keep today's unweighted total.

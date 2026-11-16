@@ -788,6 +788,24 @@ class StudentReportCardService
             $reportSectionIds,
             (int) $exam->academic_term_id,
         );
+        $startedTypeIds = Exam::query()
+            ->where('school_id', $schoolId)
+            ->whereIn('section_id', $reportSectionIds === [] ? [0] : $reportSectionIds)
+            ->where('academic_term_id', (int) $exam->academic_term_id)
+            ->whereNull('deleted_at')
+            ->whereIn('id', Marks::query()
+                ->where('school_id', $schoolId)
+                ->where(function ($query): void {
+                    $query->whereNotNull('marks')->orWhere('absent', true);
+                })
+                ->select('exam_id'))
+            ->pluck('exam_type_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+        $ownReports = array_values(array_filter(
+            $ownReports,
+            fn (array $own): bool => in_array((int) ($own['id'] ?? 0), $startedTypeIds, true),
+        ));
         $logoPath = $this->resolveLogoPath($schoolId);
         $schoolIdentity = $this->resolveSchoolIdentity($school);
 

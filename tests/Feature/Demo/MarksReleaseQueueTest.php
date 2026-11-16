@@ -172,7 +172,9 @@ class MarksReleaseQueueTest extends TestCase
             ->assertSessionHas('status', 'Queued 50 messages. Refresh this page to see each one sent.');
         $this->assertLessThan(5.0, $elapsed);
         $this->assertSame([], $this->outbound(), 'Nothing is sent inside the request.');
-        $this->assertSame(50, DB::table('jobs')->count());
+        $payloads = DB::table('jobs')->pluck('payload');
+        $this->assertSame(50, $payloads->filter(fn ($payload) => str_contains((string) $payload, 'SendMarksReleaseMessage'))->count());
+        $this->assertSame(1, $payloads->filter(fn ($payload) => str_contains((string) $payload, 'SendDemoMarksReleaseWebhook'))->count());
         $this->assertSame(50, $release->result['queued']);
         $this->assertSame(0, $release->result['sent']);
 

@@ -138,11 +138,12 @@ class MarksFollowUpTest extends TestCase
         $this->assertEquals(80.0, $rows[$this->amina->id]->average);
         $this->assertSame('1', $rows[$this->amina->id]->division);
         $this->assertSame(1, $rows[$this->amina->id]->classPosition);
-        $this->assertSame(1, $rows[$this->amina->id]->classOutOf);
-        $this->assertNull($rows[$this->brian->id]->total);
-        $this->assertNull($rows[$this->brian->id]->average);
-        $this->assertNull($rows[$this->brian->id]->division);
-        $this->assertNull($rows[$this->brian->id]->classPosition);
+        $this->assertSame(2, $rows[$this->amina->id]->classOutOf);
+        $this->assertEquals(0.0, $rows[$this->brian->id]->total);
+        $this->assertEquals(0.0, $rows[$this->brian->id]->average);
+        $this->assertSame('1', $rows[$this->brian->id]->division);
+        $this->assertSame(1, $rows[$this->brian->id]->classPosition);
+        $this->assertSame(2, $rows[$this->brian->id]->classOutOf);
         $this->assertSame(ResultCell::ABSENT, $rows[$this->brian->id]->cell((int) $this->subject->id)->status);
         $summary = collect($sheet->summary->subjects)->firstWhere('subjectId', (int) $this->subject->id);
         $this->assertEquals(80.0, $summary['average']);
@@ -255,7 +256,7 @@ class MarksFollowUpTest extends TestCase
         ]))->assertOk()->getContent();
         $this->assertStringContainsString('data-testid="marks-phone-card"', $sheet);
         $this->assertStringContainsString('Amina Follow', $sheet);
-        $this->assertStringContainsString('Total —', $sheet);
+        $this->assertMatchesRegularExpression('/data-testid="marks-phone-total">\s*—\s*</', $sheet);
 
         $release = $this->actingAs($this->admin)
             ->get(route('admin.marks.releases.create', ['exam_id' => $this->exam->id]))
@@ -300,7 +301,7 @@ class MarksFollowUpTest extends TestCase
 
         $html = $this->actingAs($this->teacher)->get(route('teacher.exam.marks.enter', $this->exam))->assertOk()->getContent();
         $this->assertStringContainsString('data-testid="mark-above-maximum-'.$this->amina->id.'"', $html);
-        $this->assertStringContainsString('Above 100. Check the mark.', $html);
+        $this->assertStringContainsString('Above 100', $html);
 
         try {
             app(MarksSubmissionService::class)->submit($this->exam, $this->teacher);

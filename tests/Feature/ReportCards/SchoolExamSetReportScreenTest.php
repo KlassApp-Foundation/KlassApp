@@ -387,6 +387,16 @@ class SchoolExamSetReportScreenTest extends TestCase
             'headTeacherComment' => '',
             'nextTerm' => null,
             'compositionLine' => $line,
+            'countMissingAsZero' => true,
+            'monthlySets' => [],
+            'termSets' => [[
+                'label' => 'North Paper',
+                'total' => 90,
+                'aggregate' => null,
+                'cells' => [
+                    $subject->id => new ResultCell((int) $subject->id, null, 'F9', 9, ResultCell::MISSING),
+                ],
+            ]],
         ];
     }
 

@@ -7,6 +7,7 @@ use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\Academics\Exam;
 use App\Models\Academics\Marks;
+use App\Models\Academics\SchoolGradingSystem;
 use App\Models\School;
 use App\Models\Section;
 use App\Models\Standard;
@@ -38,15 +39,15 @@ class ProgressiveParityTest extends TestCase
 
     /** @var list<array{grade: string, points: int, min: int, max: int}> */
     private const BANDS = [
-        ['grade' => '1', 'points' => 1, 'min' => 95, 'max' => 100],
-        ['grade' => '2', 'points' => 2, 'min' => 85, 'max' => 94],
-        ['grade' => '3', 'points' => 3, 'min' => 75, 'max' => 84],
-        ['grade' => '4', 'points' => 4, 'min' => 65, 'max' => 74],
-        ['grade' => '5', 'points' => 5, 'min' => 60, 'max' => 64],
-        ['grade' => '6', 'points' => 6, 'min' => 50, 'max' => 59],
-        ['grade' => '7', 'points' => 7, 'min' => 45, 'max' => 49],
-        ['grade' => '8', 'points' => 8, 'min' => 40, 'max' => 44],
-        ['grade' => '9', 'points' => 9, 'min' => 0, 'max' => 39],
+        ['grade' => 'D1', 'points' => 1, 'min' => 95, 'max' => 100],
+        ['grade' => 'D2', 'points' => 2, 'min' => 85, 'max' => 94],
+        ['grade' => 'C3', 'points' => 3, 'min' => 75, 'max' => 84],
+        ['grade' => 'C4', 'points' => 4, 'min' => 65, 'max' => 74],
+        ['grade' => 'C5', 'points' => 5, 'min' => 60, 'max' => 64],
+        ['grade' => 'C6', 'points' => 6, 'min' => 50, 'max' => 59],
+        ['grade' => 'P7', 'points' => 7, 'min' => 45, 'max' => 49],
+        ['grade' => 'P8', 'points' => 8, 'min' => 40, 'max' => 44],
+        ['grade' => 'F9', 'points' => 9, 'min' => 0, 'max' => 39],
     ];
 
     /** @var list<string> */
@@ -115,7 +116,7 @@ class ProgressiveParityTest extends TestCase
                     $cells[$code] = [
                         'mark' => null,
                         'points' => 9,
-                        'grade' => '9',
+                        'grade' => 'F9',
                         'status' => $raw === null ? 'missing' : 'absent',
                     ];
                     $points += 9;
@@ -326,7 +327,17 @@ class ProgressiveParityTest extends TestCase
             'school_id' => $school->id, 'name' => $standardName, 'order' => 1, 'status' => 1,
             'ranking_basis' => $rankingBasis,
         ]);
-        GradingHelper::seedGradingForSchool((int) $school->id, 'primary');
+        foreach (self::BANDS as $band) {
+            SchoolGradingSystem::create([
+                'school_id' => $school->id,
+                'standard_id' => $standard->id,
+                'grade' => $band['grade'],
+                'points' => $band['points'],
+                'min_score' => $band['min'],
+                'max_score' => $band['max'],
+                'remark' => $band['grade'],
+            ]);
+        }
         $section = Section::create(['school_id' => $school->id, 'name' => $sectionName, 'status' => 1]);
         $link = StandardLink::create([
             'school_id' => $school->id, 'academic_year_id' => $year->id, 'standard_id' => $standard->id,

@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\AcademicTerm;
+use App\Models\Academics\Exam;
 use App\Models\StandardLink;
 use App\Models\Subject;
 use App\Services\Results\ResultCell;
@@ -79,6 +80,49 @@ class CombinedMarksheetExport implements WithMultipleSheets
             $exports[] = new MarksheetExport($headings, $rows, $this->sheetTitle($sitting, $used));
         }
 
+        if ($exports === []) {
+            $exports = $this->blankSheets($schoolId, $sectionId, $subjectNames, $students, $used);
+        }
+
+        return $exports;
+    }
+
+    /**
+     * A class with exams but no entered marks still gets one sheet per set.
+     * An empty workbook is not a download the class teacher can open.
+     *
+     * @param  list<string>  $subjectNames
+     * @param  list<ResultStudent>  $students
+     * @param  array<string, true>  $used
+     * @return list<MarksheetExport>
+     */
+    private function blankSheets(int $schoolId, int $sectionId, array $subjectNames, array $students, array &$used): array
+    {
+        $names = Exam::query()
+            ->where('school_id', $schoolId)
+            ->where('section_id', $sectionId)
+            ->where('academic_term_id', (int) $this->term->id)
+            ->whereNull('deleted_at')
+            ->with('examType:id,name')
+            ->get()
+            ->map(fn (Exam $exam): string => trim((string) ($exam->examType->name ?? '')))
+            ->filter(fn (string $name): bool => $name !== '')
+            ->unique()
+            ->values();
+        if ($names->isEmpty()) {
+            $names = collect(['Exam set']);
+        }
+
+        $exports = [];
+        foreach ($names as $name) {
+            $headings = array_merge(['STUDENT NAME'], $subjectNames);
+            $rows = [];
+            foreach ($students as $student) {
+                $rows[] = array_merge([$student->name], array_fill(0, count($subjectNames), ''));
+            }
+            $exports[] = new MarksheetExport($headings, $rows, $this->uniqueTitle($name, $used));
+        }
+
         return $exports;
     }
 
@@ -91,6 +135,15 @@ class CombinedMarksheetExport implements WithMultipleSheets
         if ($sitting->periodLabel !== '') {
             $name = trim($name.' '.$sitting->periodLabel);
         }
+
+        return $this->uniqueTitle($name, $used);
+    }
+
+    /**
+     * @param array<string, true> $used
+     */
+    private function uniqueTitle(string $name, array &$used): string
+    {
         $name = str_replace(['\\', '/', '*', '?', ':', '[', ']'], ' ', $name);
         $name = trim((string) preg_replace('/\s+/', ' ', $name));
         if ($name === '') {
