@@ -2084,6 +2084,7 @@ class OnboardingEngine
      * Optional keys: 'class' (section name to resolve StandardLink), 'email',
      * 'phone' (the student's own number), 'parent' or 'parent_name',
      * 'parent_phone', 'parent_email', 'school_student_id',
+     * 'registration_number' (a KLS number from the file),
      * 'lin' (Learner Identification Number),
      * 'board_registration_number', 'gender'
      * (male|female on userprofiles), 'date_of_birth' (optional).
@@ -2098,6 +2099,13 @@ class OnboardingEngine
      *
      * school_student_id = school-internal ID; lin = Uganda national LIN.
      * They are distinct columns on student_academics — never aliases.
+     *
+     * A file value that matches StudentIdGeneratorService::PATTERN is kept as
+     * the learner's KLS number on users.registration_number and
+     * student_academics.klassapp_student_id. A value that does not match stays
+     * the school's own student id, and a KLS number is generated. The same
+     * KLS number twice in the list, or one already stored, is refused before
+     * anyone in the list is created.
      *
      * board_registration_number is persisted only for UNEB candidate classes
      * (P.7 / S.4 / S.6) via isCandidateClass().
@@ -2141,6 +2149,7 @@ class OnboardingEngine
                 $unmatchedClasses = [];
                 $batchEmails = [];
                 $batchLins = [];
+                $batchKls = [];
                 $validSeen = 0;
                 foreach ($students as $draft) {
                     $name = trim((string) ($draft['name'] ?? ''));
@@ -2190,6 +2199,29 @@ class OnboardingEngine
                         }
                         $batchLins[$linKey] = $name;
                         $this->assertLinAvailableGlobally($lin, $name);
+                    }
+
+                    $imported = StudentIdGeneratorService::fromImport(
+                        (string) ($draft['registration_number'] ?? $draft['klassapp_student_id'] ?? ''),
+                        (string) ($draft['school_student_id'] ?? ''),
+                    );
+                    if ($imported['conflict']) {
+                        throw ValidationException::withMessages([
+                            'students' => "Student {$name} has two different KLS numbers. Use one KLS number per learner.",
+                        ]);
+                    }
+                    if ($imported['kls'] !== null) {
+                        if (isset($batchKls[$imported['kls']])) {
+                            throw ValidationException::withMessages([
+                                'students' => "KLS number '{$imported['kls']}' appears more than once in this student list. Each learner needs a unique KLS number.",
+                            ]);
+                        }
+                        $batchKls[$imported['kls']] = $name;
+                        if (StudentIdGeneratorService::taken($imported['kls'])) {
+                            throw ValidationException::withMessages([
+                                'students' => "KLS number '{$imported['kls']}' is already used. Leave it blank to assign a new one.",
+                            ]);
+                        }
                     }
                 }
                 if ($unmatchedClasses !== []) {
@@ -2293,8 +2325,16 @@ class OnboardingEngine
                         ]
                     );
 
-                    // Generate KlassApp student ID
-                    $klassappId = StudentIdGeneratorService::nextForStudent($student);
+                    $imported = StudentIdGeneratorService::fromImport(
+                        (string) ($draft['registration_number'] ?? $draft['klassapp_student_id'] ?? ''),
+                        (string) ($draft['school_student_id'] ?? ''),
+                    );
+                    if ($imported['kls'] !== null) {
+                        $klassappId = $imported['kls'];
+                        $student->forceFill(['registration_number' => $klassappId])->save();
+                    } else {
+                        $klassappId = StudentIdGeneratorService::nextForStudent($student);
+                    }
 
                     $link = $pinned;
 
@@ -2307,7 +2347,7 @@ class OnboardingEngine
                         );
                     }
 
-                    $schoolStudentId = trim((string) ($draft['school_student_id'] ?? ''));
+                    $schoolStudentId = trim((string) ($imported['school_student_id'] ?? ''));
                     $boardReg = trim((string) ($draft['board_registration_number'] ?? ''));
                     $stdName = trim((string) ($link->standard?->name ?? ''));
                     $secName = trim((string) ($link->section?->name ?? $className));
