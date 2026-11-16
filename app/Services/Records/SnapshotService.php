@@ -60,10 +60,11 @@ class SnapshotService
                 academicTermId: $termId,
                 standardLinkId: (int) $link->id,
                 examTypeId: (int) $exam->exam_type_id,
-            ), $scoring->policy(
+            ), $scoring->policyForTerm(
                 (int) $release->school_id,
                 (int) $link->standard_id,
-                (string) ($release->scoring_rule ?? '') === \App\Services\Reports\ReportScoring::MISSING_AS_ZERO,
+                (int) $link->section_id,
+                $termId,
             ));
 
             foreach ($studentIds as $studentId) {
@@ -186,6 +187,7 @@ class SnapshotService
             'of' => $row->classOutOf,
             'report_kind' => app(\App\Services\Reports\ReportKindSetting::class)->forRelease($release, $release->school),
             'scoring_rule' => $release->scoring_rule,
+            'progressive_rules' => app(\App\Services\Reports\ProgressiveRulesStamp::class)->standardRules($release, (int) $link->standard_id),
             'released_at' => now()->toIso8601String(),
         ];
     }
