@@ -15,9 +15,9 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 /**
- * "Release marks" for school admins (/admin/marks/releases) and class
- * teachers (/teacher/marks/releases): choose, preview, confirm, see the
- * result. The service decides who may release which class.
+ * "Release marks" for school admins and head teachers (/admin/marks/releases)
+ * and class teachers (/teacher/marks/releases): choose, preview, confirm, see
+ * the result. The service decides who may release which class.
  */
 class MarksReleaseController extends Controller
 {
