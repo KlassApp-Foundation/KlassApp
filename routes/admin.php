@@ -666,6 +666,7 @@ Route::get( '/magazine/download/{id}', 'BulletinsController@downloadattachments'
 // Report Cards (per-class batch PDF generation + download)
 Route::prefix('reports/cards')->name('admin.reports.cards.')->group(function () {
     Route::get('/', 'ReportCardsController@index')->name('index');
+    Route::post('/report-kind', 'ReportCardsController@updateReportKind')->name('report-kind');
     Route::get('/history', 'ReportCardsController@history')->name('history');
     Route::post('/template', 'ReportCardsController@updateTemplate')->name('template');
     Route::get('/preview/{template}', 'ReportCardsController@previewTemplate')->name('preview');

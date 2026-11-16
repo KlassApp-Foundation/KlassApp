@@ -13,6 +13,9 @@
     'subtitle' => 'Generate and download student report cards by class.',
 ])
 
+@include('partials.message')
+@include('admin.reports.partials.report-kind')
+
 <div class="relative mt-4">
     <div class="bg-white rounded-lg shadow p-4 flex items-center justify-between">
         <form method="GET" class="flex items-center gap-3">

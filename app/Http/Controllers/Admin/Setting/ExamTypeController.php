@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Helpers\GradingHelper;
 use App\Models\Academics\ExamType;
 use App\Models\School;
+use App\Models\SchoolReportKindChange;
+use App\Services\Reports\ReportKindSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -31,9 +33,13 @@ class ExamTypeController extends Controller
         $profileKey = GradingHelper::profileKeyForSchool($schoolId);
         $legacyBands = GradingHelper::legacyBandsForSchool($schoolId);
         $legacyIsExample = $school?->legacy_o_level_bands === null;
+        $reportKind = app(ReportKindSetting::class)->current($school);
+        $reportKindChanges = $school === null
+            ? collect()
+            : SchoolReportKindChange::query()->where('school_id', $school->id)->with('user')->orderByDesc('id')->limit(5)->get();
 
         return view('admin.settings.exam-types', compact(
-            'examTypes', 'prefs', 'composition', 'profiles', 'profileKey', 'legacyBands', 'legacyIsExample'
+            'examTypes', 'prefs', 'composition', 'profiles', 'profileKey', 'legacyBands', 'legacyIsExample', 'reportKind', 'reportKindChanges'
         ));
     }
 
@@ -53,6 +59,16 @@ class ExamTypeController extends Controller
             }
         }
         $school->exam_type_preferences = $prefs ?: null;
+
+        // Show-on-report and weight belong to set-based reports. A progressive
+        // school keeps the composition it already stored, and this save does
+        // not rewrite it.
+        if (app(ReportKindSetting::class)->current($school) !== ReportKindSetting::SET_BASED) {
+            $school->save();
+
+            return redirect()->route('admin.settings.exam-types')
+                ->with('successmessage', 'Exam type preferences updated.');
+        }
 
         $composition = [];
         foreach ((array) $request->input('include', []) as $typeId => $on) {

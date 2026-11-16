@@ -18,6 +18,7 @@ use App\Models\Subject;
 use App\Models\User;
 use App\Services\MarksRelease\MarksReleaseService;
 use App\Services\Records\SnapshotService;
+use App\Services\Reports\ReportKindSetting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -131,6 +132,38 @@ class ReleaseSnapshotTest extends TestCase
         $service->run((int) $release->id);
 
         return $release->fresh();
+    }
+
+    public function test_a_release_copies_the_report_type_and_a_later_change_does_not_rewrite_it(): void
+    {
+        $ctx = $this->school();
+        $ctx['school']->forceFill(['report_kind' => ReportKindSetting::SET_BASED])->save();
+
+        $release = $this->release($ctx);
+
+        $this->assertSame(ReportKindSetting::SET_BASED, $release->report_kind);
+        $snapshot = RecordSnapshot::where('student_id', $ctx['students'][0]['user']->id)->sole();
+        $this->assertSame(ReportKindSetting::SET_BASED, $snapshot->payload['report_kind']);
+
+        $ctx['school']->forceFill(['report_kind' => ReportKindSetting::PROGRESSIVE])->save();
+
+        $this->assertSame(ReportKindSetting::SET_BASED, $release->fresh()->report_kind);
+        $this->assertSame(ReportKindSetting::SET_BASED, $snapshot->fresh()->payload['report_kind']);
+    }
+
+    public function test_a_change_before_the_release_runs_is_the_type_that_is_frozen(): void
+    {
+        $ctx = $this->school();
+        $service = app(MarksReleaseService::class);
+        $pending = $service->create($ctx['admin'], (int) $ctx['firstExam']->id, null, null, 'Africa/Kampala');
+        $this->assertNull($pending->report_kind);
+
+        $ctx['school']->forceFill(['report_kind' => ReportKindSetting::SET_BASED])->save();
+        $this->assertTrue($service->run((int) $pending->id));
+
+        $this->assertSame(ReportKindSetting::SET_BASED, $pending->fresh()->report_kind);
+        $snapshot = RecordSnapshot::where('student_id', $ctx['students'][0]['user']->id)->sole();
+        $this->assertSame(ReportKindSetting::SET_BASED, $snapshot->payload['report_kind']);
     }
 
     public function test_a_release_writes_one_snapshot_per_learner_for_the_term(): void
