@@ -152,6 +152,8 @@ final class ResultsService
                 $bucketChosen,
                 [$plan['typeId']],
                 $sittingSubjects,
+                [],
+                false,
             );
             $sittings[] = new ResultSitting(
                 $plan['typeId'],
@@ -608,7 +610,10 @@ final class ResultsService
                 $choice = $this->merged($chosen, $typeIds, $studentId, $subjectId, $weights, $policy->countMissingAsZero);
                 $cells[$subjectId] = $this->cell($policy, $schoolId, $standardId, $subjectId, $choice);
             }
-            [$total, $counted, $average, $aggregate, $division, $displayTotal, $displayAverage] = $this->totals($policy, $cells);
+            [$total, $counted, $average, $aggregate, $division, $displayTotal, $displayAverage] = $this->totals(
+                $policy,
+                $cells,
+            );
             $drafts[] = [
                 'studentId' => $studentId,
                 'name' => (string) $user->name,
@@ -623,6 +628,7 @@ final class ResultsService
                 'division' => $division,
                 'displayTotal' => $displayTotal,
                 'displayAverage' => $displayAverage,
+                'registrationNumber' => trim((string) ($user->registration_number ?? '')),
                 'key' => $this->rankKey($policy, $total, $average, $aggregate),
             ];
         }
@@ -649,6 +655,7 @@ final class ResultsService
                 $positions['stream'][$id]['outOf'],
                 $draft['displayTotal'],
                 $draft['displayAverage'],
+                $draft['registrationNumber'],
             );
         }
 
