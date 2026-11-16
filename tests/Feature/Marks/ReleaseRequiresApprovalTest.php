@@ -150,6 +150,94 @@ class ReleaseRequiresApprovalTest extends TestCase
         $this->assertSame(0, MarksRelease::count());
     }
 
+    public function test_an_approval_failure_returns_to_the_release_form(): void
+    {
+        $this->actingAs($this->admin())
+            ->from(route('admin.marks.releases.preview'))
+            ->post(route('admin.marks.releases.store'), $this->payload())
+            ->assertRedirect(route('admin.marks.releases.create'))
+            ->assertSessionHasErrors('approval');
+
+        $this->assertSame(0, MarksRelease::count());
+    }
+
+    public function test_another_class_unapproved_subject_does_not_block_this_class(): void
+    {
+        $this->approveFollowAlongSittings();
+
+        $school = $this->fx['demo']['school'];
+        $link = $this->fx['demo']['link'];
+        $teacher = $this->fx['demo']['teacher'];
+        $anchor = $this->fx['demo']['exams']['latest']['Mathematics'];
+        $section = Section::create(['school_id' => $school->id, 'name' => 'P.6', 'status' => 1]);
+        StandardLink::create([
+            'school_id' => $school->id,
+            'academic_year_id' => $link->academic_year_id,
+            'standard_id' => $link->standard_id,
+            'section_id' => $section->id,
+            'stream' => 'A',
+            'status' => 1,
+        ]);
+        $subject = Subject::create([
+            'school_id' => $school->id,
+            'standard_id' => $link->standard_id,
+            'section_id' => $section->id,
+            'academic_year_id' => $link->academic_year_id,
+            'name' => 'English',
+            'type' => 'core',
+            'status' => 1,
+        ]);
+        $exam = Exam::create([
+            'school_id' => $school->id,
+            'standard_id' => $link->standard_id,
+            'section_id' => $section->id,
+            'academic_year_id' => $link->academic_year_id,
+            'subject_id' => $subject->id,
+            'teacher_id' => $teacher->id,
+            'academic_term_id' => $anchor->academic_term_id,
+            'exam_type_id' => $anchor->exam_type_id,
+            'status' => 'undone',
+            'scheduled_at' => '2026-11-21 09:00:00',
+        ]);
+        Marks::create([
+            'student_id' => $this->fx['demo']['students'][0]['user']->id,
+            'subject_id' => $subject->id,
+            'section_id' => $section->id,
+            'exam_id' => $exam->id,
+            'teacher_id' => $teacher->id,
+            'school_id' => $school->id,
+            'marks' => 70,
+            'grade' => 'C',
+        ]);
+
+        $admin = $this->admin();
+
+        $this->actingAs($admin)
+            ->get('/admin/marks/releases/new?class=P.7')
+            ->assertOk()
+            ->assertSee('4 of 4 approved')
+            ->assertDontSee('ENGLISH · P.6');
+
+        $this->actingAs($admin)
+            ->get('/admin/marks/releases/new')
+            ->assertOk()
+            ->assertSee('4 of 5 approved')
+            ->assertSee('ENGLISH · P.6 — Not submitted');
+
+        $this->actingAs($admin)
+            ->post('/admin/marks/releases', $this->scheduled() + ['class' => 'P.7'])
+            ->assertRedirect()
+            ->assertSessionDoesntHaveErrors('approval');
+
+        $this->assertSame(1, MarksRelease::count());
+
+        $this->actingAs($admin)
+            ->post('/admin/marks/releases', $this->scheduled())
+            ->assertSessionHasErrors('approval');
+
+        $this->assertSame(1, MarksRelease::count());
+    }
+
     public function test_approved_subjects_can_be_released(): void
     {
         $this->approveFollowAlongSittings();

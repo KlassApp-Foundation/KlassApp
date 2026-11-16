@@ -78,6 +78,9 @@
                                 <div style="font-size:.8rem;color:#64748B">{{ $exam->section->name ?? 'Class' }} · {{ (int) ($exam->marks_entered ?? 0) }} marks entered</div>
                             </div>
                             <span class="{{ $pill }}" data-testid="exam-submission-state">{{ $label === 'Not started' && (int) ($exam->marks_entered ?? 0) > 0 ? 'In progress' : $label }}</span>
+                            @if($label === 'Returned' && filled($exam->return_note ?? null))
+                                <p class="ka-alert ka-alert-error" data-testid="teacher-return-note" style="flex-basis:100%;margin:0">{{ $exam->return_note }}</p>
+                            @endif
                             <a href="{{ route('teacher.exam.marks.enter', $exam) }}" class="ds-btn ds-btn-primary" style="min-height:44px;min-width:150px">{{ $action }}</a>
                             <a href="{{ route('teacher.exam.marks.import.page', $exam) }}" class="ds-btn ds-btn-outline" style="min-height:44px" data-testid="marks-import-button">Paste or upload marks</a>
                         </div>

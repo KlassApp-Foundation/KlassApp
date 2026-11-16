@@ -455,14 +455,14 @@ class MarksReleaseTest extends TestCase
 
         $this->actingAs($admin)->get('/admin/marks/releases/new')
             ->assertOk()
-            ->assertSee('Release to all classes (', false)
+            ->assertSee('Release End of Term Examination marks to 1 class', false)
             ->assertSee('data-testid="release-class"', false)
             ->assertSee('data-testid="release-stream"', false)
             ->assertDontSee('data-testid="sheet-filter-class"', false);
 
         $this->actingAs($admin)->get('/admin/marks/releases/new?class='.urlencode($class).'&stream='.urlencode($stream))
             ->assertOk()
-            ->assertSee('Release to '.trim($class.' '.$stream).' (', false);
+            ->assertSee('Release End of Term Examination marks to 1 class', false);
     }
 
     public function test_release_controls_keep_the_exam_select_on_one_compact_row(): void
