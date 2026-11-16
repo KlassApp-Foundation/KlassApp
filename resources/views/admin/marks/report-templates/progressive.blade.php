@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Report Card — {{ $learner->displayName ?: 'Student' }}</title>
+    <title>Report Card — {{ $learner->reportCardName() ?: 'Student' }}</title>
     <style>
         @font-face { font-family: 'DM Sans'; font-weight: 400; src: url("{{ resource_path('fonts/report-card/DMSans-Regular.ttf') }}") format('truetype'); }
         @font-face { font-family: 'DM Sans'; font-weight: 700; src: url("{{ resource_path('fonts/report-card/DMSans-Bold.ttf') }}") format('truetype'); }
@@ -63,9 +63,18 @@
         .compact .box { min-height: 72px; }
         .compact .sig { margin-top: 16px; }
         .compact .cmt { margin-top: 12px; }
+        body.bw, body.bw .page { background: #fff; color: #000; }
+        body.bw .bar, body.bw .rule, body.bw .mono { background: #000; color: #fff; }
+        body.bw .doc, body.bw .school, body.bw .res td.g, body.bw .sum.k td.v, body.bw .val, body.bw .sum td.v { color: #000; }
+        body.bw .res th { background: #000; color: #fff; border-left-color: #fff; }
+        body.bw .res th.sub { background: #fff; color: #000; }
+        body.bw .lrn, body.bw .res, body.bw .box { background: #fff; border-color: #000; }
+        body.bw .res td, body.bw .sum td, body.bw .sum.k td { background: #fff; border-color: #000; color: #000; }
+        body.bw .miss, body.bw .lbl, body.bw .fn, body.bw .key, body.bw .motto, body.bw .term, body.bw .box .t, body.bw .sl { color: #000; }
+        body.bw .flag { color: #000; background: #fff; border-color: #000; }
     </style>
 </head>
-<body>
+<body class="{{ ! empty($printBlackAndWhite) ? 'bw' : '' }}">
 @php
     $sets = $setColumns ?? [];
     if ($sets === []) {
@@ -236,7 +245,7 @@
             <tr>
                 <td style="width:250px">
                     <div class="lbl">Learner</div>
-                    <div class="val big" data-kind="learner">{{ $learner->displayName }}</div>
+                    <div class="val big" data-kind="learner">{{ $learner->reportCardName() }}</div>
                 </td>
                 @if (! empty($learner->registration_number))
                     <td>
@@ -295,14 +304,12 @@
                     @endforeach
                 </tr>
             @endif
-            @if (! empty($showDivision))
-                <tr class="sum k">
-                    <td class="s">DIVISION</td>
-                    @foreach ($sets as $set)
-                        <td class="v" colspan="2" data-kind="division" data-set="{{ $set['label'] }}">{{ $set['division'] ?? '-' }}</td>
-                    @endforeach
-                </tr>
-            @endif
+            <tr class="sum k">
+                <td class="s">DIVISION</td>
+                @foreach ($sets as $set)
+                    <td class="v" colspan="2" data-kind="division" data-set="{{ $set['label'] }}">{{ $set['division'] ?? '-' }}</td>
+                @endforeach
+            </tr>
             <tr class="sum k">
                 <td class="s">POSITION</td>
                 @foreach ($sets as $set)

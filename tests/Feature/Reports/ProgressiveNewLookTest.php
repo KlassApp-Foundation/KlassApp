@@ -32,8 +32,9 @@ class ProgressiveNewLookTest extends TestCase
 
     public function test_formal_stays_the_default(): void
     {
-        $this->assertSame('Formal', StudentReportCardService::TEMPLATES['formal']['label']);
-        $this->assertSame('Progressive (new look)', StudentReportCardService::TEMPLATES['progressive']['label']);
+        $this->assertSame('Standard', StudentReportCardService::TEMPLATES['formal']['label']);
+        $this->assertSame('Warm', StudentReportCardService::TEMPLATES['warm']['label']);
+        $this->assertSame('New look', StudentReportCardService::TEMPLATES['progressive']['label']);
         $this->assertSame(
             'admin.marks.report-templates.formal',
             app(ReportTemplates::class)->resolve(null, 'formal')['view'],
@@ -220,6 +221,101 @@ class ProgressiveNewLookTest extends TestCase
         $this->assertStringContainsString('SAMPLE FOR APPROVAL', $sample);
         $this->assertStringNotContainsString('KLS number', $sample);
         $this->assertSame(1, $this->pages($sample));
+
+        $data['showDivision'] = false;
+        $data['eotDivision'] = '-';
+        $data['termSets'] = $sets;
+        $withoutEndDivision = view('admin.marks.report-templates.progressive', $data)->render();
+        $this->assertStringContainsString('data-kind="division" data-set="First paper"', $withoutEndDivision);
+        $this->assertStringContainsString('>4<', $withoutEndDivision);
+        $this->assertStringNotContainsString('Division -', $withoutEndDivision);
+        $this->assertDoesNotMatchRegularExpression('/<body[^>]*class="bw"/', $withoutEndDivision);
+
+        $data['printBlackAndWhite'] = true;
+        $printed = view('admin.marks.report-templates.progressive', $data)->render();
+        $this->assertMatchesRegularExpression('/<body class="bw">/', $printed);
+        $this->assertStringContainsString('body.bw .bar', $printed);
+        $this->assertStringContainsString('background: #000', $printed);
+    }
+
+    public function test_every_template_prints_a_full_name_and_a_single_field_name(): void
+    {
+        $pair = new User(['name' => 'Amina Kato 12']);
+        $pair->setRelation('userprofile', new \App\Models\Userprofile([
+            'firstname' => 'Amina',
+            'lastname' => 'Kato',
+        ]));
+        $single = new User(['name' => 'PUPIL 076']);
+        $single->setRelation('userprofile', null);
+        $single->setRelation('marks', collect());
+
+        $this->assertSame('AMINA KATO', $pair->reportCardName());
+        $this->assertSame('PUPIL', $single->displayName);
+        $this->assertSame('PUPIL 076', $single->reportCardName());
+
+        $subjects = collect([(function () {
+            $subject = new Subject(['name' => 'English']);
+            $subject->id = 1;
+
+            return $subject;
+        })()]);
+        $sets = [[
+            'label' => 'Opening paper',
+            'cells' => [1 => new ResultCell(1, 55, 'C6', 6, ResultCell::MARKED)],
+            'total' => 55,
+            'aggregate' => 6,
+            'pos' => 1,
+            'of' => 1,
+            'division' => '1',
+        ]];
+        $base = [
+            'subjects' => $subjects,
+            'setColumns' => $sets,
+            'monthlySets' => $sets,
+            'termSets' => [],
+            'grading_system' => collect([(object) ['min_score' => 50, 'max_score' => 59, 'points' => 6, 'grade' => '6', 'remark' => 'Fair']]),
+            'countMissingAsZero' => true,
+            'rankingBasis' => 'aggregate',
+            'divisionRanges' => \App\Services\Reports\ProgressiveRules::defaultDivisionRanges(),
+            'schoolIdentity' => ['name' => 'Riverbank Primary', 'motto' => '', 'phones' => [], 'phones_line' => ''],
+            'class_name' => 'P.5',
+            'streamName' => '',
+            'totalLearners' => 1,
+            'showAgg' => true,
+            'showDivision' => false,
+            'showPoints' => false,
+            'isNursery' => false,
+            'isALevel' => false,
+            'total' => 55,
+            'eotAgg' => 6,
+            'eotDivision' => '-',
+            'teacherComment' => '',
+            'headTeacherComment' => '',
+            'nextTerm' => null,
+            'sampleForApproval' => false,
+            'logoPath' => null,
+            'fees' => collect(),
+            'nurseryAssessments' => collect(),
+            'eotCells' => [],
+            'examinedSubjectCount' => 1,
+            'grade' => ['agg' => 6],
+            'stdLink' => new StandardLink(['id' => 1]),
+            'controls' => [],
+            'school' => new School(['name' => 'Riverbank Primary']),
+            'myPos' => 1,
+            'streamPos' => null,
+            'streamTotal' => null,
+        ];
+
+        foreach (['formal', 'warm', 'progressive'] as $template) {
+            foreach ([$pair, $single] as $learner) {
+                $learner->setRelation('marks', collect([new \App\Models\Academics\Marks(['subject_id' => 1, 'marks' => 55])]));
+                $html = view('admin.marks.report-templates.'.$template, $base + ['learner' => $learner])->render();
+                $this->assertStringContainsString('>'.$learner->reportCardName().'<', $html);
+                $this->assertStringNotContainsString('Amina Kato 12', $html);
+            }
+        }
+        $this->assertStringNotContainsString('>PUPIL<', view('admin.marks.report-templates.progressive', $base + ['learner' => $single])->render());
     }
 
     /**

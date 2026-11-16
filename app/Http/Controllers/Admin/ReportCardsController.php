@@ -405,7 +405,7 @@ class ReportCardsController extends Controller
      * Backward-compatible entry point for jobs/commands. Real implementation:
      * StudentReportCardService::generatePdf().
      */
-    public static function generatePdf(int $sid, Exam $exam, StandardLink $stdLink, int $schoolId, $helper, ReportCardCommentService $svc, int $totalLearners, int $myPos = 0, ?string $templateKey = null, bool $sample = false): string
+    public static function generatePdf(int $sid, Exam $exam, StandardLink $stdLink, int $schoolId, $helper, ReportCardCommentService $svc, int $totalLearners, int $myPos = 0, ?string $templateKey = null, bool $sample = false, bool $printBlackAndWhite = false): string
     {
         return app(StudentReportCardService::class)->generatePdf(
             $sid,
@@ -417,7 +417,8 @@ class ReportCardsController extends Controller
             $totalLearners,
             $myPos,
             $templateKey,
-            $sample
+            $sample,
+            $printBlackAndWhite
         );
     }
 
@@ -470,6 +471,7 @@ class ReportCardsController extends Controller
             $myPos,
             $template,
             $request->boolean('sample') && $template === 'progressive',
+            $request->boolean('bw') && $template === 'progressive',
         );
 
         return response($pdf)

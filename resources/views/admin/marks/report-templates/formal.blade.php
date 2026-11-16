@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Report Card — {{ $learner->displayName ?: 'Student' }}</title>
+    <title>Report Card — {{ $learner->reportCardName() ?: 'Student' }}</title>
     <style>
         @page { margin: 0; }
 
@@ -301,7 +301,7 @@
         <tr>
             <td style="width:40%;">
                 <div class="part-label">Student</div>
-                <div class="part-value">{{ $learner->displayName }}</div>
+                <div class="part-value">{{ $learner->reportCardName() }}</div>
             </td>
             <td style="width:25%;">
                 <div class="part-label">Class</div>

@@ -16,7 +16,7 @@ Draft work. Nothing here is merged or deployed.
 | #1350 | An absence is shown as ABS. The combined marksheet names each sheet after the school's exam set. https://github.com/KlassApp-Foundation/KlassApp/pull/1350 |
 | #1351 | Exam-set columns follow the exam date. The term's start date is the tie-break. https://github.com/KlassApp-Foundation/KlassApp/pull/1351 |
 | #1352 | A pilot release tells only the parents or learners the school chooses. https://github.com/KlassApp-Foundation/KlassApp/pull/1352 |
-| #1353 | A template option, Progressive (new look). Formal stays the default. https://github.com/KlassApp-Foundation/KlassApp/pull/1353 |
+| #1353 | New look template. The screen calls it New look, the older card Standard, and Warm stays Warm. https://github.com/KlassApp-Foundation/KlassApp/pull/1353 |
 
 ## 2026-11-15 — rules stored on the release
 
@@ -30,7 +30,7 @@ Clicked through Report cards as a school admin and a head teacher at 375px and 1
 
 ## 2026-11-15 — Progressive (new look)
 
-Report Cards, under **Report Card Template**, gains **Progressive (new look)**. **Formal** stays selected until a school admin or a head teacher chooses the new look and presses **Save**. **Open full preview** is the final card. **Open sample** adds the tag SAMPLE FOR APPROVAL and a grading key built from that school's bands and division ranges.
+Report Cards, under **Report Card Template**, gains **New look**. **Standard** stays selected until a school admin or a head teacher chooses the new look and presses **Save**. **Warm** keeps its name. **Open full preview** is the final card. **Open sample** adds the tag SAMPLE FOR APPROVAL and a grading key built from that school's bands and division ranges. **Printer-friendly** opens the new look in black and white. The card prints the learner's full name, including a single-field name such as a pupil number, and it prints each set's division even when the term has no end-of-term division.
 
 The new card is one table. Each exam set is a Marks and Grade group, in exam-date order. It shows the total, the aggregate, the division and the position for each set, then the comment boxes and the three signature lines. A blank prints Missing and an absence prints ABS. The old Formal and Warm cards are unchanged, including their MONTHLY RESULTS and END OF TERM headings. Draft pull request: https://github.com/KlassApp-Foundation/KlassApp/pull/1353
 

@@ -88,6 +88,12 @@
                                    class="text-blue-600 hover:underline">
                                     Open sample
                                 </a>
+                                · <a href="{{ route('admin.reports.cards.preview', ['template' => $key, 'bw' => 1]) }}" target="_blank"
+                                   onclick="event.stopPropagation()"
+                                   data-testid="open-printer-friendly"
+                                   class="text-blue-600 hover:underline">
+                                    Printer-friendly
+                                </a>
                             @endif
                         </span>
                     </div>

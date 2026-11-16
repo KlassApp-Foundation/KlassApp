@@ -44,9 +44,9 @@ class StudentReportCardService
      * Available report-card templates: key => [label, Blade view].
      */
     public const TEMPLATES = [
-        'formal' => ['label' => 'Formal', 'view' => 'admin.marks.report-templates.formal'],
+        'formal' => ['label' => 'Standard', 'view' => 'admin.marks.report-templates.formal'],
         'warm' => ['label' => 'Warm', 'view' => 'admin.marks.report-templates.warm'],
-        'progressive' => ['label' => 'Progressive (new look)', 'view' => 'admin.marks.report-templates.progressive'],
+        'progressive' => ['label' => 'New look', 'view' => 'admin.marks.report-templates.progressive'],
     ];
 
     /**
@@ -410,7 +410,8 @@ class StudentReportCardService
         int $totalLearners,
         int $myPos = 0,
         ?string $templateKey = null,
-        bool $sample = false
+        bool $sample = false,
+        bool $printBlackAndWhite = false
     ): string {
         $learner = User::find($sid);
         $learner = $helper->learner($schoolId, $learner, $exam);
@@ -649,6 +650,7 @@ class StudentReportCardService
             'divisionRanges' => $divisionRanges,
             'rankingBasis' => $rankingBasis,
             'sampleForApproval' => $sample,
+            'printBlackAndWhite' => $printBlackAndWhite,
         ]);
         $pdf->setPaper('a4', 'portrait');
 

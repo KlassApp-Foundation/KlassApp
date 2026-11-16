@@ -113,6 +113,10 @@ class ClassReportScreenTest extends TestCase
 
     public function test_the_earlier_page_is_kept_at_history(): void
     {
-        $this->actingAs($this->admin)->get('/admin/reports/cards/history')->assertOk()->assertSee('Report Card Template');
+        $this->actingAs($this->admin)->get('/admin/reports/cards/history')->assertOk()
+            ->assertSee('Report Card Template')
+            ->assertSee('New look')
+            ->assertSee('Printer-friendly')
+            ->assertSee('data-testid="open-printer-friendly"', false);
     }
 }
