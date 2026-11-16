@@ -24,6 +24,7 @@ final class ResultsPolicy
     /**
      * @param list<string> $absentGradeLabels stored grade labels that mean absent, not zero
      * @param bool $splitMidTermByMonth keep a non-contributing exam type as one sitting per calendar month
+     * @param bool $countMissingAsZero a blank or an absence scores as mark 0 on the zero band
      */
     public function __construct(
         public readonly GradingScale $gradingScale,
@@ -34,6 +35,7 @@ final class ResultsPolicy
         public readonly int $roundingDecimals = 0,
         public readonly array $absentGradeLabels = [],
         public readonly bool $splitMidTermByMonth = false,
+        public readonly bool $countMissingAsZero = false,
     ) {
         if (! in_array($this->rankingBasis, [self::BASIS_AGGREGATE, self::BASIS_TOTAL, self::BASIS_AVERAGE], true)) {
             throw new InvalidArgumentException('Unknown ranking basis.');

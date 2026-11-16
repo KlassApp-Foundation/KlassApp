@@ -71,6 +71,16 @@ final class ResultsService
                 array_filter($typeMeta, fn (array $type) => $type['contributes'])
             ));
 
+        // A set nobody has a mark or an absence for is not a result yet.
+        // Other callers keep every exam type, including an empty one.
+        $activeTypes = $policy->countMissingAsZero ? CountedExamTypes::typeIds($exams, $marks) : [];
+        if ($policy->countMissingAsZero) {
+            $mainTypeIds = array_values(array_filter(
+                $mainTypeIds,
+                fn ($typeId) => isset($activeTypes[(int) $typeId])
+            ));
+        }
+
         // Weights only apply on the term report: a weighted mean across the
         // contributing types that carry a weight; types without one keep the
         // latest-mark behaviour for the merge below.
@@ -95,6 +105,9 @@ final class ResultsService
         $sittings = [];
         foreach ($this->sittingPlans($exams, $policy->splitMidTermByMonth, $preferences) as $plan) {
             if ($query->examTypeId === null && ! ($typeMeta[$plan['typeId']]['included'] ?? true)) {
+                continue;
+            }
+            if ($policy->countMissingAsZero && ! isset($activeTypes[$plan['typeId']])) {
                 continue;
             }
             $bucketExams = $exams->whereIn('id', $plan['examIds'])->values();
@@ -547,7 +560,7 @@ final class ResultsService
             $standardId = (int) $entry['standardId'];
             $cells = [];
             foreach ($subjects as $subject) {
-                $choice = $this->merged($chosen, $typeIds, $studentId, (int) $subject['id'], $weights);
+                $choice = $this->merged($chosen, $typeIds, $studentId, (int) $subject['id'], $weights, $policy->countMissingAsZero);
                 $cells[(int) $subject['id']] = $this->cell($policy, $schoolId, $standardId, (int) $subject['id'], $choice);
             }
             [$total, $counted, $average, $aggregate, $division, $displayTotal, $displayAverage] = $this->totals($policy, $cells);
@@ -608,7 +621,7 @@ final class ResultsService
      * @param array<int, float> $weights
      * @return array{mark: float, grade: string, scheduled: int, examId: int}|null
      */
-    private function merged(array $chosen, array $typeIds, int $studentId, int $subjectId, array $weights = []): ?array
+    private function merged(array $chosen, array $typeIds, int $studentId, int $subjectId, array $weights = [], bool $countMissingAsZero = false): ?array
     {
         $best = null;
         foreach ($typeIds as $typeId) {
@@ -620,6 +633,10 @@ final class ResultsService
 
         if ($weights === []) {
             return $best;
+        }
+
+        if ($countMissingAsZero) {
+            return $this->mergedCountingBlanks($chosen, $typeIds, $studentId, $subjectId, $weights, $best);
         }
 
         if ($best === null) {
@@ -657,21 +674,70 @@ final class ResultsService
     }
 
     /**
+     * A weighted mean that treats a blank or an absence as mark 0.
+     * A subject with no numeric mark stays blank or absent, so the cell can
+     * print Missing or ABS instead of 0.
+     *
+     * @param array<int, array<int, array<int, array{mark: float, grade: string, scheduled: int, examId: int}>>> $chosen
+     * @param list<int> $typeIds
+     * @param array<int, float> $weights
+     * @param array{mark: float, grade: string, scheduled: int, examId: int}|null $best
+     * @return array{mark: float, grade: string, scheduled: int, examId: int}|null
+     */
+    private function mergedCountingBlanks(array $chosen, array $typeIds, int $studentId, int $subjectId, array $weights, ?array $best): ?array
+    {
+        $sum = 0.0;
+        $weightSum = 0.0;
+        $numeric = false;
+        $absent = null;
+        foreach ($typeIds as $typeId) {
+            $weight = (float) ($weights[$typeId] ?? 0);
+            if ($weight <= 0) {
+                continue;
+            }
+            $row = $chosen[$typeId][$studentId][$subjectId] ?? null;
+            $weightSum += $weight;
+            if ($row !== null && $row['mark'] !== null) {
+                $sum += (float) $row['mark'] * $weight;
+                $numeric = true;
+                continue;
+            }
+            if ($row !== null && strcasecmp((string) $row['grade'], 'AB') === 0) {
+                $absent = $row;
+            }
+        }
+
+        if (! $numeric || $weightSum <= 0) {
+            return $absent ?? $best;
+        }
+
+        return [
+            'mark' => round($sum / $weightSum, 2),
+            'grade' => '',
+            'scheduled' => $best['scheduled'] ?? 0,
+            'examId' => $best['examId'] ?? 0,
+        ];
+    }
+
+    /**
      * @param array{mark: float, grade: string, scheduled: int, examId: int}|null $choice
      */
     private function cell(ResultsPolicy $policy, int $schoolId, int $standardId, int $subjectId, ?array $choice): ResultCell
     {
         if ($choice === null) {
-            return new ResultCell($subjectId, null, null, null, ResultCell::MISSING);
+            return $this->blankCell($policy, $schoolId, $standardId, $subjectId, ResultCell::MISSING);
         }
         if ($policy->isAbsentGrade($choice['grade'])) {
+            if ($policy->countMissingAsZero) {
+                return $this->blankCell($policy, $schoolId, $standardId, $subjectId, ResultCell::ABSENT);
+            }
             $label = $choice['grade'] === '' ? null : $choice['grade'];
 
             return new ResultCell($subjectId, null, $label, null, ResultCell::ABSENT);
         }
 
         if ($choice['mark'] === null) {
-            return new ResultCell($subjectId, null, null, null, ResultCell::MISSING);
+            return $this->blankCell($policy, $schoolId, $standardId, $subjectId, ResultCell::MISSING);
         }
 
         $mark = $choice['mark'];
@@ -686,6 +752,26 @@ final class ResultsService
     }
 
     /**
+     * A blank stays mark-less so the card can print Missing or ABS.
+     * When the policy counts it, the points are the school's zero band
+     * (F9, 9 points on the default primary scale). Otherwise the points stay empty.
+     */
+    private function blankCell(ResultsPolicy $policy, int $schoolId, int $standardId, int $subjectId, string $status): ResultCell
+    {
+        if (! $policy->countMissingAsZero) {
+            return new ResultCell($subjectId, null, null, null, $status);
+        }
+
+        return new ResultCell(
+            $subjectId,
+            null,
+            $policy->gradingScale->labelFor($schoolId, $standardId, 0),
+            $policy->gradingScale->pointsFor($schoolId, $standardId, 0),
+            $status,
+        );
+    }
+
+    /**
      * @param array<int, ResultCell> $cells
      * @return array{0: ?float, 1: int, 2: ?float, 3: ?int, 4: ?string, 5: ?float, 6: ?float}
      */
@@ -696,10 +782,14 @@ final class ResultsService
         $points = 0;
         $pointsSeen = false;
         foreach ($cells as $cell) {
-            if ($cell->status !== ResultCell::MARKED || $cell->mark === null) {
+            $countedBlank = $policy->countMissingAsZero
+                && ($cell->status === ResultCell::MISSING || $cell->status === ResultCell::ABSENT);
+            if (! $countedBlank && ($cell->status !== ResultCell::MARKED || $cell->mark === null)) {
                 continue;
             }
-            $total += $cell->mark;
+            if (! $countedBlank) {
+                $total += $cell->mark;
+            }
             $counted++;
             if ($cell->points !== null) {
                 $points += $cell->points;
