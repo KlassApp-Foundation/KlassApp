@@ -11,7 +11,6 @@ use App\Models\Section;
 use App\Models\Subject;
 use App\Models\User;
 use App\Notifications\MarksSubmissionNotification;
-use App\Services\Academics\BaseClassExamRoster;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
@@ -62,7 +61,7 @@ final class MarksSubmissionService
             ]);
         }
 
-        $this->assertCompleteAndWithinMaximum($exam, $teacher);
+        $this->assertWithinMaximum($exam);
 
         $existing = $this->find($exam, (int) $exam->section_id, (int) $exam->subject_id);
 
@@ -367,7 +366,10 @@ final class MarksSubmissionService
             ->first();
     }
 
-    private function assertCompleteAndWithinMaximum(Exam $exam, User $teacher): void
+    /**
+     * A blank mark is allowed and counts as 0. Only a mark above the maximum blocks submit.
+     */
+    private function assertWithinMaximum(Exam $exam): void
     {
         $writer = app(ExamMarkWriter::class);
         $maximum = $writer->maximum($exam);
@@ -382,29 +384,6 @@ final class MarksSubmissionService
             throw ValidationException::withMessages([
                 'submission' => 'A mark is above '.$maximum.'. Fix it before submitting for approval.',
             ]);
-        }
-
-        $roster = app(BaseClassExamRoster::class)->students($exam, $teacher);
-        if ($roster->isEmpty()) {
-            return;
-        }
-
-        $saved = Marks::query()
-            ->where('school_id', $exam->school_id)
-            ->where('exam_id', $exam->id)
-            ->where('subject_id', $exam->subject_id)
-            ->whereIn('student_id', $roster->pluck('id'))
-            ->get()
-            ->keyBy(fn (Marks $row) => (int) $row->student_id);
-
-        foreach ($roster as $student) {
-            $row = $saved->get((int) $student->id);
-            $entered = $row !== null && ($row->isAbsent() || $row->marks !== null);
-            if (! $entered) {
-                throw ValidationException::withMessages([
-                    'submission' => 'Every student needs a mark or ABS before you submit for approval.',
-                ]);
-            }
         }
     }
 
