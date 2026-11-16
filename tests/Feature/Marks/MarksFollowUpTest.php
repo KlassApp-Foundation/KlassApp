@@ -385,11 +385,14 @@ class MarksFollowUpTest extends TestCase
         $first->refresh();
         $second->refresh();
         $foreign->refresh();
+        $this->assertSame('approved', $first->status);
         $this->assertSame('approved', $first->approval_status);
         $this->assertSame((int) $this->admin->id, (int) $first->approved_by);
         $this->assertNotNull($first->approved_at);
+        $this->assertSame('approved', $second->status);
         $this->assertSame('approved', $second->approval_status);
         $this->assertSame((int) $this->admin->id, (int) $second->approved_by);
+        $this->assertSame('submitted', $foreign->status);
         $this->assertSame('pending', $foreign->approval_status);
 
         try {

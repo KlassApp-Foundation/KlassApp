@@ -9,6 +9,8 @@ use App\Models\Academics\Marks;
 use App\Models\MarksRelease;
 use App\Models\Section;
 use App\Models\User;
+use App\Helpers\SiteHelper;
+use App\Services\ExamAuthorization;
 use App\Services\Marks\MarksSubmissionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -25,8 +27,9 @@ class ExamMarksSubmissionController extends Controller
         $schoolId = (int) $actor->school_id;
         $classId = $request->filled('class_id') ? (int) $request->input('class_id') : 0;
         $examId = $request->filled('exam_id') ? (int) $request->input('exam_id') : 0;
+        $sections = $this->reviewSections($actor, $schoolId);
 
-        $waiting = $this->submissions->awaitingReview($schoolId);
+        $waiting = $this->submissions->awaitingReview($schoolId, $sections);
         $filterIds = (clone $waiting)->get(['class_id', 'exam_id']);
 
         $submissions = (clone $waiting)
@@ -36,7 +39,7 @@ class ExamMarksSubmissionController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        $pendingCount = $this->submissions->pendingCount($schoolId);
+        $pendingCount = $this->submissions->pendingCount($schoolId, $sections);
         $classOptions = Section::query()
             ->where('school_id', $schoolId)
             ->whereIn('id', $filterIds->pluck('class_id')->map(fn ($id) => (int) $id)->unique()->all())
@@ -51,8 +54,9 @@ class ExamMarksSubmissionController extends Controller
         $markStats = $this->markStats($schoolId, $submissions->getCollection());
         $releaseLocks = $this->releaseLocks($schoolId, $submissions->getCollection());
         $canReopen = $this->canReopen($actor);
+        $view = (int) $actor->usergroup_id === 5 ? 'teacher.marks.approvals' : 'admin.marks.submissions';
 
-        return view('admin.marks.submissions', compact(
+        return view($view, compact(
             'submissions',
             'pendingCount',
             'classOptions',
@@ -63,10 +67,36 @@ class ExamMarksSubmissionController extends Controller
         ));
     }
 
+    /**
+     * Null for usergroups 1, 2, 3, and 4 so a head teacher keeps the whole queue.
+     * Section ids for a class teacher.
+     *
+     * @return list<int>|null
+     */
+    private function reviewSections(User $actor, int $schoolId): ?array
+    {
+        if (in_array((int) $actor->usergroup_id, [1, 2, 3, 4], true)) {
+            return null;
+        }
+
+        if ((int) $actor->usergroup_id !== 5) {
+            abort(403);
+        }
+
+        $year = SiteHelper::getAcademicYear($schoolId);
+
+        return app(ExamAuthorization::class)->sectionIdsForClassTeacher($actor, $schoolId, (int) ($year?->id ?? 0));
+    }
+
     public function show(Exam $exam)
     {
         $actor = $this->actor();
         $this->assertExamSchool($exam);
+
+        if ((int) $actor->usergroup_id === 5
+            && ! app(ExamAuthorization::class)->isClassTeacherForExam($actor, $exam)) {
+            abort(403, 'You can only review marks for the class you head.');
+        }
 
         $exam->load(['section', 'subject', 'standard']);
 
@@ -152,9 +182,11 @@ class ExamMarksSubmissionController extends Controller
             isset($validated['subject_id']) ? (int) $validated['subject_id'] : null,
         );
 
-        $message = $affected > 0
-            ? $affected.' submission(s) approved.'
-            : 'Those submissions were already approved.';
+        $message = match (true) {
+            $affected === 0 => 'Those marks were already approved.',
+            $affected === 1 => 'Marks approved.',
+            default => $affected.' sets of marks approved.',
+        };
 
         return redirect()->back()->with('successmessage', $message);
     }
