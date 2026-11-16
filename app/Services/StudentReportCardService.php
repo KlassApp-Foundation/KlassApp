@@ -682,7 +682,7 @@ class StudentReportCardService
      * One column per exam set, in the sheet's order (exam type id, then exam id).
      * The heading is the set's own name.
      *
-     * @return list<array{label: string, cells: array<int, \App\Services\Results\ResultCell>, total: ?float, pos: ?int, of: int, division: string}>
+     * @return list<array{label: string, cells: array<int, \App\Services\Results\ResultCell>, total: ?float, aggregate: ?int, pos: ?int, of: int, division: string}>
      */
     private function sittingColumns(ResultSheet $sheet, int $studentId, bool $contributing): array
     {
@@ -699,6 +699,7 @@ class StudentReportCardService
                 'label' => $sitting->name,
                 'cells' => $student->cells,
                 'total' => $student->total,
+                'aggregate' => $student->aggregate,
                 'pos' => $student->classPosition,
                 'of' => $student->classOutOf,
                 'division' => $student->division ?? '-',

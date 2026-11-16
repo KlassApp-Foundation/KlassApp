@@ -386,6 +386,13 @@
             </tr>
             @if ($showAgg)
             <tr>
+                <td class="left"><strong>AGGREGATE</strong></td>
+                @foreach ($monthlySets as $set)
+                    <td></td>
+                    <td data-kind="aggregate" data-set="{{ $set['label'] }}"><strong>{{ $set['aggregate'] ?? '-' }}</strong></td>
+                @endforeach
+            </tr>
+            <tr>
                 <td class="left"><strong>DIVISION</strong></td>
                 @foreach ($monthlySets as $set)
                     <td><strong>{{ $set['division'] ?? '-' }}</strong></td>
@@ -467,6 +474,17 @@
                 <td colspan="2" class="division-cell">@if (count($termSets) > 1) TOTAL: <strong>{{ $total }}</strong> @endif @if ($showDivision) DIVISION: <strong>{{ $eotDivision }}</strong> @endif
                 @if ($showPoints) POINTS: <strong>{{ $eotAgg ?? ($grade['agg'] ?? '-') }}</strong> @endif</td>
             </tr>
+            @if ($showAgg)
+            <tr>
+                <td class="left"><strong>AGGREGATE</strong></td>
+                <td></td>
+                @foreach ($termSets as $set)
+                    <td data-kind="aggregate" data-set="{{ $set['label'] }}"><strong>{{ $set['aggregate'] ?? '-' }}</strong></td>
+                @endforeach
+                <td></td>
+                <td colspan="2"></td>
+            </tr>
+            @endif
         </table>
 
         @if ($nextTerm && !$isNursery)

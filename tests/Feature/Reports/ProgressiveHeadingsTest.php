@@ -128,6 +128,18 @@ class ProgressiveHeadingsTest extends TestCase
         $this->assertStringContainsString('Opening paper', $warm);
         $this->assertStringContainsString('Closing paper', $warm);
         $this->assertStringNotContainsString('MONTHLY RESULTS — MID TERM', $warm);
+
+        foreach ([$html, $warm] as $card) {
+            $this->assertStringContainsString('>AGGREGATE<', $card);
+            foreach (array_merge($captured['monthlySets'], $captured['termSets']) as $set) {
+                $printed = $set['aggregate'] === null ? '-' : (string) $set['aggregate'];
+                $this->assertNotSame('', $printed);
+                $this->assertMatchesRegularExpression(
+                    '/data-kind="aggregate" data-set="'.preg_quote((string) $set['label'], '/').'"[^>]*>\s*<strong>'.preg_quote($printed, '/').'<\/strong>/',
+                    $card,
+                );
+            }
+        }
     }
 
     public function test_two_counting_sets_keep_the_weighted_combined_total(): void
