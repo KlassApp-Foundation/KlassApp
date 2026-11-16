@@ -15,15 +15,19 @@
     @if($terms->isEmpty())
         <div class="text-center py-12 text-gray-500">No academic terms found for this year.</div>
     @else
-        <x-table :headers="['#', 'Term', 'Starts On', 'Ends On', 'Actions']">
+        <x-table :headers="['#', 'Term', 'Starts On', 'Ends On', 'Status', 'Actions']">
             @foreach($terms as $term)
                 <tr>
                     <td>{{ $loop->iteration }}</td>
                     <td class="font-medium">{{ $term->name }}</td>
                     <td>{{ $term->starts_on ? \Carbon\Carbon::parse($term->starts_on)->format('d M, Y') : '-' }}</td>
                     <td>{{ $term->ends_on ? \Carbon\Carbon::parse($term->ends_on)->format('d M, Y') : '-' }}</td>
+                    <td data-testid="term-status-{{ $term->id }}">{{ $term->status === 'current' ? 'Current term' : '' }}</td>
                     <td>
                         <div class="flex items-center justify-center gap-2">
+                            @if ($term->status !== 'current')
+                                <a href="{{ route('admin.academic-term.make-current', $term->id) }}" class="ds-btn ds-btn-sm" style="min-height:44px;display:inline-flex;align-items:center;" data-testid="make-current-{{ $term->id }}">Make this the current term</a>
+                            @endif
                             <a href="{{ route('admin.academic-term.edit', $term) }}" class="dt-action-btn" title="Edit">
                                 <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                             </a>

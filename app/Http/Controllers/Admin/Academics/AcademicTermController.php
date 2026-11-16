@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateAcademicTermRequest;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\Standard;
+use App\Services\Setup\CurrentTermService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -90,6 +91,29 @@ class AcademicTermController extends Controller
         AcademicTerm::where("id", $term)->where("school_id", $school_id)->update($validated);
         return redirect()->route("admin.academic-term")
                          ->with("successmessage", "Updated Academic Term of id $term !");
+    }
+
+    /** Asks "make this the current term?" before anything changes. */
+    public function confirmCurrent(string $termId, CurrentTermService $service)
+    {
+        $plan = $service->plan((int) Auth::user()->school_id, (int) $termId);
+        abort_unless($plan['found'], 404);
+
+        return view('admin.school.term.make-current', ['term' => $plan['term'], 'demote' => $plan['demote'], 'alreadyCurrent' => $plan['already_current']]);
+    }
+
+    public function makeCurrent(Request $request, string $termId, CurrentTermService $service)
+    {
+        $request->validate(['confirm' => ['accepted']]);
+
+        $plan = $service->apply((int) Auth::user()->school_id, (int) $termId, (int) Auth::id(), 'screen');
+        abort_if($plan === null, 404);
+
+        $message = $plan['already_current']
+            ? $plan['term']->name.' is already the current term.'
+            : $plan['term']->name.' is now the current term.';
+
+        return redirect()->route('admin.academic-term')->with('successmessage', $message);
     }
 
     /**

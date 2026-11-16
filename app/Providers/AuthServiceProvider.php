@@ -59,14 +59,13 @@ class AuthServiceProvider extends ServiceProvider
     {
       $this->registerPolicies();
 
-      // Sidebar `condition => school_admin` (usergroup 3) hides school details,
-      // academic years and terms, and the data exports index from a head teacher
-      // (usergroup 4). Settings already uses fullschooladmin. This gate is the
-      // same allow-list (site admin, and school admin) and fails with 403.
+      // Site admin, co-admin, school admin, and head teacher. A head teacher
+      // opens school details and the academic terms list. The gate still fails
+      // closed for a class teacher.
       // Fee and parent CSV downloads are linked from Fees and Parents, which
       // stay in the head-teacher menu, so those two URLs are not on this gate.
       Gate::define('full-school-admin', function ($user) {
-        return in_array((int) $user->usergroup_id, [1, 2, 3], true);
+        return in_array((int) $user->usergroup_id, [1, 2, 3, 4], true);
       });
 
       Gate::define('event', function ($user, $event) {
