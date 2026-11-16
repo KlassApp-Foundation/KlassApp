@@ -226,38 +226,27 @@ class StudentReportCardService
     }
 
     /**
-     * Names of the exam sets that have a sitting for this class this term,
-     * in the order the report card prints them.
-     * A stream with no sitting of its own uses the base class's sittings.
+     * Exam-set names this class's report card prints for the current term.
+     * The school's own exam type names, in the card's date order. A stream
+     * with no sitting of its own uses the base class, the same way the card does.
      *
      * @return list<string>
      */
     public function examSetNames(int $schoolId, StandardLink $stdLink): array
     {
-        $termId = $this->termIdForReport($schoolId, null);
-        if ($termId === null) {
+        $anchor = $this->resolveExam($schoolId, $stdLink);
+        if ($anchor === null) {
             return [];
         }
 
-        $sectionIds = [(int) $stdLink->section_id];
-        $section = $stdLink->section;
-        if ($section !== null) {
-            $base = app(ClassStructureService::class)->resolveBaseSection($section);
-            $sectionIds[] = (int) $base->id;
-        }
-
-        return Exam::query()
-            ->where('school_id', $schoolId)
-            ->whereIn('section_id', array_values(array_unique($sectionIds)))
-            ->where('academic_term_id', $termId)
-            ->whereNull('deleted_at')
-            ->with('examType')
-            ->get()
-            ->sortBy(fn (Exam $exam): array => [
+        return app(StudentReportHelperService::class)
+            ->exam($schoolId, $anchor)
+            ->filter(fn ($exam) => $this->typeIncluded($schoolId, $exam))
+            ->sortBy(fn ($exam): array => [
                 $exam->scheduled_at?->getTimestamp() ?? PHP_INT_MAX,
                 (int) $exam->id,
             ])
-            ->map(fn (Exam $exam): string => trim((string) ($exam->examType->name ?? '')))
+            ->map(fn ($exam): string => trim((string) ($exam->examType?->name ?? '')))
             ->filter(fn (string $name): bool => $name !== '')
             ->unique()
             ->values()
