@@ -211,8 +211,8 @@ class SchoolExamSetReportTest extends TestCase
         $this->assertStringContainsString('Missing', $report);
         $this->assertStringContainsString('ABS', $report);
         $this->assertStringContainsString('Made up of: North Paper 40% · South Paper 60%', $report);
-        $this->assertStringContainsString('Exam sets shown on their own', $report);
-        $this->assertStringContainsString('Combined report', $report);
+        $this->assertStringContainsString('Quiz Hour · Month Check · Late Paper', $report);
+        $this->assertStringContainsString('North Paper · South Paper', $report);
         $this->refuseWorkarounds($report);
 
         $frozen = MarksRelease::query()

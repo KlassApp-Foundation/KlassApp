@@ -25,8 +25,6 @@ use Illuminate\Validation\ValidationException;
  */
 final class ReportComposition
 {
-    public const END_OF_TERM_CODE = 'EOT';
-
     /**
      * The mix already saved for this school. Empty means the school has not
      * chosen, and totals keep each exam set's own contributes flag.
@@ -110,31 +108,6 @@ final class ReportComposition
         }
 
         return $catalogContributes;
-    }
-
-    public function isEndOfTerm(?ExamType $type): bool
-    {
-        return $type !== null && strtoupper((string) $type->code) === self::END_OF_TERM_CODE;
-    }
-
-    /**
-     * Quick-choice role for a real exam type. Unknown types stay null so a
-     * school-made set is not treated as Beginning, Mid, or End of Term.
-     */
-    public function sittingRole(?string $name, ?string $code): ?string
-    {
-        $code = strtoupper(trim((string) $code));
-        if (in_array($code, [self::END_OF_TERM_CODE, 'END'], true)) {
-            return 'end';
-        }
-        if ($code === 'MID') {
-            return 'mid';
-        }
-        if ($code === 'BOT') {
-            return 'begin';
-        }
-
-        return null;
     }
 
     /**

@@ -203,14 +203,14 @@ class MidExamNullScheduledAtReportTest extends TestCase
         $dated = Exam::withoutEvents(fn () => Exam::make([
             'scheduled_at' => '2026-04-10',
         ]));
-        $dated->setRelation('examType', (object) ['name' => 'Quiz Hour', 'code' => 'QH']);
+        $dated->setRelation('examType', (object) ['name' => 'Quiz Hour', 'code' => 'MID']);
 
         $nullDate = Exam::withoutEvents(fn () => Exam::make([
             'scheduled_at' => null,
         ]));
-        $nullDate->setRelation('examType', (object) ['name' => 'Quiz Hour', 'code' => 'QH']);
+        $nullDate->setRelation('examType', (object) ['name' => 'Quiz Hour', 'code' => 'MID']);
 
-        $this->assertSame('APR Quiz Hour', StudentReportCardService::midExamControlColumnLabel($dated));
+        $this->assertSame('Quiz Hour', StudentReportCardService::midExamControlColumnLabel($dated));
         $this->assertSame('Quiz Hour', StudentReportCardService::midExamControlColumnLabel($nullDate));
         $this->assertSame('APRIL', StudentReportCardService::midExamMonthRowLabel($dated));
         $this->assertSame('Quiz Hour', StudentReportCardService::midExamMonthRowLabel($nullDate));
