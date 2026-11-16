@@ -423,16 +423,24 @@ class StudentReportCardService
         );
         $exams = $this->examsOnStartedSets($schoolId, $exams, $countMissingAsZero);
 
-        $midExams = $exams->filter(fn ($e) => $e->examType->code === 'MID')->sortBy('scheduled_at')->values();
-        $eotExams = $exams->filter(fn ($e) => $e->examType->code !== 'MID')->values();
-        $allExamColumns = $midExams->merge($eotExams);
+        $school = School::find($schoolId);
+        $preferences = is_array($school?->exam_type_preferences) ? $school->exam_type_preferences : null;
+        $contribution = app(\App\Services\Results\ExamTypeContribution::class);
+        $contributing = $exams
+            ->filter(fn ($row) => $row->examType && $contribution->contributes($row->examType, $preferences))
+            ->sortBy(fn ($row) => (int) $row->exam_type_id)
+            ->values();
+        $allExamColumns = $exams->sortBy(fn ($row) => [(int) $row->exam_type_id, (int) $row->id])->values();
 
         $controls = ['SUBJECT', 'OUT OF'];
-        foreach ($midExams as $ex) {
-            $controls[] = self::midExamControlColumnLabel($ex);
-        }
-        foreach ($eotExams as $ex) {
-            $controls[] = 'EOT';
+        $namedTypes = [];
+        foreach ($allExamColumns as $row) {
+            $typeId = (int) $row->exam_type_id;
+            if ($typeId < 1 || isset($namedTypes[$typeId]) || $row->examType === null) {
+                continue;
+            }
+            $namedTypes[$typeId] = true;
+            $controls[] = (string) $row->examType->name;
         }
         $controls = array_merge($controls, ['DIVISION', 'TEACHER', 'REMARK']);
 
@@ -473,48 +481,6 @@ class StudentReportCardService
         // pool unrelated classes that reuse the same label.
         $streamName = $learner->studentAcademicLatest?->standardLink?->stream ?? null;
 
-        $midStats = [];
-        foreach ($midExams as $midExam) {
-            $nonNullMarks = $learner->marks->filter(fn ($m) => $m->exam_id === $midExam->id && ! $m->isAbsent() && $m->marks !== null);
-            $total = $nonNullMarks->isNotEmpty() ? (int) round($nonNullMarks->sum('marks')) : null;
-            $points = $this->sumPoints(
-                $this->chosenMarksBySubject($learner->marks, collect([$midExam])),
-                $schoolId,
-                (int) $stdLink->standard_id
-            );
-
-            // Monthly position is class-wide: rank against every student who
-            // sat this section's MID exam for the month. A stream is a subset
-            // of the class, so it must never be the monthly pool, and stream
-            // labels are reused across grade levels, so pooling by stream
-            // would inflate the denominator (e.g. 236 across P.1-P.3 instead
-            // of this class's 96).
-            $poolExamIds = collect([$midExam->id]);
-
-            $studentIds = \App\Models\Academics\Marks::whereIn('exam_id', $poolExamIds)->where('absent', false)->whereNotNull('marks')->distinct('student_id')->pluck('student_id')->all();
-            $ranked = [];
-            foreach ($studentIds as $rankedSid) {
-                $ranked[$rankedSid] = (int) round(\App\Models\Academics\Marks::where('student_id', $rankedSid)->whereIn('exam_id', $poolExamIds)->where('absent', false)->whereNotNull('marks')->sum('marks'));
-            }
-            arsort($ranked);
-            $pos = 0;
-            foreach (array_keys($ranked) as $i => $rankedSid) {
-                if ($rankedSid === $learner->id) {
-                    $pos = $i + 1;
-                    break;
-                }
-            }
-            $midStats[$midExam->id] = [
-                'total' => $total,
-                'pos' => $pos,
-                'of' => count($ranked),
-                'division' => $divisionLabel($points),
-            ];
-        }
-
-        $contributing = $eotExams
-            ->filter(fn ($row) => (int) $row->examType->contributes_to_report_total === 1)
-            ->values();
         $eotMarkBySubject = $this->chosenMarksBySubject($learner->marks, $contributing);
         $eotPoints = $this->sumPoints($eotMarkBySubject, $schoolId, (int) $stdLink->standard_id);
         $eotDivision = $divisionLabel($eotPoints);
@@ -577,8 +543,13 @@ class StudentReportCardService
             $totalLearners = $resultRow->classOutOf;
             $streamPos = $resultRow->streamPosition;
             $streamTotal = $resultRow->streamOutOf > 0 ? $resultRow->streamOutOf : null;
-            $midSittings = $this->midSittings($sheet, (int) $learner->id, $midExams);
+            $midSittings = $this->sittingColumns($sheet, (int) $learner->id, false);
         }
+        $monthlySets = $midSittings;
+        $termSets = $sheet instanceof ResultSheet
+            ? $this->sittingColumns($sheet, (int) $learner->id, true)
+            : [];
+        $showDivision = $showAgg && ! $isALevel && $eotDivision !== '-';
         $eotCells = $resultRow?->cells ?? [];
         $examinedSubjectCount = $subjects->filter(fn ($s) => $learner->marks->where('subject_id', $s->id)->isNotEmpty())->count();
         if ($countMissingAsZero && $resultRow !== null && $resultRow->subjectsCounted > $examinedSubjectCount) {
@@ -592,7 +563,6 @@ class StudentReportCardService
             ? $svc->headTeacherCommentFor((int) $total, $standard->name, $learner->id, $exam->id, $teacherComment)
             : '';
 
-        $school = School::find($schoolId);
         $view = app(ReportTemplates::class)->resolve($templateKey, $school?->report_template);
         $logoPath = $this->resolveLogoPath($schoolId);
         $schoolIdentity = $this->resolveSchoolIdentity($school);
@@ -610,8 +580,8 @@ class StudentReportCardService
                 : collect(),
             'nextTerm' => AcademicTerm::where('school_id', $schoolId)->where('starts_on', '>', now())->first(),
             'totalLearners' => $totalLearners, 'myPos' => $myPos,
-            'allExamColumns' => $allExamColumns, 'midExams' => $midExams, 'eotExams' => $eotExams,
-            'midCount' => $midExams->count(), 'eotCount' => $eotExams->count(),
+            'allExamColumns' => $allExamColumns,
+            'midCount' => count($monthlySets), 'eotCount' => count($termSets),
             'stdLink' => $stdLink,
             'total' => $total, 'grade' => $grade, 'examinedSubjectCount' => $examinedSubjectCount,
             'eotAgg' => $eotPoints['points'] ?? ($grade['agg'] ?? null),
@@ -631,7 +601,6 @@ class StudentReportCardService
             'teacherComment' => $teacherComment,
             'headTeacherComment' => $headTeacherComment,
             'showAgg' => $showAgg,
-            'midStats' => $midStats,
             'eotDivision' => $eotDivision,
             'eotMarkBySubject' => $eotMarkBySubject,
             'streamName' => $streamName,
@@ -641,6 +610,8 @@ class StudentReportCardService
             'logoPath' => $logoPath,
             'countMissingAsZero' => $countMissingAsZero,
             'eotCells' => $eotCells,
+            'monthlySets' => $monthlySets,
+            'termSets' => $termSets,
         ]);
         $pdf->setPaper('a4', 'portrait');
 
@@ -708,27 +679,27 @@ class StudentReportCardService
     }
 
     /**
-     * One mid-term row per sitting, with every subject in that sitting.
+     * One column per exam set, in the sheet's order (exam type id, then exam id).
+     * The heading is the set's own name.
      *
-     * @param  Collection<int, Exam>  $midExams
-     * @return list<array{label: string, cells: array<int, \App\Services\Results\ResultCell>, total: ?float, pos: ?int, of: int, division: string}>
+     * @return list<array{label: string, cells: array<int, \App\Services\Results\ResultCell>, total: ?float, aggregate: ?int, pos: ?int, of: int, division: string}>
      */
-    private function midSittings(ResultSheet $sheet, int $studentId, Collection $midExams): array
+    private function sittingColumns(ResultSheet $sheet, int $studentId, bool $contributing): array
     {
         $rows = [];
         foreach ($sheet->sittings as $sitting) {
-            if ($sitting->contributesToReport) {
+            if ($sitting->contributesToReport !== $contributing) {
                 continue;
             }
             $student = $sitting->student($studentId);
             if (! $student instanceof ResultStudent) {
                 continue;
             }
-            $sample = $midExams->first(fn ($exam) => (int) $exam->exam_type_id === $sitting->examTypeId);
             $rows[] = [
-                'label' => $sample ? self::midExamMonthRowLabel($sample) : $sitting->name,
+                'label' => $sitting->name,
                 'cells' => $student->cells,
                 'total' => $student->total,
+                'aggregate' => $student->aggregate,
                 'pos' => $student->classPosition,
                 'of' => $student->classOutOf,
                 'division' => $student->division ?? '-',
