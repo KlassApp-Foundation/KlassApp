@@ -19,6 +19,7 @@
             <p style="color:#b91c1c;font-size:.85rem;">{{ $message }}</p>
         @enderror
         <button type="submit" class="ds-btn ds-btn-primary" data-testid="report-kind-save" style="min-height:44px;">Save report type</button>
+        <a href="{{ route('admin.reports.cards.progressive-rules') }}" data-testid="progressive-rules-link" style="margin-left:12px;color:#1d4ed8;">Progressive report rules</a>
     </form>
     <div data-testid="report-kind-history" style="margin-top:12px;color:#334155;font-size:.85rem;">
         @forelse ($reportKindChanges ?? [] as $change)
