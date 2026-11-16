@@ -960,6 +960,27 @@ public function scopeStudents($query)
     }
 
     /**
+     * Name printed on a report card. A first and last name are used as stored.
+     * A single-field name keeps its trailing number, which class lists strip.
+     */
+    public function reportCardName(): string
+    {
+        $profile = $this->userprofile;
+        $first = trim((string) ($profile->firstname ?? ''));
+        $last = trim((string) ($profile->lastname ?? ''));
+        if ($first !== '' && $last !== '') {
+            return mb_strtoupper($first.' '.$last);
+        }
+
+        $raw = trim((string) ($this->attributes['name'] ?? ''));
+        if ($raw !== '') {
+            return mb_strtoupper($raw);
+        }
+
+        return $first !== '' ? mb_strtoupper($first) : '';
+    }
+
+    /**
      * Parent/student name for WhatsApp copy: digit suffixes stripped, never the raw users.name.
      */
     public function whatsappDisplayName(string $fallback = 'there'): string
