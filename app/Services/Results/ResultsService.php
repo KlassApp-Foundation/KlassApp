@@ -37,7 +37,16 @@ final class ResultsService
 
     public function sheet(ResultsQuery $query, ?ResultsPolicy $policy = null): ResultSheet
     {
-        $policy ??= new ResultsPolicy($this->gradingScale, $this->divisionRule);
+        if ($policy === null) {
+            $policy = app(\App\Services\Reports\ReportScoring::class)->displayPolicy(
+                $query->schoolId,
+                $query->sectionId,
+                $query->academicTermId,
+                $query->standardLinkId,
+                false,
+                $this->divisionRule,
+            );
+        }
 
         $term = AcademicTerm::query()
             ->where('id', $query->academicTermId)

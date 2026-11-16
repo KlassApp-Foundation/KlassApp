@@ -47,6 +47,7 @@
             <tr>
                 <th>Total</th>
                 <th>Aggregate</th>
+                <th>Division</th>
                 <th>Position</th>
                 <th>Out of</th>
             </tr>
@@ -55,6 +56,7 @@
             <tr>
                 <td data-testid="student-result-total">{{ $student->displayTotal ?? '—' }}</td>
                 <td data-testid="student-result-aggregate">{{ $student->aggregate ?? '—' }}</td>
+                <td data-testid="student-result-division">{{ $student->division ?? '—' }}</td>
                 <td data-testid="student-result-position">{{ $student->classPosition ?? '—' }}</td>
                 <td>{{ $student->classOutOf }}</td>
             </tr>

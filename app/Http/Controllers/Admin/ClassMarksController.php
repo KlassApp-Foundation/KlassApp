@@ -104,6 +104,7 @@ class ClassMarksController extends Controller
                     return [
                         'code' => DemoStudentCode::fromKls($student->registration_number) ?? '#' . $student->id,
                         'first_name' => \Illuminate\Support\Str::title(mb_strtolower($first)),
+                        'division' => $result?->division,
                         'rows' => $rows,
                     ];
                 })
