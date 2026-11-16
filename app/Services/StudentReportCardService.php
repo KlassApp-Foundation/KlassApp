@@ -56,15 +56,17 @@ class StudentReportCardService
      */
     public static function midExamControlColumnLabel(Exam $exam): string
     {
+        $name = self::setName($exam);
         if ($exam->scheduled_at) {
-            return strtoupper($exam->scheduled_at->format('M')).' MID';
+            return strtoupper($exam->scheduled_at->format('M')).' '.$name;
         }
 
-        return 'MID';
+        return $name;
     }
 
     /**
-     * MID exam row label in monthly results tables (full month name).
+     * Row label in the stand-alone sets table. A dated sitting keeps the
+     * month name. A sitting with no date uses the school's own set name.
      */
     public static function midExamMonthRowLabel(Exam $exam): string
     {
@@ -72,7 +74,27 @@ class StudentReportCardService
             return strtoupper($exam->scheduled_at->format('F'));
         }
 
-        return 'MID TERM';
+        return self::setName($exam);
+    }
+
+    private static function setName(Exam $exam): string
+    {
+        if ($exam->relationLoaded('examType') && $exam->examType !== null) {
+            $name = trim((string) ($exam->examType->name ?? ''));
+            if ($name !== '') {
+                return $name;
+            }
+        }
+
+        if ($exam->exists) {
+            $exam->loadMissing('examType');
+            $name = trim((string) ($exam->examType->name ?? ''));
+            if ($name !== '') {
+                return $name;
+            }
+        }
+
+        return 'Exam set';
     }
 
     /**
@@ -193,6 +215,7 @@ class StudentReportCardService
             ->where('section_id', $sectionId)
             ->where('standard_id', $standardId)
             ->where('academic_term_id', $academicTermId)
+            ->whereNull('deleted_at')
             ->with('examType')
             ->orderBy('id')
             ->get();
@@ -200,6 +223,34 @@ class StudentReportCardService
         $contributing = $rows->first(fn ($row) => $row->examType && (bool) $row->examType->contributes_to_report_total);
 
         return $contributing ?? $rows->first();
+    }
+
+    /**
+     * Exam-set names this class's report card prints for the current term.
+     * The school's own exam type names, in the card's date order. A stream
+     * with no sitting of its own uses the base class, the same way the card does.
+     *
+     * @return list<string>
+     */
+    public function examSetNames(int $schoolId, StandardLink $stdLink): array
+    {
+        $anchor = $this->resolveExam($schoolId, $stdLink);
+        if ($anchor === null) {
+            return [];
+        }
+
+        return app(StudentReportHelperService::class)
+            ->exam($schoolId, $anchor)
+            ->filter(fn ($exam) => $this->typeIncluded($schoolId, $exam))
+            ->sortBy(fn ($exam): array => [
+                $exam->scheduled_at?->getTimestamp() ?? PHP_INT_MAX,
+                (int) $exam->id,
+            ])
+            ->map(fn ($exam): string => trim((string) ($exam->examType?->name ?? '')))
+            ->filter(fn (string $name): bool => $name !== '')
+            ->unique()
+            ->values()
+            ->all();
     }
 
     /**
@@ -718,6 +769,25 @@ class StudentReportCardService
                 mkdir($fontDir, 0755, true);
             }
         }
+        $composition = app(\App\Services\ReportCards\EndOfTermCompositionLine::class);
+        $anchorType = $exam->examType;
+        $countsOnCombined = $anchorType !== null && $composition->countsToward(
+            $anchorType,
+            $composition->compositionFor($schoolId, (int) $exam->id),
+        );
+        $compositionLine = $composition->lineFor($schoolId, $countsOnCombined, (int) $exam->id);
+        $reportSectionIds = array_values(array_unique(array_filter([
+            (int) ($stdLink->section_id ?? 0),
+            (int) ($exam->section_id ?? 0),
+        ])));
+        foreach (Section::query()->where('school_id', $schoolId)->whereIn('id', $reportSectionIds === [] ? [0] : $reportSectionIds)->get() as $reportSection) {
+            $reportSectionIds[] = (int) app(\App\Services\ClassStructureService::class)->resolveBaseSection($reportSection)->id;
+        }
+        $ownReports = app(\App\Services\ReportCards\EndOfTermCompositionLine::class)->ownReports(
+            $schoolId,
+            $reportSectionIds,
+            (int) $exam->academic_term_id,
+        );
         $logoPath = $this->resolveLogoPath($schoolId);
         $schoolIdentity = $this->resolveSchoolIdentity($school);
 
@@ -775,6 +845,8 @@ class StudentReportCardService
             'withheldSentence' => $withheldSentence,
             'sampleForApproval' => $sample,
             'printBlackAndWhite' => $printBlackAndWhite,
+            'compositionLine' => $compositionLine,
+            'ownReports' => $ownReports,
         ];
         if ($this->collectingClassCards) {
             $this->classCardHtml[] = view($view['view'], $data)->render();
@@ -994,6 +1066,47 @@ class StudentReportCardService
         }
 
         return $chosen;
+    }
+
+    /**
+     * Marks the card prints. A numeric mark is the chosen row. An absence
+     * prints ABS. A subject on this report with no mark prints Missing.
+     * The total comes from the results sheet, which counts both as 0.
+     *
+     * @param  array<int, Marks>  $chosen
+     * @param  Collection<int, Marks>  $marks
+     * @param  Collection<int, Exam>  $exams
+     * @return array<int, Marks>
+     */
+    private function displayMarksBySubject(array $chosen, Collection $marks, Collection $exams): array
+    {
+        $byId = $exams->keyBy('id');
+        $display = $chosen;
+        foreach ($marks as $mark) {
+            if (! $byId->has($mark->exam_id) || ($mark->marks !== null && ! $mark->isAbsent())) {
+                continue;
+            }
+            $subjectId = (int) $mark->subject_id;
+            if (! isset($display[$subjectId])) {
+                $display[$subjectId] = $mark;
+            }
+        }
+
+        foreach ($exams as $exam) {
+            $subjectId = (int) $exam->subject_id;
+            if ($subjectId < 1 || isset($display[$subjectId])) {
+                continue;
+            }
+            $display[$subjectId] = new Marks([
+                'subject_id' => $subjectId,
+                'exam_id' => (int) $exam->id,
+                'school_id' => (int) $exam->school_id,
+                'marks' => null,
+                'absent' => false,
+            ]);
+        }
+
+        return $display;
     }
 
     private function markIsLater(Marks $candidate, Marks $current, Collection $exams): bool

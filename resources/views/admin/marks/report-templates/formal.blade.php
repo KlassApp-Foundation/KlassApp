@@ -284,6 +284,15 @@
     <div class="doc-title-wrap">
         <span class="doc-title">PROGRESSIVE REPORT</span>
         <div class="doc-sub">{{ $termName }}</div>
+        @if (!empty($compositionLine ?? null))
+        <div class="doc-sub" data-testid="eot-composition">{{ $compositionLine }}</div>
+        @endif
+        @if (!empty($ownReports ?? []))
+        <div class="doc-sub" data-testid="own-reports">Each exam set has its own report</div>
+        @foreach ($ownReports as $own)
+        <div class="doc-sub" data-testid="own-report-{{ $own['id'] ?? '' }}">{{ $own['name'] }} — {{ $own['status'] }}</div>
+        @endforeach
+        @endif
     </div>
 
 </div>
