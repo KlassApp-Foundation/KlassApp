@@ -33,6 +33,20 @@ class OnboardingNameListExtractorTest extends TestCase
         $this->assertSame('P1', $result[2]['class']);
     }
 
+    public function test_csv_keeps_a_kls_column_apart_from_the_admission_number(): void
+    {
+        $csv = "Name,Class,KLS,Admission Number\nAmina Nakato,P4,KLS0010077,ADM-15\n";
+        $path = tempnam(sys_get_temp_dir(), 'bulk_test').'.csv';
+        file_put_contents($path, $csv);
+
+        $result = $this->extractor->extractNamesFromFile($path, 'csv');
+        unlink($path);
+
+        $this->assertCount(1, $result);
+        $this->assertSame('KLS0010077', $result[0]['registration_number']);
+        $this->assertSame('ADM-15', $result[0]['school_student_id']);
+    }
+
     public function test_csv_without_class_column_returns_empty_class(): void
     {
         $csv = "firstname\nAlice\nBob\n";

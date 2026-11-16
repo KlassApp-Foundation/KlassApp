@@ -117,13 +117,64 @@ class StudentIdGeneratorService
         return sprintf('KLS%05d%06d', $schoolId, $sequence);
     }
 
+    /**
+     * True when this KLS number is already stored on a user or an academic row.
+     * The check is global: the same number cannot belong to two learners.
+     */
+    public static function taken(string $id): bool
+    {
+        return self::isTaken($id);
+    }
+
+    /**
+     * A file value that matches PATTERN is the learner's KLS number.
+     * Anything else stays the school's own student id. A blank KLS is left
+     * for the generator. Two different KLS numbers on one row conflict.
+     *
+     * @return array{kls: ?string, school_student_id: ?string, conflict: bool}
+     */
+    public static function fromImport(?string $registration, ?string $schoolStudentId): array
+    {
+        $registrationRaw = trim((string) $registration);
+        $schoolRaw = trim((string) $schoolStudentId);
+        $registrationKls = self::isValid($registrationRaw) ? strtoupper($registrationRaw) : null;
+        $schoolKls = self::isValid($schoolRaw) ? strtoupper($schoolRaw) : null;
+
+        if ($registrationKls !== null && $schoolKls !== null && $registrationKls !== $schoolKls) {
+            return [
+                'kls' => null,
+                'school_student_id' => $schoolRaw,
+                'conflict' => true,
+            ];
+        }
+
+        $kls = $registrationKls ?? $schoolKls;
+        $schoolKept = $schoolRaw;
+        if ($schoolKls !== null) {
+            $schoolKept = $schoolKls;
+        } elseif ($registrationKls === null && $registrationRaw !== '' && $schoolKept === '') {
+            $schoolKept = $registrationRaw;
+        }
+
+        return [
+            'kls' => $kls,
+            'school_student_id' => $schoolKept !== '' ? $schoolKept : null,
+            'conflict' => false,
+        ];
+    }
+
     private static function isTaken(string $id): bool
     {
-        if (DB::table('users')->where('registration_number', $id)->exists()) {
+        $id = strtoupper(trim($id));
+        if ($id === '' || ! self::isValid($id)) {
+            return false;
+        }
+
+        if (DB::table('users')->whereRaw('upper(registration_number) = ?', [$id])->exists()) {
             return true;
         }
 
-        return DB::table('student_academics')->where('klassapp_student_id', $id)->exists();
+        return DB::table('student_academics')->whereRaw('upper(klassapp_student_id) = ?', [$id])->exists();
     }
 
     /**

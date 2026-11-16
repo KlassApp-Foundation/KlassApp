@@ -11,7 +11,9 @@ use App\Models\StudentAcademic;
 use App\Models\User;
 use App\Services\OnboardingEngine;
 use App\Services\OnboardingNameListExtractor;
+use App\Services\StudentIdGeneratorService;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Throwable;
@@ -279,8 +281,10 @@ class OnboardingUploadService
                 .'|'.$this->normaliseKey((string) ($row->section_name ?? ''))] = true;
         }
 
+        $takenKls = $this->takenKlsNumbers($rows);
         $keep = [];
         $seenInFile = [];
+        $seenKls = [];
         foreach ($rows as $row) {
             $fingerprint = $this->studentFingerprint($row);
             if (isset($existing[$fingerprint])) {
@@ -291,11 +295,77 @@ class OnboardingUploadService
                 $skips[] = ['row' => (int) ($row['row'] ?? 0), 'reason' => 'duplicate in file'];
                 continue;
             }
+
+            $imported = StudentIdGeneratorService::fromImport(
+                (string) ($row['registration_number'] ?? $row['klassapp_student_id'] ?? ''),
+                (string) ($row['school_student_id'] ?? ''),
+            );
+            if ($imported['conflict']) {
+                $skips[] = ['row' => (int) ($row['row'] ?? 0), 'reason' => 'two different KLS numbers'];
+                continue;
+            }
+            if ($imported['kls'] !== null && isset($takenKls[$imported['kls']])) {
+                $skips[] = ['row' => (int) ($row['row'] ?? 0), 'reason' => 'KLS number already used'];
+                continue;
+            }
+            if ($imported['kls'] !== null && isset($seenKls[$imported['kls']])) {
+                $skips[] = ['row' => (int) ($row['row'] ?? 0), 'reason' => 'duplicate KLS number'];
+                continue;
+            }
+
             $seenInFile[$fingerprint] = true;
+            if ($imported['kls'] !== null) {
+                $seenKls[$imported['kls']] = true;
+            }
             $keep[] = $row;
         }
 
         return $keep;
+    }
+
+    /**
+     * KLS numbers from this file that are already stored for any learner.
+     *
+     * @param  list<array<string, mixed>>  $rows
+     * @return array<string, true>
+     */
+    private function takenKlsNumbers(array $rows): array
+    {
+        $wanted = [];
+        foreach ($rows as $row) {
+            $imported = StudentIdGeneratorService::fromImport(
+                (string) ($row['registration_number'] ?? $row['klassapp_student_id'] ?? ''),
+                (string) ($row['school_student_id'] ?? ''),
+            );
+            if ($imported['kls'] !== null) {
+                $wanted[$imported['kls']] = true;
+            }
+        }
+
+        if ($wanted === []) {
+            return [];
+        }
+
+        $taken = [];
+        foreach (array_chunk(array_keys($wanted), 500) as $ids) {
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            $stored = DB::table('users')
+                ->whereRaw('upper(registration_number) in ('.$placeholders.')', $ids)
+                ->pluck('registration_number')
+                ->merge(
+                    DB::table('student_academics')
+                        ->whereRaw('upper(klassapp_student_id) in ('.$placeholders.')', $ids)
+                        ->pluck('klassapp_student_id')
+                );
+            foreach ($stored as $id) {
+                $canonical = strtoupper(trim((string) $id));
+                if ($canonical !== '') {
+                    $taken[$canonical] = true;
+                }
+            }
+        }
+
+        return $taken;
     }
 
     /**

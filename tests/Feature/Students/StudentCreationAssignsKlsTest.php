@@ -10,12 +10,14 @@ use App\Models\StandardLink;
 use App\Models\StudentAcademic;
 use App\Models\User;
 use App\Models\Userprofile;
+use App\Services\Onboarding\OnboardingUploadService;
 use App\Services\OnboardingEngine;
 use App\Services\StudentIdGeneratorService;
 use App\Traits\AdmissionUser;
 use App\Traits\RegisterUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 /**
@@ -152,6 +154,89 @@ class StudentCreationAssignsKlsTest extends TestCase
         $this->assertCount(1, $result['created']);
         $student = User::findOrFail($result['created'][0]['user_id']);
         $this->assertStudentCarriesKls($student);
+    }
+
+    /** A KLS number in the import file is the learner's KLS number. */
+    public function test_import_keeps_a_matching_kls_number_on_both_fields(): void
+    {
+        $provided = 'kls0010077';
+        $result = app(OnboardingEngine::class)->saveStudents($this->school, $this->year, [[
+            'name' => 'Kept Pupil',
+            'class' => 'P4',
+            'registration_number' => $provided,
+            'school_student_id' => 'ADM-15',
+        ]]);
+
+        $student = User::findOrFail($result['created'][0]['user_id']);
+        $this->assertSame('KLS0010077', $this->assertStudentCarriesKls($student));
+        $this->assertSame('ADM-15', StudentAcademic::where('user_id', $student->id)->value('school_student_id'));
+    }
+
+    /** An admission column that already holds a KLS number is kept, not replaced. */
+    public function test_import_keeps_a_kls_number_written_in_the_admission_column(): void
+    {
+        $result = app(OnboardingEngine::class)->saveStudents($this->school, $this->year, [[
+            'name' => 'Admission Pupil',
+            'class' => 'P4',
+            'school_student_id' => 'KLS00100010001',
+        ]]);
+
+        $student = User::findOrFail($result['created'][0]['user_id']);
+        $this->assertSame('KLS00100010001', $this->assertStudentCarriesKls($student));
+        $this->assertSame('KLS00100010001', StudentAcademic::where('user_id', $student->id)->value('school_student_id'));
+    }
+
+    /** A non-KLS admission number stays the school's own id. A KLS number is generated. */
+    public function test_import_leaves_a_non_kls_admission_number_on_the_school_id(): void
+    {
+        $result = app(OnboardingEngine::class)->saveStudents($this->school, $this->year, [[
+            'name' => 'School Id Pupil',
+            'class' => 'P4',
+            'school_student_id' => 'ADM-123',
+        ]]);
+
+        $student = User::findOrFail($result['created'][0]['user_id']);
+        $this->assertStudentCarriesKls($student);
+        $this->assertNotSame('ADM-123', $student->registration_number);
+        $this->assertSame('ADM-123', StudentAcademic::where('user_id', $student->id)->value('school_student_id'));
+    }
+
+    /** The same KLS number twice is refused before any learner in the list is created. */
+    public function test_import_refuses_a_repeated_kls_number_before_creating_anyone(): void
+    {
+        try {
+            app(OnboardingEngine::class)->saveStudents($this->school, $this->year, [
+                ['name' => 'First Pupil', 'class' => 'P4', 'registration_number' => 'KLS0010088'],
+                ['name' => 'Second Pupil', 'class' => 'P4', 'registration_number' => 'kls0010088'],
+            ]);
+            $this->fail('A repeated KLS number must be refused.');
+        } catch (ValidationException $e) {
+            $this->assertStringContainsString('KLS0010088', $e->getMessage());
+        }
+
+        $this->assertSame(0, User::query()->where('school_id', $this->school->id)->where('usergroup_id', 6)->count());
+    }
+
+    /** The dry run reports a KLS number that is already used, and does not insert. */
+    public function test_dry_run_skips_a_kls_number_already_used(): void
+    {
+        app(OnboardingEngine::class)->saveStudents($this->school, $this->year, [[
+            'name' => 'First Pupil',
+            'class' => 'P4',
+            'registration_number' => 'KLS0010099',
+        ]]);
+
+        $filtered = app(OnboardingUploadService::class)->filterExistingStudents($this->school, [
+            ['name' => 'Second Pupil', 'class' => 'P4', 'school_student_id' => 'KLS0010099', 'row' => 4],
+            ['name' => 'Third Pupil', 'class' => 'P4', 'registration_number' => 'KLS0010100', 'row' => 5],
+            ['name' => 'Fourth Pupil', 'class' => 'P4', 'registration_number' => 'KLS0010100', 'row' => 6],
+        ]);
+
+        $this->assertCount(1, $filtered['rows']);
+        $this->assertSame('Third Pupil', $filtered['rows'][0]['name']);
+        $this->assertSame('KLS number already used', $filtered['skips'][0]['reason']);
+        $this->assertSame('duplicate KLS number', $filtered['skips'][1]['reason']);
+        $this->assertSame(1, User::query()->where('school_id', $this->school->id)->where('usergroup_id', 6)->count());
     }
 
     /** The legacy academic seeder must sync both stores for students that lack an id. */

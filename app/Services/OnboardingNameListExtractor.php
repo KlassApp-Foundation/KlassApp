@@ -29,6 +29,7 @@ class OnboardingNameListExtractor
      *     classes: string,
      *     gender: string,
      *     school_student_id: string,
+     *     registration_number: string,
      *     lin: string,
      *     board_registration_number: string,
      *     date_of_birth: string
@@ -168,6 +169,15 @@ class OnboardingNameListExtractor
         $subjectsIdx = $this->findHeaderIndex($lowerHeaders, ['subjects', 'subject']);
         $classesIdx = $this->findHeaderIndex($lowerHeaders, ['classes']);
         $genderIdx = $this->findHeaderIndex($lowerHeaders, ['gender', 'sex']);
+        $klsIdx = $this->findHeaderIndex($lowerHeaders, [
+            'kls',
+            'kls number',
+            'kls no',
+            'klassapp student id',
+            'klassapp_student_id',
+            'registration number',
+            'registration_number',
+        ]);
         $schoolIdIdx = $this->findHeaderIndex($lowerHeaders, [
             'school student id',
             'school_student_id',
@@ -287,6 +297,7 @@ class OnboardingNameListExtractor
                 'classes' => ($classesIdx !== null && ! empty($row[$classesIdx] ?? '')) ? $row[$classesIdx] : '',
                 'gender' => $gender,
                 'school_student_id' => ($schoolIdIdx !== null && ! empty($row[$schoolIdIdx] ?? '')) ? $row[$schoolIdIdx] : '',
+                'registration_number' => ($klsIdx !== null && ! empty($row[$klsIdx] ?? '')) ? $row[$klsIdx] : '',
                 'lin' => ($linIdx !== null && ! empty($row[$linIdx] ?? '')) ? $row[$linIdx] : '',
                 'board_registration_number' => ($boardRegIdx !== null && ! empty($row[$boardRegIdx] ?? '')) ? $row[$boardRegIdx] : '',
                 'date_of_birth' => ($dobIdx !== null && ! empty($row[$dobIdx] ?? '')) ? $row[$dobIdx] : '',
@@ -652,6 +663,7 @@ class OnboardingNameListExtractor
      *     classes: string,
      *     gender: string,
      *     school_student_id: string,
+     *     registration_number: string,
      *     lin: string,
      *     board_registration_number: string,
      *     date_of_birth: string
@@ -672,6 +684,7 @@ class OnboardingNameListExtractor
             'classes' => '',
             'gender' => '',
             'school_student_id' => '',
+            'registration_number' => '',
             'lin' => '',
             'board_registration_number' => '',
             'date_of_birth' => '',
