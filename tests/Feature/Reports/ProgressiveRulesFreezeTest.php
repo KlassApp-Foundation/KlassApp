@@ -61,8 +61,8 @@ class ProgressiveRulesFreezeTest extends TestCase
         $this->assertSame(1, $before['myPos']);
 
         $snapshot = RecordSnapshot::query()->where('student_id', $ctx['lower']->id)->sole();
-        $this->assertSame(1, $snapshot->payload['progressive_rules']['bands'][0]['points'] ?? $this->bandPoints($snapshot->payload['progressive_rules']['bands'], '1'));
-        $storedPoints = $this->bandPoints($snapshot->payload['progressive_rules']['bands'], '1');
+        $this->assertSame(1, $snapshot->payload['progressive_rules']['bands'][0]['points'] ?? $this->bandPoints($snapshot->payload['progressive_rules']['bands'], 'D1'));
+        $storedPoints = $this->bandPoints($snapshot->payload['progressive_rules']['bands'], 'D1');
         $this->assertSame(1, $storedPoints);
 
         $this->editRules($ctx);
@@ -80,9 +80,9 @@ class ProgressiveRulesFreezeTest extends TestCase
         $fresh = $release->fresh();
         $this->assertSame(1, $this->bandPoints(
             $fresh->progressive_rules['standards'][(string) $ctx['standard']->id]['bands'],
-            '1',
+            'D1',
         ));
-        $this->assertSame($storedPoints, $this->bandPoints($snapshot->fresh()->payload['progressive_rules']['bands'], '1'));
+        $this->assertSame($storedPoints, $this->bandPoints($snapshot->fresh()->payload['progressive_rules']['bands'], 'D1'));
         $this->assertSame('aggregate', $fresh->progressive_rules['standards'][(string) $ctx['standard']->id]['ranking_basis']);
     }
 
@@ -141,7 +141,7 @@ class ProgressiveRulesFreezeTest extends TestCase
         SchoolGradingSystem::query()
             ->where('school_id', $ctx['school']->id)
             ->where('standard_id', $ctx['standard']->id)
-            ->where('grade', '1')
+            ->where('grade', 'D1')
             ->update(['points' => 9]);
         $ctx['standard']->forceFill(['ranking_basis' => 'total'])->save();
     }
