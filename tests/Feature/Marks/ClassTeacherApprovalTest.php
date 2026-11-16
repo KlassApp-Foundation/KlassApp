@@ -157,8 +157,10 @@ class ClassTeacherApprovalTest extends TestCase
         $affected = app(MarksSubmissionService::class)->approve($this->classTeacher, $this->exam);
 
         $this->assertSame(1, $affected);
-        $this->assertSame('approved', $row->fresh()->approval_status);
-        $this->assertSame($this->classTeacher->id, $row->fresh()->approved_by);
+        $approved = $row->fresh();
+        $this->assertSame('approved', $approved->status);
+        $this->assertSame('approved', $approved->approval_status);
+        $this->assertSame($this->classTeacher->id, $approved->approved_by);
     }
 
     public function test_a_subject_teacher_who_does_not_head_the_class_cannot_approve(): void
@@ -222,7 +224,9 @@ class ClassTeacherApprovalTest extends TestCase
         $row = $this->submittedFor($this->exam, $this->section->id);
 
         $this->assertSame(1, app(MarksSubmissionService::class)->approve($this->admin, $this->exam));
-        $this->assertSame('approved', $row->fresh()->approval_status);
+        $approved = $row->fresh();
+        $this->assertSame('approved', $approved->status);
+        $this->assertSame('approved', $approved->approval_status);
     }
 
     public function test_the_sidebar_offers_review_marks_to_a_class_teacher_only(): void

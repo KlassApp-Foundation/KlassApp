@@ -139,13 +139,7 @@ final class MarksSubmissionService
             if ($row->isApproved()) {
                 continue;
             }
-            $from = $row->status;
-            $row->approval_status = 'approved';
-            $row->approved_at = now();
-            $row->approved_by = $actor->id;
-            $row->save();
-            $this->log($actor, $row, 'approved', $from, $row->status);
-            $this->notifyTeacher($row, 'approved', 'Your marks were approved.');
+            $this->recordApproval($row, $actor);
             $affected++;
         }
 
@@ -170,19 +164,16 @@ final class MarksSubmissionService
         $approved = 0;
         $skipped = 0;
         foreach (array_unique(array_map('intval', $submissionIds)) as $id) {
-            $row = ExamMarksSubmission::query()->whereKey($id)->first();
-            if ($row === null || (int) $row->school_id !== (int) $actor->school_id || ! $row->isApprovable()) {
+            $row = ExamMarksSubmission::query()
+                ->where('id', $id)
+                ->where('school_id', $actor->school_id)
+                ->first();
+            if ($row === null || ! $row->isApprovable()) {
                 $skipped++;
 
                 continue;
             }
-            $from = $row->status;
-            $row->approval_status = 'approved';
-            $row->approved_at = now();
-            $row->approved_by = $actor->id;
-            $row->save();
-            $this->log($actor, $row, 'approved', $from, $row->status);
-            $this->notifyTeacher($row, 'approved', 'Your marks were approved.');
+            $this->recordApproval($row, $actor);
             $approved++;
         }
 
@@ -360,6 +351,22 @@ final class MarksSubmissionService
             ->orderByDesc('id');
     }
 
+    /**
+     * The review list prints status. The release gate reads approval_status.
+     * Older approved rows left status as submitted, so both are set.
+     */
+    private function recordApproval(ExamMarksSubmission $row, User $actor): void
+    {
+        $from = $row->status;
+        $row->status = 'approved';
+        $row->approval_status = 'approved';
+        $row->approved_at = now();
+        $row->approved_by = $actor->id;
+        $row->save();
+        $this->log($actor, $row, 'approved', $from, $row->status);
+        $this->notifyTeacher($row, 'approved', 'Your marks were approved.');
+    }
+
     private function applyLock(ExamMarksSubmission $row, ?User $actor, string $action): ExamMarksSubmission
     {
         $from = $row->status;
@@ -437,6 +444,7 @@ final class MarksSubmissionService
         }
 
         $rows = ExamMarksSubmission::query()
+            ->where('school_id', $actor->school_id)
             ->whereIn('id', array_map('intval', $submissionIds))
             ->with('exam')
             ->get();
