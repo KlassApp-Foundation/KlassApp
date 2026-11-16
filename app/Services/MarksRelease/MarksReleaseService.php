@@ -507,7 +507,7 @@ final class MarksReleaseService
     private function approvalRows(User $user, Exam $anchor, ?StandardLink $link): array
     {
         $sectionIds = $link
-            ? [(int) $link->section_id]
+            ? $this->sectionsInClass((int) $user->school_id, (int) $link->section_id)
             : Exam::query()
                 ->where('school_id', $user->school_id)
                 ->where('exam_type_id', $anchor->exam_type_id)
@@ -772,8 +772,9 @@ final class MarksReleaseService
 
     private function releaseSheet(int $schoolId, Exam $anchor, StandardLink $classLink): ResultSheet
     {
-        // Exams are stored on the base class. A stream link still reads that sheet.
-        $sectionId = (int) $anchor->section_id > 0 ? (int) $anchor->section_id : (int) $classLink->section_id;
+        // Exams sit on the base class. Read that class, not whichever class in the
+        // exam set happens to own the anchor row.
+        $sectionId = $this->baseSectionId($schoolId, (int) $classLink->section_id);
 
         return app(ResultsService::class)->sheet(new ResultsQuery(
             schoolId: $schoolId,
@@ -2060,6 +2061,46 @@ final class MarksReleaseService
         $digits = preg_replace('/\D+/', '', $phone);
 
         return '•••' . substr($digits, -3);
+    }
+
+    /**
+     * The class being released: its base section and that class's stream sections.
+     * Another class that shares the exam set is not included. Scope is section id,
+     * never the grading-band standard id.
+     *
+     * @return list<int>
+     */
+    private function sectionsInClass(int $schoolId, int $sectionId): array
+    {
+        return $this->withStreamSections($schoolId, [$this->baseSectionId($schoolId, $sectionId)]);
+    }
+
+    /** The section itself, or the shorter class it is a stream of ("Primary Five E" → "Primary Five"). */
+    private function baseSectionId(int $schoolId, int $sectionId): int
+    {
+        if ($sectionId <= 0) {
+            return $sectionId;
+        }
+
+        $sections = Section::query()->where('school_id', $schoolId)->get(['id', 'name']);
+        $current = $sections->firstWhere('id', $sectionId);
+        if ($current === null) {
+            return $sectionId;
+        }
+
+        $name = trim((string) $current->name);
+        $base = $sections
+            ->filter(function ($candidate) use ($current, $name) {
+                $candidateName = trim((string) $candidate->name);
+
+                return (int) $candidate->id !== (int) $current->id
+                    && $candidateName !== ''
+                    && str_starts_with($name, $candidateName.' ');
+            })
+            ->sortBy(fn ($candidate) => strlen(trim((string) $candidate->name)))
+            ->first();
+
+        return $base !== null ? (int) $base->id : $sectionId;
     }
 
     /**

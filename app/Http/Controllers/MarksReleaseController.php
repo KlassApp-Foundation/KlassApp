@@ -56,6 +56,16 @@ class MarksReleaseController extends Controller
 
     public function preview(Request $request): View
     {
+        try {
+            return $this->previewRelease($request);
+        } catch (ValidationException $exception) {
+            $this->sendFailureToReleaseForm($request, $exception);
+            throw $exception;
+        }
+    }
+
+    private function previewRelease(Request $request): View
+    {
         $user = $this->user();
         $data = $this->validated($request);
         $exams = $this->releases->exams($user);
@@ -84,6 +94,19 @@ class MarksReleaseController extends Controller
     }
 
     public function store(Request $request): RedirectResponse|View
+    {
+        try {
+            return $this->storeRelease($request);
+        } catch (ValidationException $exception) {
+            // The confirm step is often reached from the preview POST. Sending
+            // the error back there is a GET to a POST-only URL, which is a 405,
+            // and the approval message never renders.
+            $this->sendFailureToReleaseForm($request, $exception);
+            throw $exception;
+        }
+    }
+
+    private function storeRelease(Request $request): RedirectResponse
     {
         $user = $this->user();
         $data = $this->validated($request);
@@ -322,6 +345,19 @@ class MarksReleaseController extends Controller
     private function area(Request $request): string
     {
         return str_starts_with((string) $request->route()?->getName(), 'teacher.') ? 'teacher' : 'admin';
+    }
+
+    /**
+     * Validation from confirm or preview belongs on the release form, which is a GET.
+     * Never send the browser to the preview URL.
+     */
+    private function sendFailureToReleaseForm(Request $request, ValidationException $exception): void
+    {
+        if ($exception->redirectTo !== null) {
+            return;
+        }
+
+        $exception->redirectTo(route($this->area($request).'.marks.releases.create'));
     }
 
     /**
