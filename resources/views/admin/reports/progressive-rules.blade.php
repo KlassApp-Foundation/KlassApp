@@ -45,6 +45,8 @@
         </select>
     </form>
 
+    <p style="margin:0 0 12px;font-size:.9rem;"><a href="{{ route('admin.school-identity') }}" data-testid="rules-identity-link">School details for report cards</a>: the crest and the head teacher's name.</p>
+
     <p data-testid="rules-apply-note" style="margin:0 0 12px;padding:10px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;color:#14532d;font-size:.9rem;">
         Changes you save here apply from the next release. A report that has already been released keeps the rules it was released with and never changes.
     </p>
