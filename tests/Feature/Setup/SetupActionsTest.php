@@ -65,6 +65,10 @@ class SetupActionsTest extends TestCase
     {
         [$first, $second] = $this->terms($this->school, $this->year);
 
+        $this->actingAs($this->admin)->get('/admin/settings')->assertOk()
+            ->assertSee(route('admin.academic-term'), false)
+            ->assertDontSee('/admin/academic-term/create', false);
+
         $this->actingAs($this->admin)->get('/admin/academic-term')->assertOk()
             ->assertSee('data-testid="make-current-'.$second->id.'"', false)
             ->assertDontSee('data-testid="make-current-'.$first->id.'"', false)
@@ -138,7 +142,20 @@ class SetupActionsTest extends TestCase
 
     public static function rolesRefused(): array
     {
-        return ['head teacher' => [4], 'teacher' => [5], 'student' => [6], 'parent' => [7], 'accountant' => [11]];
+        return ['teacher' => [5], 'student' => [6], 'parent' => [7], 'accountant' => [11]];
+    }
+
+    public function test_a_head_teacher_can_open_the_terms_list_and_make_a_term_current(): void
+    {
+        [$first, $second] = $this->terms($this->school, $this->year);
+        $head = $this->user($this->school, 4, 'Setup Head');
+
+        $this->actingAs($head)->get('/admin/academic-term')->assertOk()->assertSee('Make this the current term');
+        $this->actingAs($head)->post('/admin/academic-term/'.$second->id.'/make-current', ['confirm' => '1'])
+            ->assertRedirect(route('admin.academic-term'));
+
+        $this->assertSame('current', $second->fresh()->status);
+        $this->assertNotSame('current', $first->fresh()->status);
     }
 
     #[DataProvider('rolesRefused')]
