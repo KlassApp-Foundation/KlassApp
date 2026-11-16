@@ -19,6 +19,20 @@ return [
     'default_for_transcription' => 'openai',
     'default_for_embeddings' => 'openai',
     'default_for_reranking' => 'cohere',
+    'default_for_classification' => 'typesafe',
+
+    /*
+    | Conversation tables match the Laravel AI 1.x defaults. The package
+    | reads these keys and falls back to the same names when they are absent.
+    */
+    'conversations' => [
+        'connection' => null,
+        'generate_title' => true,
+        'tables' => [
+            'conversations' => 'agent_conversations',
+            'messages' => 'agent_conversation_messages',
+        ],
+    ],
 
     /*
     |--------------------------------------------------------------------------

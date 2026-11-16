@@ -29,9 +29,9 @@ use Throwable;
  *
  * Conversational + RemembersConversations: REQUIRED for native laravel/ai
  * HITL approval pause/resume (GeneratesText::throwIfNotResumable throws
- * ApprovalNotResumableException for non-Conversational agents). The paused
- * turn persists approval_state on agent_conversation_messages; RouteTo*
- * surfaces the pause to the Toshi panel, which resumes via
+ * ApprovalNotResumableException for non-Conversational agents). A paused
+ * turn stores status "paused" and the approval reason on the call inside
+ * steps; RouteTo* surfaces the pause to the Toshi panel, which resumes via
  * continue(conversationId)->prompt(Decisions::...).
  *
  * UsesToshiLlm: this skill calls prompt() itself, so it must resolve the same

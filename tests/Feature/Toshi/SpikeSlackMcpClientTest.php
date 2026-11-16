@@ -241,6 +241,7 @@ class SpikeSlackMcpClientTest extends TestCase
             $mcpTool,
             [],
             $result,
+            0.0,
         ));
 
         $this->assertSame(

@@ -6,6 +6,7 @@ use App\Ai\Agents\PlatformOperationsAgent;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Laravel\Ai\Approvals\PendingApproval;
+use Laravel\Ai\Enums\MessageStatus;
 use Laravel\Ai\Models\Conversation;
 use Laravel\Ai\Models\ConversationMessage;
 use Laravel\Ai\Approvals\Decisions;
@@ -29,24 +30,19 @@ class PlatformOpsConversationService
             return collect();
         }
 
-        $pending = $message->approval_state['pending'] ?? [];
+        return collect($message->tool_calls ?? [])
+            ->filter(fn (mixed $call): bool => is_array($call) && PendingApproval::isPending($call))
+            ->map(function (array $call): PendingApproval {
+                $reason = $call['approval_reason'] ?? null;
 
-        if (! is_array($pending) || $pending === []) {
-            return collect();
-        }
-
-        $toolCalls = collect($message->tool_calls ?? [])->keyBy('id');
-
-        return collect($pending)->map(function (mixed $reason, string $id) use ($toolCalls): PendingApproval {
-            $call = $toolCalls->get($id) ?? [];
-
-            return new PendingApproval(
-                $id,
-                (string) ($call['name'] ?? 'unknown'),
-                is_array($call['arguments'] ?? null) ? $call['arguments'] : [],
-                is_string($reason) ? $reason : null,
-            );
-        })->values();
+                return new PendingApproval(
+                    (string) ($call['id'] ?? ''),
+                    (string) ($call['name'] ?? 'unknown'),
+                    is_array($call['arguments'] ?? null) ? $call['arguments'] : [],
+                    is_string($reason) ? $reason : null,
+                );
+            })
+            ->values();
     }
 
     public function hasPendingApprovals(Conversation $conversation): bool
@@ -68,13 +64,12 @@ class PlatformOpsConversationService
     {
         return $conversation->messages()
             ->where('role', 'assistant')
-            ->whereNotNull('approval_state')
+            ->where('status', MessageStatus::Paused->value)
             ->orderByDesc('created_at')
             ->get()
             ->first(function (ConversationMessage $message): bool {
-                $pending = $message->approval_state['pending'] ?? null;
-
-                return is_array($pending) && $pending !== [];
+                return collect($message->tool_calls ?? [])
+                    ->contains(fn (mixed $call): bool => is_array($call) && PendingApproval::isPending($call));
             });
     }
 }
