@@ -5,6 +5,7 @@ namespace Tests\Support;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\Academics\Exam;
+use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\Marks;
 use App\Models\Academics\SchoolGradingSystem;
 use App\Models\School;
@@ -42,6 +43,8 @@ final class SyntheticClass
 
     public User $teacher;
 
+    public User $admin;
+
     /** @var list<Subject> in the fixture's subject order */
     public array $subjects = [];
 
@@ -55,7 +58,7 @@ final class SyntheticClass
     public array $fixture = [];
 
     /**
-     * @param  array{learners?: int, counting_sets?: list<int>, ranking_basis?: ?string, template?: string, suffix?: string}  $options
+     * @param  array{learners?: int, counting_sets?: list<int>, ranking_basis?: ?string, template?: string, suffix?: string, submitted?: bool}  $options
      */
     public static function build(array $options = []): self
     {
@@ -63,6 +66,7 @@ final class SyntheticClass
         $self->fixture = self::fixture();
         $count = (int) ($options['learners'] ?? count($self->fixture['learners']));
         $counting = $options['counting_sets'] ?? [];
+        $nameSuffix = isset($options['suffix']) ? ' '.$options['suffix'] : '';
         $suffix = (string) ($options['suffix'] ?? uniqid());
 
         DB::table('usergroups')->insertOrIgnore([
@@ -73,14 +77,14 @@ final class SyntheticClass
         $typeIds = [];
         foreach ($self->fixture['sets'] as $index => $setName) {
             $typeIds[$index] = DB::table('exam_types')->insertGetId([
-                'name' => $setName.' '.$suffix, 'code' => 'SET'.($index + 1).substr($suffix, 0, 4),
+                'name' => $setName.$nameSuffix, 'code' => 'SET'.($index + 1).substr($suffix, 0, 4),
                 'contributes_to_report_total' => in_array($index, $counting, true) ? 1 : 0,
                 'created_at' => now(), 'updated_at' => now(),
             ]);
         }
 
         $self->school = School::create([
-            'name' => $self->fixture['school'], 'slug' => 'synthetic-'.$suffix, 'email' => $suffix.'@synthetic.test',
+            'name' => $self->fixture['school'].$nameSuffix, 'slug' => 'synthetic-'.$suffix, 'email' => $suffix.'@synthetic.test',
             'phone' => '073'.random_int(1000000, 9999999), 'status' => 1, 'report_template' => $options['template'] ?? 'progressive',
         ]);
         $self->year = AcademicYear::create([
@@ -104,6 +108,9 @@ final class SyntheticClass
         $self->teacher = User::factory()->create([
             'usergroup_id' => 5, 'school_id' => $self->school->id, 'email' => $suffix.'-teacher@synthetic.test', 'status' => 'active',
         ]);
+        $self->admin = User::factory()->create([
+            'usergroup_id' => 3, 'school_id' => $self->school->id, 'email' => $suffix.'-admin@synthetic.test', 'status' => 'active',
+        ]);
         $self->link = StandardLink::create([
             'school_id' => $self->school->id, 'academic_year_id' => $self->year->id, 'standard_id' => $self->standard->id,
             'section_id' => $self->section->id, 'class_teacher_id' => $self->teacher->id, 'stream' => 'A', 'status' => 1,
@@ -126,6 +133,18 @@ final class SyntheticClass
                     'academic_term_id' => $self->term->id, 'academic_year_id' => $self->year->id,
                     'scheduled_at' => $dates[$setIndex], 'status' => 'submitted',
                 ]));
+            }
+        }
+
+        if (! empty($options['submitted'])) {
+            foreach ($self->exams as $perSubject) {
+                foreach ($perSubject as $subjectIndex => $exam) {
+                    ExamMarksSubmission::create([
+                        'school_id' => $self->school->id, 'exam_id' => $exam->id, 'class_id' => $self->section->id,
+                        'subject_id' => $self->subjects[$subjectIndex]->id, 'teacher_id' => $self->teacher->id, 'status' => 'locked',
+                        'approval_status' => 'approved', 'submitted_at' => now(), 'approved_at' => now(),
+                    ]);
+                }
             }
         }
 
@@ -180,5 +199,39 @@ final class SyntheticClass
             }
         }
         throw new \OutOfBoundsException($kls);
+    }
+
+    /**
+     * The card's view data for one learner (the real service, a stand-in PDF writer that keeps what the
+     * template was given). Needs one counting set, otherwise the card refuses (known gap, see the plan).
+     *
+     * @return array<string, mixed>
+     */
+    public function cardData(string $kls): array
+    {
+        $captured = null;
+        $pdf = \Mockery::mock(\Barryvdh\DomPDF\PDF::class);
+        $pdf->shouldReceive('loadView')->andReturnUsing(function (string $view, array $data) use (&$captured, $pdf) {
+            $captured = $data;
+
+            return $pdf;
+        });
+        $pdf->shouldReceive('setPaper')->andReturnSelf();
+        $pdf->shouldReceive('output')->andReturn('%PDF');
+        app()->instance('dompdf.wrapper', $pdf);
+
+        app(\App\Services\StudentReportCardService::class)->pdfForStudent((int) $this->school->id, $this->link, $this->learners[$kls]);
+        app()->forgetInstance('dompdf.wrapper');
+
+        return $captured;
+    }
+
+    /** The real PDF for one learner, as the text a person would read in it. */
+    public function pdfText(string $kls): string
+    {
+        app()->forgetInstance('dompdf.wrapper');
+        $pdf = app(\App\Services\StudentReportCardService::class)->pdfForStudent((int) $this->school->id, $this->link, $this->learners[$kls]);
+
+        return (new \Smalot\PdfParser\Parser)->parseContent($pdf)->getText();
     }
 }
