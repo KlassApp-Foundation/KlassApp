@@ -154,7 +154,7 @@ class OneDivisionTableTest extends TestCase
         $binary = Excel::raw(new CombinedMarksheetExport($ctx['link'], $ctx['term']), \Maatwebsite\Excel\Excel::XLSX);
         $tmp = tempnam(sys_get_temp_dir(), 'div').'.xlsx';
         file_put_contents($tmp, $binary);
-        $sheet = IOFactory::load($tmp)->getSheetByName('END OF TERM');
+        $sheet = IOFactory::load($tmp)->getSheetByName('Closing paper');
         @unlink($tmp);
         $this->assertNotNull($sheet);
         $rows = $sheet->toArray();

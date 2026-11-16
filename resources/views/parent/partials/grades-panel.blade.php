@@ -21,7 +21,7 @@
                             @foreach ($group['subjects'] as $subject)
                                 <tr>
                                     <td>{{ $subject['name'] }}</td>
-                                    <td>{{ $subject['score'] }}/{{ $subject['total'] }}</td>
+                                    <td>{{ ($subject['shown'] ?? null) === 'ABS' ? 'ABS' : $subject['score'].'/'.$subject['total'] }}</td>
                                     <td>{{ $subject['grade'] }}</td>
                                 </tr>
                             @endforeach

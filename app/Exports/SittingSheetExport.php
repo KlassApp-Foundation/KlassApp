@@ -47,7 +47,7 @@ class SittingSheetExport implements FromArray, WithHeadings, WithTitle
             foreach ($this->sheet->subjects as $subject) {
                 $cell = $student->cell((int) $subject['id']);
                 $row[] = ($cell !== null && $cell->status === ResultCell::ABSENT)
-                    ? 'AB'
+                    ? 'ABS'
                     : (($cell !== null && $cell->status === ResultCell::MARKED && $cell->mark !== null)
                         ? $cell->mark
                         : '');
