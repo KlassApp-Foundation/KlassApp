@@ -32,6 +32,8 @@
     </div>
     @endif
 
+    <p data-testid="marks-abs-hint">Type ABS when a student was absent. Marks are out of 100.</p>
+
     {{-- Table --}}
     <div class="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm p-1">
         <h3 class='text-center py-2 font-semibold '>
@@ -76,11 +78,20 @@
                             @if($mark->isAbsent())
                                 <span data-testid="submitted-mark-absent">ABS</span>
                             @else
+                            @php
+                                $shownMark = $mark->marks;
+                                if ($shownMark === null || $shownMark === '') {
+                                    $shownMark = '';
+                                } else {
+                                    $shownMark = rtrim(rtrim(number_format((float) $shownMark, 2, '.', ''), '0'), '.');
+                                    $shownMark = $shownMark === '' ? '0' : $shownMark;
+                                }
+                            @endphp
                             <span class="px-2 py-1 text-sm font-semibold rounded-full
                                 {{ $mark->marks >= 70 ? 'bg-green-100 text-green-700' :
                                    ($mark->marks >= 50 ? 'bg-yellow-100 text-yellow-700' :
-                                   'bg-red-100 text-red-700') }}">
-                                {{ $mark->isAbsent() ? 'ABS' : ceil($mark->marks) }}
+                                   'bg-red-100 text-red-700') }}" data-testid="submitted-mark-value">
+                                {{ $shownMark }}
                             </span>
                             @endif
                         </td>

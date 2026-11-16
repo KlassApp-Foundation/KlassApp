@@ -151,19 +151,6 @@ public function submitMarks(Exam $exam, MarksSubmissionService $submissions)
             ->with('failmessage', 'Save marks before submitting them for review.');
     }
 
-    $exam->loadMissing('standard');
-    $level = $exam->standard ? GradingHelper::levelTypeForStandard($exam->standard) : null;
-    if ($level !== 'nursery') {
-        $missing = $this->learnersMissingMarkOrAbs($exam, $teacher);
-        if ($missing > 0) {
-            $noun = $missing === 1 ? 'learner' : 'learners';
-
-            return redirect()
-                ->route('teacher.exam.marks.enter', $exam)
-                ->with('failmessage', 'A mark or ABS is missing for '.$missing.' '.$noun.'.');
-        }
-    }
-
     try {
         $submissions->submit($exam, $teacher);
     } catch (ValidationException $e) {

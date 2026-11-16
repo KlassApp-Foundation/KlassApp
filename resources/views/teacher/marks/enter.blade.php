@@ -93,7 +93,9 @@
     @endif
 
     @php
-        $submitReady = ($canSubmit ?? false) && ($missingMarkCount ?? 0) === 0 && ($fixCount ?? 0) === 0 && ($unsavedCount ?? 0) === 0 && ($blankCount ?? 0) === 0;
+        // A blank is allowed. Missing rows block only when they are not those blanks.
+        $missingBlocksSubmit = ($missingMarkCount ?? 0) > ($blankCount ?? 0);
+        $submitReady = ($canSubmit ?? false) && ! $missingBlocksSubmit && ($fixCount ?? 0) === 0 && ($unsavedCount ?? 0) === 0;
     @endphp
     <div class="ka-sticky ka-marks-bar">
         @unless($isNursery)
@@ -115,7 +117,7 @@
             @endunless
         </div>
         @unless($isNursery)
-            <p class="ka-entry-help">Submit is ready when every learner has a mark or ABS, and every mark is saved.</p>
+            <p class="ka-entry-help">A blank is allowed and will count as 0 on the card. Submit stays off while a mark is not saved yet or needs fixing.</p>
         @endunless
     </div>
 
@@ -291,6 +293,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var previousButton = document.querySelector('[data-testid="marks-previous"]');
     var offlineCount = banner ? banner.querySelector('[data-offline-count]') : null;
     var writesOpen = {{ ($writesOpen ?? false) ? 'true' : 'false' }};
+    var canSubmit = {{ ($canSubmit ?? false) ? 'true' : 'false' }};
+    var missingBlocks = {{ ($missingBlocksSubmit ?? false) ? 'true' : 'false' }};
 
     function isAbs(value) {
         var text = String(value || '').trim().toUpperCase();
@@ -386,12 +390,11 @@ document.addEventListener('DOMContentLoaded', function () {
             tally.textContent = savedCount + ' saved · ' + unsaved + ' not saved yet · ' + life;
         }
         if (offlineCount) offlineCount.textContent = unsaved + ' not saved yet.';
-        var ready = writesOpen && inputs.length > 0 && inputs.every(function (input) {
+        var ready = writesOpen && canSubmit && !missingBlocks && inputs.length > 0 && inputs.every(function (input) {
             var value = String(input.value).trim();
-            if (!savedSame(input)) return false;
-            if (isAbs(value)) return true;
-            var number = Number(value);
-            return value !== '' && !isNaN(number) && number <= 100;
+            if (kindOf(value) === 'fix') return false;
+            if (value !== '' && !savedSame(input)) return false;
+            return true;
         });
         if (submit) submit.disabled = !ready;
         nameNext();

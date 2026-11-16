@@ -129,7 +129,8 @@ class MarksEntryPhoneTest extends TestCase
         $this->assertStringContainsString('KLS0091111', $html);
         $this->assertStringContainsString('Not entered', $html);
         $this->assertMatchesRegularExpression('/0 of 2<\/strong>\s*entered · 0 to fix · 0 not saved yet/', $html);
-        $this->assertStringContainsString('Submit is ready when every learner has a mark or ABS, and every mark is saved.', $html);
+        $this->assertStringContainsString('A blank is allowed and will count as 0 on the card. Submit stays off while a mark is not saved yet or needs fixing.', $html);
+        $this->assertStringNotContainsString('every learner has a mark or ABS', $html);
         $this->assertStringContainsString("You're offline.", $html);
         $this->assertStringContainsString('enterkeyhint="next"', $html);
         $this->assertStringContainsString('inputmode="numeric"', $html);
@@ -192,7 +193,7 @@ class MarksEntryPhoneTest extends TestCase
         );
     }
 
-    public function test_submit_is_refused_until_every_learner_has_a_mark_or_abs(): void
+    public function test_a_blank_mark_does_not_disable_submit(): void
     {
         $this->actingAs($this->subjectTeacher)
             ->post(route('teacher.exam.marks.save', $this->exam), [
@@ -200,20 +201,14 @@ class MarksEntryPhoneTest extends TestCase
             ])
             ->assertRedirect();
 
-        $refused = $this->actingAs($this->subjectTeacher)
-            ->post(route('teacher.exam.marks.submit', $this->exam));
-        $refused->assertRedirect(route('teacher.exam.marks.enter', $this->exam));
-        $refused->assertSessionHas('failmessage');
-        $message = (string) session('failmessage');
-        $this->assertStringContainsString('mark or ABS', $message);
-        $this->assertStringContainsString('missing', $message);
-        $this->assertSame(0, ExamMarksSubmission::query()->count());
+        $html = $this->actingAs($this->subjectTeacher)
+            ->get(route('teacher.exam.marks.enter', $this->exam))
+            ->assertOk()
+            ->getContent();
 
-        $this->actingAs($this->subjectTeacher)
-            ->post(route('teacher.exam.marks.save', $this->exam), [
-                'marks' => [$this->secondStudent->id => 'ABS'],
-            ])
-            ->assertRedirect();
+        $this->assertMatchesRegularExpression('/value=""/', $html);
+        $this->assertDoesNotMatchRegularExpression('/data-testid="marks-submit-button"[^>]*disabled/', $html);
+        $this->assertStringNotContainsString('every learner has a mark or ABS', $html);
 
         $accepted = $this->actingAs($this->subjectTeacher)
             ->post(route('teacher.exam.marks.submit', $this->exam));
@@ -223,6 +218,67 @@ class MarksEntryPhoneTest extends TestCase
             'submitted',
             ExamMarksSubmission::query()->where('exam_id', $this->exam->id)->value('status')
         );
+    }
+
+    public function test_unsaved_and_fix_marks_still_disable_submit(): void
+    {
+        $this->actingAs($this->subjectTeacher)
+            ->post(route('teacher.exam.marks.save', $this->exam), [
+                'marks' => [
+                    $this->student->id => 70,
+                    $this->secondStudent->id => 40,
+                ],
+            ])
+            ->assertRedirect();
+
+        $unsaved = $this->actingAs($this->subjectTeacher)
+            ->withSession([
+                '_old_input' => [
+                    'marks' => [
+                        $this->student->id => '71',
+                        $this->secondStudent->id => '40',
+                    ],
+                ],
+            ])
+            ->get(route('teacher.exam.marks.enter', $this->exam))
+            ->assertOk()
+            ->getContent();
+        $this->assertMatchesRegularExpression('/data-testid="marks-submit-button"[^>]*disabled/', $unsaved);
+
+        $this->actingAs($this->subjectTeacher)
+            ->post(route('teacher.exam.marks.save', $this->exam), [
+                'marks' => [$this->student->id => 140],
+            ])
+            ->assertRedirect();
+
+        $fix = $this->actingAs($this->subjectTeacher)
+            ->get(route('teacher.exam.marks.enter', $this->exam))
+            ->assertOk()
+            ->getContent();
+        $this->assertStringContainsString('Above 100', $fix);
+        $this->assertMatchesRegularExpression('/data-testid="marks-submit-button"[^>]*disabled/', $fix);
+    }
+
+    public function test_viewed_mark_prints_abs_or_the_number_without_display_mark(): void
+    {
+        $this->actingAs($this->subjectTeacher)
+            ->post(route('teacher.exam.marks.save', $this->exam), [
+                'marks' => [
+                    $this->student->id => 70,
+                    $this->secondStudent->id => 'ABS',
+                ],
+            ])
+            ->assertRedirect();
+
+        $html = $this->actingAs($this->subjectTeacher)
+            ->get(route('teacher.exam.marks.view', $this->exam))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringContainsString('data-testid="submitted-mark-absent">ABS<', $html);
+        $this->assertMatchesRegularExpression('/data-testid="submitted-mark-value"[^>]*>\s*70\s*</', $html);
+        $this->assertStringNotContainsString('displayMark', $html);
+        $this->assertStringContainsString('Type ABS when a student was absent. Marks are out of 100.', $html);
     }
 
     public function test_a_subject_teacher_who_does_not_own_the_exam_cannot_save(): void
