@@ -85,28 +85,28 @@ class SchoolCategorySeederTest extends TestCase
         $this->assertSame(9, SchoolGradingSystem::where('school_id', $this->school->id)->count());
         $this->assertDatabaseHas('school_grading_systems', [
             'school_id' => $this->school->id,
-            'grade' => '1',
+            'grade' => 'D1',
             'min_score' => 95,
             'max_score' => 100,
             'points' => 1,
         ]);
         $this->assertDatabaseHas('school_grading_systems', [
             'school_id' => $this->school->id,
-            'grade' => '2',
+            'grade' => 'D2',
             'min_score' => 90,
             'max_score' => 94,
             'points' => 2,
         ]);
         $this->assertDatabaseHas('school_grading_systems', [
             'school_id' => $this->school->id,
-            'grade' => '3',
+            'grade' => 'C3',
             'min_score' => 75,
             'max_score' => 89,
             'points' => 3,
         ]);
         $this->assertDatabaseHas('school_grading_systems', [
             'school_id' => $this->school->id,
-            'grade' => '9',
+            'grade' => 'F9',
             'min_score' => 0,
             'max_score' => 39,
             'points' => 9,
