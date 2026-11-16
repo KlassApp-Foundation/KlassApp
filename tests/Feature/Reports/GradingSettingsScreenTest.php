@@ -239,6 +239,44 @@ class GradingSettingsScreenTest extends TestCase
         $this->assertSame(0, ReportDivisionRange::query()->count());
     }
 
+    public function test_a_refused_band_edit_keeps_the_ranking_the_ranges_and_the_bands(): void
+    {
+        $this->actingAs($this->admin)->post(self::URL, [
+            'standard_id' => $this->standard->id,
+            'ranking_basis' => 'aggregate',
+            'ranges' => [
+                ['label' => '1', 'min' => '', 'max' => '12'],
+                ['label' => '2', 'min' => '13', 'max' => ''],
+            ],
+            'bands' => $this->bandsFromScreen(),
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $bands = $this->bandsFromScreen();
+        $before = $this->storedBands();
+        $bands[0]['min_score'] = 90;
+
+        $this->actingAs($this->admin)->post(self::URL, [
+            'standard_id' => $this->standard->id,
+            'ranking_basis' => 'total',
+            'ranges' => [
+                ['label' => '1', 'min' => '', 'max' => '4'],
+                ['label' => '2', 'min' => '5', 'max' => ''],
+            ],
+            'bands' => $bands,
+        ])->assertSessionHasErrors('bands');
+
+        $this->assertSame('aggregate', $this->standard->fresh()->ranking_basis);
+        $this->assertSame(
+            ['1', '2'],
+            ReportDivisionRange::query()->where('school_id', $this->school->id)->orderBy('position')->pluck('label')->all(),
+        );
+        $this->assertSame(
+            12,
+            (int) ReportDivisionRange::query()->where('school_id', $this->school->id)->where('label', '1')->value('max_aggregate'),
+        );
+        $this->assertSame($before, $this->storedBands());
+    }
+
     public function test_ordered_division_ranges_are_saved(): void
     {
         $this->actingAs($this->head)->post(self::URL, ['ranking_basis' => 'aggregate', 'ranges' => [

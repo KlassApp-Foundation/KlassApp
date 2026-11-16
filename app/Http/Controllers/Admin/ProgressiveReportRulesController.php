@@ -14,6 +14,7 @@ use App\Services\Reports\GradingRulesKit;
 use App\Services\Reports\ProgressiveRules;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -191,40 +192,47 @@ class ProgressiveReportRulesController extends Controller
         }
 
         $basis = $data['ranking_basis'] === 'automatic' ? null : $data['ranking_basis'];
-        if ($standard === null) {
-            $school->ranking_basis = $basis;
-            $school->save();
-        } else {
-            $standard->ranking_basis = $basis;
-            $standard->save();
-        }
+        $automaticDivision = $request->boolean('use_automatic_division');
+        $ranges = $automaticDivision ? [] : $this->cleanRanges((array) ($data['ranges'] ?? []));
+        $bands = ($standard !== null && $request->exists('bands'))
+            ? $this->cleanBands((array) $request->input('bands', []))
+            : null;
 
-        $scope = ReportDivisionRange::query()
-            ->where('school_id', $schoolId)
-            ->when(
-                $standard === null,
-                fn ($query) => $query->whereNull('standard_id'),
-                fn ($query) => $query->where('standard_id', $standard->id),
-            );
-        $scope->delete();
-
-        if (! $request->boolean('use_automatic_division')) {
-            $ranges = $this->cleanRanges((array) ($data['ranges'] ?? []));
-            foreach ($ranges as $position => $range) {
-                ReportDivisionRange::query()->create([
-                    'school_id' => $schoolId,
-                    'standard_id' => $standard?->id,
-                    'label' => $range['label'],
-                    'min_aggregate' => $range['min'],
-                    'max_aggregate' => $range['max'],
-                    'position' => $position,
-                ]);
+        DB::transaction(function () use ($school, $standard, $basis, $automaticDivision, $ranges, $bands, $schoolId): void {
+            if ($standard === null) {
+                $school->ranking_basis = $basis;
+                $school->save();
+            } else {
+                $standard->ranking_basis = $basis;
+                $standard->save();
             }
-        }
 
-        if ($standard !== null && $request->exists('bands')) {
-            $this->saveBands($schoolId, (int) $standard->id, (array) $request->input('bands', []));
-        }
+            $scope = ReportDivisionRange::query()
+                ->where('school_id', $schoolId)
+                ->when(
+                    $standard === null,
+                    fn ($query) => $query->whereNull('standard_id'),
+                    fn ($query) => $query->where('standard_id', $standard->id),
+                );
+            $scope->delete();
+
+            if (! $automaticDivision) {
+                foreach ($ranges as $position => $range) {
+                    ReportDivisionRange::query()->create([
+                        'school_id' => $schoolId,
+                        'standard_id' => $standard?->id,
+                        'label' => $range['label'],
+                        'min_aggregate' => $range['min'],
+                        'max_aggregate' => $range['max'],
+                        'position' => $position,
+                    ]);
+                }
+            }
+
+            if ($bands !== null && $standard !== null) {
+                $this->writeBands($schoolId, (int) $standard->id, $bands);
+            }
+        });
 
         $presetName = (string) $request->input('preset', '');
         $this->recordChange(
@@ -332,6 +340,15 @@ class ProgressiveReportRulesController extends Controller
      */
     private function saveBands(int $schoolId, int $standardId, array $rows): void
     {
+        $this->writeBands($schoolId, $standardId, $this->cleanBands($rows));
+    }
+
+    /**
+     * @param  array<int|string, mixed>  $rows
+     * @return list<array{grade: string, points: ?int, min_score: int, max_score: int, remark: string}>
+     */
+    private function cleanBands(array $rows): array
+    {
         $clean = [];
         foreach ($rows as $row) {
             if (! is_array($row)) {
@@ -364,6 +381,14 @@ class ProgressiveReportRulesController extends Controller
             throw ValidationException::withMessages(['bands' => $problems[0]]);
         }
 
+        return $clean;
+    }
+
+    /**
+     * @param  list<array{grade: string, points: ?int, min_score: int, max_score: int, remark: string}>  $clean
+     */
+    private function writeBands(int $schoolId, int $standardId, array $clean): void
+    {
         SchoolGradingSystem::query()
             ->where('school_id', $schoolId)
             ->where('standard_id', $standardId)
