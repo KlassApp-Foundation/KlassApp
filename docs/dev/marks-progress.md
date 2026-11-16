@@ -15,6 +15,7 @@ Draft work. Nothing here is merged or deployed.
 | #1348 | One division table on the card, the mark sheets, the download, and the parent and learner marks page. https://github.com/KlassApp-Foundation/KlassApp/pull/1348 |
 | #1350 | An absence is shown as ABS. The combined marksheet names each sheet after the school's exam set. https://github.com/KlassApp-Foundation/KlassApp/pull/1350 |
 | #1351 | Exam-set columns follow the exam date. The term's start date is the tie-break. https://github.com/KlassApp-Foundation/KlassApp/pull/1351 |
+| #1352 | A pilot release tells only the parents or learners the school chooses. https://github.com/KlassApp-Foundation/KlassApp/pull/1352 |
 
 ## 2026-11-15 — rules stored on the release
 
@@ -25,6 +26,12 @@ A release from before this column has no copy and the row is not rewritten. Its 
 ## 2026-11-15 — rules screen on a phone
 
 Clicked through Report cards as a school admin and a head teacher at 375px and 1280px. The report type, its history line, a card with Missing and ABS, and a reprint after editing the ranges all held. The reprint text did not change. On a phone the rules tables were wider than the screen and the page hid the overflow. #1343 now stacks Division, From aggregate, To aggregate, and the grade bands under their own labels. Nothing else on that screen changed.
+
+## 2026-11-15 — a pilot release tells only the people who were chosen
+
+On **Marks Release**, a school admin or a class teacher can choose **Only the people I choose**. The preview names each person and the message. **Confirm and release** messages only that list. The rest of the class is not told. A parent who is not linked to the learner, or who has no number, is skipped and written on the release log. **Everyone in this class** is unchanged. A head teacher still cannot open Marks Release.
+
+Nothing was sent on WhatsApp from this work. The local click left the send switched off, so the log says the messages are switched off. Draft pull request: https://github.com/KlassApp-Foundation/KlassApp/pull/1352
 
 ## 2026-11-15 — exam-set columns follow the exam date
 

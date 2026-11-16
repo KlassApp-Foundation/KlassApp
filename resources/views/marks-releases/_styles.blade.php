@@ -26,6 +26,11 @@
     .mr-seg input { position: absolute; opacity: 0; inset: 0; margin: 0; }
     .mr-seg label:has(input:checked) { background: #15803D; color: #fff; }
     .mr-when-at[hidden] { display: none !important; }
+    .mr-pilot { border: 0; margin: 0; padding: 0; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+    .mr-pilot legend { font-size: 12px; font-weight: 700; color: #475569; }
+    .mr-pilot label, .mr-pilot-learner label { display: flex; gap: 8px; align-items: flex-start; min-height: 44px; font-size: 14px; color: #0F172A; }
+    .mr-pilot-learner { display: flex; flex-direction: column; gap: 4px; padding-top: 8px; border-top: 1px solid #E2E8F0; }
+    .mr-pilot-list[hidden], [data-testid="release-pilot-list"][hidden] { display: none !important; }
     .mr-wa { background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 12px; padding: 8px 10px; }
     .mr-wa summary { cursor: pointer; font-size: 13px; font-weight: 700; color: #14532D; }
     .mr-wa-body { font-size: 12px; line-height: 1.35; color: #0F172A; margin-top: 6px; max-height: 96px; overflow: auto; }
