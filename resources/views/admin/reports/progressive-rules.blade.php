@@ -9,18 +9,34 @@
         [data-testid="division-ranges"] thead,
         [data-testid="grade-bands"] thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
         [data-testid="division-ranges"],
+        [data-testid="division-ranges"] tbody { display: block; width: 100%; }
+        [data-testid="division-ranges"] tr {
+            display: grid;
+            grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr) minmax(0, 1fr);
+            gap: 6px;
+            align-items: end;
+            width: 100%;
+            padding: 8px 0;
+            border-top: 1px solid #e2e8f0;
+        }
+        [data-testid="division-ranges"] td { display: block; width: auto; min-width: 0; padding: 0; border: none; text-align: left; }
+        [data-testid="division-ranges"] td::before {
+            content: attr(data-label);
+            display: block;
+            margin-bottom: 2px;
+            color: #475569;
+            font-size: .7rem;
+            line-height: 1.2;
+            text-align: left;
+        }
+        [data-testid="division-ranges"] .rules-field { display: block; width: 100%; max-width: none; min-width: 0; min-height: 44px; padding: 6px 8px; }
+        [data-testid="rules-live"] { grid-template-columns: 1fr !important; }
         [data-testid="grade-bands"],
-        [data-testid="division-ranges"] tbody,
         [data-testid="grade-bands"] tbody,
-        [data-testid="division-ranges"] tr,
         [data-testid="grade-bands"] tr { display: block; width: 100%; text-align: left; }
-        [data-testid="division-ranges"] td,
         [data-testid="grade-bands"] td { display: block; width: 100%; text-align: left; padding: 8px 0; border: none; }
-        [data-testid="division-ranges"] tr,
         [data-testid="grade-bands"] tr { padding: 8px 0; border-top: 1px solid #e2e8f0; }
-        [data-testid="division-ranges"] td::before,
         [data-testid="grade-bands"] td::before { content: attr(data-label); display: block; margin-bottom: 4px; color: #475569; font-size: .75rem; text-align: left; }
-        [data-testid="division-ranges"] .rules-field,
         [data-testid="grade-bands"] .rules-field { display: block; width: 100%; max-width: none; }
     }
 </style>
@@ -144,8 +160,8 @@
             @foreach ($ranges as $index => $range)
                 <tr>
                     <td data-label="Division"><input name="ranges[{{ $index }}][label]" value="{{ $range['label'] }}" class="ds-input rules-field" placeholder="Division"></td>
-                    <td data-label="From aggregate"><input name="ranges[{{ $index }}][min]" value="{{ $range['min'] }}" class="ds-input rules-field" placeholder="no lower limit"></td>
-                    <td data-label="To aggregate"><input name="ranges[{{ $index }}][max]" value="{{ $range['max'] }}" class="ds-input rules-field" placeholder="no upper limit"></td>
+                    <td data-label="From"><input name="ranges[{{ $index }}][min]" value="{{ $range['min'] }}" class="ds-input rules-field" placeholder="none"></td>
+                    <td data-label="To"><input name="ranges[{{ $index }}][max]" value="{{ $range['max'] }}" class="ds-input rules-field" placeholder="none"></td>
                 </tr>
             @endforeach
             </tbody>
