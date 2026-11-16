@@ -152,6 +152,30 @@ class HeadTeacherParityTest extends TestCase
         $this->actingAs($this->headA)->get('/admin/settings')->assertOk();
     }
 
+    public function test_a_head_teacher_can_open_only_their_own_school_details(): void
+    {
+        $this->actingAs($this->headA)
+            ->get('/admin/schooldetails')
+            ->assertOk()
+            ->assertSee($this->schoolA->name)
+            ->assertDontSee($this->schoolB->name);
+
+        $this->actingAs($this->headA)
+            ->get('/admin/schooldetails/editdetail/'.$this->schoolA->id)
+            ->assertOk()
+            ->assertSee($this->schoolA->name);
+
+        $this->actingAs($this->headA)
+            ->get('/admin/schooldetails/editdetail/'.$this->schoolB->id)
+            ->assertNotFound()
+            ->assertDontSee($this->schoolB->name);
+
+        $response = $this->actingAs($this->teacher)->get('/admin/schooldetails');
+
+        $this->assertFalse($response->isSuccessful());
+        $response->assertDontSee($this->schoolA->name);
+    }
+
     public function test_a_head_teacher_can_open_the_approvals_page_and_settings(): void
     {
         $this->actingAs($this->headA)->get(route('admin.marks.submissions'))->assertOk();

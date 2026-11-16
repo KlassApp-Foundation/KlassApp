@@ -166,14 +166,24 @@ class SchoolDetailsController extends Controller
      * update() already ignored the parameter and used the authenticated school, so the write
      * path was not cross-tenant; it is guarded here too so the refusal is explicit and
      * consistent rather than incidental.
+     *
+     * A head teacher of another school gets 404, the same answer as the middleware,
+     * so the other school's page is not rendered.
      */
     private function assertOwnSchool(int|string $school_id): int
     {
-        $own = (int) (Auth::user()->school_id ?? 0);
+        $user = Auth::user();
+        $own = (int) ($user->school_id ?? 0);
 
-        abort_unless($own > 0 && (int) $school_id === $own, 403, 'You can only manage your own school.');
+        if ($own > 0 && (int) $school_id === $own) {
+            return $own;
+        }
 
-        return $own;
+        if ($user !== null && (int) $user->usergroup_id === 4) {
+            abort(404);
+        }
+
+        abort(403, 'You can only manage your own school.');
     }
 
     public function edit($school_id)

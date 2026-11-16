@@ -72,9 +72,9 @@ Route::get( '/dashboard/workAnniversary', 'BirthdayController@workAnniversaryCre
 Route::post( '/dashboard/workAnniversary', 'BirthdayController@workAnniversaryMessage' );
 
 //school details
-// Hidden from head teachers (sidebar condition school_admin). The gate matches
-// MustBeFullSchoolAdmin and answers 403.
-Route::middleware('can:full-school-admin')->group(function () {
+// A head teacher may open their own school. Another school's id is not found.
+// fullschooladmin also keeps co-admin (usergroup 2) on this gate.
+Route::middleware(['fullschooladmin', 'can:full-school-admin'])->group(function () {
 Route::get( '/schooldetails', 'SchoolDetailsController@index' );
 //Route::get( '/schooldetails/list', 'SchoolDetailsController@list' );
 //Route::get( '/schooldetails/create', 'SchoolDetailsController@create' );

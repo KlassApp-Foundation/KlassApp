@@ -62,7 +62,8 @@ class AuthServiceProvider extends ServiceProvider
 
       // Site admin, co-admin, school admin, and head teacher. A head teacher
       // opens school details and the academic terms list. The gate still fails
-      // closed for a class teacher.
+      // closed for a class teacher. A head teacher is limited to their own
+      // school where the URL names a school.
       // Fee and parent CSV downloads are linked from Fees and Parents, which
       // stay in the head-teacher menu, so those two URLs are not on this gate.
       Gate::define('full-school-admin', function ($user) {
