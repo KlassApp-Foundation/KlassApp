@@ -63,6 +63,13 @@ final class ResultsService
             ->where('academic_term_id', $term->id)
             ->whereNull('deleted_at')
             ->when($query->examTypeId !== null, fn ($builder) => $builder->where('exam_type_id', $query->examTypeId))
+            ->when($query->examTypeIds !== null, function ($builder) use ($query) {
+                $ids = array_values(array_filter(
+                    array_map(intval(...), $query->examTypeIds),
+                    fn (int $id) => $id > 0,
+                ));
+                $builder->whereIn('exam_type_id', $ids === [] ? [0] : $ids);
+            })
             ->with('examType')
             ->get();
 

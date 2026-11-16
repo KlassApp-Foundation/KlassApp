@@ -72,7 +72,7 @@ class ReportRolesTest extends TestCase
     public function test_admin_report_screens_open_for_school_admins_and_head_teachers_only(string $verb, string $url): void
     {
         $url = $this->fill($url);
-        $allowed = in_array($url, ['/admin/school-identity'], true) ? ['school admin'] : ['school admin', 'head teacher'];
+        $allowed = ['school admin', 'head teacher'];
 
         foreach ($this->actors as $role => $user) {
             $status = $this->actingAs($user)->{$verb}($url)->getStatusCode();

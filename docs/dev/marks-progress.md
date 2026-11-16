@@ -75,7 +75,7 @@ The progressive card, the class mark sheet, the class marks page, the student re
 
 Draft pull request: https://github.com/KlassApp-Foundation/KlassApp/pull/1359 on branch `feat/report-card-defects`, stacked on #1358. Not merged. Not deployed.
 
-A learner who is absent or missing in a set that counts toward the term total still scores 0. The card and the report list say Incomplete and name that set. A set that does not count is not named.
+A learner who is absent or missing in a set that counts toward the term total still scores 0. The card, the report list, the results sheet, and the learner results page say Incomplete and name that set. A set that does not count is not named. A parent can download a released sitting even when no exam type contributes to the total. An unreleased sitting stays off that card. WhatsApp still requires a contributing exam. A head teacher can open school details.
 
 A reprint after a rules edit keeps the position sentence from the release. Another school's class and a missing class both answer 404 on the card preview. A results sheet with no policy of its own counts a blank the same way the card does. The whole-class PDF includes a learner who has no mark in the pinned subject. The card prints when no set counts toward the term total, and says that no combined mark applies. The exam edit page answers 404 when the exam is not in the signed-in school. The three card templates print the head teacher's name when the school has saved one.
 

@@ -22,9 +22,14 @@
         </thead>
         <tbody>
             @foreach ($students as $student)
+                @php
+                    $incompleteNames = ($sheet ?? null) instanceof \App\Services\Results\ResultSheet
+                        ? app(\App\Services\StudentReportCardService::class)->incompleteSetNames($sheet, (int) $student->studentId)
+                        : [];
+                @endphp
                 <tr data-testid="marks-sheet-row">
                     <td>{{ ($students->currentPage() - 1) * $students->perPage() + $loop->iteration }}</td>
-                    <td>{{ $student->name }}</td>
+                    <td>{{ $student->name }}@if ($incompleteNames !== [])<div data-kind="incomplete">Incomplete: {{ implode(', ', $incompleteNames) }}.</div>@endif</td>
                     <td data-testid="marks-stream">{{ $student->stream !== '' ? $student->stream : '—' }}</td>
                     @foreach ($subjects as $subject)
                         @php $cell = $student->cell((int) $subject['id']); @endphp
@@ -60,8 +65,16 @@
 </div>
 <div class="ka-phone-cards" data-testid="marks-phone-cards">
     @foreach ($students as $student)
+        @php
+            $incompleteNames = ($sheet ?? null) instanceof \App\Services\Results\ResultSheet
+                ? app(\App\Services\StudentReportCardService::class)->incompleteSetNames($sheet, (int) $student->studentId)
+                : [];
+        @endphp
         <article class="ka-card ka-card-pad" data-testid="marks-phone-card" style="display:flex;flex-direction:column;gap:4px">
             <strong>{{ $student->name }}</strong>
+            @if ($incompleteNames !== [])
+                <span data-kind="incomplete">Incomplete: {{ implode(', ', $incompleteNames) }}.</span>
+            @endif
             <span>{{ $student->stream !== '' ? $student->stream : '—' }}</span>
             <span>Total {{ $student->displayTotal ?? '—' }}</span>
             <span data-testid="marks-phone-division">Division {{ $student->division ?? '—' }}</span>

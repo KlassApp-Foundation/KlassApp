@@ -51,6 +51,9 @@
     @if (! empty($withheldSentence))
         <p data-kind="withheld">{{ $withheldSentence }}</p>
     @endif
+    @if (! empty($incompleteSets))
+        <p data-kind="incomplete">Incomplete: {{ implode(', ', $incompleteSets) }}.</p>
+    @endif
     <table class="ds-table w-full mt-6">
         <thead>
             <tr>

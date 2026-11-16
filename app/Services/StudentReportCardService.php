@@ -224,9 +224,9 @@ class StudentReportCardService
             ->pluck('student_id');
     }
 
-    public function computePositionMap(Exam $exam, int $schoolId): array
+    public function computePositionMap(Exam $exam, int $schoolId, ?array $onlyExamTypeIds = null): array
     {
-        $sheet = $this->classSheet($schoolId, (int) $exam->section_id, (int) $exam->academic_term_id, (int) $exam->standard_id);
+        $sheet = $this->classSheet($schoolId, (int) $exam->section_id, (int) $exam->academic_term_id, (int) $exam->standard_id, null, $onlyExamTypeIds);
         if ($sheet === null) {
             return [];
         }
@@ -252,9 +252,23 @@ class StudentReportCardService
         StandardLink $stdLink,
         User $learner,
         ?string $templateKey = null,
-        ?int $academicTermId = null
+        ?int $academicTermId = null,
+        ?array $onlyExamTypeIds = null,
     ): string {
         $exam = $this->resolveExam($schoolId, $stdLink, $academicTermId);
+        if ($exam && $onlyExamTypeIds !== null && ! in_array((int) $exam->exam_type_id, array_map(intval(...), $onlyExamTypeIds), true)) {
+            $replacement = Exam::query()
+                ->where('school_id', $schoolId)
+                ->where('section_id', (int) $exam->section_id)
+                ->where('academic_term_id', (int) $exam->academic_term_id)
+                ->whereIn('exam_type_id', $onlyExamTypeIds)
+                ->whereNull('deleted_at')
+                ->orderBy('id')
+                ->first();
+            if ($replacement !== null) {
+                $exam = $replacement;
+            }
+        }
         if (! $exam) {
             throw new \RuntimeException('No exam set found for this class.');
         }
@@ -262,7 +276,7 @@ class StudentReportCardService
         $allStudentIds = $this->studentIds($exam);
         $helper = app(StudentReportHelperService::class);
         $svc = new ReportCardCommentService;
-        $positionMap = $this->computePositionMap($exam, $schoolId);
+        $positionMap = $this->computePositionMap($exam, $schoolId, $onlyExamTypeIds);
         $myPos = $positionMap[$learner->id] ?? 0;
 
         return $this->generatePdf(
@@ -274,7 +288,10 @@ class StudentReportCardService
             $svc,
             $allStudentIds->count(),
             $myPos,
-            $templateKey
+            $templateKey,
+            false,
+            false,
+            $onlyExamTypeIds,
         );
     }
 
@@ -418,7 +435,8 @@ class StudentReportCardService
         int $myPos = 0,
         ?string $templateKey = null,
         bool $sample = false,
-        bool $printBlackAndWhite = false
+        bool $printBlackAndWhite = false,
+        ?array $onlyExamTypeIds = null,
     ): string {
         $learner = User::find($sid);
         $learner = $helper->learner($schoolId, $learner, $exam);
@@ -426,6 +444,10 @@ class StudentReportCardService
         $subjects = \App\Models\Subject::sortByReportOrder($subjects);
         $exams = $helper->exam($schoolId, $exam);
         $exams = $exams->filter(fn ($e) => $this->typeIncluded($schoolId, $e));
+        if ($onlyExamTypeIds !== null) {
+            $allowed = array_map(intval(...), $onlyExamTypeIds);
+            $exams = $exams->filter(fn ($row) => in_array((int) $row->exam_type_id, $allowed, true))->values();
+        }
         $countMissingAsZero = app(\App\Services\Reports\ReportScoring::class)->countsMissingAsZero(
             $schoolId,
             (int) $stdLink->section_id,
@@ -557,7 +579,7 @@ class StudentReportCardService
 
         $total = array_sum(array_map(fn ($mark) => (float) $mark->marks, $eotMarkBySubject));
         $midSittings = [];
-        $sheet = $this->classSheet($schoolId, (int) $stdLink->section_id, (int) $exam->academic_term_id, (int) $stdLink->standard_id, (int) $learner->id);
+        $sheet = $this->classSheet($schoolId, (int) $stdLink->section_id, (int) $exam->academic_term_id, (int) $stdLink->standard_id, (int) $learner->id, $onlyExamTypeIds);
         $resultRow = $sheet?->student((int) $learner->id);
         $withheldSets = $sheet instanceof ResultSheet ? $sheet->unreleasedWeightedSets : [];
         if ($resultRow !== null && $withheldSets === []) {
@@ -748,7 +770,7 @@ class StudentReportCardService
         return $out;
     }
 
-    private function classSheet(int $schoolId, int $sectionId, int $academicTermId, int $standardId, ?int $studentId = null): ?ResultSheet
+    private function classSheet(int $schoolId, int $sectionId, int $academicTermId, int $standardId, ?int $studentId = null, ?array $onlyExamTypeIds = null): ?ResultSheet
     {
         if ($sectionId < 1 || $academicTermId < 1) {
             return null;
@@ -760,6 +782,7 @@ class StudentReportCardService
                 sectionId: $sectionId,
                 academicTermId: $academicTermId,
                 studentId: $studentId,
+                examTypeIds: $onlyExamTypeIds,
             ),
             $this->resultsPolicy($schoolId, $standardId, $sectionId, $academicTermId),
         );

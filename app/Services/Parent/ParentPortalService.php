@@ -14,6 +14,7 @@ use App\Models\StudentAcademic;
 use App\Models\StudentHealthIncident;
 use App\Models\StudentParentLink;
 use App\Models\User;
+use App\Services\ClassStructureService;
 use App\Services\StudentFeeResolver;
 use App\Services\StudentReportCardService;
 use App\Support\AttendanceDays;
@@ -1029,7 +1030,7 @@ class ParentPortalService
             ->where('school_id', $schoolId)
             ->where('user_id', $student->id)
             ->when($year, fn ($query) => $query->where('academic_year_id', $year->id))
-            ->with('standardLink')
+            ->with('standardLink.section')
             ->orderByDesc('id')
             ->first();
         $link = $academic?->standardLink;
@@ -1038,13 +1039,14 @@ class ParentPortalService
         }
 
         $reports = app(StudentReportCardService::class);
-        $exam = $reports->resolveReleasedExam($schoolId, $link, $student);
-        if (! $exam || ! $reports->studentHasContributingMark($exam, (int) $student->id)) {
+        $exam = $this->visibleReleasedExam($student, $link);
+        $typeIds = $exam ? $this->releasedExamTypeIds($student, $exam) : [];
+        if (! $exam || $typeIds === []) {
             return ['ok' => false, 'message' => 'No report card has been released yet.'];
         }
 
         try {
-            $pdf = $reports->pdfForStudent($schoolId, $link, $student, null, (int) $exam->academic_term_id);
+            $pdf = $reports->pdfForStudent($schoolId, $link, $student, null, (int) $exam->academic_term_id, $typeIds);
         } catch (\Throwable $e) {
             report($e);
 
@@ -1060,6 +1062,47 @@ class ParentPortalService
             : 'student';
 
         return ['ok' => true, 'pdf' => $pdf, 'filename' => $slug.'_report_card.pdf'];
+    }
+
+    /**
+     * A released sitting this learner can already see. A contributing exam
+     * type is not required. WhatsApp delivery keeps its own check.
+     */
+    private function visibleReleasedExam(User $student, \App\Models\StandardLink $link): ?Exam
+    {
+        $exam = $this->releases->latestReleasedExam($student, (int) $link->section_id);
+        if ($exam !== null || $link->section === null) {
+            return $exam;
+        }
+
+        $base = app(ClassStructureService::class)->resolveBaseSection($link->section);
+        if ((int) $base->id === (int) $link->section_id) {
+            return null;
+        }
+
+        return $this->releases->latestReleasedExam($student, (int) $base->id);
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function releasedExamTypeIds(User $student, Exam $exam): array
+    {
+        $ids = [];
+        foreach ($this->releases->releasedSittings($student) as $sitting) {
+            if ($sitting->schoolId !== (int) $exam->school_id) {
+                continue;
+            }
+            if ($sitting->academicTermId !== (int) $exam->academic_term_id) {
+                continue;
+            }
+            if ($sitting->sectionId !== null && $sitting->sectionId !== (int) $exam->section_id) {
+                continue;
+            }
+            $ids[] = $sitting->examTypeId;
+        }
+
+        return array_values(array_unique($ids));
     }
 
     /**

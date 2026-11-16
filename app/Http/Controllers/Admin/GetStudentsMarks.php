@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\Reports\ReportScoring;
 use App\Services\Results\ResultsQuery;
 use App\Services\Results\ResultsService;
+use App\Services\StudentReportCardService;
 use Illuminate\Support\Facades\Auth;
 
 class GetStudentsMarks extends Controller
@@ -35,6 +36,7 @@ class GetStudentsMarks extends Controller
             'section' => $section,
             'term' => $term,
             'withheldSentence' => app(ResultsService::class)->withheldSentence($sheet->unreleasedWeightedSets),
+            'incompleteSets' => app(StudentReportCardService::class)->incompleteSetNames($sheet, (int) $student->studentId),
         ]);
     }
 
