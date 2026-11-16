@@ -430,7 +430,10 @@ class StudentReportCardService
             ->filter(fn ($row) => $row->examType && $contribution->contributes($row->examType, $preferences))
             ->sortBy(fn ($row) => (int) $row->exam_type_id)
             ->values();
-        $allExamColumns = $exams->sortBy(fn ($row) => [(int) $row->exam_type_id, (int) $row->id])->values();
+        $allExamColumns = $exams->sortBy(fn ($row) => [
+            $row->scheduled_at?->getTimestamp() ?? PHP_INT_MAX,
+            (int) $row->id,
+        ])->values();
 
         $controls = ['SUBJECT', 'OUT OF'];
         $namedTypes = [];
@@ -709,7 +712,7 @@ class StudentReportCardService
     }
 
     /**
-     * One column per exam set, in the sheet's order (exam type id, then exam id).
+     * One column per exam set, in the sheet's date order.
      * The heading is the set's own name.
      *
      * @return list<array{label: string, cells: array<int, \App\Services\Results\ResultCell>, total: ?float, aggregate: ?int, pos: ?int, of: int, division: string}>
