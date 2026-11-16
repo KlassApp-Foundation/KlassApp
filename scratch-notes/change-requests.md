@@ -74,3 +74,35 @@ Proposed fix, on #1335: remove the call. Print ABS or the number the same way `e
 #1330 adds `ReportComposition` and `schools.report_composition`. #1342–#1347 add `ReportKindSetting`, `ReportScoring`, and `ProgressiveRulesStamp`, and freeze those on the release. The scratch merge kept the later writer and left `ReportComposition` in the tree.
 
 Proposed fix, on #1330: rebase onto #1347 and delete the composition writer, or make it a reader of the scoring rule. Do not freeze a second JSON blob on `marks_releases`.
+
+## 12. The class teacher's report-card list calls a method that does not exist
+
+`Teacher/ReportCardsController.php` line 57 calls `StudentReportCardService::examSetNames()`. That method is not in the class. The list returns 500 for a class teacher who has a class. Opening one class by its id still works. The same 500 fails `TeacherReportCardsTest` and `WholeClassReportCardPdfTest`.
+
+The call came in with "Use each school's exam set names", merged as #1339. Proposed fix, on #1339: add the method, or stop calling it and read the set names the card already prints.
+
+## 13. A parent cannot download the released card when no exam type contributes
+
+Mid Term was released. The parent's Marks page shows the four Mid Term marks, the average, and "Download latest report card". The download answers "No report card has been released yet."
+
+`ParentPortalService::releasedReportPdf` asks `resolveReleasedExam` for an anchor. That method prefers an exam whose type has `contributes_to_report_total = 1`. Beginning Of Term and Mid Term are 0, and this school has no End Of Term exam, so the anchor is the first exam in the term (Beginning Of Term), which is not released. `studentHasContributingMark` then looks only at contributing exams, finds none, and refuses.
+
+Proposed fix, on the card service (#1344 / #1359): a released sitting the parent can already see is enough to build the card. Do not require a contributing exam type.
+
+## 14. The new-look card hides the division row
+
+Formal and Warm print `DIVISION` for both sets. Progressive (new look) prints the row only when `$showDivision` is true, and that flag is false when the end-of-term division is `-`. With no End Of Term exam the row is omitted for all 76 learners. The aggregate number is the opposite: the new look prints it, and Formal and Warm do not (their AGG column is the grade letter).
+
+Proposed fix, on #1345: print each set's division on the new look, and print the aggregate number on Formal and Warm.
+
+## 15. A refused rules save still stores the ranking
+
+`ProgressiveReportRulesController::update` saves the ranking and deletes stored division ranges before it validates the new ranges and bands. A band edit that overlaps (grade 1 moved to 90 while grade 2 still ends at 94) throws after that. The ranking stays on "total", the ranges are gone, and the bands stay as they were. A later valid save (division 1 ends at 11, division 2 starts at 12, grade 1 starts at 96, grade 2 ends at 95) did store all three.
+
+Proposed fix, on #1355: validate first, then write, in one transaction.
+
+## 16. An approval failure on release becomes a 405
+
+Confirming Beginning Of Term posted to `/admin/marks/releases` and came back as a redirect to `/admin/marks/releases/preview`. That address only accepts POST, so the browser then got 405 and the "these subjects are not approved" message never appeared. Mid Term, which was fully approved, released on the second confirm.
+
+Proposed fix, on #1338: send the validation error back to the release form, which is a GET.

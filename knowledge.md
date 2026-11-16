@@ -4,7 +4,7 @@
 
 ## Session note — 2026-11-16 — disposable report-stack click-through
 
-Scratch branch `scratch/report-stack-2026-11-16` only. Not a pull request, not merged, not deployed. The heads of the listed report and marks drafts were merged there so they could be clicked with invented learners. Notes: `scratch-notes/conflicts.md`, `scratch-notes/test-failures.md`, `scratch-notes/change-requests.md`, and `docs/demo/report-cards-human-walkthrough.md`.
+Scratch branch `scratch/report-stack-2026-11-16` only. Not a pull request, not merged, not deployed. The heads of the listed report and marks drafts were merged there so they could be clicked with invented learners. Pass 2 released Mid Term for the invented Primary Five class with senders stubbed, clicked every role at 375 and 1280, and compared all 76 cards with the reference. Notes: `scratch-notes/conflicts.md`, `scratch-notes/test-failures.md`, `scratch-notes/change-requests.md`, and `docs/demo/report-cards-human-walkthrough.md`.
 
 ## Session note — 2026-11-05 — parent and student portals (page 9, draft)
 
