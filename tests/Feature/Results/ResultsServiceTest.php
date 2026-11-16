@@ -86,7 +86,7 @@ class ResultsServiceTest extends TestCase
         }
     }
 
-    public function test_missing_marks_are_excluded_and_absent_labels_do_not_count_as_zero(): void
+    public function test_missing_and_absent_marks_count_as_zero(): void
     {
         $ctx = $this->school();
         $term = $this->term($ctx);
@@ -109,17 +109,16 @@ class ResultsServiceTest extends TestCase
         $this->assertSame('missing', $partialRow->cell($ctx['maths']->id)->status);
         $this->assertNull($partialRow->cell($ctx['maths']->id)->mark);
         $this->assertSame(80.0, $partialRow->total);
-        $this->assertSame(80.0, $partialRow->average);
-        $this->assertSame(1, $partialRow->subjectsCounted);
-        $this->assertSame(9, $partialRow->aggregate);
-        $this->assertSame('1', $partialRow->division);
+        $this->assertSame(40.0, $partialRow->average);
+        $this->assertSame(2, $partialRow->subjectsCounted);
+        $this->assertSame(18, $partialRow->aggregate);
 
         $absentRow = $sheet->student($absent->id);
         $this->assertSame('absent', $absentRow->cell($ctx['maths']->id)->status);
         $this->assertNull($absentRow->cell($ctx['maths']->id)->mark);
         $this->assertSame(80.0, $absentRow->total);
-        $this->assertSame(80.0, $absentRow->average);
-        $this->assertSame(1, $absentRow->subjectsCounted);
+        $this->assertSame(40.0, $absentRow->average);
+        $this->assertSame(2, $absentRow->subjectsCounted);
     }
 
     public function test_decimal_marks_use_the_scale_and_display_rounds_half_up(): void
@@ -248,15 +247,14 @@ class ResultsServiceTest extends TestCase
         $this->assertArrayNotHasKey($science->id, $row->cells);
 
         $this->assertCount(2, $sheet->sittings);
-        $mid = $sheet->sittings[0];
-        $end = $sheet->sittings[1];
-        $this->assertSame('MID', $mid->code);
-        $this->assertFalse($mid->contributesToReport);
-        $this->assertSame(40.0, $mid->student($student->id)->cell($ctx['english']->id)->mark);
-        $this->assertSame(30.0, $mid->student($student->id)->cell($science->id)->mark);
-        $this->assertSame('EOT', $end->code);
-        $this->assertTrue($end->contributesToReport);
-        $this->assertSame(80.0, $end->student($student->id)->total);
+        $byCode = [];
+        foreach ($sheet->sittings as $sitting) {
+            $byCode[$sitting->code] = $sitting;
+        }
+        $this->assertTrue($byCode['EOT']->contributesToReport);
+        $this->assertSame(80.0, $byCode['EOT']->student($student->id)->total);
+        $this->assertFalse($byCode['MID']->contributesToReport);
+        $this->assertSame(70.0, $byCode['MID']->student($student->id)->total);
 
         $midSheet = $this->sheet($ctx, $term, examTypeId: 1);
         $this->assertSame(70.0, $midSheet->student($student->id)->total);
@@ -337,6 +335,12 @@ class ResultsServiceTest extends TestCase
         $this->bands($ctx, [
             ['grade' => '9', 'points' => 9, 'min' => 0, 'max' => 100],
         ]);
+        $ctx['school']->forceFill([
+            'report_composition' => [
+                '1' => ['include' => true, 'weight' => null],
+                '2' => ['include' => true, 'weight' => null],
+            ],
+        ])->save();
         $student = $this->student($ctx, 'Month Student');
         $june = $this->exam($ctx, $term, $ctx['english'], '2026-06-15', 1);
         $july = $this->exam($ctx, $term, $ctx['english'], '2026-07-15', 1);
@@ -415,8 +419,16 @@ class ResultsServiceTest extends TestCase
         $this->mark($ctx, $eot, $ctx['english'], $student, 80, 'C3');
 
         // The settings form stores the checkbox as the strings "0" and "1".
-        $ctx['school']->exam_type_preferences = ['1' => '1', '2' => '0'];
-        $ctx['school']->save();
+        // The end-of-term mix decides which sets are on that report. The
+        // preference still decides which of those sets add to the total
+        // when they have no weight.
+        $ctx['school']->forceFill([
+            'exam_type_preferences' => ['1' => '1', '2' => '0'],
+            'report_composition' => [
+                '1' => ['include' => true, 'weight' => null],
+                '2' => ['include' => true, 'weight' => null],
+            ],
+        ])->save();
 
         $sheet = $this->sheet($ctx, $term);
         $row = $sheet->student($student->id);
