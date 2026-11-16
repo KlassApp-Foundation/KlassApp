@@ -42,15 +42,15 @@ final class GradingPresets
     {
         if ($preset === self::OLDER_SEEDED) {
             return [
-                ['grade' => '1', 'points' => 1, 'min_score' => 95, 'max_score' => 100, 'remark' => 'Excellent'],
-                ['grade' => '2', 'points' => 2, 'min_score' => 90, 'max_score' => 94, 'remark' => 'V.Good'],
-                ['grade' => '3', 'points' => 3, 'min_score' => 80, 'max_score' => 89, 'remark' => 'Good'],
-                ['grade' => '4', 'points' => 4, 'min_score' => 70, 'max_score' => 79, 'remark' => 'Good'],
-                ['grade' => '5', 'points' => 5, 'min_score' => 60, 'max_score' => 69, 'remark' => 'Fairly Good'],
-                ['grade' => '6', 'points' => 6, 'min_score' => 55, 'max_score' => 59, 'remark' => 'Promising'],
-                ['grade' => '7', 'points' => 7, 'min_score' => 50, 'max_score' => 54, 'remark' => 'Fair'],
-                ['grade' => '8', 'points' => 8, 'min_score' => 40, 'max_score' => 49, 'remark' => 'Work harder / Aim higher'],
-                ['grade' => '9', 'points' => 9, 'min_score' => 0, 'max_score' => 39, 'remark' => 'Extra effort'],
+                ['grade' => 'D1', 'points' => 1, 'min_score' => 95, 'max_score' => 100, 'remark' => 'Excellent'],
+                ['grade' => 'D2', 'points' => 2, 'min_score' => 90, 'max_score' => 94, 'remark' => 'V.Good'],
+                ['grade' => 'C3', 'points' => 3, 'min_score' => 80, 'max_score' => 89, 'remark' => 'Good'],
+                ['grade' => 'C4', 'points' => 4, 'min_score' => 70, 'max_score' => 79, 'remark' => 'Good'],
+                ['grade' => 'C5', 'points' => 5, 'min_score' => 60, 'max_score' => 69, 'remark' => 'Fairly Good'],
+                ['grade' => 'C6', 'points' => 6, 'min_score' => 55, 'max_score' => 59, 'remark' => 'Promising'],
+                ['grade' => 'P7', 'points' => 7, 'min_score' => 50, 'max_score' => 54, 'remark' => 'Fair'],
+                ['grade' => 'P8', 'points' => 8, 'min_score' => 40, 'max_score' => 49, 'remark' => 'Work harder / Aim higher'],
+                ['grade' => 'F9', 'points' => 9, 'min_score' => 0, 'max_score' => 39, 'remark' => 'Extra effort'],
             ];
         }
         if ($preset === self::DEFAULT) {

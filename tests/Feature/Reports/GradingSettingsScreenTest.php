@@ -135,10 +135,30 @@ class GradingSettingsScreenTest extends TestCase
         // 85 is grade 2 in the app default and 3 in the older table.
         $this->actingAs($this->admin)
             ->get(self::URL.'?standard='.$this->standard->id.'&preset='.GradingPresets::OLDER_SEEDED.'&try_mark=85')
-            ->assertOk()->assertSee('85 is grade <strong>3</strong>', false);
+            ->assertOk()->assertSee('85 is grade <strong>C3</strong>', false);
         $this->actingAs($this->admin)
             ->get(self::URL.'?standard='.$this->standard->id.'&preset='.GradingPresets::DEFAULT.'&try_mark=85')
-            ->assertOk()->assertSee('85 is grade <strong>2</strong>', false);
+            ->assertOk()->assertSee('85 is grade <strong>D2</strong>', false);
+    }
+
+    public function test_the_screen_writes_letters_and_a_stored_number_still_prints_as_a_letter(): void
+    {
+        $this->actingAs($this->admin)->get(self::URL.'?standard='.$this->standard->id)
+            ->assertOk()
+            ->assertSee('name="bands[0][grade]" value="D1"', false)
+            ->assertSee('name="bands[8][grade]" value="F9"', false);
+
+        SchoolGradingSystem::query()
+            ->where('school_id', $this->school->id)
+            ->where('standard_id', $this->standard->id)
+            ->where('grade', 'F9')
+            ->update(['grade' => '9']);
+
+        $this->assertSame('F9', app(\App\Services\Results\SchoolGradingScale::class)->labelFor(
+            (int) $this->school->id,
+            (int) $this->standard->id,
+            10,
+        ));
     }
 
     public function test_try_an_aggregate_shows_the_division_from_the_ranges_on_screen(): void
@@ -220,7 +240,7 @@ class GradingSettingsScreenTest extends TestCase
             'preset' => GradingPresets::OLDER_SEEDED, 'bands' => $bands,
         ])->assertRedirect()->assertSessionHasNoErrors();
 
-        $this->assertSame(88, (int) SchoolGradingSystem::query()->where('school_id', $this->school->id)->where('standard_id', $this->standard->id)->where('grade', '2')->value('min_score'));
+        $this->assertSame(88, (int) SchoolGradingSystem::query()->where('school_id', $this->school->id)->where('standard_id', $this->standard->id)->where('grade', 'D2')->value('min_score'));
         $this->assertStringContainsString('Older seeded scale', (string) ProgressiveRulesChange::query()->latest('id')->value('summary'));
     }
 
@@ -304,7 +324,7 @@ class GradingSettingsScreenTest extends TestCase
 
         $this->assertNull($this->standard->fresh()->ranking_basis);
         $this->assertSame(0, ReportDivisionRange::query()->where('school_id', $this->school->id)->count());
-        $this->assertSame(85, (int) SchoolGradingSystem::query()->where('school_id', $this->school->id)->where('standard_id', $this->standard->id)->where('grade', '2')->value('min_score'));
+        $this->assertSame(85, (int) SchoolGradingSystem::query()->where('school_id', $this->school->id)->where('standard_id', $this->standard->id)->where('grade', 'D2')->value('min_score'));
         $this->assertSame('reset', ProgressiveRulesChange::query()->latest('id')->value('action'));
     }
 

@@ -31,6 +31,9 @@ final class SchoolGradingScale implements GradingScale
         }
 
         $grade = trim((string) $row->grade);
+        if ($grade !== '' && ctype_digit($grade)) {
+            return GradingHelper::formatAggLabel($row) ?? $grade;
+        }
 
         return $grade === '' ? null : $grade;
     }
