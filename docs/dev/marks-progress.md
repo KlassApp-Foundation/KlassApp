@@ -70,3 +70,17 @@ The combined marksheet no longer has sheets named MONTHLY RESULTS or END OF TERM
 ## 2026-11-15 — one division table
 
 The progressive card, the class mark sheet, the class marks page, the student result page, the combined mark sheet, its spreadsheet, the parent and learner marks page, and `student-report.blade.php` read one division table. A released term uses the copy stored on that release. Ranking and the blank-mark rule on those other screens are unchanged.
+
+## 2026-11-15 — report card defects
+
+Draft pull request: https://github.com/KlassApp-Foundation/KlassApp/pull/1359 on branch `feat/report-card-defects`, stacked on #1358. Not merged. Not deployed.
+
+A learner who is absent or missing in a set that counts toward the term total still scores 0. The card, the report list, the results sheet, and the learner results page say Incomplete and name that set. A set that does not count is not named. A parent can download a released sitting even when no exam type contributes to the total. An unreleased sitting stays off that card. WhatsApp still requires a contributing exam. A head teacher can open school details.
+
+A reprint after a rules edit keeps the position sentence from the release. Another school's class and a missing class both answer 404 on the card preview. A results sheet with no policy of its own counts a blank the same way the card does. The whole-class PDF includes a learner who has no mark in the pinned subject. The card prints when no set counts toward the term total, and says that no combined mark applies. The exam edit page answers 404 when the exam is not in the signed-in school. The three card templates print the head teacher's name when the school has saved one.
+
+A set that has a weight and has not been released is named. The combined mark is not shown. Each set's own columns stay. The weighted mean still applies once every weighted set has been released.
+
+Clicked Report cards as the school admin at 375 and at 1280. Closing paper shows Incomplete under the learner, and the downloaded card says the same. The class teacher page is covered by the test. Nothing was sent. Nothing was written to production.
+
+Still to do, in order: the primary default grade table, the report builder, the comment bank, the calendar import, the read-only production check, the full rehearsal, then the named merge order. Sections 14 and 15 are not in the re-delivered handoff.

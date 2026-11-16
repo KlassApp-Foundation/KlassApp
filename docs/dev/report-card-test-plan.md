@@ -71,7 +71,7 @@ A check marked **incomplete** (yellow `I`) is a **known gap that the test found 
 
 | File and command | Proves |
 | --- | --- |
-| `tests/Feature/Reports/ReportRolesTest.php` | Report Cards, template history, template preview, learner card preview and download and the rules screen open for school admins and head teachers only (school details for the school admin only); the template cannot be changed by any other role; a class teacher prints their own class (class page, learner preview, learner download, whole-class PDF) and no other role or teacher does; another school's class is refused and returns no PDF; a refused role cannot change the rules. **Incomplete:** another school's class answers differently from a missing class (gap 2). |
+| `tests/Feature/Reports/ReportRolesTest.php` | Report Cards, template history, template preview, learner card preview and download and the rules screen open for school admins and head teachers only (school details for a school admin or a head teacher); the template cannot be changed by any other role; a class teacher prints their own class (class page, learner preview, learner download, whole-class PDF) and no other role or teacher does; another school's class is refused and returns no PDF; a refused role cannot change the rules. **Incomplete:** another school's class answers differently from a missing class (gap 2). |
 
 ### Scale
 

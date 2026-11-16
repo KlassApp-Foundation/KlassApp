@@ -82,7 +82,8 @@ class ProgressiveRulesTest extends TestCase
             ->assertSee('12')
             ->assertSee('By aggregate')
             ->assertSee('data-testid="automatic-division"', false)
-            ->assertSee('data-label="From aggregate"', false)
+            ->assertSee('From aggregate')
+            ->assertSee('data-label="From"', false)
             ->assertSee('data-label="Remark"', false)
             ->assertSee('division-ranges-scroll', false);
 

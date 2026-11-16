@@ -10,8 +10,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * School details printed on report cards: the head teacher's name and the crest. School admin only
- * (the route sits behind the full-school-admin gate). Always the signed-in user's own school.
+ * School details printed on report cards: the head teacher's name and the crest.
+ * A school admin or a head teacher (the full-school-admin gate). Always the signed-in user's own school.
  */
 class SchoolIdentityController extends Controller
 {

@@ -5,6 +5,7 @@ namespace App\Services\Results;
 use App\Contracts\Results\DivisionRule;
 use App\Contracts\Results\GradingScale;
 use App\Models\AcademicTerm;
+use App\Models\MarksRelease;
 use App\Models\Academics\Exam;
 use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\Marks;
@@ -62,6 +63,13 @@ final class ResultsService
             ->where('academic_term_id', $term->id)
             ->whereNull('deleted_at')
             ->when($query->examTypeId !== null, fn ($builder) => $builder->where('exam_type_id', $query->examTypeId))
+            ->when($query->examTypeIds !== null, function ($builder) use ($query) {
+                $ids = array_values(array_filter(
+                    array_map(intval(...), $query->examTypeIds),
+                    fn (int $id) => $id > 0,
+                ));
+                $builder->whereIn('exam_type_id', $ids === [] ? [0] : $ids);
+            })
             ->with('examType')
             ->get();
 
@@ -103,12 +111,22 @@ final class ResultsService
             $weights = [];
         }
 
+        // A weighted set that has not been released must not leak into the
+        // combined mark. The screen and the card name it and show no partial.
+        $unreleasedWeightedSets = $weights === []
+            ? []
+            : $this->unreleasedWeightedNames($query, $typeMeta, $weights, $exams);
+        $withholdCombined = $unreleasedWeightedSets !== [];
+        if ($withholdCombined) {
+            $weights = [];
+        }
+
         $subjects = $this->subjectRows(
             $query->schoolId,
             $this->subjectIdsFor($exams, $marks, $mainTypeIds),
             $this->submissionLabels($query->schoolId, $exams, $mainTypeIds),
         );
-        $students = $this->buildStudents($policy, $query->schoolId, $roster, $chosen, $mainTypeIds, $subjects, $weights);
+        $students = $this->buildStudents($policy, $query->schoolId, $roster, $chosen, $mainTypeIds, $subjects, $weights, $withholdCombined);
         $summary = $this->summary($subjects, $students);
 
         $sittings = [];
@@ -157,6 +175,7 @@ final class ResultsService
             $this->visible($students, $query),
             $sittings,
             $summary,
+            $unreleasedWeightedSets,
         );
     }
 
@@ -571,7 +590,7 @@ final class ResultsService
      * @param list<array{id: int, name: string, code: string, submission: string}> $subjects
      * @return list<ResultStudent>
      */
-    private function buildStudents(ResultsPolicy $policy, int $schoolId, Collection $roster, array $chosen, array $typeIds, array $subjects, array $weights = []): array
+    private function buildStudents(ResultsPolicy $policy, int $schoolId, Collection $roster, array $chosen, array $typeIds, array $subjects, array $weights = [], bool $withholdCombined = false): array
     {
         $drafts = [];
         foreach ($roster as $entry) {
@@ -580,8 +599,14 @@ final class ResultsService
             $standardId = (int) $entry['standardId'];
             $cells = [];
             foreach ($subjects as $subject) {
-                $choice = $this->merged($chosen, $typeIds, $studentId, (int) $subject['id'], $weights, $policy->countMissingAsZero);
-                $cells[(int) $subject['id']] = $this->cell($policy, $schoolId, $standardId, (int) $subject['id'], $choice);
+                $subjectId = (int) $subject['id'];
+                if ($withholdCombined) {
+                    $cells[$subjectId] = new ResultCell($subjectId, null, null, null, ResultCell::WITHHELD);
+
+                    continue;
+                }
+                $choice = $this->merged($chosen, $typeIds, $studentId, $subjectId, $weights, $policy->countMissingAsZero);
+                $cells[$subjectId] = $this->cell($policy, $schoolId, $standardId, $subjectId, $choice);
             }
             [$total, $counted, $average, $aggregate, $division, $displayTotal, $displayAverage] = $this->totals($policy, $cells);
             $drafts[] = [
@@ -628,6 +653,60 @@ final class ResultsService
         }
 
         return $students;
+    }
+
+    /**
+     * Weighted sets in this term that have no release. One unreleased exam
+     * in the set is enough: the combined mark would be a partial.
+     *
+     * @param  array<int, array{id: int, name: string, code: string, contributes: bool}>  $typeMeta
+     * @param  array<int, float>  $weights
+     * @param  Collection<int, Exam>  $exams
+     * @return list<string>
+     */
+    private function unreleasedWeightedNames(ResultsQuery $query, array $typeMeta, array $weights, Collection $exams): array
+    {
+        $names = [];
+        foreach ($weights as $typeId => $weight) {
+            $typeExams = $exams->where('exam_type_id', (int) $typeId);
+            $name = (string) ($typeMeta[$typeId]['name'] ?? 'Exam');
+            if ($typeExams->isEmpty()) {
+                $names[] = $name;
+
+                continue;
+            }
+            $releasedIds = MarksRelease::query()
+                ->where('school_id', $query->schoolId)
+                ->where('status', MarksRelease::STATUS_RELEASED)
+                ->whereIn('exam_id', $typeExams->pluck('id'))
+                ->pluck('exam_id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+            $missing = $typeExams->contains(fn ($exam) => ! in_array((int) $exam->id, $releasedIds, true));
+            if ($missing) {
+                $names[] = $name;
+            }
+        }
+
+        return array_values(array_unique($names));
+    }
+
+    /**
+     * The sentence the screen and the card print when a weighted set is missing.
+     *
+     * @param  list<string>  $names
+     */
+    public function withheldSentence(array $names): string
+    {
+        if ($names === []) {
+            return '';
+        }
+        $list = count($names) === 1
+            ? $names[0]
+            : implode(', ', array_slice($names, 0, -1)).' and '.$names[array_key_last($names)];
+        $verb = count($names) === 1 ? 'has' : 'have';
+
+        return $list.' '.$verb.' not been released. No combined mark is shown.';
     }
 
     /**

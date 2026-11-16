@@ -82,7 +82,6 @@ class ReportScaleSmokeTest extends TestCase
 
         // 3. The whole-class PDF (one class by default, every class with SCALE_FULL=1).
         $started = microtime(true);
-        $gaps = [];
         $classes = getenv('SCALE_FULL') === '1' ? $school['classes'] : [$school['classes'][0]];
         foreach ($classes as $class) {
             $generation = ReportGeneration::create([
@@ -96,11 +95,9 @@ class ReportScaleSmokeTest extends TestCase
             $path = storage_path('app/'.$generation->file_path);
             $this->assertFileExists($path);
             $this->assertGreaterThan(20000, filesize($path));
+            $this->assertLessThan(10 * 1024 * 1024, filesize($path), 'the class PDF stays under 10 MB');
             $pages = count((new Parser)->parseFile($path)->getPages());
-            $this->assertGreaterThan(self::PER_CLASS * 0.9, $pages, 'a page for nearly every learner');
-            if ($pages < self::PER_CLASS) {
-                $gaps[] = "the whole-class PDF for {$class['section']->name} has {$pages} pages for ".self::PER_CLASS.' learners';
-            }
+            $this->assertSame(self::PER_CLASS, $pages, "the whole-class PDF for {$class['section']->name} has a page for every learner");
             @unlink($path);
         }
         $timings['whole-class PDF x'.count($classes)] = microtime(true) - $started;
@@ -108,13 +105,6 @@ class ReportScaleSmokeTest extends TestCase
         fwrite(STDERR, "\nSCALE TIMINGS (seconds): ".json_encode(array_map(fn ($t) => round($t, 1), $timings))."\n");
         $this->assertLessThan(900, array_sum($timings), 'the whole smoke run stays inside 15 minutes');
 
-        // KNOWN GAP found by this test: the whole-class PDF takes its learners from the marks of one pinned
-        // exam (one subject), so a learner with a MISSING mark in that subject gets no card, although a
-        // missing mark counts as 0 and the card is meant to print "Missing" (decision 5). The class PDF code
-        // (StudentReportCardService::reportLearners and studentIds) is the marks agent's; reported, not fixed.
-        if ($gaps !== []) {
-            $this->markTestIncomplete('KNOWN GAP: '.implode('; ', $gaps).'.');
-        }
     }
 
     /**

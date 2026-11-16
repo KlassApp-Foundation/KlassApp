@@ -22,6 +22,8 @@ final class ResultsQuery
         public readonly ?int $standardLinkId = null,
         public readonly ?int $examTypeId = null,
         public readonly ?int $studentId = null,
+        /** @var list<int>|null When set, the sheet lists only these exam types. */
+        public readonly ?array $examTypeIds = null,
     ) {
     }
 }

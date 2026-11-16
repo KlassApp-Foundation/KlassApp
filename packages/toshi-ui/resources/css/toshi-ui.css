@@ -1146,6 +1146,18 @@ select, .dropdown-menu, [class*="select"], [class*="dropdown"],
         outline: 2px solid #15803D;
         outline-offset: 2px;
     }
+    @media (max-width: 767px) {
+        body.toshi-collapsed #toshi-toggle.toshi-toggle {
+            top: auto !important;
+            bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+            right: 12px !important;
+            transform: none !important;
+            width: 44px !important;
+            height: 44px !important;
+            border-radius: 12px !important;
+            border-right: 1px solid #E2E8F0 !important;
+        }
+    }
 
 /* TOSHI ENTRY PILL — the second shape of the same launcher. White, just
    left of the 36px gutter. Green K in a ring. 14px/700 label. No orange.

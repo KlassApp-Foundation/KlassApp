@@ -124,7 +124,14 @@ class CrestAndHeadTeacherTest extends TestCase
         $this->assertNull($this->renderCard($class, $learner)['data']['headTeacherName']);
 
         SchoolDetail::create(['school_id' => $class->school->id, 'meta_key' => SchoolIdentity::HEAD_TEACHER_KEY, 'meta_value' => 'Ruth Example']);
-        $this->assertSame('Ruth Example', $this->renderCard($class, $learner)['data']['headTeacherName']);
+        $card = $this->renderCard($class, $learner);
+        $this->assertSame('Ruth Example', $card['data']['headTeacherName']);
+        $this->assertStringContainsString('data-kind="head-teacher"', $card['html']);
+        $this->assertStringContainsString('Ruth Example', $card['html']);
+        foreach (['formal', 'warm'] as $template) {
+            $html = view('admin.marks.report-templates.'.$template, $card['data'])->render();
+            $this->assertStringContainsString('Ruth Example', $html, $template);
+        }
     }
 
     public function test_the_composer_is_registered_for_every_report_template_and_uses_the_views_own_school(): void
@@ -205,13 +212,24 @@ class CrestAndHeadTeacherTest extends TestCase
         $this->actingAs($admin)->post(self::URL, ['head_teacher_name' => str_repeat('x', 121)])->assertSessionHasErrors('head_teacher_name');
     }
 
+    public function test_a_head_teacher_can_open_school_details_and_save_the_name(): void
+    {
+        $school = $this->school();
+        $head = $this->user($school, 4);
+
+        $this->actingAs($head)->get(self::URL)->assertOk()->assertSee('data-testid="school-identity"', false);
+        $this->actingAs($head)->post(self::URL, ['head_teacher_name' => 'Hugo Head'])->assertRedirect(route('admin.school-identity'));
+
+        $this->assertSame('Hugo Head', SchoolIdentity::headTeacherName((int) $school->id));
+    }
+
     public static function rolesRefused(): array
     {
-        return ['head teacher' => [4], 'teacher' => [5], 'student' => [6], 'parent' => [7], 'accountant' => [11]];
+        return ['teacher' => [5], 'student' => [6], 'parent' => [7], 'accountant' => [11]];
     }
 
     #[DataProvider('rolesRefused')]
-    public function test_only_a_school_admin_may_change_these_details(int $group): void
+    public function test_other_roles_cannot_change_these_details(int $group): void
     {
         $school = $this->school();
         $user = $this->user($school, $group);

@@ -72,7 +72,7 @@ class ReportRolesTest extends TestCase
     public function test_admin_report_screens_open_for_school_admins_and_head_teachers_only(string $verb, string $url): void
     {
         $url = $this->fill($url);
-        $allowed = in_array($url, ['/admin/school-identity'], true) ? ['school admin'] : ['school admin', 'head teacher'];
+        $allowed = ['school admin', 'head teacher'];
 
         foreach ($this->actors as $role => $user) {
             $status = $this->actingAs($user)->{$verb}($url)->getStatusCode();
@@ -143,10 +143,9 @@ class ReportRolesTest extends TestCase
         $real = $this->actingAs($foreignAdmin)->get("/admin/reports/cards/{$this->class->link->id}/student/{$this->learner->id}/preview");
         $none = $this->actingAs($foreignAdmin)->get("/admin/reports/cards/{$missing}/student/{$this->learner->id}/preview");
 
-        if ($real->getStatusCode() !== $none->getStatusCode() || $real->headers->get('Location') !== $none->headers->get('Location')) {
-            $this->markTestIncomplete("KNOWN GAP: another school's class answers {$real->getStatusCode()}, a missing class answers {$none->getStatusCode()}.");
-        }
+        $this->assertSame(404, $none->getStatusCode());
         $this->assertSame($none->getStatusCode(), $real->getStatusCode());
+        $this->assertSame($none->headers->get('Location'), $real->headers->get('Location'));
     }
 
     public function test_a_refused_role_changes_nothing_about_the_progressive_rules(): void

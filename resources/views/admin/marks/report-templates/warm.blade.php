@@ -366,6 +366,12 @@
         </table>
         @endif
 
+        @if (!empty($monthlySets) && empty($termSets))
+        <p>No combined mark applies.</p>
+        @endif
+        @if (!empty($incompleteSets))
+        <p>Incomplete: {{ implode(', ', $incompleteSets) }}.</p>
+        @endif
         @if (!empty($termSets))
         <div class="sec-heading sec-heading-eot"><span class="dot"></span>END OF TERM {{ $termNumeral ?: 'EXAMINATION' }}</div>
         <table class="card-table">
@@ -433,8 +439,8 @@
                 @foreach ($termSets as $set)
                     <td><strong>{{ count($termSets) === 1 ? $total : ($set['total'] ?? '-') }}</strong></td>
                 @endforeach
-                @if ($showAgg) <td><strong>{{ $eotAgg ?? ($grade['agg'] ?? '-') }}</strong></td> @endif
-                <td colspan="2" class="division-cell">@if (count($termSets) > 1) TOTAL: <strong>{{ $total }}</strong> @endif @if ($showDivision) DIVISION: <strong>{{ $eotDivision }}</strong> @endif
+                @if ($showAgg) <td><strong>{{ !empty($withheldSets) ? '—' : ($eotAgg ?? ($grade['agg'] ?? '-')) }}</strong></td> @endif
+                <td colspan="2" class="division-cell">@if (!empty($withheldSets))<span data-kind="withheld">{{ $withheldSentence }}</span>@elseif (count($termSets) > 1) TOTAL: <strong>{{ $total }}</strong> @if ($showDivision) DIVISION: <strong>{{ $eotDivision }}</strong> @endif @elseif ($showDivision) DIVISION: <strong>{{ $eotDivision }}</strong> @endif
                 @if ($showPoints) POINTS: <strong>{{ $eotAgg ?? ($grade['agg'] ?? '-') }}</strong> @endif</td>
             </tr>
             @if ($showAgg)
@@ -469,6 +475,7 @@
                     <div class="comments-label">HEADTEACHER'S COMMENT</div>
                     <div class="comments-box">{{ $headTeacherComment ?? '-' }}</div>
                     <div class="sig-row"><span class="sig-caption">SIGN &amp; STAMP</span>&nbsp;<span class="sig-dash">____________________</span></div>
+                    @if (!empty($headTeacherName))<div>{{ $headTeacherName }}</div>@endif
                 </td>
             </tr>
         </table>

@@ -228,11 +228,12 @@ class ReportCardsController extends Controller
     {
         $schoolId = Auth::user()->school_id;
 
-        $exam = $this->resolveExam($schoolId, $stdLink, $this->requestedTermId($schoolId));
-        if (!$exam) return back()->with('failmessage', 'No EOT exam found for this class.');
+        $termId = $this->requestedTermId($schoolId);
+        $exam = $this->resolveExam($schoolId, $stdLink, $termId);
+        if (!$exam) return back()->with('failmessage', 'No exam set found for this class.');
 
-        $studentIds = $this->studentIds($exam);
-        if ($studentIds->isEmpty()) return back()->with('failmessage', 'No students with marks.');
+        $learners = app(StudentReportCardService::class)->reportLearners($schoolId, $stdLink, $termId);
+        if ($learners->isEmpty()) return back()->with('failmessage', 'No learners in this class.');
 
         $className = Section::find($stdLink->section_id)->name ?? 'class';
 
@@ -339,14 +340,18 @@ class ReportCardsController extends Controller
 
     private function singleStudentResponse(StandardLink $stdLink, \App\Models\User $learner, bool $download)
     {
-        try {
-            $schoolId = Auth::user()?->school_id;
-            if (!$schoolId) return back()->with('failmessage', 'Your account is not linked to a school.');
+        $schoolId = Auth::user()?->school_id;
+        if (! $schoolId
+            || (int) $stdLink->school_id !== (int) $schoolId
+            || (int) $learner->school_id !== (int) $schoolId) {
+            abort(404);
+        }
 
+        try {
             $reports = app(StudentReportCardService::class);
             $termId = $this->requestedTermId($schoolId);
             $exam = $reports->resolveExam($schoolId, $stdLink, $termId);
-            if (!$exam) return back()->with('failmessage', 'No EOT exam found for this class.');
+            if (!$exam) return back()->with('failmessage', 'No exam set found for this class.');
 
             $pdfContent = $reports->pdfForStudent($schoolId, $stdLink, $learner, null, $termId);
 
@@ -405,7 +410,7 @@ class ReportCardsController extends Controller
      * Backward-compatible entry point for jobs/commands. Real implementation:
      * StudentReportCardService::generatePdf().
      */
-    public static function generatePdf(int $sid, Exam $exam, StandardLink $stdLink, int $schoolId, $helper, ReportCardCommentService $svc, int $totalLearners, int $myPos = 0, ?string $templateKey = null, bool $sample = false, bool $printBlackAndWhite = false): string
+    public static function generatePdf(int $sid, Exam $exam, StandardLink $stdLink, int $schoolId, $helper, ReportCardCommentService $svc, int $totalLearners, int $myPos = 0, ?string $templateKey = null, bool $sample = false, bool $printBlackAndWhite = false, ?array $onlyExamTypeIds = null): string
     {
         return app(StudentReportCardService::class)->generatePdf(
             $sid,
@@ -418,7 +423,8 @@ class ReportCardsController extends Controller
             $myPos,
             $templateKey,
             $sample,
-            $printBlackAndWhite
+            $printBlackAndWhite,
+            $onlyExamTypeIds,
         );
     }
 

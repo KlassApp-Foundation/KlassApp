@@ -117,8 +117,10 @@ final class ReportScoring
     }
 
     /**
-     * Grade bands and division ranges shared with the progressive card.
-     * Ranking and blank marks stay on the caller's own settings.
+     * The same rules as the card for this class and term: bands, division,
+     * ranking, and counting a blank or an absence as 0. A screen that asks
+     * for a sheet without its own policy gets this, so it cannot skip a blank
+     * the card counts.
      */
     public function displayPolicy(
         int $schoolId,
@@ -136,7 +138,10 @@ final class ReportScoring
         return new ResultsPolicy(
             $shared?->gradingScale ?? app(GradingScale::class),
             $shared?->divisionRule ?? $fallback ?? app(DivisionRule::class),
+            rankingBasis: $shared?->rankingBasis ?? ResultsPolicy::BASIS_TOTAL,
+            higherIsBetter: $shared?->higherIsBetter ?? true,
             splitMidTermByMonth: $splitMidTermByMonth,
+            countMissingAsZero: $shared?->countMissingAsZero ?? false,
         );
     }
 
