@@ -2,6 +2,14 @@
 
 > **Canonical location**: `/Users/mac/projects/KlassApp/knowledge.md` (workspace root). Worktrees (e.g. `KlassApp-main-checkout`) should sync to that path when copies diverge — keep one body of truth; do not maintain parallel divergent session logs.
 
+## Session note — 2026-11-10 — Help opens the guide for the current page
+
+- **Work done**: Account-menu Help opens `/help/guide?from=<route name>`, which redirects to the mapped school guide. Unknown routes open `/docs-preview/help/`. Help is shown to school admins, head teachers, and teachers. Parents and students are unchanged.
+- **Files modified**: `config/help.php`, `app/Support/HelpGuide.php`, `routes/web.php`, `routes/admin.php` (names only: `admin.students.index`, `admin.teacher.show`), `resources/views/layouts/partials/profile-dropdown.blade.php`, help and account-menu tests.
+- **Key decisions**: Route-name patterns, first match wins. Attendance patterns are `admin.attendance.*` and `teacher.attendance.*`, so a student-profile attendance post does not use the attendance guide. Marks releases stay on the help home. Guide markdown is on draft #1319 and is not copied here, so the new tab 404s until that PR is published.
+- **Status**: Draft [#1321](https://github.com/KlassApp-Foundation/KlassApp/pull/1321), branch `feat/help-page-guides`, tip `d4c6114291fa2a3626981961723564321f66eb00`. Not merged. Production untouched. Merge after the Wednesday demo.
+- **Edge cases flagged**: Class teachers and subject teachers share usergroup 5, so both see Help. The teacher profile URL is still addressed by name; only the route name was added.
+
 ## Session note — 2026-11-05 — parent and student portals (page 9, draft)
 
 Stacked on `cursor/parent-student-portal-0657` (#1266, not merged). Branch `cursor/parent-student-portals-page9-6ada`. Dashboard cards open Marks, Attendance and Fees. Both portals read `ParentPortalService` released results only. Attendance is one row per session: both sessions present is one day, one present session is a half day, shown as `4½ days present`, `4 days present`, `½ day present`, or `1 day present`. The same wording is on the student dashboard in #1281 (`cursor/base-class-fixes-1cb2`) and on the teacher week chart in #1283 (a half-present student counts as ½). Fees pages do not show attendance days. No new WhatsApp or Toshi messages. Drafts only; not merged, not deployed, and not rebased onto #1265.

@@ -18,6 +18,12 @@ Route::get('/docs/{path?}', DocsController::class)
 // Soft-launch Help hub. VitePress builds to public/docs-preview (npm run docs:build)
 // so the live Docsify /docs route stays unchanged until cutover.
 Route::redirect('/help', '/docs-preview/help/', 302)->name('help');
+// Registered before the {path} catch-all so "guide" is not treated as a doc slug.
+Route::get('/help/guide', function () {
+    $from = request()->query('from');
+
+    return redirect(\App\Support\HelpGuide::urlFor(is_string($from) ? $from : null), 302);
+})->name('help.guide');
 Route::get('/help/{path}', function (string $path) {
     return redirect('/docs-preview/help/'.ltrim($path, '/'), 302);
 })->where('path', '.*')->name('help.path');

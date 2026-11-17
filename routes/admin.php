@@ -269,7 +269,7 @@ Route::get('/toshi-activity', 'ToshiActivityController@index')->name('admin.tosh
 //students
 	//index
 	Route::get( '/students/find', 'StudentController@find' );
-	Route::get( '/students', 'StudentController@index' );
+	Route::get( '/students', 'StudentController@index' )->name('admin.students.index');
 	Route::get( '/students/{student}', 'StudentProfileController@show' )->whereNumber('student')->name('admin.students.profile');
 	Route::post( '/students/{student}/deactivate', 'StudentProfileController@deactivate' )->whereNumber('student')->name('admin.students.deactivate');
 	Route::post( '/students/{student}/resend-setup', 'StudentProfileController@resendSetup' )->whereNumber('student')->name('admin.students.resend-setup');
@@ -390,7 +390,7 @@ Route::get('/teacher/my-timetable', 'TimetableSlotController@teacherWeekly')->na
 	Route::get( '/teacher/show/logactivity/{name}', 'TeacherShowController@showActivityLog' );
 	Route::post( '/teacher/show/{name}/deactivate', 'TeacherProfileController@deactivate' );
 	Route::post( '/teacher/show/{name}/resend-setup', 'TeacherProfileController@resendSetup' )->name('admin.teacher.resend-setup');
-	Route::get( '/teacher/show/{name}', 'TeacherProfileController@show' );
+	Route::get( '/teacher/show/{name}', 'TeacherProfileController@show' )->name('admin.teacher.show');
 	//edit
 	Route::get( '/teacher/editTeacher/{name}', 'TeacherEditController@editTeacher' );
 	Route::get( '/teacher/edit/{name}', 'TeacherEditController@edit' );
