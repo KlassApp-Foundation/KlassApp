@@ -4,6 +4,7 @@ namespace App\Services\Toshi\Concerns;
 
 use App\Services\Toshi\McpWriteGate;
 use App\Services\Toshi\ToshiMcpCallAuditor;
+use Laravel\Mcp\Client\Primitives\Tool;
 use Laravel\Mcp\Client\Schema\ToolResult;
 
 /**
@@ -17,13 +18,15 @@ trait AuditsMcpToolCalls
     /**
      * @param  array<string, mixed>  $arguments
      */
-    public function callTool(string $name, array $arguments = []): ToolResult
+    public function callTool(Tool|string $tool, array $arguments = []): ToolResult
     {
+        $name = $tool instanceof Tool ? $tool->name : $tool;
+
         if ($this->name !== null) {
             McpWriteGate::assertExecutable($this->name, $name);
         }
 
-        $result = parent::callTool($name, $arguments);
+        $result = parent::callTool($tool, $arguments);
 
         ToshiMcpCallAuditor::audit($name, $arguments, $result);
 

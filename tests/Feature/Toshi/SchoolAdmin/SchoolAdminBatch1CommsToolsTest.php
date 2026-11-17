@@ -533,6 +533,7 @@ class SchoolAdminBatch1CommsToolsTest extends TestCase
                 'type' => 'school',
             ],
             $confirmJson,
+            0.0,
         ));
 
         $log = ActivityLog::where('log_name', 'toshi')
