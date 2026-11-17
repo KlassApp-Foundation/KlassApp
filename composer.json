@@ -118,7 +118,7 @@
         "laravel/framework": "^13.42",
         "laravel/mcp": "^0.8",
         "laravel/nightwatch": "^1.30.6",
-        "laravel/sanctum": "^4.0",
+        "laravel/sanctum": "^4.4",
         "laravel/socialite": "^5.32",
         "laravel/tinker": "^3.0",
         "laravel/ui": "^4.6",
