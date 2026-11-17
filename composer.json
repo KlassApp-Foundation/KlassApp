@@ -122,7 +122,7 @@
         "laravel/socialite": "^5.32",
         "laravel/tinker": "^3.1",
         "laravel/ui": "^4.6",
-        "league/csv": "^9.14",
+        "league/csv": "^9.29",
         "league/flysystem": "^3.35.3",
         "league/flysystem-aws-s3-v3": "^3.24.0",
         "livewire/livewire": "^3.4",
