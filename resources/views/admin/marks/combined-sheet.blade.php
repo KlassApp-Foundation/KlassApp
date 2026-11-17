@@ -109,7 +109,7 @@
         @endif
         @if($filtered && $missingSubjects->isNotEmpty())
             <div class="ds-reminder-banner" data-testid="exams-reminder-banner">
-                <div>{{ $missingSubjects->count() }} {{ \Illuminate\Support\Str::plural('subject', $missingSubjects->count()) }} still missing marks</div>
+                <div>{{ $missingSubjects->count() }} {{ \Illuminate\Support\Str::plural('subject', $missingSubjects->count()) }} {{ $missingSubjects->count() === 1 ? 'is' : 'are' }} not approved. {{ $missingSubjects->count() === 1 ? 'Its marks show' : 'Their marks show' }} as a dash and are left out of the total.</div>
             </div>
         @endif
     </div>

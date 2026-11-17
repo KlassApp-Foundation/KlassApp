@@ -327,6 +327,8 @@ class MarksOverviewTest extends TestCase
         $this->assertStringNotContainsString('Total 127', $html);
         $this->assertStringNotContainsString('Total 218', $html);
         $this->assertStringNotContainsString('Each missing mark counts as 0', $html);
+        $this->assertStringNotContainsString('still missing marks', $html);
+        $this->assertStringContainsString('is not approved', $html);
         $this->assertStringContainsString('left out of the total', $html);
         $this->assertStringContainsString('>ABS<', $html);
         $this->assertStringNotContainsString('marks-cell-absent">AB<', $html);
