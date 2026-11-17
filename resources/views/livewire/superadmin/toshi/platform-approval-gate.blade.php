@@ -122,7 +122,7 @@
                 <div wire:key="msg-{{ $message->id }}" class="border-b border-gray-100 py-2 last:border-0">
                     <p class="text-xs font-semibold uppercase text-gray-500">{{ $message->role }}</p>
                     <p class="mt-1 whitespace-pre-wrap text-sm" style="color:#0F172A;">{{ $message->content ?: '—' }}</p>
-                    @if (! empty($message->approval_state['pending']))
+                    @if ($message->status === \Laravel\Ai\Enums\MessageStatus::Paused)
                         <p class="mt-1 text-xs font-semibold text-amber-700">Paused — pending approval</p>
                     @endif
                 </div>
