@@ -123,7 +123,7 @@
         "laravel/tinker": "^3.1",
         "laravel/ui": "^4.6",
         "league/csv": "^9.29",
-        "league/flysystem": "^3.35.3",
+        "league/flysystem": "^3.36",
         "league/flysystem-aws-s3-v3": "^3.24.0",
         "livewire/livewire": "^3.4",
         "maatwebsite/excel": "3.1.x-dev",
