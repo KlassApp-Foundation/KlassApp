@@ -3,6 +3,7 @@
 namespace App\Services\ReportCards;
 
 use App\Contracts\Results\ReleaseGate;
+use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\Academics\Exam;
 use App\Models\Academics\ExamType;
@@ -95,6 +96,46 @@ class ClassReportScreen
             ->map(fn (array $s) => array_diff_key($s, ['sort' => 1]))
             ->values()
             ->all();
+    }
+
+    /**
+     * The class the screen opens on when the person has not chosen one.
+     *
+     * Classes are ordered nursery-first. A nursery class with no exam, or with
+     * an exam only in another term, must not cover a class that has an exam
+     * in the current term. The same section rules as sittings() apply, including
+     * an exam that lives on the base section of a stream.
+     *
+     * @param  list<array{id: int, label: string, links: list<array{id: int, stream: string}>}>  $classes
+     * @return array{id: int, label: string, links: list<array{id: int, stream: string}>}|null
+     */
+    public function firstWithCurrentTermExam(int $schoolId, array $classes): ?array
+    {
+        $termId = AcademicTerm::query()
+            ->where('school_id', $schoolId)
+            ->where('status', 'current')
+            ->orderByDesc('starts_on')
+            ->orderByDesc('id')
+            ->value('id');
+        if ($termId === null) {
+            return null;
+        }
+
+        foreach ($classes as $class) {
+            $sectionIds = $this->sectionIdsFor($schoolId, (int) $class['id']);
+            $hasExam = Exam::query()
+                ->where('school_id', $schoolId)
+                ->whereIn('section_id', $sectionIds)
+                ->where('academic_term_id', (int) $termId)
+                ->whereNull('deleted_at')
+                ->whereNotNull('exam_type_id')
+                ->exists();
+            if ($hasExam) {
+                return $class;
+            }
+        }
+
+        return null;
     }
 
     /**
