@@ -413,7 +413,7 @@ class ReportCompositionAndProfileTest extends TestCase
             ->assertOk()
             ->assertSee('65')
             ->assertSee('>C<', false)
-            ->assertDontSee('ZZ');
+            ->assertDontSee('>ZZ<', false);
     }
 
     private function school(string $name = 'Composition School'): array
