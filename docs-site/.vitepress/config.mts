@@ -8,6 +8,8 @@ export default defineConfig({
   description: 'Help for schools and guides for contributors. Set up a school, message parents on WhatsApp, and work in the code.',
   lang: 'en',
   base: '/docs-preview/',
+  // Governance is drafted on the stacked docs PR. Ignore this one link until that page is on this branch.
+  ignoreDeadLinks: ['/community/governance'],
   // Soft-launch: build to docs-preview so live Docsify /docs is unchanged until cutover.
   outDir: '../public/docs-preview',
   cleanUrls: true,
