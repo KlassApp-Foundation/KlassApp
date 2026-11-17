@@ -12,6 +12,7 @@ use Illuminate\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Tests\TestCase;
 
 class SignupEmailVerificationTest extends TestCase
@@ -35,6 +36,11 @@ class SignupEmailVerificationTest extends TestCase
 
         $this->withoutMiddleware(VerifyCsrfToken::class);
         Mail::fake();
+
+        // Plain throttle:N,M shares one counter per guest IP, and the suite
+        // keeps that counter in the file cache. The resend route allows 3 a
+        // minute, so earlier tests in that minute make this request return 429.
+        RateLimiter::clear(sha1('|127.0.0.1'));
     }
 
     private function signup(array $overrides = [])
