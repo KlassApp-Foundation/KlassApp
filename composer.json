@@ -119,7 +119,7 @@
         "laravel/mcp": "^0.8",
         "laravel/nightwatch": "^1.30",
         "laravel/sanctum": "^4.0",
-        "laravel/socialite": "^5.28",
+        "laravel/socialite": "^5.32",
         "laravel/tinker": "^3.0",
         "laravel/ui": "^4.6",
         "league/csv": "^9.14",
