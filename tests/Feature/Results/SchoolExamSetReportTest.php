@@ -31,8 +31,10 @@ use Tests\TestCase;
 
 /**
  * A school names its own exam sets. Two of them count toward one combined
- * report. The others are shown on their own. A missing mark is 0 and is
- * labelled Missing. ABS is 0 and stays ABS.
+ * report. The others stay on their own marks sheet. Once any set for the
+ * class is released, the report card names only released sets that count
+ * toward the combined report. A missing mark is 0 and is labelled Missing.
+ * ABS is 0 and stays ABS on the marks sheet.
  */
 class SchoolExamSetReportTest extends TestCase
 {
@@ -214,11 +216,11 @@ class SchoolExamSetReportTest extends TestCase
 
         $report = $this->renderReport($ctx, $ada);
         $this->assertStringContainsString('Missing', $report);
-        $this->assertStringContainsString('ABS', $report);
         $this->assertStringContainsString('Made up of: North Paper 40% · South Paper 60%', $report);
-        $this->assertStringContainsString('Quiz Hour', $report);
-        $this->assertStringContainsString('Late Paper', $report);
+        $this->assertStringNotContainsString('Quiz Hour', $report);
+        $this->assertStringNotContainsString('Late Paper', $report);
         $this->assertStringNotContainsString('Month Check', $report);
+        $this->assertStringNotContainsString('ABS', $report);
         $this->refuseWorkarounds($report);
 
         $frozen = MarksRelease::query()
