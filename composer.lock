@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "55325ba28a3e516e1821d4442428a020",
+    "content-hash": "4bb34d6e885bb1ddceaee677691988fa",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -9383,16 +9383,16 @@
         },
         {
             "name": "spatie/laravel-model-states",
-            "version": "2.14.1",
+            "version": "2.14.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/spatie/laravel-model-states.git",
-                "reference": "772703a62478f578c1476aa2e6dcdc25339542df"
+                "reference": "8b109545c6d916b7394c841604b174288259b0b8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/spatie/laravel-model-states/zipball/772703a62478f578c1476aa2e6dcdc25339542df",
-                "reference": "772703a62478f578c1476aa2e6dcdc25339542df",
+                "url": "https://api.github.com/repos/spatie/laravel-model-states/zipball/8b109545c6d916b7394c841604b174288259b0b8",
+                "reference": "8b109545c6d916b7394c841604b174288259b0b8",
                 "shasum": ""
             },
             "require": {
@@ -9448,7 +9448,7 @@
                 "state"
             ],
             "support": {
-                "source": "https://github.com/spatie/laravel-model-states/tree/2.14.1"
+                "source": "https://github.com/spatie/laravel-model-states/tree/2.14.3"
             },
             "funding": [
                 {
@@ -9460,7 +9460,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-04-22T07:41:05+00:00"
+            "time": "2026-11-04T15:43:57+00:00"
         },
         {
             "name": "spatie/laravel-package-tools",
