@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3d1642e0ad10fea77b6897c1a28165cb",
+    "content-hash": "2b695b17d57c19d667cf2ef2e10cc021",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -2634,20 +2634,20 @@
         },
         {
             "name": "giggsey/libphonenumber-for-php",
-            "version": "9.0.41",
+            "version": "9.0.43",
             "source": {
                 "type": "git",
                 "url": "https://github.com/giggsey/libphonenumber-for-php.git",
-                "reference": "9b954c5020364210dd4f2f15f881c0ddf2a78862"
+                "reference": "75a801c3dbf9a675e4bc83e0da2c2142fcc5344d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/giggsey/libphonenumber-for-php/zipball/9b954c5020364210dd4f2f15f881c0ddf2a78862",
-                "reference": "9b954c5020364210dd4f2f15f881c0ddf2a78862",
+                "url": "https://api.github.com/repos/giggsey/libphonenumber-for-php/zipball/75a801c3dbf9a675e4bc83e0da2c2142fcc5344d",
+                "reference": "75a801c3dbf9a675e4bc83e0da2c2142fcc5344d",
                 "shasum": ""
             },
             "require": {
-                "giggsey/locale": "^2.7",
+                "giggsey/locale": "^2.10",
                 "php": "^8.1",
                 "symfony/polyfill-mbstring": "^1.31"
             },
@@ -2706,7 +2706,7 @@
                 "issues": "https://github.com/giggsey/libphonenumber-for-php/issues",
                 "source": "https://github.com/giggsey/libphonenumber-for-php"
             },
-            "time": "2026-10-08T08:51:49+00:00"
+            "time": "2026-11-06T10:00:34+00:00"
         },
         {
             "name": "giggsey/locale",
