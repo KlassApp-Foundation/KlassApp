@@ -12,3 +12,5 @@ Choose who you are. New to the school? Start with [Get started](/help/getting-st
  {title:'Bursar',text:'Fees, exports, and payroll',link:'/docs-preview/help/bursars/'},
  {title:'Parent',text:'Children, fees, grades, and WhatsApp',link:'/docs-preview/help/parents/'},
  {title:'Student',text:'Marks, attendance, homework, and notices',link:'/docs-preview/help/students/'}]" />
+
+Working on report cards? Start with [Reports and marks](/help/reports/): the report type, the rules behind the numbers, marks, release and the card.
