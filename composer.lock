@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4bb34d6e885bb1ddceaee677691988fa",
+    "content-hash": "b21e07c8a93e4b8a373ffe03d547f7be",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -13684,16 +13684,16 @@
         },
         {
             "name": "twilio/sdk",
-            "version": "8.13.0",
+            "version": "8.14.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/twilio/twilio-php.git",
-                "reference": "0cb66196f3c017dae395661e0cf1fc8197cb6d34"
+                "reference": "5c40955d6591ce4276fd423da8d4b6fb45fe4a7b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/twilio/twilio-php/zipball/0cb66196f3c017dae395661e0cf1fc8197cb6d34",
-                "reference": "0cb66196f3c017dae395661e0cf1fc8197cb6d34",
+                "url": "https://api.github.com/repos/twilio/twilio-php/zipball/5c40955d6591ce4276fd423da8d4b6fb45fe4a7b",
+                "reference": "5c40955d6591ce4276fd423da8d4b6fb45fe4a7b",
                 "shasum": ""
             },
             "require": {
@@ -13732,9 +13732,9 @@
             ],
             "support": {
                 "issues": "https://github.com/twilio/twilio-php/issues",
-                "source": "https://github.com/twilio/twilio-php/tree/8.13.0"
+                "source": "https://github.com/twilio/twilio-php/tree/8.14.1"
             },
-            "time": "2026-10-12T11:56:40+00:00"
+            "time": "2026-11-17T09:50:22+00:00"
         },
         {
             "name": "vlucas/phpdotenv",
