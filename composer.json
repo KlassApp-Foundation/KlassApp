@@ -153,7 +153,7 @@
         "mockery/mockery": "^1.6.15",
         "nunomaduro/collision": "^8.9.6",
         "phpunit/phpunit": "^13.4.7",
-        "spatie/laravel-web-tinker": "^1.8.4"
+        "spatie/laravel-web-tinker": "^1.12"
     },
     "autoload": {
         "psr-4": {

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e5808d435d33e9ba26311442a71fa39a",
+    "content-hash": "fd4f01781a284432439f0556b5d9985c",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -16752,29 +16752,31 @@
         },
         {
             "name": "spatie/laravel-web-tinker",
-            "version": "1.10.6",
+            "version": "1.12.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/spatie/laravel-web-tinker.git",
-                "reference": "54ec53ecd275335baaf4b7b7300aeda69e932af6"
+                "reference": "0d0e8e355ed0e3bdda9e28059597a8d6b368ec88"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/spatie/laravel-web-tinker/zipball/54ec53ecd275335baaf4b7b7300aeda69e932af6",
-                "reference": "54ec53ecd275335baaf4b7b7300aeda69e932af6",
+                "url": "https://api.github.com/repos/spatie/laravel-web-tinker/zipball/0d0e8e355ed0e3bdda9e28059597a8d6b368ec88",
+                "reference": "0d0e8e355ed0e3bdda9e28059597a8d6b368ec88",
                 "shasum": ""
             },
             "require": {
-                "illuminate/cookie": "^10.0|^11.0|^12.0|^13.0",
-                "illuminate/session": "^10.0|^11.0|^12.0|^13.0",
-                "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/cookie": "^12.0|^13.0",
+                "illuminate/session": "^12.0|^13.0",
+                "illuminate/support": "^12.0|^13.0",
                 "laravel/tinker": "^2.0|^3.0",
                 "php": "^8.2",
-                "psy/psysh": "^0.12"
+                "psy/psysh": "^0.12.24",
+                "symfony/var-dumper": "^7.2|^8.0"
             },
             "require-dev": {
-                "orchestra/testbench": "^8.22|^9.6|^10.0|^11.0",
-                "phpunit/phpunit": "^9.0|^10.5|^11.5.3|^12.5.12"
+                "laravel/pint": "^1.27",
+                "orchestra/testbench": "^10.0|^11.0",
+                "phpunit/phpunit": "^11.5.3|^12.5.12"
             },
             "type": "library",
             "extra": {
@@ -16813,7 +16815,7 @@
             ],
             "support": {
                 "issues": "https://github.com/spatie/laravel-web-tinker/issues",
-                "source": "https://github.com/spatie/laravel-web-tinker/tree/1.10.6"
+                "source": "https://github.com/spatie/laravel-web-tinker/tree/1.12.0"
             },
             "funding": [
                 {
@@ -16821,7 +16823,7 @@
                     "type": "custom"
                 }
             ],
-            "time": "2026-04-27T06:48:06+00:00"
+            "time": "2026-10-19T16:18:45+00:00"
         },
         {
             "name": "staabm/side-effects-detector",
