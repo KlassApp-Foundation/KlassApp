@@ -2,6 +2,10 @@
 
 > **Canonical location**: `/Users/mac/projects/KlassApp/knowledge.md` (workspace root). Worktrees (e.g. `KlassApp-main-checkout`) should sync to that path when copies diverge — keep one body of truth; do not maintain parallel divergent session logs.
 
+## Session note — 2026-11-17 — stack upgrade draft
+
+Branch `chore/stack-upgrade` from `169c092c`. Draft only. Not merged and not deployed. PHP constraint is `^8.4`, which accepts 8.4 and 8.5 and does not require 8.5. Laravel framework 13.38.0 to 13.42.0. Laravel AI 0.10.2 to 1.4.0 and Laravel MCP 0.8.2 to 1.2.0, with Boost already at 2.10.4. The conversation migration adds `steps` and `status` and does not drop `tool_calls`, `tool_results`, or `approval_state`. Excel stays on 3.1.70. PhpSpreadsheet 1.30.8 still requires PHP below 8.5, so a clean install on 8.5 fails and production should stay on 8.4. Majors that came along and still need the owner's acceptance: Symfony 8.1 components, phpseclib 4, brick/math 1.0, and PHPUnit 13. Livewire 4, Filament 5, and Excel 4 were not moved. One pilot-path test assertion was tightened so a random Livewire id cannot fail the class-overview grade check.
+
 ## Session note — 2026-11-05 — parent and student portals (page 9, draft)
 
 Stacked on `cursor/parent-student-portal-0657` (#1266, not merged). Branch `cursor/parent-student-portals-page9-6ada`. Dashboard cards open Marks, Attendance and Fees. Both portals read `ParentPortalService` released results only. Attendance is one row per session: both sessions present is one day, one present session is a half day, shown as `4½ days present`, `4 days present`, `½ day present`, or `1 day present`. The same wording is on the student dashboard in #1281 (`cursor/base-class-fixes-1cb2`) and on the teacher week chart in #1283 (a half-present student counts as ½). Fees pages do not show attendance days. No new WhatsApp or Toshi messages. Drafts only; not merged, not deployed, and not rebased onto #1265.
