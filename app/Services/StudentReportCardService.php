@@ -1066,8 +1066,9 @@ class StudentReportCardService
     }
 
     /**
-     * Sets that may be named on this card: released for the class and term,
-     * and included in the school's combined mix.
+     * Sets that may be named on this card. A class that has not released a
+     * set still names every set that has started. Once one set is released,
+     * a set is named only when it is released and the mix has not excluded it.
      *
      * @param  list<array{id: int, name: string, status: string, released: bool}>  $ownReports
      * @return array<int, true>
@@ -1094,13 +1095,29 @@ class StudentReportCardService
             if ($id < 1 || $type === null) {
                 continue;
             }
-            if ($releaseGate && (empty($row['released']) || ! $composition->countsToward($type, $mix))) {
+            if ($releaseGate && (empty($row['released']) || $this->mixExcludes($mix, $id))) {
                 continue;
             }
             $ids[$id] = true;
         }
 
         return $ids;
+    }
+
+    /**
+     * @param  array<int|string, mixed>|null  $mix
+     */
+    private function mixExcludes(?array $mix, int $typeId): bool
+    {
+        if (! is_array($mix)) {
+            return false;
+        }
+        $row = $mix[(string) $typeId] ?? $mix[$typeId] ?? null;
+        if (! is_array($row)) {
+            return false;
+        }
+
+        return ($row['include'] ?? true) === false;
     }
 
     /**
