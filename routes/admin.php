@@ -510,8 +510,11 @@ Route::get( '/staff/export', 'StaffController@staffexports' );
 
 //import
 
-Route::get( '/import', 'ImportMemberController@index' );
-Route::post( '/importUsers', 'ImportMemberController@importUsers' );
+// T-118: the legacy UsersImport path wrote outside OnboardingEngine and could
+// die mid-file on dd(). The students import page runs the engine-backed upload.
+Route::get('/import', fn () => redirect('/admin/students/import'));
+Route::post('/importUsers', fn () => redirect('/admin/students/import')
+    ->with('successmessage', 'Use the Import students page; it reports every skipped row.'));
 Route::get( '/downloadformat', 'ImportMemberController@downloadFormat' );
 
 //without approval homework -- do not remove

@@ -53,7 +53,6 @@ class UsersImport implements ToCollection, WithHeadingRow
                 // $row = collect($row)->filter(function ($value, $key) {
                 //     return is_string($key); // removes numeric keys like 11 => 11
                 // });
-            // dd(array_keys($row->toArray()));
                 // ✅ Minimal required fields
                 if (empty($row['firstname']) || empty($row['class'])) {
                     Log::warning('Skipping invalid student import row', [
