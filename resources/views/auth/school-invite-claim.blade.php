@@ -55,7 +55,6 @@
 
         <div data-testid="invite-onboarding-paths" style="margin-top:18px;">
           <p class="ap-meta" style="margin:0 0 10px;">After this account is created, you'll set {{ $invite->school_name }} up step by step in the Wizard.</p>
-          @include('auth.partials.toshi-path-choice', ['toshiPathAvailable' => false])
         </div>
       </div>
     </div>

@@ -148,7 +148,7 @@ class GoogleAuthController extends Controller
             Auth::login($user, true);
 
             return redirect(\App\Helpers\AuthRedirectHelper::dashboardPathForUser($user))
-                ->with('open_toshi_onboarding', true)
+                
                 ->with('successmessage', 'Welcome to KlassApp! Continue setup with Toshi.');
         } catch (Throwable $e) {
             Log::error('Google auth user creation failed', [
@@ -172,13 +172,14 @@ class GoogleAuthController extends Controller
         }
 
         $school = Auth::user()->school;
-        $paths = app(\App\Services\Toshi\ToshiOnboardingPath::class);
-        if ($school && ! $paths->openFor($school) && \App\Services\OnboardingEngine::setupDestination($school, Auth::id()) !== null) {
-            return $paths->sendToWizard($school);
+        $destination = $school
+            ? \App\Services\OnboardingEngine::setupDestination($school, Auth::id())
+            : null;
+        if ($destination !== null) {
+            return redirect()->to($destination);
         }
 
-        return redirect(\App\Helpers\AuthRedirectHelper::dashboardPathForUser(Auth::user()))
-            ->with('open_toshi_onboarding', true);
+        return redirect(\App\Helpers\AuthRedirectHelper::dashboardPathForUser(Auth::user()));
     }
 
     public function storeOnboarding(Request $request)
@@ -215,7 +216,7 @@ class GoogleAuthController extends Controller
 
         if ($needsSetup) {
             return redirect($path)
-                ->with('open_toshi_onboarding', true);
+                ;
         }
 
         return redirect($path);

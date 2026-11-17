@@ -3,7 +3,6 @@
 namespace Tests\Feature\Onboarding;
 
 use App\Events\SchoolOnboardingFinished;
-use App\Livewire\AgentToshi;
 use App\Livewire\ManualOnboardingWizard;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
@@ -53,51 +52,6 @@ class FinishSchoolOnboardingTest extends TestCase
         Queue::fake();
     }
 
-    public function test_toshi_completion_sets_onboarding_finished_at_and_the_same_follow_ups_as_the_wizard(): void
-    {
-        [$toshiAdmin, $toshiSchool] = $this->readySchool('toshi-finish');
-
-        $this->actingAs($toshiAdmin);
-
-        Livewire::test(AgentToshi::class)
-            ->set('mode', 'complete')
-            ->set('schoolId', $toshiSchool->id)
-            ->set('scope', 'school')
-            ->set('schoolName', $toshiSchool->name)
-            ->call('confirmOnboarding')
-            ->assertSet('step', 99)
-            ->assertSet('mode', 'preview');
-
-        $toshiSchool->refresh();
-        $this->assertNotNull($toshiSchool->onboarding_finished_at);
-        $this->assertTrue(OnboardingStepsService::isOnboardingFinished($toshiSchool));
-        Event::assertDispatched(
-            SchoolOnboardingFinished::class,
-            fn (SchoolOnboardingFinished $event) => (int) $event->school->id === (int) $toshiSchool->id
-        );
-
-        [$wizardAdmin, $wizardSchool] = $this->readySchool('wizard-finish');
-        $this->actingAs($wizardAdmin);
-
-        Livewire::test(ManualOnboardingWizard::class)
-            ->call('confirmReview')
-            ->assertSet('finished', true)
-            ->assertDispatched('manual-onboarding-finished');
-
-        $wizardSchool->refresh();
-        $this->assertNotNull($wizardSchool->onboarding_finished_at);
-        $this->assertTrue(OnboardingStepsService::isOnboardingFinished($wizardSchool));
-        Event::assertDispatched(
-            SchoolOnboardingFinished::class,
-            fn (SchoolOnboardingFinished $event) => (int) $event->school->id === (int) $wizardSchool->id
-        );
-
-        Mail::assertNothingSent();
-        Notification::assertNothingSent();
-        Bus::assertNothingDispatched();
-        Queue::assertNothingPushed();
-    }
-
     public function test_wizard_confirm_review_still_finishes_once(): void
     {
         [$admin, $school] = $this->readySchool('wizard-same');
@@ -141,13 +95,6 @@ class FinishSchoolOnboardingTest extends TestCase
         $school->refresh();
         $this->assertTrue($finishedAt->eq($school->onboarding_finished_at));
         Event::assertDispatchedTimes(SchoolOnboardingFinished::class, 1);
-
-        Livewire::test(AgentToshi::class)
-            ->set('mode', 'complete')
-            ->set('schoolId', $school->id)
-            ->set('scope', 'school')
-            ->set('schoolName', $school->name)
-            ->call('confirmOnboarding');
 
         $school->refresh();
         $this->assertTrue($finishedAt->eq($school->onboarding_finished_at));

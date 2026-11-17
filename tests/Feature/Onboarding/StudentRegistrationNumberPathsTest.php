@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Onboarding;
 
+use App\Livewire\ManualOnboardingWizard;
+
 use App\AiAgents\Tools\AddStudentTool;
 use App\Models\AcademicYear;
 use App\Models\School;
@@ -131,82 +133,6 @@ class StudentRegistrationNumberPathsTest extends TestCase
     }
 
     #[Test]
-    public function commit_all_create_mode_sets_both_student_id_fields(): void
-    {
-        $superadmin = User::create([
-            'school_id' => null,
-            'usergroup_id' => 1,
-            'name' => 'Super Admin',
-            'email' => 'super@regno-paths.sch.ug',
-            'password' => bcrypt('password'),
-            'status' => 'active',
-            'email_verified' => 1,
-        ]);
-
-        $this->actingAs($superadmin);
-
-        $component = Livewire::test(\App\Livewire\AgentToshi::class);
-        $component->set('mode', 'create');
-        $component->set('schoolName', 'Create Mode RegNo School');
-        $component->set('schoolEmail', 'create-regno@test.sch.ug');
-        $component->set('schoolPhone', '0700111222');
-        $component->set('adminName', 'Create Admin');
-        $component->set('adminEmail', 'create-admin@regno.sch.ug');
-        $component->set('adminPassword', 'password123');
-        $component->set('schoolType', 'primary');
-        $component->set('curriculum', 'uneb');
-        $component->set('selectedPlanId', 1);
-        $component->set('standards', [['name' => 'P1']]);
-        $component->set('subjects', []);
-        $component->set('teacherList', []);
-        $component->set('teacherLinks', []);
-        $component->set('terms', []);
-        $component->set('fees', []);
-        $component->set('studentList', ['Alice Create']);
-        $component->set('actionData', [
-            'students' => [['name' => 'Alice Create', 'class' => 'P1']],
-        ]);
-
-        $component->call('commit');
-
-        $schoolId = $component->get('schoolId');
-        $this->assertNotNull($schoolId, 'Create-mode commit must create a school');
-        $this->assertTrue((bool) ($component->get('reviewData')['committed'] ?? false), 'Commit must succeed');
-
-        $student = $this->findStudentByDisplayName((int) $schoolId, 'Alice Create');
-        $this->assertNotNull($student, 'Create-mode student must exist');
-        $this->assertStudentIdsSynced($student);
-    }
-
-    #[Test]
-    public function commit_all_complete_mode_sets_both_student_id_fields(): void
-    {
-        $this->actingAs($this->admin);
-
-        $component = Livewire::test(\App\Livewire\AgentToshi::class);
-        $component->set('mode', 'complete');
-        $component->set('schoolId', $this->school->id);
-        $component->set('schoolName', $this->school->name);
-        $component->set('standards', [['name' => 'P1']]);
-        $component->set('subjects', []);
-        $component->set('teacherList', []);
-        $component->set('teacherLinks', []);
-        $component->set('terms', []);
-        $component->set('studentList', ['Bob Complete']);
-        $component->set('actionData', [
-            'students' => [['name' => 'Bob Complete', 'class' => 'P1']],
-        ]);
-
-        $component->call('commit');
-
-        $this->assertTrue((bool) ($component->get('reviewData')['committed'] ?? false), 'Commit must succeed');
-
-        $student = $this->findStudentByDisplayName($this->school->id, 'Bob Complete');
-        $this->assertNotNull($student, 'Complete-mode student must exist');
-        $this->assertStudentIdsSynced($student);
-    }
-
-    #[Test]
     public function add_student_tool_sets_both_student_id_fields(): void
     {
         $this->actingAs($this->admin);
@@ -234,25 +160,18 @@ class StudentRegistrationNumberPathsTest extends TestCase
     {
         $this->actingAs($this->admin);
 
-        // Path 1: complete-mode commitAll
-        $component = Livewire::test(\App\Livewire\AgentToshi::class);
-        $component->set('mode', 'complete');
-        $component->set('schoolId', $this->school->id);
-        $component->set('schoolName', $this->school->name);
-        $component->set('standards', [['name' => 'P1']]);
-        $component->set('subjects', []);
-        $component->set('teacherList', []);
-        $component->set('teacherLinks', []);
-        $component->set('terms', []);
-        $component->set('studentList', ['Dana Complete']);
-        $component->set('actionData', [
-            'students' => [['name' => 'Dana Complete', 'class' => 'P1']],
-        ]);
-        $component->call('commit');
+        // Path 1: the wizard's own roster import → OnboardingEngine::saveStudents
+        $wizard = Livewire::test(ManualOnboardingWizard::class);
+        $wizard->call('runRosterImport', 'students', [[
+            'name' => 'Dana Wizard',
+            'class' => 'P1',
+            'gender' => 'female',
+            'school_student_id' => '',
+        ]]);
 
-        $fromComplete = $this->findStudentByDisplayName($this->school->id, 'Dana Complete');
-        $this->assertNotNull($fromComplete, 'Complete-mode student must exist');
-        $idComplete = $this->assertStudentIdsSynced($fromComplete);
+        $fromWizard = $this->findStudentByDisplayName($this->school->id, 'Dana Wizard');
+        $this->assertNotNull($fromWizard, 'Wizard student must exist');
+        $idWizard = $this->assertStudentIdsSynced($fromWizard);
 
         // Path 2: AddStudentTool (same school)
         ToshiActionService::$bypassConfirm = true;
@@ -271,7 +190,7 @@ class StudentRegistrationNumberPathsTest extends TestCase
         $this->assertNotNull($fromTool, 'AddStudentTool student must exist');
         $idTool = $this->assertStudentIdsSynced($fromTool);
 
-        $this->assertNotSame($idComplete, $idTool, 'IDs from different paths must be unique within a school');
+        $this->assertNotSame($idWizard, $idTool, 'IDs from different paths must be unique within a school');
 
         $allIds = User::where('school_id', $this->school->id)
             ->where('usergroup_id', 6)

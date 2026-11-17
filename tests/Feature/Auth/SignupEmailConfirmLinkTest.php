@@ -118,7 +118,7 @@ class SignupEmailConfirmLinkTest extends TestCase
         $response = $this->post($mail->confirmUrl);
 
         $response->assertRedirect($this->setupDestinationFor('grace@example.com'));
-        $response->assertSessionHas('open_toshi_onboarding', true);
+        $response->assertSessionMissing('open_toshi_onboarding');
         $this->assertStringContainsString('Email confirmed', (string) session('successmessage'));
         $this->assertAuthenticated();
 
@@ -413,7 +413,7 @@ class SignupEmailConfirmLinkTest extends TestCase
         $response = $this->post(route('register.verify.continue'));
 
         $response->assertRedirect($this->setupDestinationFor('grace@example.com'));
-        $response->assertSessionHas('open_toshi_onboarding', true);
+        $response->assertSessionMissing('open_toshi_onboarding');
         $this->assertStringContainsString('Email confirmed', (string) session('successmessage'));
         $this->assertAuthenticated();
     }

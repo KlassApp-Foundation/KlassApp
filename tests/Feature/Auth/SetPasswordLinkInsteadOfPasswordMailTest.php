@@ -71,67 +71,6 @@ class SetPasswordLinkInsteadOfPasswordMailTest extends TestCase
         $this->assertTrue(Hash::check('NewSecret123!x', $user->fresh()->password));
     }
 
-    public function test_school_create_without_a_chosen_password_emails_a_link_and_hides_it(): void
-    {
-        $this->prepareSchoolCreate();
-        Mail::fake();
-
-        $component = Livewire::test(AgentToshi::class);
-        $component->set('step', 14);
-        $component->set('schoolName', 'Link Only School');
-        $component->set('schoolType', 'primary');
-        $component->set('schoolCountry', 'Uganda');
-        $component->set('academicYearLabel', '2026');
-        $component->set('adminName', 'Link Admin');
-        $component->set('adminEmail', 'link-admin@klassapp.test');
-        $component->set('adminPassword', '');
-        $component->set('standards', [['name' => 'Primary One']]);
-        $component->set('mode', 'create');
-        $component->call('commit');
-
-        $admin = User::where('email', 'link-admin@klassapp.test')->firstOrFail();
-        $this->assertSame(1, (int) $admin->is_reset);
-        $this->assertFalse(Hash::check('password', $admin->password));
-
-        Mail::assertQueued(SetPasswordLinkMail::class, function (SetPasswordLinkMail $mail) {
-            $html = $mail->render();
-
-            return str_contains($mail->url, '/password/reset/')
-                && str_contains($html, $mail->url)
-                && ! str_contains($html, 'Password:');
-        });
-
-        $component->assertSee('A set-password link was emailed');
-        $component->assertDontSee('Password:');
-    }
-
-    public function test_school_create_with_a_chosen_password_does_not_email_or_show_it(): void
-    {
-        $this->prepareSchoolCreate();
-        Mail::fake();
-
-        $component = Livewire::test(AgentToshi::class);
-        $component->set('step', 14);
-        $component->set('schoolName', 'Chosen Password School');
-        $component->set('schoolType', 'primary');
-        $component->set('schoolCountry', 'Uganda');
-        $component->set('academicYearLabel', '2026');
-        $component->set('adminName', 'Chosen Admin');
-        $component->set('adminEmail', 'chosen-admin@klassapp.test');
-        $component->set('adminPassword', 'chosen-secret-99');
-        $component->set('standards', [['name' => 'Primary One']]);
-        $component->set('mode', 'create');
-        $component->call('commit');
-
-        $admin = User::where('email', 'chosen-admin@klassapp.test')->firstOrFail();
-        $this->assertTrue(Hash::check('chosen-secret-99', $admin->password));
-        Mail::assertNotQueued(SetPasswordLinkMail::class);
-
-        $component->assertSee('A password was set during setup');
-        $component->assertDontSee('chosen-secret-99');
-        $component->assertDontSee('Password:');
-    }
-
     private function enableMail(): void
     {
         putenv('MAIL_STATUS=on');

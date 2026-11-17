@@ -31,11 +31,7 @@
                 @else
                     A few setup items are still open.
                 @endif
-                @toshiOnboarding
-                    Work through them step by step, or let Toshi guide you in a focused panel.
-                @else
-                    Work through them step by step in the setup wizard.
-                @endtoshiOnboarding
+                Work through them step by step in the setup wizard.
             </p>
             <div class="setup-banner-actions">
                 {{-- Green acts, blue informs: this is an action, so it takes the primary
@@ -50,25 +46,6 @@
                 <a href="{{ $setupHref }}" class="ds-btn ds-btn-primary ds-btn-md" data-testid="setup-banner-manual">
                     Set up manually
                 </a>
-                @toshiOnboarding
-                @if(auth()->user()?->school && app(\App\Services\Toshi\ToshiOnboardingPath::class)->openFor(auth()->user()->school))
-                <button type="button"
-                        class="ds-btn ds-btn-success ds-btn-md"
-                        data-testid="setup-banner-toshi"
-                        onclick="window.toshiSetCollapsed && window.toshiSetCollapsed(false); window.dispatchEvent(new CustomEvent('toshi-maximize'));">
-                    Set up with Toshi
-                </button>
-                @else
-                <button type="button"
-                        disabled
-                        class="ds-btn ds-btn-success ds-btn-md"
-                        data-testid="setup-banner-toshi"
-                        aria-disabled="true">
-                    Set up with Toshi
-                    <span data-testid="setup-banner-toshi-soon">Coming soon</span>
-                </button>
-                @endif
-                @endtoshiOnboarding
                 @if(!empty($onboardingMissing))
                     <form method="POST" action="{{ route('dismiss.onboarding.reminder') }}" class="inline" onsubmit="return confirm('Hide the setup banner? Your progress stays available.');">
                         @csrf

@@ -29,7 +29,7 @@
     $currentIsOptional = $sharedCurrent !== null
         && in_array($sharedSteps[$sharedCurrent]['key'], \App\Services\OnboardingStepsService::OPTIONAL_STEPS, true);
 @endphp
-@if($sharedTotal > 0 && in_array($this->mode, ['complete', 'create'], true))
+@if($sharedTotal > 0 && in_array($this->mode, ['complete', 'create', 'setup'], true))
     @if(($variant ?? 'dock') === 'modal')
         <div style="margin-top: 12px;" data-testid="toshi-modal-checklist">
             <div class="toshi-setup-progress-label">Progress — {{ $sharedDone }}/{{ $sharedTotal }}</div>
