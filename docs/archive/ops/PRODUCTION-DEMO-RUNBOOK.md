@@ -1,3 +1,5 @@
+> **Archived 10 November 2026.** Replaced by the current run sheet, `docs/demo/2026-11-12-run-sheet.md`. Kept for history only.
+
 # Production demo runbook
 
 The owner sets every production variable and runs every production command

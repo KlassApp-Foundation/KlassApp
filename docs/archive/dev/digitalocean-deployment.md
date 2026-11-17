@@ -1,3 +1,5 @@
+> **Archived 10 November 2026.** Not the current hosting. Production runs on Laravel Cloud; deploy steps are in `docs/release/2026-11-09-deploy-runbook.md`.
+
 # DigitalOcean Deployment — 10-School Production Environment
 
 ## Context

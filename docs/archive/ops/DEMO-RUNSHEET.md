@@ -1,3 +1,5 @@
+> **Archived 10 November 2026.** Replaced by the current run sheet, `docs/demo/2026-11-12-run-sheet.md`. Kept for history only.
+
 # Demo run sheet: follow a class on WhatsApp (15 minutes)
 
 A presenter-led demo. The audience opens the follow-along page, binds their

@@ -1,3 +1,5 @@
+> **Archived 10 November 2026.** Superseded by the shipped defaults in the setup wizard (`ManualOnboardingWizard::prefillDefaultTerms` and the category preset) and by `docs/onboarding/playbook.md`.
+
 # Onboarding Defaults Skill: Configurable, But Never Blank
 
 > **Status:** principle documented, not yet implemented in any UI. This skill governs future UI work.
