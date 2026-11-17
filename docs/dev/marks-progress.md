@@ -91,9 +91,9 @@ A new primary standard is seeded with 2 points from 90 to 94 and 3 points from 7
 
 Still to do, in order: the report builder, the comment bank, the calendar import, the read-only production check, the full rehearsal, then the named merge order.
 
-## 2026-11-16 — handoff sections 14 and 15, snapshot spacing, head teacher release
+## 2026-11-16 — handoff section 15, snapshot spacing, head teacher release
 
-Sections 14 and 15 were added to the living handoff. The production check stays read-only. School names and production row ids are not copied into this file.
+Section 15 was added to the living handoff.
 
 The progressive card snapshot differed only by spacing. The captured marks, aggregate 7, and division 1 are unchanged.
 
