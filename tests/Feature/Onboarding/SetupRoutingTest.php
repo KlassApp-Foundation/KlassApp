@@ -92,6 +92,8 @@ class SetupRoutingTest extends TestCase
             'The setup bar should be present on an unfinished school.',
         );
         $setupBar = $bar[1];
+        preg_match('#data-testid="dashboard-v2-setup-bar".*?</div>#s', $html, $barOnly);
+        $setupBar = $barOnly[0] ?? $setupBar;
         preg_match_all('#<a\b[^>]*href="([^"]*)"[^>]*>#', $setupBar, $links);
         $this->assertSame([$destination], $links[1], 'Continue setup is the only link in the setup bar.');
         $this->assertStringContainsString('Continue setup', $setupBar);

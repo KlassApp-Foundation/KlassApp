@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Helpers\GradingHelper;
 use App\Models\Academics\ExamType;
 use App\Models\School;
+use App\Models\SchoolReportKindChange;
+use App\Services\Reports\ReportKindSetting;
+use App\Services\Results\ReportComposition;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -19,21 +22,38 @@ class ExamTypeController extends Controller
 {
     public function index()
     {
-        $schoolId = Auth::user()->school_id;
-        $examTypes = ExamType::visibleToSchool($schoolId)->orderBy('id')->get();
+        $schoolId = (int) Auth::user()->school_id;
+        $school = School::find($schoolId);
+        $composer = app(ReportComposition::class);
+        $examTypes = $composer->orderedTypes($schoolId);
 
         // Load current toggles: each school's preference is stored in a JSON column
         // on the schools table, or falls back to the exam_types default.
-        $school = School::find($schoolId);
         $prefs = $this->jsonColumn($school, 'exam_type_preferences');
-        $composition = $this->jsonColumn($school, 'report_composition');
+        $stored = is_array($school?->report_composition) && $school->report_composition !== [];
+        $composition = $stored ? $composer->resolved($school) : $composer->suggested($examTypes, $schoolId);
+        $labelNames = $composer->displayNames($schoolId);
+        $names = [];
+        foreach ($examTypes as $type) {
+            $names[(int) $type->id] = $labelNames[(int) $type->id] ?? (string) $type->name;
+        }
+        $madeUpOf = $composer->madeUpOf($composition, $names);
+        $mix = $composer->mixSummary($composition, $names);
+        $preset = $composer->matchingPreset($examTypes, $composition);
+        $ownReports = $school ? $composer->ownReports($schoolId) : [];
+        $showMarksLater = ! ($school && $composer->hasReleasedCountedMark($schoolId, $composition));
         $profiles = config('curricula.profiles', []);
         $profileKey = GradingHelper::profileKeyForSchool($schoolId);
         $legacyBands = GradingHelper::legacyBandsForSchool($schoolId);
         $legacyIsExample = $school?->legacy_o_level_bands === null;
+        $reportKind = app(ReportKindSetting::class)->current($school);
+        $reportKindChanges = $school === null
+            ? collect()
+            : SchoolReportKindChange::query()->where('school_id', $school->id)->with('user')->orderByDesc('id')->limit(5)->get();
 
         return view('admin.settings.exam-types', compact(
-            'examTypes', 'prefs', 'composition', 'profiles', 'profileKey', 'legacyBands', 'legacyIsExample'
+            'examTypes', 'prefs', 'composition', 'profiles', 'profileKey', 'legacyBands', 'legacyIsExample', 'reportKind', 'reportKindChanges',
+            'madeUpOf', 'mix', 'preset', 'ownReports', 'showMarksLater', 'labelNames'
         ));
     }
 
@@ -53,36 +73,32 @@ class ExamTypeController extends Controller
             }
         }
         $school->exam_type_preferences = $prefs ?: null;
+        $this->storeTypeLabels($school, $request, $visibleIds);
 
-        $composition = [];
-        foreach ((array) $request->input('include', []) as $typeId => $on) {
-            $typeId = (int) $typeId;
-            if (! in_array($typeId, $visibleIds, true)) {
-                continue;
-            }
-            $composition[(string) $typeId] = ['include' => (string) $on === '1', 'weight' => null];
+        // Show-on-report and weight belong to set-based reports. A progressive
+        // school keeps the composition it already stored, and this save does
+        // not rewrite it. A set-based save refuses a mix that does not total 100.
+        if (app(ReportKindSetting::class)->current($school) !== ReportKindSetting::SET_BASED) {
+            $school->save();
+
+            return redirect()->route('admin.settings.exam-types')
+                ->with('successmessage', 'Exam type preferences updated.');
         }
-        foreach ((array) $request->input('weight', []) as $typeId => $weight) {
-            $typeId = (int) $typeId;
-            if (! in_array($typeId, $visibleIds, true)) {
-                continue;
+
+        $compositionSent = $request->exists('include') || $request->exists('weight') || $request->exists('mode');
+        if ($compositionSent) {
+            $composer = app(ReportComposition::class);
+            $composition = $composer->fromRequest(
+                (array) $request->input('include', []),
+                (array) $request->input('weight', []),
+                $visibleIds,
+                (array) $request->input('mode', []),
+            );
+            $school->report_composition = $composition;
+            if (is_array($composition)) {
+                $composer->syncCombinedReport($school, $composition);
             }
-            $weight = trim((string) $weight);
-            if ($weight === '') {
-                continue;
-            }
-            if (! is_numeric($weight) || (float) $weight <= 0 || (float) $weight > 100) {
-                continue;
-            }
-            $key = (string) $typeId;
-            $composition[$key] = ($composition[$key] ?? ['include' => true, 'weight' => null]);
-            $composition[$key]['weight'] = (float) $weight;
         }
-        foreach ($composition as $key => $settings) {
-            // Right-hand side fills gaps only: `+` keeps include/weight already set.
-            $composition[$key] = $settings + ['include' => true, 'weight' => null];
-        }
-        $school->report_composition = $composition ?: null;
 
         $school->save();
 
@@ -136,6 +152,35 @@ class ExamTypeController extends Controller
     private function visibleTypeIds(int $schoolId): array
     {
         return ExamType::visibleToSchool($schoolId)->pluck('id')->map(fn ($id) => (int) $id)->all();
+    }
+
+    /**
+     * A name the school types over a starter set. The catalog row stays.
+     * A blank or an unchanged name clears that school's label.
+     *
+     * @param  list<int>  $visibleIds
+     */
+    private function storeTypeLabels(School $school, Request $request, array $visibleIds): void
+    {
+        if (! $request->exists('type_name')) {
+            return;
+        }
+
+        $existing = is_array($school->exam_type_labels) ? $school->exam_type_labels : [];
+        $catalog = ExamType::query()->whereIn('id', $visibleIds)->pluck('name', 'id');
+        foreach ((array) $request->input('type_name', []) as $typeId => $name) {
+            $typeId = (int) $typeId;
+            if (! in_array($typeId, $visibleIds, true)) {
+                continue;
+            }
+            $typed = trim((string) $name);
+            $original = trim((string) ($catalog[$typeId] ?? ''));
+            unset($existing[(string) $typeId], $existing[$typeId]);
+            if ($typed !== '' && $typed !== $original) {
+                $existing[(string) $typeId] = $typed;
+            }
+        }
+        $school->exam_type_labels = $existing === [] ? null : $existing;
     }
 
     public function updateProfile(Request $request)

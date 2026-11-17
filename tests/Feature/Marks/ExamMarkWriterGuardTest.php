@@ -26,6 +26,7 @@ class ExamMarkWriterGuardTest extends TestCase
         'app/Console/Commands/SetupUiReviewDemoSchool.php' => 'demo fixture on exams already marked submitted',
         'app/Console/Commands/SetupUiReviewSecondaryDemoSchool.php' => 'demo fixture on exams already marked submitted',
         'app/Services/Toshi/LiveAdversarialRunner.php' => 'isolation fixture aimed at exam id 1, which is not an exam row',
+        'app/Services/StudentReportCardService.php' => 'builds an unsaved display row for a subject with no mark; it is never saved',
     ];
 
     public function test_product_code_does_not_write_marks_outside_exam_mark_writer(): void

@@ -144,6 +144,11 @@ class NoMutatingGetRouteTest extends TestCase
             $uri = $route->uri();
             $method = $this->actionMethod($action);
 
+            // The class-link screen only shows the plan. store() is the write.
+            if ($action === \App\Http\Controllers\Admin\ClassLinkController::class.'@confirm') {
+                continue;
+            }
+
             if (in_array($method, self::MUTATING_METHODS, true) || $this->uriIsMutating($uri)) {
                 $offenders[] = implode('|', $methods).' '.$uri.' '.$action;
             }

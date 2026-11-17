@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Report Card — {{ $learner->displayName ?: 'Student' }}</title>
+    <title>Report Card — {{ $learner->reportCardName() ?: 'Student' }}</title>
     <style>
         @page { margin: 0; background: #FFFBF2; }
 
@@ -245,6 +245,9 @@
         </tr>
     </table>
     <div class="ribbon">PROGRESSIVE REPORT</div>
+    @if (!empty($compositionLine ?? null))
+    <div class="doc-sub" data-testid="eot-composition">{{ $compositionLine }}</div>
+    @endif
 </div>
 
 <div class="page">
@@ -259,7 +262,7 @@
             <td style="width:40%;">
                 <div class="pill pill-student">
                     <div class="pill-label">Student</div>
-                    <div class="pill-value">{{ $learner->displayName }}</div>
+                    <div class="pill-value">{{ $learner->reportCardName() }}</div>
                 </div>
             </td>
             <td style="width:25%;">
@@ -291,95 +294,122 @@
             @endforeach
         </table>
     @else
-        @if ($midExams->isNotEmpty())
-        <div class="sec-heading"><span class="dot"></span>MONTHLY RESULTS — MID TERM</div>
+        @if (!empty($monthlySets))
+        <div class="sec-heading"><span class="dot"></span>MONTHLY RESULTS</div>
         <table class="card-table">
             <tr>
-                <th style="width:12%">Month Of</th>
-                @foreach ($subjects as $subject)
-                    @if ($learner->marks->where('subject_id', $subject->id)->isNotEmpty())
-                        <th>{{ $subject->name }}</th>
-                        @if ($showAgg) <th>AGG</th> @endif
-                    @endif
+                <th>Subject</th>
+                @foreach ($monthlySets as $set)
+                    <th>{{ $set['label'] }}</th>
+                    @if ($showAgg) <th>AGG</th> @endif
                 @endforeach
-                <th>TOTAL</th>
-                <th>POSITION</th>
-                @if ($showAgg) <th>DIVISION</th> @endif
             </tr>
-            @if (!empty($midSittings))
-            @foreach ($midSittings as $sitting)
+            @foreach ($subjects as $subject)
+                @php
+                    $showSubject = $learner->marks->where('subject_id', $subject->id)->isNotEmpty();
+                    if (! $showSubject) {
+                        foreach ($monthlySets as $set) {
+                            if (\App\Services\Reports\MarkCellText::isCountedBlank($set['cells'][$subject->id] ?? null, !empty($countMissingAsZero))) {
+                                $showSubject = true;
+                            }
+                        }
+                    }
+                @endphp
+                @if (! $showSubject) @continue @endif
                 <tr>
-                    <td class="left">{{ $sitting['label'] }}</td>
-                    @foreach ($subjects as $subject)
-                        @if ($learner->marks->where('subject_id', $subject->id)->isNotEmpty())
-                            @php
-                                $cell = $sitting['cells'][$subject->id] ?? null;
-                                $markValue = ($cell && $cell->mark !== null) ? $cell->mark : null;
-                                $midGrade = '-';
-                                if ($markValue !== null) {
-                                    $g = $grading_system->first(fn($gs) => $gs->min_score <= $markValue && $gs->max_score >= $markValue);
-                                    $midGrade = \App\Helpers\GradingHelper::formatAggLabel($g) ?? '-';
-                                }
-                            @endphp
-                            <td>{{ $markValue !== null ? floor($markValue) : '-' }}</td>
-                            @if ($showAgg) <td>@if($midGrade !== '-')<span class="chip {{ $chipClass($midGrade) }}">{{ $midGrade }}</span>@else - @endif</td> @endif
-                        @endif
+                    <td class="left">{{ $subject->name }}</td>
+                    @foreach ($monthlySets as $set)
+                        @php
+                            $cell = $set['cells'][$subject->id] ?? null;
+                            $markValue = ($cell && $cell->mark !== null) ? $cell->mark : null;
+                            $setGrade = '-';
+                            if ($markValue !== null) {
+                                $g = $grading_system->first(fn($gs) => $gs->min_score <= $markValue && $gs->max_score >= $markValue);
+                                $setGrade = \App\Helpers\GradingHelper::formatAggLabel($g) ?? '-';
+                            } elseif (\App\Services\Reports\MarkCellText::isCountedBlank($cell, !empty($countMissingAsZero))) {
+                                $g = $grading_system->first(fn($gs) => (float) $gs->min_score <= 0 && (float) $gs->max_score >= 0);
+                                $setGrade = \App\Helpers\GradingHelper::formatAggLabel($g) ?? '-';
+                            }
+                        @endphp
+                        <td>{{ $markValue !== null ? floor($markValue) : (\App\Services\Reports\MarkCellText::isCountedBlank($cell, !empty($countMissingAsZero)) ? \App\Services\Reports\MarkCellText::word($cell) : '-') }}</td>
+                        @if ($showAgg) <td>@if($setGrade !== '-')<span class="chip {{ $chipClass($setGrade) }}">{{ $setGrade }}</span>@else - @endif</td> @endif
                     @endforeach
-                    <td><strong>{{ $sitting['total'] ?? '-' }}</strong></td>
-                    <td>{{ !empty($sitting['pos']) ? $ordinal($sitting['pos']) : '-' }}</td>
-                    @if ($showAgg) <td><strong>{{ $sitting['division'] ?? '-' }}</strong></td> @endif
                 </tr>
             @endforeach
-            @else
-            @foreach ($midExams as $midExam)
-                @php $monthLabel = \App\Services\StudentReportCardService::midExamMonthRowLabel($midExam); @endphp
-                @php $ms = $midStats[$midExam->id] ?? null; @endphp
-                <tr>
-                    <td class="left">{{ $monthLabel }}</td>
-                    @foreach ($subjects as $subject)
-                        @if ($learner->marks->where('subject_id', $subject->id)->isNotEmpty())
-                            @php
-                                $midMark = $learner->marks->firstWhere('exam_id', $midExam->id) && $learner->marks->firstWhere('exam_id', $midExam->id)->subject_id == $subject->id
-                                    ? $learner->marks->firstWhere('exam_id', $midExam->id) : $learner->marks->where('subject_id', $subject->id)->firstWhere('exam_id', $midExam->id);
-                                $midGrade = '-';
-                                if ($midMark && $midMark->marks !== null) {
-                                    $g = $grading_system->first(fn($gs) => $gs->min_score <= $midMark->marks && $gs->max_score >= $midMark->marks);
-                                    $midGrade = \App\Helpers\GradingHelper::formatAggLabel($g) ?? '-';
-                                }
-                            @endphp
-                            <td>{{ $midMark && $midMark->marks !== null ? floor($midMark->marks) : '-' }}</td>
-                            @if ($showAgg) <td>@if($midGrade !== '-')<span class="chip {{ $chipClass($midGrade) }}">{{ $midGrade }}</span>@else - @endif</td> @endif
-                        @endif
-                    @endforeach
-                    <td><strong>{{ $ms['total'] ?? '-' }}</strong></td>
-                    <td>{{ ($ms && $ms['pos']) ? $ordinal($ms['pos']) : '-' }}</td>
-                    @if ($showAgg) <td><strong>{{ $ms['division'] ?? '-' }}</strong></td> @endif
-                </tr>
-            @endforeach
+            <tr class="total-row">
+                <td class="left"><strong>TOTAL</strong></td>
+                @foreach ($monthlySets as $set)
+                    <td><strong>{{ $set['total'] ?? '-' }}</strong></td>
+                    @if ($showAgg) <td></td> @endif
+                @endforeach
+            </tr>
+            <tr>
+                <td class="left"><strong>POSITION</strong></td>
+                @foreach ($monthlySets as $set)
+                    <td>{{ !empty($set['pos']) ? $ordinal($set['pos']) : '-' }}</td>
+                    @if ($showAgg) <td></td> @endif
+                @endforeach
+            </tr>
+            @if ($showAgg)
+            <tr>
+                <td class="left"><strong>AGGREGATE</strong></td>
+                @foreach ($monthlySets as $set)
+                    <td></td>
+                    <td data-kind="aggregate" data-set="{{ $set['label'] }}"><strong>{{ $set['aggregate'] ?? '-' }}</strong></td>
+                @endforeach
+            </tr>
+            <tr>
+                <td class="left"><strong>DIVISION</strong></td>
+                @foreach ($monthlySets as $set)
+                    <td><strong>{{ $set['division'] ?? '-' }}</strong></td>
+                    <td></td>
+                @endforeach
+            </tr>
             @endif
         </table>
         @endif
 
-        @if ($eotExams->isNotEmpty())
+        @if (!empty($monthlySets) && empty($termSets))
+        <p>No combined mark applies.</p>
+        @endif
+        @if (!empty($incompleteSets))
+        <p>Incomplete: {{ implode(', ', $incompleteSets) }}.</p>
+        @endif
+        @if (!empty($termSets))
         <div class="sec-heading sec-heading-eot"><span class="dot"></span>END OF TERM {{ $termNumeral ?: 'EXAMINATION' }}</div>
         <table class="card-table">
             <tr>
                 <th class="eot-th">Subject</th>
                 <th class="eot-th" style="width:8%">Full Mark</th>
-                <th class="eot-th" style="width:8%">Mark Gained</th>
+                @foreach ($termSets as $set)
+                    <th class="eot-th">{{ $set['label'] }}</th>
+                @endforeach
                 @if ($showAgg) <th class="eot-th" style="width:10%">AGG</th> @endif
                 <th class="eot-th">Comment</th>
                 <th class="eot-th" style="width:10%">TR Initials</th>
             </tr>
             @foreach ($subjects as $subject)
-                @php $eotMark = ($eotMarkBySubject[$subject->id] ?? null); @endphp
-                @if (!$eotMark) @continue @endif
                 @php
-                    $hasEotMarks = $eotMark->marks !== null;
+                    $eotCell = ($eotCells ?? [])[$subject->id] ?? null;
+                    $showSubject = false;
+                    foreach ($termSets as $set) {
+                        $setCell = $set['cells'][$subject->id] ?? null;
+                        if (($setCell && $setCell->mark !== null) || \App\Services\Reports\MarkCellText::isCountedBlank($setCell, !empty($countMissingAsZero))) {
+                            $showSubject = true;
+                        }
+                    }
+                @endphp
+                @if (! $showSubject) @continue @endif
+                @php
+                    $gradeMark = ($eotCell && $eotCell->mark !== null) ? $eotCell->mark : null;
                     $eotGrade = '-';
                     $eotComment = '-';
-                    if ($hasEotMarks) {
-                        $g = $grading_system->first(fn($gs) => $gs->min_score <= $eotMark->marks && $gs->max_score >= $eotMark->marks);
+                    if ($gradeMark !== null) {
+                        $g = $grading_system->first(fn($gs) => $gs->min_score <= $gradeMark && $gs->max_score >= $gradeMark);
+                        $eotGrade = \App\Helpers\GradingHelper::formatAggLabel($g) ?? '-';
+                        $eotComment = $g ? $g->remark : '-';
+                    } elseif (\App\Services\Reports\MarkCellText::isCountedBlank($eotCell, !empty($countMissingAsZero))) {
+                        $g = $grading_system->first(fn($gs) => (float) $gs->min_score <= 0 && (float) $gs->max_score >= 0);
                         $eotGrade = \App\Helpers\GradingHelper::formatAggLabel($g) ?? '-';
                         $eotComment = $g ? $g->remark : '-';
                     }
@@ -397,7 +427,10 @@
                 <tr>
                     <td class="left">{{ $subject->name }}</td>
                     <td>100</td>
-                    <td>{{ $eotMark && $eotMark->marks !== null ? floor($eotMark->marks) : '-' }}</td>
+                    @foreach ($termSets as $set)
+                        @php $setCell = $set['cells'][$subject->id] ?? null; @endphp
+                        <td>{{ $setCell && $setCell->mark !== null ? floor($setCell->mark) : (\App\Services\Reports\MarkCellText::isCountedBlank($setCell, !empty($countMissingAsZero)) ? \App\Services\Reports\MarkCellText::word($setCell) : '-') }}</td>
+                    @endforeach
                     @if ($showAgg) <td>@if($eotGrade !== '-')<span class="chip {{ $chipClass($eotGrade) }}">{{ $eotGrade }}</span>@else - @endif</td> @endif
                     <td>{{ $eotComment }}</td>
                     <td>{{ $teacherName }}</td>
@@ -406,11 +439,24 @@
             <tr class="total-row">
                 <td class="left"><strong>TOTAL</strong></td>
                 <td>{{ isset($examinedSubjectCount) ? $examinedSubjectCount * 100 : count($subjects) * 100 }}</td>
-                <td><strong>{{ $total }}</strong></td>
-                @if ($showAgg) <td><strong>{{ $eotAgg ?? ($grade['agg'] ?? '-') }}</strong></td> @endif
-                <td colspan="2" class="division-cell">@if ($showDivision) DIVISION: <strong>{{ $eotDivision }}</strong> @endif
+                @foreach ($termSets as $set)
+                    <td><strong>{{ count($termSets) === 1 ? $total : ($set['total'] ?? '-') }}</strong></td>
+                @endforeach
+                @if ($showAgg) <td><strong>{{ !empty($withheldSets) ? '—' : ($eotAgg ?? ($grade['agg'] ?? '-')) }}</strong></td> @endif
+                <td colspan="2" class="division-cell">@if (!empty($withheldSets))<span data-kind="withheld">{{ $withheldSentence }}</span>@elseif (count($termSets) > 1) TOTAL: <strong>{{ $total }}</strong> @if ($showDivision) DIVISION: <strong>{{ $eotDivision }}</strong> @endif @elseif ($showDivision) DIVISION: <strong>{{ $eotDivision }}</strong> @endif
                 @if ($showPoints) POINTS: <strong>{{ $eotAgg ?? ($grade['agg'] ?? '-') }}</strong> @endif</td>
             </tr>
+            @if ($showAgg)
+            <tr>
+                <td class="left"><strong>AGGREGATE</strong></td>
+                <td></td>
+                @foreach ($termSets as $set)
+                    <td data-kind="aggregate" data-set="{{ $set['label'] }}"><strong>{{ $set['aggregate'] ?? '-' }}</strong></td>
+                @endforeach
+                <td></td>
+                <td colspan="2"></td>
+            </tr>
+            @endif
         </table>
 
         @if ($nextTerm && !$isNursery)
@@ -432,6 +478,7 @@
                     <div class="comments-label">HEADTEACHER'S COMMENT</div>
                     <div class="comments-box">{{ $headTeacherComment ?? '-' }}</div>
                     <div class="sig-row"><span class="sig-caption">SIGN &amp; STAMP</span>&nbsp;<span class="sig-dash">____________________</span></div>
+                    @if (!empty($headTeacherName))<div>{{ $headTeacherName }}</div>@endif
                 </td>
             </tr>
         </table>

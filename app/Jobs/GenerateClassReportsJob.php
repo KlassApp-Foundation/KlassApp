@@ -28,7 +28,7 @@ class GenerateClassReportsJob implements ShouldQueue
 
     public function handle(): void
     {
-        @ini_set('memory_limit', '1024M');
+        $this->raiseMemoryCeiling('1024M');
 
         $generation = ReportGeneration::find($this->generationId);
         if (!$generation) {
@@ -53,16 +53,13 @@ class GenerateClassReportsJob implements ShouldQueue
                 : $reports->resolveExam($schoolId, $stdLink, $generation->academic_term_id);
 
             if (!$exam) {
-                throw new \RuntimeException('No EOT exam found for this class.');
+                throw new \RuntimeException('No exam set found for this class.');
             }
 
-            $studentIds = \App\Models\Academics\Marks::where('exam_id', $exam->id)
-                ->distinct('student_id')
-                ->orderBy('student_id')
-                ->pluck('student_id');
-
-            if ($studentIds->isEmpty()) {
-                throw new \RuntimeException('No students with marks.');
+            $termId = $exam->academic_term_id ? (int) $exam->academic_term_id : null;
+            $learners = $reports->reportLearners($schoolId, $stdLink, $termId);
+            if ($learners->isEmpty()) {
+                throw new \RuntimeException('No learners in this class.');
             }
 
             $className = Section::find($stdLink->section_id)->name ?? 'class';
@@ -72,11 +69,6 @@ class GenerateClassReportsJob implements ShouldQueue
                 // The pinned exam (when the caller passed one) chooses the term.
                 // The cards themselves still come from pdfForStudent(), which
                 // resolves that term the same way as the single-student download.
-                $termId = $exam->academic_term_id ? (int) $exam->academic_term_id : null;
-                $learners = $reports->reportLearners($schoolId, $stdLink, $termId);
-                if ($learners->isEmpty()) {
-                    throw new \RuntimeException('No students with marks.');
-                }
                 // Same pdfForStudent() view and data as the single-student card,
                 // so each page keeps that student's own class and stream fees.
                 $content = $reports->mergedPdfForLearners($schoolId, $stdLink, $learners, $termId);
@@ -110,11 +102,11 @@ class GenerateClassReportsJob implements ShouldQueue
                 if ($zip->open($zipPath, ZipArchive::CREATE) !== true) {
                     throw new \RuntimeException('Could not create zip file.');
                 }
-                foreach ($studentIds as $sid) {
-                    $learner = \App\Models\User::find($sid);
+                foreach ($learners as $learner) {
+                    $sid = (int) $learner->id;
                     $myPos = $positionMap[$sid] ?? 0;
                     $pdf = \App\Http\Controllers\Admin\ReportCardsController::generatePdf(
-                        $sid, $exam, $stdLink, $schoolId, $helper, $svc, $studentIds->count(), $myPos
+                        $sid, $exam, $stdLink, $schoolId, $helper, $svc, $learners->count(), $myPos
                     );
                     $name = $learner->displayNameFilenameSlug((string) $sid);
                     $zip->addFromString("{$sid}_{$name}.pdf", $pdf);
@@ -142,6 +134,37 @@ class GenerateClassReportsJob implements ShouldQueue
             ]);
             throw $e;
         }
+    }
+
+    /**
+     * A class PDF needs room. Never lower a limit the caller already raised:
+     * the suite runs this job inside a process that may already be above 1024M.
+     */
+    private function raiseMemoryCeiling(string $floor): void
+    {
+        $current = $this->memoryLimitBytes((string) ini_get('memory_limit'));
+        $needed = $this->memoryLimitBytes($floor);
+        if ($needed !== -1 && $current !== -1 && $current < $needed) {
+            @ini_set('memory_limit', $floor);
+        }
+    }
+
+    private function memoryLimitBytes(string $limit): int
+    {
+        $limit = trim($limit);
+        if ($limit === '' || $limit === '-1') {
+            return -1;
+        }
+
+        $unit = strtolower(substr($limit, -1));
+        $number = (int) $limit;
+
+        return match ($unit) {
+            'g' => $number * 1024 * 1024 * 1024,
+            'm' => $number * 1024 * 1024,
+            'k' => $number * 1024,
+            default => (int) $limit,
+        };
     }
 
 }

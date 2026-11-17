@@ -48,6 +48,8 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  * Who gets a message: in a demo school, numbers with an active demo binding
  * (BIND, inside the TTL) to a student in scope. In a real school, an approved,
  * opted-in parent of a student in scope, and only as the results_released
+ * template. A pilot list replaces that class: only the chosen learners and
+ * parents are considered, and the rest of the class is not messaged.
  * template, and only when realSendBlocker() allows it. After that,
  * WHATSAPP_DEMO_ONLY_RECIPIENTS still stops a real school: while it is on,
  * the release sends nothing. An older sitting
@@ -67,6 +69,8 @@ final class MarksReleaseService
 {
     public const USERGROUP_SCHOOL_ADMIN = 3;
 
+    public const USERGROUP_HEAD_TEACHER = 4;
+
     public const USERGROUP_TEACHER = 5;
 
     /** @var array<int, true> release ids whose demo webhook was already posted */
@@ -81,9 +85,14 @@ final class MarksReleaseService
         return $user !== null && $this->links($user)->isNotEmpty();
     }
 
+    /**
+     * A school admin or a head teacher who belongs to a school.
+     * The class list is still limited to that school. A site admin is not included.
+     */
     public function isSchoolAdmin(User $user): bool
     {
-        return (int) $user->usergroup_id === self::USERGROUP_SCHOOL_ADMIN && $user->school_id !== null;
+        return in_array((int) $user->usergroup_id, [self::USERGROUP_SCHOOL_ADMIN, self::USERGROUP_HEAD_TEACHER], true)
+            && $user->school_id !== null;
     }
 
     /**
@@ -191,8 +200,9 @@ final class MarksReleaseService
 
     /**
      * @param  string|null  $localWhen  "Y-m-d\TH:i" in $timezone, or null for now
+     * @param  list<array{student_id:int, parent_id:int|null}>|null  $pilotRecipients  null messages the class; a list messages only those people
      */
-    public function create(User $user, int $examId, ?int $standardLinkId, ?string $localWhen, ?string $timezone, bool $confirmPast = false, bool $whatsappSend = false, ?string $releaseReason = null): MarksRelease
+    public function create(User $user, int $examId, ?int $standardLinkId, ?string $localWhen, ?string $timezone, bool $confirmPast = false, bool $whatsappSend = false, ?string $releaseReason = null, ?array $pilotRecipients = null): MarksRelease
     {
         [$anchor, $link] = $this->authorise($user, $examId, $standardLinkId);
         $this->requireApproval($user, $anchor, $link);
@@ -211,6 +221,7 @@ final class MarksReleaseService
             'timezone' => $timezone,
             'whatsapp_send' => $whatsappSend,
             'release_reason' => $releaseReason,
+            'pilot_recipients' => $this->storePilot($pilotRecipients),
         ]);
 
         $properties = [
@@ -308,6 +319,167 @@ final class MarksReleaseService
     }
 
     /**
+     * The people a pilot release may message.
+     * "class" is the existing release and returns null.
+     * "chosen" returns the ticked learners and parents. An empty list is not the class.
+     *
+     * A learner id messages every linked parent of that learner.
+     * A "student:parent" token messages that parent. "student:0" is the learner.
+     *
+     * @param  array<int, mixed>  $learners
+     * @param  array<int, mixed>  $parents
+     * @return list<array{student_id:int, parent_id:int|null}>|null
+     */
+    public function chosenRecipients(string $mode, array $learners, array $parents): ?array
+    {
+        if ($mode !== 'chosen') {
+            return null;
+        }
+
+        $rows = [];
+        foreach ($learners as $id) {
+            $rows[] = ['student_id' => (int) $id, 'parent_id' => null];
+        }
+        foreach ($parents as $token) {
+            if (! preg_match('/^(\d+):(\d+)$/', trim((string) $token), $match)) {
+                continue;
+            }
+            $parentId = (int) $match[2];
+            $rows[] = [
+                'student_id' => (int) $match[1],
+                'parent_id' => $parentId === 0 ? null : $parentId,
+            ];
+        }
+
+        return $this->storePilot($rows) ?? [];
+    }
+
+    /**
+     * Learners in this release, with each linked parent, for the pilot checklist.
+     * Nothing is sent from here.
+     *
+     * @param  list<int>|null  $linkIds
+     * @return list<array{student_id:int, name:string, parents:list<array{id:int, name:string, number:string}>}>
+     */
+    public function pilotChoices(User $user, int $examId, ?array $linkIds): array
+    {
+        $schoolId = (int) $user->school_id;
+        $anchor = Exam::query()->where('school_id', $schoolId)->find($examId);
+        if ($anchor === null) {
+            return [];
+        }
+
+        $links = $linkIds === null
+            ? [null]
+            : StandardLink::query()->with('section')->where('school_id', $schoolId)->whereIn('id', $linkIds)->get()->all();
+
+        $roster = [];
+        foreach ($links as $link) {
+            foreach ($this->students($schoolId, $anchor, $link) as [$studentId, $classLink]) {
+                $roster[$studentId] = $classLink;
+            }
+        }
+        if ($roster === []) {
+            return [];
+        }
+
+        $studentIds = array_keys($roster);
+        $students = User::query()
+            ->where('school_id', $schoolId)
+            ->whereIn('id', $studentIds)
+            ->get(['id', 'name'])
+            ->keyBy(fn (User $row) => (int) $row->id);
+        $parentLinks = StudentParentLink::query()
+            ->where('school_id', $schoolId)
+            ->where('status', 1)
+            ->whereIn('student_id', $studentIds)
+            ->orderBy('id')
+            ->get(['student_id', 'parent_id']);
+        $parentIds = $parentLinks->pluck('parent_id')->map(fn ($id) => (int) $id)->unique()->all();
+        $parents = $parentIds === []
+            ? collect()
+            : User::query()->where('school_id', $schoolId)->whereIn('id', $parentIds)->get(['id', 'name'])->keyBy(fn (User $row) => (int) $row->id);
+        $phones = $parentIds === []
+            ? collect()
+            : WhatsAppUser::query()
+                ->where('school_id', $schoolId)
+                ->whereIn('user_id', $parentIds)
+                ->orderBy('id')
+                ->get(['user_id', 'phone'])
+                ->keyBy(fn (WhatsAppUser $row) => (int) $row->user_id);
+
+        $choices = [];
+        foreach ($roster as $studentId => $classLink) {
+            $learner = $students->get((int) $studentId);
+            $rows = [];
+            foreach ($parentLinks->where('student_id', (int) $studentId) as $parentLink) {
+                $parent = $parents->get((int) $parentLink->parent_id);
+                $phone = $phones->get((int) $parentLink->parent_id);
+                $number = trim((string) ($phone->phone ?? ''));
+                $rows[] = [
+                    'id' => (int) $parentLink->parent_id,
+                    'name' => trim((string) ($parent->name ?? 'Parent')),
+                    'number' => $number === '' ? 'no number' : $this->mask($number),
+                ];
+            }
+            $choices[] = [
+                'student_id' => (int) $studentId,
+                'name' => trim((string) ($learner->name ?? 'Learner')),
+                'parents' => $rows,
+            ];
+        }
+
+        return $choices;
+    }
+
+    /**
+     * Exactly who a pilot would tell, and the message, before anything is sent.
+     *
+     * @param  list<array{student_id:int, parent_id:int|null}>  $pilot
+     * @return list<array{learner:string, parent:string, number:string, message:string, told:bool, reason:?string}>
+     */
+    public function pilotPreview(User $user, int $examId, ?int $standardLinkId, array $pilot, bool $whatsappSend): array
+    {
+        [$anchor, $link] = $this->authorise($user, $examId, $standardLinkId);
+        $schoolId = (int) $user->school_id;
+        $school = School::query()->find($schoolId);
+        $isDemo = (int) ($school?->is_demo ?? 0) === 1;
+        $probe = new MarksRelease(['whatsapp_send' => $whatsappSend, 'school_id' => $schoolId]);
+        $blocker = $this->sendBlocker($probe, $isDemo);
+        $roster = $this->roster($schoolId, $anchor, $link);
+        $lines = [];
+
+        foreach ($this->storePilot($pilot) ?? [] as $entry) {
+            $studentId = $entry['student_id'];
+            $classLink = $roster[$studentId] ?? null;
+            $student = User::query()->where('school_id', $schoolId)->whereKey($studentId)->first();
+            $learner = trim((string) ($student?->name ?? 'Learner'));
+            foreach ($this->chosenPeople($schoolId, $studentId, $entry['parent_id'], $isDemo, $classLink) as $person) {
+                $text = $classLink !== null
+                    ? $this->outboundText($school, $anchor, $student, $person, $isDemo, $classLink)
+                    : '';
+                $reason = $person['reason'];
+                if ($reason === null && $text === '') {
+                    $reason = 'No marks for this exam';
+                }
+                if ($reason === null) {
+                    $reason = $blocker;
+                }
+                $lines[] = [
+                    'learner' => $learner,
+                    'parent' => $person['parent_name'],
+                    'number' => $person['masked'] ?? 'no number',
+                    'message' => $text,
+                    'told' => $reason === null,
+                    'reason' => $reason,
+                ];
+            }
+        }
+
+        return $lines;
+    }
+
+    /**
      * Refuse the release until every subject in scope is approved. There is no
      * override: a school admin and a class teacher meet the same rule. The
      * message names every subject that is not approved yet.
@@ -335,7 +507,7 @@ final class MarksReleaseService
     private function approvalRows(User $user, Exam $anchor, ?StandardLink $link): array
     {
         $sectionIds = $link
-            ? [(int) $link->section_id]
+            ? $this->sectionsInClass((int) $user->school_id, (int) $link->section_id)
             : Exam::query()
                 ->where('school_id', $user->school_id)
                 ->where('exam_type_id', $anchor->exam_type_id)
@@ -600,11 +772,15 @@ final class MarksReleaseService
 
     private function releaseSheet(int $schoolId, Exam $anchor, StandardLink $classLink): ResultSheet
     {
+        // Exams sit on the base class. Read that class, not whichever class in the
+        // exam set happens to own the anchor row.
+        $sectionId = $this->baseSectionId($schoolId, (int) $classLink->section_id);
+
         return app(ResultsService::class)->sheet(new ResultsQuery(
             schoolId: $schoolId,
-            sectionId: (int) $classLink->section_id,
+            sectionId: $sectionId,
             academicTermId: (int) $anchor->academic_term_id,
-            standardLinkId: (int) $classLink->id,
+            standardLinkId: null,
             examTypeId: (int) $anchor->exam_type_id,
         ));
     }
@@ -663,7 +839,7 @@ final class MarksReleaseService
             $key = mb_strtolower($name);
             $cell = $row?->cell($subjectId);
             if ($cell !== null && $cell->status === ResultCell::ABSENT) {
-                $cells[$key] = ['mark' => 'AB', 'grade' => '—'];
+                $cells[$key] = ['mark' => 'ABS', 'grade' => '—'];
 
                 continue;
             }
@@ -731,25 +907,31 @@ final class MarksReleaseService
         }
 
         $release = MarksRelease::with(['school', 'exam', 'standardLink'])->findOrFail($releaseId);
-        [$result, $jobs, $webhookStudents] = $this->deliver($release);
+        [$result, $jobs, $webhookCounts] = $this->deliver($release);
 
         // The release row and every snapshot are one unit: all saved or none.
         // A release that cannot write its records did not happen. The demo
         // webhook is registered only after the snapshots are written, and
         // DB::afterCommit drops it if this transaction rolls back.
         try {
-            DB::transaction(function () use ($release, $result, $webhookStudents): void {
+            DB::transaction(function () use ($release, $result, $webhookCounts): void {
                 $release->forceFill([
                     'status' => MarksRelease::STATUS_RELEASED,
                     'released_at' => CarbonImmutable::now('UTC'),
                     'result' => $result,
                 ])->save();
 
+                // The type and the scoring rule in force at release time. A later
+                // change on the school does not rewrite this row or the snapshots.
+                app(\App\Services\Reports\ReportKindSetting::class)->freeze($release);
+                app(\App\Services\Reports\ReportScoring::class)->freeze($release);
+                app(\App\Services\Reports\ProgressiveRulesStamp::class)->freeze($release);
+
                 app(\App\Services\Records\SnapshotService::class)->capture($release, $release->release_reason);
 
-                if ($webhookStudents !== null) {
-                    DB::afterCommit(function () use ($release, $webhookStudents): void {
-                        $this->recordDemoWebhook($release, $webhookStudents);
+                if ($webhookCounts !== null) {
+                    DB::afterCommit(function () use ($release, $webhookCounts): void {
+                        self::queueDemoWebhook((int) $release->id, $webhookCounts);
                     });
                 }
             });
@@ -758,15 +940,6 @@ final class MarksReleaseService
             $release->forceFill(['status' => MarksRelease::STATUS_FAILED])->save();
 
             return false;
-        }
-
-        // PHPUnit wraps each test in a transaction that never commits, so
-        // afterCommit would be discarded and the test would not see the
-        // webhook. A real outer transaction must wait for that outermost
-        // commit: posting here would send a webhook for a release that can
-        // still roll back. recordDemoWebhook runs once.
-        if ($webhookStudents !== null && app()->runningUnitTests() && DB::transactionLevel() > 0) {
-            $this->recordDemoWebhook($release, $webhookStudents);
         }
 
         activity('marks_release')->performedOn($release)->causedBy($release->creator)
@@ -838,6 +1011,11 @@ final class MarksReleaseService
 
                 return;
             }
+        }
+        if (is_array($release->pilot_recipients) && ! $this->pilotIncludes($release->pilot_recipients, $studentId, (int) ($binding->user_id ?? 0))) {
+            $skip('This person was not on the chosen list');
+
+            return;
         }
         if (isset($this->alreadySent($release, ['sent'])[$key])) {
             $skip('Already sent to this number');
@@ -958,8 +1136,299 @@ final class MarksReleaseService
      *
      * @return array{0: array<string, mixed>, 1: array<int, SendMarksReleaseMessage>, 2: array<int, array{code:string, class:string}>|null}
      */
+    /**
+     * @param  list<array{student_id:int, parent_id:int|null}>|null  $pilot
+     * @return list<array{student_id:int, parent_id:int|null}>|null
+     */
+    private function storePilot(?array $pilot): ?array
+    {
+        if ($pilot === null) {
+            return null;
+        }
+
+        $out = [];
+        foreach ($pilot as $row) {
+            $studentId = (int) ($row['student_id'] ?? 0);
+            if ($studentId <= 0) {
+                continue;
+            }
+            $parentId = $row['parent_id'] ?? null;
+            $parentId = ($parentId === null || (int) $parentId <= 0) ? null : (int) $parentId;
+            $out[$studentId.':'.($parentId ?? 0)] = [
+                'student_id' => $studentId,
+                'parent_id' => $parentId,
+            ];
+        }
+
+        $covered = [];
+        foreach ($out as $row) {
+            if ($row['parent_id'] === null) {
+                $covered[$row['student_id']] = true;
+            }
+        }
+        if ($covered !== []) {
+            $out = array_filter(
+                $out,
+                fn (array $row): bool => $row['parent_id'] === null || ! isset($covered[$row['student_id']]),
+            );
+        }
+
+        return array_values($out);
+    }
+
+    /** @return array<int, StandardLink> */
+    private function roster(int $schoolId, Exam $anchor, ?StandardLink $link): array
+    {
+        $roster = [];
+        foreach ($this->students($schoolId, $anchor, $link) as [$studentId, $classLink]) {
+            $roster[$studentId] = $classLink;
+        }
+
+        return $roster;
+    }
+
+    /** Why this release cannot send yet, or null when a chosen person may be queued. */
+    private function sendBlocker(MarksRelease $release, bool $isDemo): ?string
+    {
+        if (! (bool) config('services.whatsapp.replies_enabled')) {
+            return 'WhatsApp messages are switched off';
+        }
+        if ($isDemo) {
+            return null;
+        }
+        if (($blocked = $this->realSendBlocker($release)) !== null) {
+            return $blocked;
+        }
+        if ((bool) config('services.whatsapp.demo_only_recipients')) {
+            return 'Not a demo school: release messages are sent only in the demo for now';
+        }
+
+        return null;
+    }
+
+    /**
+     * One chosen learner, expanded to the parents who were asked for.
+     * A null parent id is every linked parent of that learner.
+     *
+     * @return list<array{parent_name:string, phone:?string, masked:?string, wa_id:?int, user_id:?int, reason:?string}>
+     */
+    private function chosenPeople(int $schoolId, int $studentId, ?int $parentId, bool $isDemo, ?StandardLink $classLink): array
+    {
+        if ($classLink === null) {
+            return [[
+                'parent_name' => $this->parentName($schoolId, $parentId),
+                'phone' => null,
+                'masked' => null,
+                'wa_id' => null,
+                'user_id' => $parentId,
+                'reason' => 'This learner is not in this class',
+            ]];
+        }
+
+        if ($isDemo) {
+            return $this->chosenDemoPeople($schoolId, $studentId, $parentId);
+        }
+
+        $parentIds = $parentId === null
+            ? StudentParentLink::query()
+                ->where('school_id', $schoolId)
+                ->where('student_id', $studentId)
+                ->orderBy('id')
+                ->pluck('parent_id')
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values()
+                ->all()
+            : [$parentId];
+
+        if ($parentIds === []) {
+            return [[
+                'parent_name' => 'Parent',
+                'phone' => null,
+                'masked' => null,
+                'wa_id' => null,
+                'user_id' => null,
+                'reason' => 'This learner has no linked parent',
+            ]];
+        }
+
+        $people = [];
+        foreach ($parentIds as $id) {
+            $people[] = $this->chosenParent($schoolId, $studentId, (int) $id);
+        }
+
+        return $people;
+    }
+
+    /**
+     * @return list<array{parent_name:string, phone:?string, masked:?string, wa_id:?int, user_id:?int, reason:?string}>
+     */
+    private function chosenDemoPeople(int $schoolId, int $studentId, ?int $parentId): array
+    {
+        if ($parentId !== null && ! $this->parentIsLinked($schoolId, $studentId, $parentId)) {
+            return [[
+                'parent_name' => $this->parentName($schoolId, $parentId),
+                'phone' => null,
+                'masked' => null,
+                'wa_id' => null,
+                'user_id' => $parentId,
+                'reason' => 'This parent is not linked to this learner',
+            ]];
+        }
+
+        $bindings = $this->activeBindings($schoolId, $studentId);
+        if ($parentId !== null) {
+            $bindings = $bindings->where('user_id', $parentId)->values();
+        }
+        if ($bindings->isEmpty()) {
+            return [[
+                'parent_name' => $this->parentName($schoolId, $parentId),
+                'phone' => null,
+                'masked' => null,
+                'wa_id' => null,
+                'user_id' => $parentId,
+                'reason' => $parentId === null ? 'No number is following this student' : 'This parent has no number',
+            ]];
+        }
+
+        $people = [];
+        foreach ($bindings as $binding) {
+            $phone = trim((string) $binding->phone);
+            $people[] = [
+                'parent_name' => $this->parentName($schoolId, (int) $binding->user_id),
+                'phone' => $phone,
+                'masked' => $phone === '' ? null : $this->mask($phone),
+                'wa_id' => (int) $binding->id,
+                'user_id' => (int) $binding->user_id,
+                'reason' => null,
+            ];
+        }
+
+        return $people;
+    }
+
+    /**
+     * @return array{parent_name:string, phone:?string, masked:?string, wa_id:?int, user_id:?int, reason:?string}
+     */
+    private function chosenParent(int $schoolId, int $studentId, int $parentId): array
+    {
+        $name = $this->parentName($schoolId, $parentId);
+        $base = [
+            'parent_name' => $name,
+            'phone' => null,
+            'masked' => null,
+            'wa_id' => null,
+            'user_id' => $parentId,
+            'reason' => null,
+        ];
+        if (! $this->parentIsLinked($schoolId, $studentId, $parentId)) {
+            $base['reason'] = 'This parent is not linked to this learner';
+
+            return $base;
+        }
+
+        $row = WhatsAppUser::query()
+            ->where('school_id', $schoolId)
+            ->where('user_id', $parentId)
+            ->orderByDesc('id')
+            ->first(['id', 'phone', 'user_id', 'opted_in']);
+        $phone = trim((string) ($row->phone ?? ''));
+        if ($row === null || $phone === '') {
+            $base['reason'] = 'This parent has no number';
+
+            return $base;
+        }
+        if (! (bool) $row->opted_in) {
+            $base['masked'] = $this->mask($phone);
+            $base['reason'] = 'This parent opted out of WhatsApp results';
+
+            return $base;
+        }
+
+        $base['phone'] = $phone;
+        $base['masked'] = $this->mask($phone);
+        $base['wa_id'] = (int) $row->id;
+
+        return $base;
+    }
+
+    private function parentIsLinked(int $schoolId, int $studentId, int $parentId): bool
+    {
+        if ($parentId <= 0) {
+            return false;
+        }
+        $parent = User::query()
+            ->where('school_id', $schoolId)
+            ->whereKey($parentId)
+            ->where('usergroup_id', 7)
+            ->where('status', 'active')
+            ->exists();
+        if (! $parent) {
+            return false;
+        }
+
+        return StudentParentLink::query()
+            ->where('school_id', $schoolId)
+            ->where('student_id', $studentId)
+            ->where('parent_id', $parentId)
+            ->where('status', 1)
+            ->exists();
+    }
+
+    private function parentName(int $schoolId, ?int $parentId): string
+    {
+        if ($parentId === null || $parentId <= 0) {
+            return 'Parent';
+        }
+        $name = User::query()->where('school_id', $schoolId)->whereKey($parentId)->value('name');
+        $name = trim((string) $name);
+
+        return $name !== '' ? $name : 'Parent';
+    }
+
+    /**
+     * @param  array{parent_name:string, phone:?string, masked:?string, wa_id:?int, user_id:?int, reason:?string}  $person
+     */
+    private function outboundText(?School $school, Exam $anchor, ?User $student, array $person, bool $isDemo, StandardLink $link): string
+    {
+        if ($isDemo) {
+            return (string) ($this->message($school, $anchor, (int) ($student->id ?? 0), $link) ?? '');
+        }
+
+        $parent = new WhatsAppUser;
+        $parent->user_id = $person['user_id'];
+        $release = new MarksRelease;
+        $release->school_id = (int) $anchor->school_id;
+        $release->setRelation('school', $school);
+        $release->setRelation('exam', $anchor);
+        $variables = $this->resultsReleasedVariables($release, $parent, (int) ($student->id ?? 0));
+
+        return 'Hello '.$variables[0].', '.$variables[1].' has released the '.$variables[3].' results for '.$variables[2].'. Tap See results or reply GRADES to view them here.';
+    }
+
+    /**
+     * @param  list<array{student_id:int, parent_id:int|null}>  $pilot
+     */
+    private function pilotIncludes(array $pilot, int $studentId, int $parentUserId): bool
+    {
+        foreach ($this->storePilot($pilot) ?? [] as $row) {
+            if ($row['student_id'] !== $studentId) {
+                continue;
+            }
+            if ($row['parent_id'] === null || $row['parent_id'] === $parentUserId) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function deliver(MarksRelease $release): array
     {
+        if (is_array($release->pilot_recipients)) {
+            return $this->deliverChosen($release);
+        }
+
         $school = $release->school;
         $anchor = $release->exam;
         $messages = [];
@@ -1053,57 +1522,192 @@ final class MarksReleaseService
             }
         }
 
-        $webhookStudents = ($repliesOn && $isDemo) ? $released : null;
+        $webhookCounts = ($repliesOn && $isDemo) ? [
+            'learners' => count($released),
+            'classes' => count(array_unique(array_column($released, 'class'))),
+        ] : null;
 
         return [
             $this->totals([
                 'messages' => $messages,
-                'webhook' => $webhookStudents !== null ? 'pending' : 'not sent',
+                'webhook' => $webhookCounts !== null ? 'pending' : 'not sent',
             ]),
             $jobs,
-            $webhookStudents,
+            $webhookCounts,
         ];
     }
 
-    /**
-     * Demo n8n webhook. Called from DB::afterCommit, so a rolled-back release
-     * never posts. Runs at most once per release on this service instance:
-     * an outer test transaction also calls it after the release savepoint
-     * commits, and the afterCommit callback must not post a second time.
-     *
-     * @param  array<int, array{code:string, class:string}>  $students
-     */
-    private function recordDemoWebhook(MarksRelease $release, array $students): void
-    {
-        $id = (int) $release->id;
-        if (isset($this->demoWebhookRecorded[$id])) {
-            return;
-        }
-        $this->demoWebhookRecorded[$id] = true;
+    /** @var array<int, true> release ids whose refusal was already logged */
+    private static array $webhookRefusedLogged = [];
 
-        $status = $this->postWebhook($release, $students);
-        $fresh = MarksRelease::query()
-            ->where('school_id', $release->school_id)
-            ->whereKey($id)
-            ->first();
-        if ($fresh === null) {
-            return;
+    /**
+     * A pilot list. People who were not chosen are absent from the log and are not messaged.
+     * The webhook third value is counts only (learners, classes), and only for a demo school
+     * while replies are on. Learner codes never leave the app.
+     *
+     * @return array{0: array<string, mixed>, 1: array<int, SendMarksReleaseMessage>, 2: array{learners: int, classes: int}|null}
+     */
+    private function deliverChosen(MarksRelease $release): array
+    {
+        $school = $release->school;
+        $anchor = $release->exam;
+        $schoolId = (int) $release->school_id;
+        $isDemo = (int) ($school?->is_demo ?? 0) === 1;
+        $messages = [];
+        $jobs = [];
+        $released = [];
+        $releasedCodes = [];
+        $alreadySent = $this->alreadySent($release, ['sent', 'queued', 'retrying']);
+        $roster = $this->roster($schoolId, $anchor, $release->standardLink);
+        $blocker = $this->sendBlocker($release, $isDemo);
+
+        foreach ($this->storePilot($release->pilot_recipients) ?? [] as $entry) {
+            $studentId = $entry['student_id'];
+            $link = $roster[$studentId] ?? null;
+            $student = User::query()->where('school_id', $schoolId)->whereKey($studentId)->first();
+            $code = $this->studentCode($schoolId, $studentId);
+            $name = trim((string) ($student?->name ?? ''));
+            $className = $link ? trim(($link->section?->name ?? '').' '.($link->stream ?? '')) : '';
+
+            foreach ($this->chosenPeople($schoolId, $studentId, $entry['parent_id'], $isDemo, $link) as $person) {
+                $identity = [
+                    'student' => $code,
+                    'name' => $name !== '' ? $name : $code,
+                    'parent' => $person['parent_name'],
+                    'class' => $className,
+                ];
+                $skip = function (string $reason, ?string $to = null) use (&$messages, $identity): void {
+                    $messages[] = $identity + ['to' => $to, 'status' => 'skipped', 'reason' => $reason];
+                };
+
+                if ($person['reason'] !== null) {
+                    $skip($person['reason'], $person['masked']);
+
+                    continue;
+                }
+                if ($blocker !== null) {
+                    $skip($blocker, $person['masked']);
+
+                    continue;
+                }
+                if ($link === null || $person['wa_id'] === null || $person['phone'] === null) {
+                    $skip('This parent has no number', $person['masked']);
+
+                    continue;
+                }
+
+                $text = $this->message($school, $anchor, $studentId, $link);
+                if ($text === null) {
+                    $skip('No marks for this exam', $person['masked']);
+
+                    continue;
+                }
+
+                $key = $this->dedupeKey($person['phone'], $studentId);
+                if (isset($alreadySent[$key])) {
+                    $skip('Already sent to this number', $person['masked']);
+
+                    continue;
+                }
+
+                if (! isset($releasedCodes[$code])) {
+                    $released[] = ['code' => $code, 'class' => $className];
+                    $releasedCodes[$code] = true;
+                }
+                $messages[] = $identity + [
+                    'to' => $person['masked'],
+                    'status' => 'queued',
+                    'reason' => null,
+                    'key' => $key,
+                    'attempts' => 0,
+                ];
+                $alreadySent[$key] = true;
+                $jobs[] = new SendMarksReleaseMessage((int) $release->id, (int) $person['wa_id'], $studentId, (int) $link->id, $key);
+            }
         }
-        $result = $fresh->result ?? [];
-        $result['webhook'] = $status;
-        $fresh->forceFill(['result' => $result])->save();
+
+        $webhookCounts = ((bool) config('services.whatsapp.replies_enabled') && $isDemo) ? [
+            'learners' => count($released),
+            'classes' => count(array_unique(array_column($released, 'class'))),
+        ] : null;
+
+        return [
+            $this->totals([
+                'messages' => $messages,
+                'webhook' => $webhookCounts !== null ? 'pending' : 'not sent',
+            ]),
+            $jobs,
+            $webhookCounts,
+        ];
+    }
+
+    /** Dispatch the demo webhook job. Counts only; no learner data leaves the app. */
+    public static function queueDemoWebhook(int $releaseId, array $counts): void
+    {
+        dispatch(new \App\Jobs\SendDemoMarksReleaseWebhook(
+            $releaseId,
+            (int) ($counts['learners'] ?? 0),
+            (int) ($counts['classes'] ?? 0),
+        ));
     }
 
     /**
-     * Tier 3: tell a presenter's workflow that marks were released. Only for a
-     * demo school, only when DEMO_RELEASE_WEBHOOK_URL and _SECRET are both
-     * set, and the body carries only the exam and each student's code and
-     * class. A failure is logged and never stops the release.
+     * Post the demo webhook for one release, after every gate passes.
      *
-     * @param  array<int, array{code:string, class:string}>  $students
+     * Gates, in order: enabled flag (default false), environment allow-list
+     * (local/staging/testing), the school is a demo school, URL and secret are
+     * set, and the URL is https. Production always refuses, even when every
+     * other gate is open. A refusal logs once per release, without the URL or
+     * the secret.
      */
-    private function postWebhook(MarksRelease $release, array $students): string
+    public function sendDemoWebhook(int $releaseId, int $learners, int $classes): string
     {
+        $release = MarksRelease::with(['school', 'exam'])->find($releaseId);
+        if ($release === null) {
+            return 'not sent: release not found';
+        }
+
+        $status = $this->postWebhook($release, $learners, $classes);
+
+        $fresh = MarksRelease::query()
+            ->where('school_id', $release->school_id)
+            ->whereKey($releaseId)
+            ->first();
+        if ($fresh !== null) {
+            $result = $fresh->result ?? [];
+            $result['webhook'] = $status;
+            $fresh->forceFill(['result' => $result])->save();
+        }
+
+        return $status;
+    }
+
+    private function postWebhook(MarksRelease $release, int $learners, int $classes): string
+    {
+        $refuse = function (string $reason) use ($release): string {
+            if (! isset(self::$webhookRefusedLogged[(int) $release->id])) {
+                self::$webhookRefusedLogged[(int) $release->id] = true;
+                Log::info('Demo release webhook refused', [
+                    'release_id' => (int) $release->id,
+                    'reason' => $reason,
+                ]);
+            }
+
+            return 'not sent: '.$reason;
+        };
+
+        if (! (bool) config('klassapp.demo.release_webhook_enabled', false)) {
+            return $refuse('the demo webhook flag is off');
+        }
+
+        if (! app()->environment(['local', 'staging', 'testing'])) {
+            return $refuse('not a demo environment');
+        }
+
+        if ((int) ($release->school?->is_demo ?? 0) !== 1) {
+            return $refuse('not a demo school');
+        }
+
         $url = trim((string) config('klassapp.demo.release_webhook_url'));
         $secret = (string) config('klassapp.demo.release_webhook_secret');
         if ($url === '' || $secret === '') {
@@ -1117,7 +1721,8 @@ final class MarksReleaseService
             'event' => 'marks.released',
             'release_id' => (int) $release->id,
             'exam' => $this->examLabel($release->exam),
-            'students' => array_values($students),
+            'learners' => $learners,
+            'classes' => $classes,
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
         try {
@@ -1271,13 +1876,21 @@ final class MarksReleaseService
             ->where('exam_type_id', $anchor->exam_type_id)
             ->where('academic_term_id', $anchor->academic_term_id)
             ->whereNull('deleted_at')
-            ->pluck('section_id')->unique();
+            ->pluck('section_id')
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
 
-        $links = $link
-            ? collect([$link])
-            : StandardLink::query()->with('section')->where('school_id', $schoolId)
-                ->whereIn('academic_year_id', $this->currentYearIds($schoolId))
-                ->whereIn('section_id', $sections)->orderBy('section_id')->orderBy('stream')->get();
+        // An exam sits on the base class. Learners are enrolled on its streams.
+        $sectionIds = $link
+            ? $this->withStreamSections($schoolId, [(int) $link->section_id])
+            : $this->withStreamSections($schoolId, $sections);
+
+        $links = StandardLink::query()->with('section')->where('school_id', $schoolId)
+            ->whereIn('academic_year_id', $this->currentYearIds($schoolId))
+            ->whereIn('section_id', $sectionIds === [] ? [-1] : $sectionIds)
+            ->orderBy('section_id')->orderBy('stream')->get();
 
         foreach ($links as $classLink) {
             $ids = StudentAcademic::query()
@@ -1448,6 +2061,77 @@ final class MarksReleaseService
         $digits = preg_replace('/\D+/', '', $phone);
 
         return '•••' . substr($digits, -3);
+    }
+
+    /**
+     * The class being released: its base section and that class's stream sections.
+     * Another class that shares the exam set is not included. Scope is section id,
+     * never the grading-band standard id.
+     *
+     * @return list<int>
+     */
+    private function sectionsInClass(int $schoolId, int $sectionId): array
+    {
+        return $this->withStreamSections($schoolId, [$this->baseSectionId($schoolId, $sectionId)]);
+    }
+
+    /** The section itself, or the shorter class it is a stream of ("Primary Five E" → "Primary Five"). */
+    private function baseSectionId(int $schoolId, int $sectionId): int
+    {
+        if ($sectionId <= 0) {
+            return $sectionId;
+        }
+
+        $sections = Section::query()->where('school_id', $schoolId)->get(['id', 'name']);
+        $current = $sections->firstWhere('id', $sectionId);
+        if ($current === null) {
+            return $sectionId;
+        }
+
+        $name = trim((string) $current->name);
+        $base = $sections
+            ->filter(function ($candidate) use ($current, $name) {
+                $candidateName = trim((string) $candidate->name);
+
+                return (int) $candidate->id !== (int) $current->id
+                    && $candidateName !== ''
+                    && str_starts_with($name, $candidateName.' ');
+            })
+            ->sortBy(fn ($candidate) => strlen(trim((string) $candidate->name)))
+            ->first();
+
+        return $base !== null ? (int) $base->id : $sectionId;
+    }
+
+    /**
+     * The exam's class, plus every stream section whose name starts with that
+     * class name. "Primary Five" includes "Primary Five E" and "Primary Five W".
+     *
+     * @param  list<int>  $sectionIds
+     * @return list<int>
+     */
+    private function withStreamSections(int $schoolId, array $sectionIds): array
+    {
+        $sections = Section::query()->where('school_id', $schoolId)->get(['id', 'name']);
+        $ids = array_values(array_unique(array_map(fn ($id) => (int) $id, $sectionIds)));
+
+        foreach ($sections->whereIn('id', $ids) as $base) {
+            $prefix = trim((string) $base->name);
+            if ($prefix === '') {
+                continue;
+            }
+            $prefix .= ' ';
+            foreach ($sections as $candidate) {
+                if ((int) $candidate->id === (int) $base->id) {
+                    continue;
+                }
+                if (str_starts_with(trim((string) $candidate->name), $prefix)) {
+                    $ids[] = (int) $candidate->id;
+                }
+            }
+        }
+
+        return array_values(array_unique($ids));
     }
 
     /** @return array<int, int> */

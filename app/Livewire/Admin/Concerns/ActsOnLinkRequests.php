@@ -127,7 +127,7 @@ trait ActsOnLinkRequests
     protected function linkRequestAdmin(): \App\Models\User
     {
         $user = auth()->user();
-        abort_unless($user !== null && (int) $user->usergroup_id === 3 && (int) $user->school_id > 0, 403);
+        abort_unless($user !== null && \App\Support\SchoolAdmin::managesOwnSchool($user, $user->school_id), 403);
 
         return $user;
     }

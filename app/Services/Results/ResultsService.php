@@ -5,6 +5,7 @@ namespace App\Services\Results;
 use App\Contracts\Results\DivisionRule;
 use App\Contracts\Results\GradingScale;
 use App\Models\AcademicTerm;
+use App\Models\MarksRelease;
 use App\Models\Academics\Exam;
 use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\Marks;
@@ -37,7 +38,16 @@ final class ResultsService
 
     public function sheet(ResultsQuery $query, ?ResultsPolicy $policy = null): ResultSheet
     {
-        $policy ??= new ResultsPolicy($this->gradingScale, $this->divisionRule);
+        if ($policy === null) {
+            $policy = app(\App\Services\Reports\ReportScoring::class)->displayPolicy(
+                $query->schoolId,
+                $query->sectionId,
+                $query->academicTermId,
+                $query->standardLinkId,
+                false,
+                $this->divisionRule,
+            );
+        }
 
         $term = AcademicTerm::query()
             ->where('id', $query->academicTermId)
@@ -53,12 +63,29 @@ final class ResultsService
             ->where('academic_term_id', $term->id)
             ->whereNull('deleted_at')
             ->when($query->examTypeId !== null, fn ($builder) => $builder->where('exam_type_id', $query->examTypeId))
+            ->when($query->examTypeIds !== null, function ($builder) use ($query) {
+                $ids = array_values(array_filter(
+                    array_map(intval(...), $query->examTypeIds),
+                    fn (int $id) => $id > 0,
+                ));
+                $builder->whereIn('exam_type_id', $ids === [] ? [0] : $ids);
+            })
             ->with('examType')
             ->get();
 
         $school = School::query()->find($query->schoolId);
         $preferences = $school?->exam_type_preferences;
-        $composition = $school?->report_composition;
+        // A released class keeps the mix stored on that release. A school
+        // that has not saved one, and has no release yet, keeps each set's flag.
+        $composer = app(ReportComposition::class);
+        $releasedMix = $composer->forTermReport(
+            $query->schoolId,
+            $query->sectionId,
+            (int) $term->id,
+        );
+        $schoolMix = $composer->resolved($school);
+        $mixIsFromRelease = $releasedMix !== [] && $releasedMix !== $schoolMix;
+        $composition = $releasedMix === [] ? null : $releasedMix;
         $typeMeta = $this->typeMeta($exams, $preferences, $composition);
         $marks = $this->marksFor($query->schoolId, $exams);
         $chosen = $this->choose($exams, $marks);
@@ -70,6 +97,16 @@ final class ResultsService
                 fn (array $type) => $type['id'],
                 array_filter($typeMeta, fn (array $type) => $type['contributes'])
             ));
+
+        // A set nobody has a mark or an absence for is not a result yet.
+        // Other callers keep every exam type, including an empty one.
+        $activeTypes = $policy->countMissingAsZero ? CountedExamTypes::typeIds($exams, $marks) : [];
+        if ($policy->countMissingAsZero) {
+            $mainTypeIds = array_values(array_filter(
+                $mainTypeIds,
+                fn ($typeId) => isset($activeTypes[(int) $typeId])
+            ));
+        }
 
         // Weights only apply on the term report: a weighted mean across the
         // contributing types that carry a weight; types without one keep the
@@ -84,17 +121,27 @@ final class ResultsService
             $weights = [];
         }
 
+        // A weighted set that has not been released must not leak into the
+        // combined mark. The screen and the card name it and show no partial.
+        $unreleasedWeightedSets = ($weights === [] || $mixIsFromRelease)
+            ? []
+            : $this->unreleasedWeightedNames($query, $typeMeta, $weights, $exams);
+        $withholdCombined = $unreleasedWeightedSets !== [];
+        if ($withholdCombined) {
+            $weights = [];
+        }
+
         $subjects = $this->subjectRows(
             $query->schoolId,
             $this->subjectIdsFor($exams, $marks, $mainTypeIds),
             $this->submissionLabels($query->schoolId, $exams, $mainTypeIds),
         );
-        $students = $this->buildStudents($policy, $query->schoolId, $roster, $chosen, $mainTypeIds, $subjects, $weights);
+        $students = $this->buildStudents($policy, $query->schoolId, $roster, $chosen, $mainTypeIds, $subjects, $weights, $withholdCombined);
         $summary = $this->summary($subjects, $students);
 
         $sittings = [];
-        foreach ($this->sittingPlans($exams, $policy->splitMidTermByMonth, $preferences) as $plan) {
-            if ($query->examTypeId === null && ! ($typeMeta[$plan['typeId']]['included'] ?? true)) {
+        foreach ($this->sittingPlans($exams, $policy->splitMidTermByMonth, $preferences, $term) as $plan) {
+            if ($policy->countMissingAsZero && ! isset($activeTypes[$plan['typeId']])) {
                 continue;
             }
             $bucketExams = $exams->whereIn('id', $plan['examIds'])->values();
@@ -112,6 +159,8 @@ final class ResultsService
                 $bucketChosen,
                 [$plan['typeId']],
                 $sittingSubjects,
+                [],
+                false,
             );
             $sittings[] = new ResultSitting(
                 $plan['typeId'],
@@ -135,6 +184,7 @@ final class ResultsService
             $this->visible($students, $query),
             $sittings,
             $summary,
+            $unreleasedWeightedSets,
         );
     }
 
@@ -165,6 +215,7 @@ final class ResultsService
      */
     private function typeMeta(Collection $exams, ?array $preferences, ?array $composition = null): array
     {
+        $composer = app(ReportComposition::class);
         $types = [];
         foreach ($exams as $exam) {
             $type = $exam->examType;
@@ -172,12 +223,17 @@ final class ResultsService
                 continue;
             }
             $settings = $composition[(string) $type->id] ?? $composition[(int) $type->id] ?? [];
+            $catalog = $this->examTypeContribution->contributes($type, $preferences);
+            $contributes = ($composition === null || $composition === [])
+                ? $catalog
+                : $composer->countsToward($composition, (int) $type->id, $catalog);
             $types[(int) $type->id] = [
                 'id' => (int) $type->id,
                 'name' => (string) $type->name,
                 'code' => (string) ($type->code ?? ''),
-                'contributes' => $this->examTypeContribution->contributes($type, $preferences),
-                'included' => ($settings['include'] ?? true) === false ? false : (bool) ($settings['include'] ?? true),
+                'contributes' => $contributes,
+                // A set that stands alone stays on the sheet. It is out of the total.
+                'included' => true,
                 'weight' => isset($settings['weight']) && is_numeric($settings['weight']) && (float) $settings['weight'] > 0
                     ? (float) $settings['weight']
                     : null,
@@ -194,10 +250,14 @@ final class ResultsService
      * mode stays its own sitting. Contributing types stay one sitting, and
      * the main total is unaffected.
      *
+     * Columns follow the set's exam date, earliest first. A set with no date
+     * goes last. The term's start date, then its id, breaks a tie. The earliest
+     * exam id is only the last stable key when the date and the term are the same.
+     *
      * @param array<int|string, mixed>|null $preferences
      * @return list<array{typeId: int, name: string, code: string, contributes: bool, periodKey: string, periodLabel: string, examIds: list<int>}>
      */
-    private function sittingPlans(Collection $exams, bool $splitMidTermByMonth, ?array $preferences): array
+    private function sittingPlans(Collection $exams, bool $splitMidTermByMonth, ?array $preferences, AcademicTerm $term): array
     {
         $plans = [];
         foreach ($exams as $exam) {
@@ -220,6 +280,7 @@ final class ResultsService
                 $periodKey = '';
                 $periodLabel = '';
             }
+            $stamp = $exam->scheduled_at?->getTimestamp();
             if (! isset($plans[$key])) {
                 $plans[$key] = [
                     'typeId' => (int) $type->id,
@@ -229,17 +290,23 @@ final class ResultsService
                     'periodKey' => $periodKey,
                     'periodLabel' => $periodLabel,
                     'examIds' => [],
+                    'sortAt' => $stamp ?? PHP_INT_MAX,
+                    'sortTermStart' => $term->starts_on?->getTimestamp() ?? PHP_INT_MAX,
+                    'sortTermId' => (int) $term->id,
                     'sortExamId' => (int) $exam->id,
                 ];
             }
             $plans[$key]['examIds'][] = (int) $exam->id;
             $plans[$key]['sortExamId'] = min($plans[$key]['sortExamId'], (int) $exam->id);
+            if ($stamp !== null && $stamp < $plans[$key]['sortAt']) {
+                $plans[$key]['sortAt'] = $stamp;
+            }
         }
 
         $list = array_values($plans);
         usort($list, function (array $left, array $right) {
-            return [$left['typeId'], $left['periodKey'], $left['sortExamId']]
-                <=> [$right['typeId'], $right['periodKey'], $right['sortExamId']];
+            return [$left['sortAt'], $left['sortTermStart'], $left['sortTermId'], $left['sortExamId']]
+                <=> [$right['sortAt'], $right['sortTermStart'], $right['sortTermId'], $right['sortExamId']];
         });
 
         return $list;
@@ -270,7 +337,8 @@ final class ResultsService
             if ($exam === null || $exam->exam_type_id === null) {
                 continue;
             }
-            $absent = (bool) ($mark->absent ?? false) || strcasecmp(trim((string) $mark->grade), 'AB') === 0;
+            $label = strtoupper(trim((string) $mark->grade));
+            $absent = (bool) ($mark->absent ?? false) || in_array($label, ['AB', 'ABS'], true);
             $candidate = [
                 'mark' => ($absent || $mark->marks === null) ? null : (float) $mark->marks,
                 'grade' => $absent ? 'AB' : trim((string) $mark->grade),
@@ -538,7 +606,7 @@ final class ResultsService
      * @param list<array{id: int, name: string, code: string, submission: string}> $subjects
      * @return list<ResultStudent>
      */
-    private function buildStudents(ResultsPolicy $policy, int $schoolId, Collection $roster, array $chosen, array $typeIds, array $subjects, array $weights = []): array
+    private function buildStudents(ResultsPolicy $policy, int $schoolId, Collection $roster, array $chosen, array $typeIds, array $subjects, array $weights = [], bool $withholdCombined = false): array
     {
         $drafts = [];
         foreach ($roster as $entry) {
@@ -547,10 +615,19 @@ final class ResultsService
             $standardId = (int) $entry['standardId'];
             $cells = [];
             foreach ($subjects as $subject) {
-                $choice = $this->merged($chosen, $typeIds, $studentId, (int) $subject['id'], $weights);
-                $cells[(int) $subject['id']] = $this->cell($policy, $schoolId, $standardId, (int) $subject['id'], $choice);
+                $subjectId = (int) $subject['id'];
+                if ($withholdCombined) {
+                    $cells[$subjectId] = new ResultCell($subjectId, null, null, null, ResultCell::WITHHELD);
+
+                    continue;
+                }
+                $choice = $this->merged($chosen, $typeIds, $studentId, $subjectId, $weights, $policy->countMissingAsZero);
+                $cells[$subjectId] = $this->cell($policy, $schoolId, $standardId, $subjectId, $choice);
             }
-            [$total, $counted, $average, $aggregate, $division, $displayTotal, $displayAverage] = $this->totals($policy, $cells);
+            [$total, $counted, $average, $aggregate, $division, $displayTotal, $displayAverage] = $this->totals(
+                $policy,
+                $cells,
+            );
             $drafts[] = [
                 'studentId' => $studentId,
                 'name' => (string) $user->name,
@@ -565,6 +642,7 @@ final class ResultsService
                 'division' => $division,
                 'displayTotal' => $displayTotal,
                 'displayAverage' => $displayAverage,
+                'registrationNumber' => trim((string) ($user->registration_number ?? '')),
                 'key' => $this->rankKey($policy, $total, $average, $aggregate),
             ];
         }
@@ -591,6 +669,7 @@ final class ResultsService
                 $positions['stream'][$id]['outOf'],
                 $draft['displayTotal'],
                 $draft['displayAverage'],
+                $draft['registrationNumber'],
             );
         }
 
@@ -598,17 +677,71 @@ final class ResultsService
     }
 
     /**
+     * Weighted sets in this term that have no release. One unreleased exam
+     * in the set is enough: the combined mark would be a partial.
+     *
+     * @param  array<int, array{id: int, name: string, code: string, contributes: bool}>  $typeMeta
+     * @param  array<int, float>  $weights
+     * @param  Collection<int, Exam>  $exams
+     * @return list<string>
+     */
+    private function unreleasedWeightedNames(ResultsQuery $query, array $typeMeta, array $weights, Collection $exams): array
+    {
+        $names = [];
+        foreach ($weights as $typeId => $weight) {
+            $typeExams = $exams->where('exam_type_id', (int) $typeId);
+            $name = (string) ($typeMeta[$typeId]['name'] ?? 'Exam');
+            if ($typeExams->isEmpty()) {
+                $names[] = $name;
+
+                continue;
+            }
+            $releasedIds = MarksRelease::query()
+                ->where('school_id', $query->schoolId)
+                ->where('status', MarksRelease::STATUS_RELEASED)
+                ->whereIn('exam_id', $typeExams->pluck('id'))
+                ->pluck('exam_id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+            $missing = $typeExams->contains(fn ($exam) => ! in_array((int) $exam->id, $releasedIds, true));
+            if ($missing) {
+                $names[] = $name;
+            }
+        }
+
+        return array_values(array_unique($names));
+    }
+
+    /**
+     * The sentence the screen and the card print when a weighted set is missing.
+     *
+     * @param  list<string>  $names
+     */
+    public function withheldSentence(array $names): string
+    {
+        if ($names === []) {
+            return '';
+        }
+        $list = count($names) === 1
+            ? $names[0]
+            : implode(', ', array_slice($names, 0, -1)).' and '.$names[array_key_last($names)];
+        $verb = count($names) === 1 ? 'has' : 'have';
+
+        return $list.' '.$verb.' not been released. No combined mark is shown.';
+    }
+
+    /**
      * One merged mark per subject: the latest contributing mark, or a
      * weighted mean when the school's report composition configures weights
-     * for at least two contributing types (types without marks are dropped
-     * from both numerator and denominator).
+     * for at least two contributing types. A missing mark and an absence
+     * count as 0 and stay in the denominator.
      *
      * @param array<int, array<int, array<int, array{mark: float, grade: string, scheduled: int, examId: int}>>> $chosen
      * @param list<int> $typeIds
      * @param array<int, float> $weights
      * @return array{mark: float, grade: string, scheduled: int, examId: int}|null
      */
-    private function merged(array $chosen, array $typeIds, int $studentId, int $subjectId, array $weights = []): ?array
+    private function merged(array $chosen, array $typeIds, int $studentId, int $subjectId, array $weights = [], bool $countMissingAsZero = false): ?array
     {
         $best = null;
         foreach ($typeIds as $typeId) {
@@ -620,6 +753,10 @@ final class ResultsService
 
         if ($weights === []) {
             return $best;
+        }
+
+        if ($countMissingAsZero) {
+            return $this->mergedCountingBlanks($chosen, $typeIds, $studentId, $subjectId, $weights, $best);
         }
 
         if ($best === null) {
@@ -635,12 +772,18 @@ final class ResultsService
         $sum = 0.0;
         $weightSum = 0.0;
         foreach ($typeIds as $typeId) {
-            $row = $chosen[$typeId][$studentId][$subjectId] ?? null;
             $weight = (float) ($weights[$typeId] ?? 0);
-            if ($row === null || $weight <= 0 || $row['mark'] === null) {
+            if ($weight <= 0) {
                 continue;
             }
-            $sum += (float) $row['mark'] * $weight;
+            $row = $chosen[$typeId][$studentId][$subjectId] ?? null;
+            $grade = trim((string) ($row['grade'] ?? ''));
+            $absent = $row !== null && strcasecmp($grade, 'AB') === 0;
+            if ($row !== null && ($row['mark'] ?? null) === null && ! $absent && $grade !== '') {
+                return $best;
+            }
+            $value = ($row !== null && ($row['mark'] ?? null) !== null && ! $absent) ? (float) $row['mark'] : 0.0;
+            $sum += $value * $weight;
             $weightSum += $weight;
         }
 
@@ -651,8 +794,54 @@ final class ResultsService
         return [
             'mark' => round($sum / $weightSum, 2),
             'grade' => '',
-            'scheduled' => $best['scheduled'],
-            'examId' => $best['examId'],
+            'scheduled' => $best['scheduled'] ?? 0,
+            'examId' => $best['examId'] ?? 0,
+        ];
+    }
+
+    /**
+     * A weighted mean that treats a blank or an absence as mark 0.
+     * A subject with no numeric mark stays blank or absent, so the cell can
+     * print Missing or ABS instead of 0.
+     *
+     * @param array<int, array<int, array<int, array{mark: float, grade: string, scheduled: int, examId: int}>>> $chosen
+     * @param list<int> $typeIds
+     * @param array<int, float> $weights
+     * @param array{mark: float, grade: string, scheduled: int, examId: int}|null $best
+     * @return array{mark: float, grade: string, scheduled: int, examId: int}|null
+     */
+    private function mergedCountingBlanks(array $chosen, array $typeIds, int $studentId, int $subjectId, array $weights, ?array $best): ?array
+    {
+        $sum = 0.0;
+        $weightSum = 0.0;
+        $numeric = false;
+        $absent = null;
+        foreach ($typeIds as $typeId) {
+            $weight = (float) ($weights[$typeId] ?? 0);
+            if ($weight <= 0) {
+                continue;
+            }
+            $row = $chosen[$typeId][$studentId][$subjectId] ?? null;
+            $weightSum += $weight;
+            if ($row !== null && $row['mark'] !== null) {
+                $sum += (float) $row['mark'] * $weight;
+                $numeric = true;
+                continue;
+            }
+            if ($row !== null && strcasecmp((string) $row['grade'], 'AB') === 0) {
+                $absent = $row;
+            }
+        }
+
+        if (! $numeric || $weightSum <= 0) {
+            return $absent ?? $best;
+        }
+
+        return [
+            'mark' => round($sum / $weightSum, 2),
+            'grade' => '',
+            'scheduled' => $best['scheduled'] ?? 0,
+            'examId' => $best['examId'] ?? 0,
         ];
     }
 
@@ -662,16 +851,19 @@ final class ResultsService
     private function cell(ResultsPolicy $policy, int $schoolId, int $standardId, int $subjectId, ?array $choice): ResultCell
     {
         if ($choice === null) {
-            return new ResultCell($subjectId, null, null, null, ResultCell::MISSING);
+            return $this->blankCell($policy, $schoolId, $standardId, $subjectId, ResultCell::MISSING);
         }
         if ($policy->isAbsentGrade($choice['grade'])) {
+            if ($policy->countMissingAsZero) {
+                return $this->blankCell($policy, $schoolId, $standardId, $subjectId, ResultCell::ABSENT);
+            }
             $label = $choice['grade'] === '' ? null : $choice['grade'];
 
             return new ResultCell($subjectId, null, $label, null, ResultCell::ABSENT);
         }
 
         if ($choice['mark'] === null) {
-            return new ResultCell($subjectId, null, null, null, ResultCell::MISSING);
+            return $this->blankCell($policy, $schoolId, $standardId, $subjectId, ResultCell::MISSING);
         }
 
         $mark = $choice['mark'];
@@ -686,20 +878,44 @@ final class ResultsService
     }
 
     /**
+     * A blank stays mark-less so the card can print Missing or ABS.
+     * When the policy counts it, the points are the school's zero band
+     * (F9, 9 points on the default primary scale). Otherwise the points stay empty.
+     */
+    private function blankCell(ResultsPolicy $policy, int $schoolId, int $standardId, int $subjectId, string $status): ResultCell
+    {
+        if (! $policy->countMissingAsZero) {
+            return new ResultCell($subjectId, null, null, null, $status);
+        }
+
+        return new ResultCell(
+            $subjectId,
+            null,
+            $policy->gradingScale->labelFor($schoolId, $standardId, 0),
+            $policy->gradingScale->pointsFor($schoolId, $standardId, 0),
+            $status,
+        );
+    }
+
+    /**
      * @param array<int, ResultCell> $cells
      * @return array{0: ?float, 1: int, 2: ?float, 3: ?int, 4: ?string, 5: ?float, 6: ?float}
      */
-    private function totals(ResultsPolicy $policy, array $cells): array
+    private function totals(ResultsPolicy $policy, array $cells, int $schoolId = 0, int $standardId = 0): array
     {
         $total = 0.0;
         $counted = 0;
         $points = 0;
         $pointsSeen = false;
         foreach ($cells as $cell) {
-            if ($cell->status !== ResultCell::MARKED || $cell->mark === null) {
+            $countedBlank = $policy->countMissingAsZero
+                && ($cell->status === ResultCell::MISSING || $cell->status === ResultCell::ABSENT);
+            if (! $countedBlank && ($cell->status !== ResultCell::MARKED || $cell->mark === null)) {
                 continue;
             }
-            $total += $cell->mark;
+            if (! $countedBlank) {
+                $total += $cell->mark;
+            }
             $counted++;
             if ($cell->points !== null) {
                 $points += $cell->points;

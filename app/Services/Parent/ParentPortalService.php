@@ -14,6 +14,7 @@ use App\Models\StudentAcademic;
 use App\Models\StudentHealthIncident;
 use App\Models\StudentParentLink;
 use App\Models\User;
+use App\Services\ClassStructureService;
 use App\Services\StudentFeeResolver;
 use App\Services\StudentReportCardService;
 use App\Support\AttendanceDays;
@@ -486,6 +487,7 @@ class ParentPortalService
             'student_name' => $name,
             'school_id' => $schoolId > 0 ? $schoolId : null,
             'exam_groups' => [],
+            'registration_number' => trim((string) ($student->registration_number ?? '')),
             'years' => $yearRows,
             'selected_year' => $selected,
             'current_year_id' => $currentId,
@@ -523,6 +525,7 @@ class ParentPortalService
         })->values();
 
         $examGroups = [];
+        $divisionByTerm = [];
         foreach ($exams->groupBy(function (Exam $exam) {
             return implode('|', [
                 (string) ($exam->academic_year_id ?? ''),
@@ -534,11 +537,17 @@ class ParentPortalService
             $subjects = [];
             foreach ($typeExams as $exam) {
                 foreach ($exam->marks as $mark) {
+                    $absent = $mark->isAbsent();
+                    $blank = ! $absent && $mark->marks === null;
+                    $score = ($absent || $blank) ? 0.0 : (float) $mark->marks;
+                    $label = $absent ? 'ABS' : ($blank ? 'Missing' : null);
                     $subjects[] = [
                         'name' => $mark->subject?->name ?? $exam->subject?->name ?? 'Subject',
-                        'score' => (float) ($mark->marks ?? 0),
+                        'score' => $score,
                         'total' => 100,
-                        'grade' => $mark->grade ?? '-',
+                        'grade' => $label !== null ? '—' : ($mark->grade ?? '-'),
+                        'shown' => $label,
+                        'display' => $label ?? (string) (int) round($score),
                     ];
                 }
             }
@@ -549,15 +558,23 @@ class ParentPortalService
                 $first->examType?->name ?? 'Exam',
             ], fn ($part) => $part !== null && $part !== ''));
 
-            $average = $subjects === []
+            $counted = array_values(array_filter($subjects, fn (array $row) => $row['score'] !== null));
+            $average = $counted === []
                 ? 0.0
-                : round(array_sum(array_column($subjects, 'score')) / count($subjects), 1);
+                : round(array_sum(array_column($counted, 'score')) / count($counted), 1);
 
+            $termKey = ((int) ($first->academic_term_id ?? 0)).'|'.((int) ($first->section_id ?? 0));
             $examGroups[] = [
                 'exam_type' => $label !== '' ? $label : 'Exam',
                 'year_id' => $first->academic_year_id ? (int) $first->academic_year_id : null,
                 'subjects' => $subjects,
                 'average' => $average,
+                'division' => $divisionByTerm[$termKey] ??= $this->termDivision(
+                    $schoolId,
+                    (int) ($first->section_id ?? 0),
+                    (int) ($first->academic_term_id ?? 0),
+                    (int) $student->id,
+                ),
             ];
         }
 
@@ -568,6 +585,25 @@ class ParentPortalService
         ];
 
         return $base;
+    }
+
+    /**
+     * The term division from the same table as the progressive card.
+     */
+    private function termDivision(int $schoolId, int $sectionId, int $termId, int $studentId): ?string
+    {
+        if ($sectionId < 1 || $termId < 1) {
+            return null;
+        }
+
+        $sheet = app(\App\Services\Results\ResultsService::class)->sheet(new \App\Services\Results\ResultsQuery(
+            schoolId: $schoolId,
+            sectionId: $sectionId,
+            academicTermId: $termId,
+            studentId: $studentId,
+        ));
+
+        return $sheet->student($studentId)?->division;
     }
 
     /**
@@ -993,7 +1029,7 @@ class ParentPortalService
             ->where('school_id', $schoolId)
             ->where('user_id', $student->id)
             ->when($year, fn ($query) => $query->where('academic_year_id', $year->id))
-            ->with('standardLink')
+            ->with('standardLink.section')
             ->orderByDesc('id')
             ->first();
         $link = $academic?->standardLink;
@@ -1002,13 +1038,14 @@ class ParentPortalService
         }
 
         $reports = app(StudentReportCardService::class);
-        $exam = $reports->resolveReleasedExam($schoolId, $link, $student);
-        if (! $exam || ! $reports->studentHasContributingMark($exam, (int) $student->id)) {
+        $exam = $this->visibleReleasedExam($student, $link);
+        $typeIds = $exam ? $this->releasedExamTypeIds($student, $exam) : [];
+        if (! $exam || $typeIds === []) {
             return ['ok' => false, 'message' => 'No report card has been released yet.'];
         }
 
         try {
-            $pdf = $reports->pdfForStudent($schoolId, $link, $student, null, (int) $exam->academic_term_id);
+            $pdf = $reports->pdfForStudent($schoolId, $link, $student, null, (int) $exam->academic_term_id, $typeIds);
         } catch (\Throwable $e) {
             report($e);
 
@@ -1024,6 +1061,47 @@ class ParentPortalService
             : 'student';
 
         return ['ok' => true, 'pdf' => $pdf, 'filename' => $slug.'_report_card.pdf'];
+    }
+
+    /**
+     * A released sitting this learner can already see. A contributing exam
+     * type is not required. WhatsApp delivery keeps its own check.
+     */
+    private function visibleReleasedExam(User $student, \App\Models\StandardLink $link): ?Exam
+    {
+        $exam = $this->releases->latestReleasedExam($student, (int) $link->section_id);
+        if ($exam !== null || $link->section === null) {
+            return $exam;
+        }
+
+        $base = app(ClassStructureService::class)->resolveBaseSection($link->section);
+        if ((int) $base->id === (int) $link->section_id) {
+            return null;
+        }
+
+        return $this->releases->latestReleasedExam($student, (int) $base->id);
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function releasedExamTypeIds(User $student, Exam $exam): array
+    {
+        $ids = [];
+        foreach ($this->releases->releasedSittings($student) as $sitting) {
+            if ($sitting->schoolId !== (int) $exam->school_id) {
+                continue;
+            }
+            if ($sitting->academicTermId !== (int) $exam->academic_term_id) {
+                continue;
+            }
+            if ($sitting->sectionId !== null && $sitting->sectionId !== (int) $exam->section_id) {
+                continue;
+            }
+            $ids[] = $sitting->examTypeId;
+        }
+
+        return array_values(array_unique($ids));
     }
 
     /**

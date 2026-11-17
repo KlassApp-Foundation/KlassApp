@@ -72,6 +72,9 @@ class AppServiceProvider extends ServiceProvider {
     */
 
     public function boot() {
+        // Report cards: crest from the disk it was saved to, and the head teacher's name (T-129, T-130).
+        \Illuminate\Support\Facades\View::composer('admin.marks.report-templates.*', \App\View\Composers\ReportIdentityComposer::class);
+
         \Illuminate\Support\Facades\Validator::extend('international_phone', function ($attribute, $value) {
             if ($value === null || $value === '') {
                 return true;

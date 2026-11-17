@@ -32,12 +32,12 @@ class ClassReportCardDownload
         $termId = $this->requestedTermId($schoolId);
         $exam = $this->reports->resolveExam($schoolId, $stdLink, $termId);
         if (! $exam) {
-            return back()->with('failmessage', 'No EOT exam found for this class.');
+            return back()->with('failmessage', 'No exam set found for this class.');
         }
 
         $learners = $this->reports->reportLearners($schoolId, $stdLink, $termId);
         if ($learners->isEmpty()) {
-            return back()->with('failmessage', 'No students with marks.');
+            return back()->with('failmessage', 'No learners in this class.');
         }
 
         if ($learners->count() <= StudentReportCardService::CLASS_PDF_DIRECT_MAX) {

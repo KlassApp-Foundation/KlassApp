@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
-use App\Contracts\Results\DivisionRule;
 use App\Contracts\Results\GradingScale;
 use App\Contracts\Results\ReleaseGate;
 use App\Contracts\Results\ReportTemplates;
+use App\Services\Results\ResultCell;
 use App\Services\Results\ResultSheet;
 use App\Services\Results\ResultStudent;
 use App\Services\Results\ResultsPolicy;
@@ -45,8 +45,9 @@ class StudentReportCardService
      * Available report-card templates: key => [label, Blade view].
      */
     public const TEMPLATES = [
-        'formal' => ['label' => 'Formal', 'view' => 'admin.marks.report-templates.formal'],
+        'formal' => ['label' => 'Standard', 'view' => 'admin.marks.report-templates.formal'],
         'warm' => ['label' => 'Warm', 'view' => 'admin.marks.report-templates.warm'],
+        'progressive' => ['label' => 'New look', 'view' => 'admin.marks.report-templates.progressive'],
     ];
 
     /**
@@ -55,15 +56,17 @@ class StudentReportCardService
      */
     public static function midExamControlColumnLabel(Exam $exam): string
     {
+        $name = self::setName($exam);
         if ($exam->scheduled_at) {
-            return strtoupper($exam->scheduled_at->format('M')).' MID';
+            return strtoupper($exam->scheduled_at->format('M')).' '.$name;
         }
 
-        return 'MID';
+        return $name;
     }
 
     /**
-     * MID exam row label in monthly results tables (full month name).
+     * Row label in the stand-alone sets table. A dated sitting keeps the
+     * month name. A sitting with no date uses the school's own set name.
      */
     public static function midExamMonthRowLabel(Exam $exam): string
     {
@@ -71,7 +74,27 @@ class StudentReportCardService
             return strtoupper($exam->scheduled_at->format('F'));
         }
 
-        return 'MID TERM';
+        return self::setName($exam);
+    }
+
+    private static function setName(Exam $exam): string
+    {
+        if ($exam->relationLoaded('examType') && $exam->examType !== null) {
+            $name = trim((string) ($exam->examType->name ?? ''));
+            if ($name !== '') {
+                return $name;
+            }
+        }
+
+        if ($exam->exists) {
+            $exam->loadMissing('examType');
+            $name = trim((string) ($exam->examType->name ?? ''));
+            if ($name !== '') {
+                return $name;
+            }
+        }
+
+        return 'Exam set';
     }
 
     /**
@@ -187,14 +210,47 @@ class StudentReportCardService
 
     private function examOnSection(int $schoolId, int $sectionId, int $standardId, int $academicTermId): ?Exam
     {
-        return Exam::query()
+        $rows = Exam::query()
             ->where('school_id', $schoolId)
             ->where('section_id', $sectionId)
             ->where('standard_id', $standardId)
             ->where('academic_term_id', $academicTermId)
-            ->whereHas('examType', fn ($q) => $q->where('contributes_to_report_total', 1))
+            ->whereNull('deleted_at')
+            ->with('examType')
             ->orderBy('id')
-            ->first();
+            ->get();
+
+        $contributing = $rows->first(fn ($row) => $row->examType && (bool) $row->examType->contributes_to_report_total);
+
+        return $contributing ?? $rows->first();
+    }
+
+    /**
+     * Exam-set names this class's report card prints for the current term.
+     * The school's own exam type names, in the card's date order. A stream
+     * with no sitting of its own uses the base class, the same way the card does.
+     *
+     * @return list<string>
+     */
+    public function examSetNames(int $schoolId, StandardLink $stdLink): array
+    {
+        $anchor = $this->resolveExam($schoolId, $stdLink);
+        if ($anchor === null) {
+            return [];
+        }
+
+        return app(StudentReportHelperService::class)
+            ->exam($schoolId, $anchor)
+            ->filter(fn ($exam) => $this->typeIncluded($schoolId, $exam))
+            ->sortBy(fn ($exam): array => [
+                $exam->scheduled_at?->getTimestamp() ?? PHP_INT_MAX,
+                (int) $exam->id,
+            ])
+            ->map(fn ($exam): string => trim((string) ($exam->examType?->name ?? '')))
+            ->filter(fn (string $name): bool => $name !== '')
+            ->unique()
+            ->values()
+            ->all();
     }
 
     /**
@@ -219,9 +275,9 @@ class StudentReportCardService
             ->pluck('student_id');
     }
 
-    public function computePositionMap(Exam $exam, int $schoolId): array
+    public function computePositionMap(Exam $exam, int $schoolId, ?array $onlyExamTypeIds = null): array
     {
-        $sheet = $this->classSheet($schoolId, (int) $exam->section_id, (int) $exam->academic_term_id, (int) $exam->standard_id);
+        $sheet = $this->classSheet($schoolId, (int) $exam->section_id, (int) $exam->academic_term_id, (int) $exam->standard_id, null, $onlyExamTypeIds);
         if ($sheet === null) {
             return [];
         }
@@ -240,24 +296,38 @@ class StudentReportCardService
      * Build a single student's report PDF using the same inputs as the admin
      * preview/download routes. Pass null $templateKey to inherit the school setting.
      *
-     * @throws \RuntimeException when no contributing exam exists for the class
+     * @throws \RuntimeException when the class has no exam set in the term
      */
     public function pdfForStudent(
         int $schoolId,
         StandardLink $stdLink,
         User $learner,
         ?string $templateKey = null,
-        ?int $academicTermId = null
+        ?int $academicTermId = null,
+        ?array $onlyExamTypeIds = null,
     ): string {
         $exam = $this->resolveExam($schoolId, $stdLink, $academicTermId);
+        if ($exam && $onlyExamTypeIds !== null && ! in_array((int) $exam->exam_type_id, array_map(intval(...), $onlyExamTypeIds), true)) {
+            $replacement = Exam::query()
+                ->where('school_id', $schoolId)
+                ->where('section_id', (int) $exam->section_id)
+                ->where('academic_term_id', (int) $exam->academic_term_id)
+                ->whereIn('exam_type_id', $onlyExamTypeIds)
+                ->whereNull('deleted_at')
+                ->orderBy('id')
+                ->first();
+            if ($replacement !== null) {
+                $exam = $replacement;
+            }
+        }
         if (! $exam) {
-            throw new \RuntimeException('No EOT exam found for this class.');
+            throw new \RuntimeException('No exam set found for this class.');
         }
 
         $allStudentIds = $this->studentIds($exam);
         $helper = app(StudentReportHelperService::class);
         $svc = new ReportCardCommentService;
-        $positionMap = $this->computePositionMap($exam, $schoolId);
+        $positionMap = $this->computePositionMap($exam, $schoolId, $onlyExamTypeIds);
         $myPos = $positionMap[$learner->id] ?? 0;
 
         return $this->generatePdf(
@@ -269,52 +339,70 @@ class StudentReportCardService
             $svc,
             $allStudentIds->count(),
             $myPos,
-            $templateKey
+            $templateKey,
+            false,
+            false,
+            $onlyExamTypeIds,
         );
     }
 
     /**
-     * Active students with a mark on this class's contributing exam.
-     * Same set as the class report-card page. Ordered by name, then id.
+     * Active learners enrolled in this class. A missing mark in one subject
+     * does not drop the learner: that cell prints Missing and counts as 0.
+     * Ordered by name, then id.
      *
      * @return Collection<int, User>
      */
     public function reportLearners(int $schoolId, StandardLink $stdLink, ?int $academicTermId = null): Collection
     {
         $exam = $this->resolveExam($schoolId, $stdLink, $academicTermId);
-        if (! $exam) {
+        if ($exam === null) {
             return collect();
         }
 
+        $enrolled = \App\Models\StudentAcademic::query()
+            ->where('school_id', $schoolId)
+            ->where('standardLink_id', $stdLink->id)
+            ->whereNull('deleted_at')
+            ->pluck('user_id');
+
+        // An exam on the class holds every stream's marks. A stream whose
+        // section is not that exam's section is limited to its own learners.
+        // A learner enrolled here with no mark on the pinned exam still gets
+        // a card: the missing subject prints Missing and counts as 0.
         $ids = $this->studentIds($exam);
-        if ($ids->isEmpty()) {
-            return collect();
+        if ((int) $exam->section_id !== (int) $stdLink->section_id) {
+            $ids = $ids->intersect($enrolled);
         }
+        $ids = $ids->merge($enrolled)->unique()->values();
 
         return User::query()
             ->whereIn('id', $ids)
             ->where('school_id', $schoolId)
             ->where('usergroup_id', 6)
             ->where('status', 'active')
-            // An exam on the class (base section) holds both streams' marks; a
-            // stream's card set is the students enrolled in that stream.
-            ->when((int) $exam->section_id !== (int) $stdLink->section_id, fn ($query) => $query->whereIn(
-                'id',
-                \App\Models\StudentAcademic::query()
-                    ->where('school_id', $schoolId)
-                    ->where('standardLink_id', $stdLink->id)
-                    ->whereNull('deleted_at')
-                    ->select('user_id')
-            ))
             ->orderBy('name')
             ->orderBy('id')
             ->get();
     }
 
     /**
-     * One PDF, one report card per student. Each card is pdfForStudent(),
-     * the same view and data as the single-student download, including that
-     * student's own class and stream fees.
+     * While a class PDF is being built, each card is rendered to HTML and the
+     * class sheet is built once. The finished file is one Dompdf document, so
+     * the fonts are embedded once for the class instead of once per page.
+     */
+    private bool $collectingClassCards = false;
+
+    /** @var list<string> */
+    private array $classCardHtml = [];
+
+    /** @var array<string, ResultSheet|null>|null */
+    private ?array $classSheetCache = null;
+
+    /**
+     * One PDF, one report card per student. Each card uses the same view and
+     * data as the single-student download, including that student's own class
+     * and stream fees. The pages share one font embed.
      *
      * @param  Collection<int, User>  $learners
      */
@@ -324,12 +412,68 @@ class StudentReportCardService
         Collection $learners,
         ?int $academicTermId = null
     ): string {
-        $merger = new \iio\libmergepdf\Merger;
-        foreach ($learners as $learner) {
-            $merger->addRaw($this->pdfForStudent($schoolId, $stdLink, $learner, null, $academicTermId));
+        if ($learners->isEmpty()) {
+            throw new \RuntimeException('No learners in this class.');
         }
 
-        return $merger->merge();
+        $this->collectingClassCards = true;
+        $this->classCardHtml = [];
+        $this->classSheetCache = [];
+        try {
+            foreach ($learners as $learner) {
+                $this->pdfForStudent($schoolId, $stdLink, $learner, null, $academicTermId);
+            }
+            $cards = $this->classCardHtml;
+        } finally {
+            $this->collectingClassCards = false;
+            $this->classCardHtml = [];
+            $this->classSheetCache = null;
+        }
+
+        return $this->pdfForCards($cards);
+    }
+
+    /**
+     * @param  list<string>  $documents
+     */
+    private function pdfForCards(array $documents): string
+    {
+        $html = count($documents) === 1
+            ? $documents[0]
+            : $this->classDocument($documents);
+        unset($documents);
+
+        $pdf = Pdf::loadHTML($html);
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->output();
+    }
+
+    /**
+     * One HTML document. Each card keeps the markup the single-student view
+     * rendered. A later card starts on the next page. The card templates
+     * themselves are unchanged.
+     *
+     * @param  list<string>  $documents
+     */
+    private function classDocument(array $documents): string
+    {
+        $head = '';
+        if (preg_match('/<head\b[^>]*>(.*)<\/head>/is', $documents[0], $match) === 1) {
+            $head = $match[1];
+        }
+
+        $sheets = '';
+        foreach ($documents as $index => $document) {
+            $body = $document;
+            if (preg_match('/<body\b[^>]*>(.*)<\/body>/is', $document, $match) === 1) {
+                $body = $match[1];
+            }
+            $break = $index === 0 ? '' : 'page-break-before:always;';
+            $sheets .= '<div class="report-card-sheet" style="position:relative;'.$break.'">'.$body.'</div>';
+        }
+
+        return '<!DOCTYPE html><html lang="en"><head>'.$head.'</head><body>'.$sheets.'</body></html>';
     }
 
     public function classPdfFilename(StandardLink $stdLink): string
@@ -409,7 +553,10 @@ class StudentReportCardService
         ReportCardCommentService $svc,
         int $totalLearners,
         int $myPos = 0,
-        ?string $templateKey = null
+        ?string $templateKey = null,
+        bool $sample = false,
+        bool $printBlackAndWhite = false,
+        ?array $onlyExamTypeIds = null,
     ): string {
         $learner = User::find($sid);
         $learner = $helper->learner($schoolId, $learner, $exam);
@@ -417,17 +564,38 @@ class StudentReportCardService
         $subjects = \App\Models\Subject::sortByReportOrder($subjects);
         $exams = $helper->exam($schoolId, $exam);
         $exams = $exams->filter(fn ($e) => $this->typeIncluded($schoolId, $e));
+        if ($onlyExamTypeIds !== null) {
+            $allowed = array_map(intval(...), $onlyExamTypeIds);
+            $exams = $exams->filter(fn ($row) => in_array((int) $row->exam_type_id, $allowed, true))->values();
+        }
+        $countMissingAsZero = app(\App\Services\Reports\ReportScoring::class)->countsMissingAsZero(
+            $schoolId,
+            (int) $stdLink->section_id,
+            $exam->academic_term_id ? (int) $exam->academic_term_id : null,
+        );
+        $exams = $this->examsOnStartedSets($schoolId, $exams, $countMissingAsZero);
 
-        $midExams = $exams->filter(fn ($e) => $e->examType->code === 'MID')->sortBy('scheduled_at')->values();
-        $eotExams = $exams->filter(fn ($e) => $e->examType->code !== 'MID')->values();
-        $allExamColumns = $midExams->merge($eotExams);
+        $school = School::find($schoolId);
+        $preferences = is_array($school?->exam_type_preferences) ? $school->exam_type_preferences : null;
+        $contribution = app(\App\Services\Results\ExamTypeContribution::class);
+        $contributing = $exams
+            ->filter(fn ($row) => $row->examType && $contribution->contributes($row->examType, $preferences))
+            ->sortBy(fn ($row) => (int) $row->exam_type_id)
+            ->values();
+        $allExamColumns = $exams->sortBy(fn ($row) => [
+            $row->scheduled_at?->getTimestamp() ?? PHP_INT_MAX,
+            (int) $row->id,
+        ])->values();
 
         $controls = ['SUBJECT', 'OUT OF'];
-        foreach ($midExams as $ex) {
-            $controls[] = self::midExamControlColumnLabel($ex);
-        }
-        foreach ($eotExams as $ex) {
-            $controls[] = 'EOT';
+        $namedTypes = [];
+        foreach ($allExamColumns as $row) {
+            $typeId = (int) $row->exam_type_id;
+            if ($typeId < 1 || isset($namedTypes[$typeId]) || $row->examType === null) {
+                continue;
+            }
+            $namedTypes[$typeId] = true;
+            $controls[] = (string) $row->examType->name;
         }
         $controls = array_merge($controls, ['DIVISION', 'TEACHER', 'REMARK']);
 
@@ -444,12 +612,26 @@ class StudentReportCardService
             $showAgg = ! $isNursery && ! in_array($standardName, ['primary_lower'], true);
         }
 
-        $gradingSystem = \App\Models\Academics\SchoolGradingSystem::where('school_id', $schoolId)
-            ->where('standard_id', $stdLink->standard_id)
-            ->orderBy('min_score', 'desc')
-            ->get();
+        $appliedRules = app(\App\Services\Reports\ProgressiveRulesStamp::class)->applied(
+            $schoolId,
+            (int) $stdLink->section_id,
+            $exam->academic_term_id ? (int) $exam->academic_term_id : null,
+            (int) $stdLink->standard_id,
+        );
+        $gradingSystem = $appliedRules['mode'] === \App\Services\Reports\ProgressiveRulesStamp::MODE_STORED
+            ? $this->storedGradingRows($schoolId, (int) $stdLink->standard_id, $appliedRules['rules']['bands'] ?? [])
+            : \App\Models\Academics\SchoolGradingSystem::where('school_id', $schoolId)
+                ->where('standard_id', $stdLink->standard_id)
+                ->orderBy('min_score', 'desc')
+                ->get();
 
-        $division = app(DivisionRule::class);
+        $policy = $this->resultsPolicy(
+            $schoolId,
+            (int) $stdLink->standard_id,
+            (int) $stdLink->section_id,
+            $exam->academic_term_id ? (int) $exam->academic_term_id : 0,
+        );
+        $division = $policy->divisionRule;
         $divisionLabel = static function (?array $points) use ($division): string {
             if ($points === null) {
                 return '-';
@@ -467,48 +649,6 @@ class StudentReportCardService
         // pool unrelated classes that reuse the same label.
         $streamName = $learner->studentAcademicLatest?->standardLink?->stream ?? null;
 
-        $midStats = [];
-        foreach ($midExams as $midExam) {
-            $nonNullMarks = $learner->marks->filter(fn ($m) => $m->exam_id === $midExam->id && ! $m->isAbsent() && $m->marks !== null);
-            $total = $nonNullMarks->isNotEmpty() ? (int) round($nonNullMarks->sum('marks')) : null;
-            $points = $this->sumPoints(
-                $this->chosenMarksBySubject($learner->marks, collect([$midExam])),
-                $schoolId,
-                (int) $stdLink->standard_id
-            );
-
-            // Monthly position is class-wide: rank against every student who
-            // sat this section's MID exam for the month. A stream is a subset
-            // of the class, so it must never be the monthly pool, and stream
-            // labels are reused across grade levels, so pooling by stream
-            // would inflate the denominator (e.g. 236 across P.1-P.3 instead
-            // of this class's 96).
-            $poolExamIds = collect([$midExam->id]);
-
-            $studentIds = \App\Models\Academics\Marks::whereIn('exam_id', $poolExamIds)->where('absent', false)->whereNotNull('marks')->distinct('student_id')->pluck('student_id')->all();
-            $ranked = [];
-            foreach ($studentIds as $rankedSid) {
-                $ranked[$rankedSid] = (int) round(\App\Models\Academics\Marks::where('student_id', $rankedSid)->whereIn('exam_id', $poolExamIds)->where('absent', false)->whereNotNull('marks')->sum('marks'));
-            }
-            arsort($ranked);
-            $pos = 0;
-            foreach (array_keys($ranked) as $i => $rankedSid) {
-                if ($rankedSid === $learner->id) {
-                    $pos = $i + 1;
-                    break;
-                }
-            }
-            $midStats[$midExam->id] = [
-                'total' => $total,
-                'pos' => $pos,
-                'of' => count($ranked),
-                'division' => $divisionLabel($points),
-            ];
-        }
-
-        $contributing = $eotExams
-            ->filter(fn ($row) => (int) $row->examType->contributes_to_report_total === 1)
-            ->values();
         $eotMarkBySubject = $this->chosenMarksBySubject($learner->marks, $contributing);
         $eotPoints = $this->sumPoints($eotMarkBySubject, $schoolId, (int) $stdLink->standard_id);
         $eotDivision = $divisionLabel($eotPoints);
@@ -559,9 +699,10 @@ class StudentReportCardService
 
         $total = array_sum(array_map(fn ($mark) => (float) $mark->marks, $eotMarkBySubject));
         $midSittings = [];
-        $sheet = $this->classSheet($schoolId, (int) $stdLink->section_id, (int) $exam->academic_term_id, (int) $stdLink->standard_id, (int) $learner->id);
+        $sheet = $this->classSheet($schoolId, (int) $stdLink->section_id, (int) $exam->academic_term_id, (int) $stdLink->standard_id, (int) $learner->id, $onlyExamTypeIds);
         $resultRow = $sheet?->student((int) $learner->id);
-        if ($resultRow !== null) {
+        $withheldSets = $sheet instanceof ResultSheet ? $sheet->unreleasedWeightedSets : [];
+        if ($resultRow !== null && $withheldSets === []) {
             $total = (float) ($resultRow->total ?? 0);
             $eotPoints = $resultRow->aggregate === null
                 ? null
@@ -571,9 +712,48 @@ class StudentReportCardService
             $totalLearners = $resultRow->classOutOf;
             $streamPos = $resultRow->streamPosition;
             $streamTotal = $resultRow->streamOutOf > 0 ? $resultRow->streamOutOf : null;
-            $midSittings = $this->midSittings($sheet, (int) $learner->id, $midExams);
+            $midSittings = $this->sittingColumns($sheet, (int) $learner->id, false);
         }
+        if ($withheldSets !== []) {
+            $total = null;
+            $eotPoints = null;
+            if ($sheet instanceof ResultSheet) {
+                $midSittings = $this->sittingColumns($sheet, (int) $learner->id, false);
+            }
+        }
+        $monthlySets = $midSittings;
+        $termSets = $sheet instanceof ResultSheet
+            ? $this->sittingColumns($sheet, (int) $learner->id, true)
+            : [];
+        $setColumns = $sheet instanceof ResultSheet
+            ? $this->sittingColumns($sheet, (int) $learner->id, null)
+            : [];
+        $standardId = (int) ($standard->id ?? $stdLink->standard_id);
+        $progressiveRules = app(\App\Services\Reports\ProgressiveRules::class);
+        if ($appliedRules['mode'] === \App\Services\Reports\ProgressiveRulesStamp::MODE_STORED
+            && is_array($appliedRules['rules']['division_ranges'] ?? null)
+            && $appliedRules['rules']['division_ranges'] !== []) {
+            $divisionRanges = $appliedRules['rules']['division_ranges'];
+        } elseif ($appliedRules['mode'] === \App\Services\Reports\ProgressiveRulesStamp::MODE_HISTORICAL) {
+            $divisionRanges = \App\Services\Reports\ProgressiveRules::defaultDivisionRanges();
+        } else {
+            $divisionRanges = $progressiveRules->rangesFor($schoolId, $standardId);
+            if ($divisionRanges === []) {
+                $divisionRanges = \App\Services\Reports\ProgressiveRules::defaultDivisionRanges();
+            }
+        }
+        $rankingBasis = $policy->rankingBasis;
+        $incompleteSets = $sheet instanceof ResultSheet
+            ? $this->incompleteSetNames($sheet, (int) $learner->id)
+            : [];
+        $noCombinedMark = $setColumns !== [] && $termSets === [];
+        $withheldSentence = app(ResultsService::class)->withheldSentence($withheldSets);
+        $showDivision = $showAgg && ! $isALevel && $eotDivision !== '-';
+        $eotCells = $resultRow?->cells ?? [];
         $examinedSubjectCount = $subjects->filter(fn ($s) => $learner->marks->where('subject_id', $s->id)->isNotEmpty())->count();
+        if ($countMissingAsZero && $resultRow !== null && $resultRow->subjectsCounted > $examinedSubjectCount) {
+            $examinedSubjectCount = $resultRow->subjectsCounted;
+        }
         $grade = $helper->grade($learner, $exam);
         $teacherComment = $standard
             ? $svc->commentFor((int) $total, $standard->name, $learner->id, $exam->id)
@@ -582,12 +762,54 @@ class StudentReportCardService
             ? $svc->headTeacherCommentFor((int) $total, $standard->name, $learner->id, $exam->id, $teacherComment)
             : '';
 
-        $school = School::find($schoolId);
         $view = app(ReportTemplates::class)->resolve($templateKey, $school?->report_template);
+        if (($view['view'] ?? '') === 'admin.marks.report-templates.progressive') {
+            $fontDir = storage_path('fonts');
+            if (! is_dir($fontDir)) {
+                mkdir($fontDir, 0755, true);
+            }
+        }
+        $composition = app(\App\Services\ReportCards\EndOfTermCompositionLine::class);
+        $anchorType = $exam->examType;
+        $countsOnCombined = $anchorType !== null && $composition->countsToward(
+            $anchorType,
+            $composition->compositionFor($schoolId, (int) $exam->id),
+        );
+        $compositionLine = $composition->lineFor($schoolId, $countsOnCombined, (int) $exam->id);
+        $reportSectionIds = array_values(array_unique(array_filter([
+            (int) ($stdLink->section_id ?? 0),
+            (int) ($exam->section_id ?? 0),
+        ])));
+        foreach (Section::query()->where('school_id', $schoolId)->whereIn('id', $reportSectionIds === [] ? [0] : $reportSectionIds)->get() as $reportSection) {
+            $reportSectionIds[] = (int) app(\App\Services\ClassStructureService::class)->resolveBaseSection($reportSection)->id;
+        }
+        $ownReports = app(\App\Services\ReportCards\EndOfTermCompositionLine::class)->ownReports(
+            $schoolId,
+            $reportSectionIds,
+            (int) $exam->academic_term_id,
+        );
+        $startedTypeIds = Exam::query()
+            ->where('school_id', $schoolId)
+            ->whereIn('section_id', $reportSectionIds === [] ? [0] : $reportSectionIds)
+            ->where('academic_term_id', (int) $exam->academic_term_id)
+            ->whereNull('deleted_at')
+            ->whereIn('id', Marks::query()
+                ->where('school_id', $schoolId)
+                ->where(function ($query): void {
+                    $query->whereNotNull('marks')->orWhere('absent', true);
+                })
+                ->select('exam_id'))
+            ->pluck('exam_type_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+        $ownReports = array_values(array_filter(
+            $ownReports,
+            fn (array $own): bool => in_array((int) ($own['id'] ?? 0), $startedTypeIds, true),
+        ));
         $logoPath = $this->resolveLogoPath($schoolId);
         $schoolIdentity = $this->resolveSchoolIdentity($school);
 
-        $pdf = Pdf::loadView($view['view'], [
+        $data = [
             'subjects' => $subjects, 'learner' => $learner, 'controls' => $controls,
             'class_name' => Section::find($stdLink->section_id)->name,
             'grading_system' => $gradingSystem,
@@ -600,11 +822,11 @@ class StudentReportCardService
                 : collect(),
             'nextTerm' => AcademicTerm::where('school_id', $schoolId)->where('starts_on', '>', now())->first(),
             'totalLearners' => $totalLearners, 'myPos' => $myPos,
-            'allExamColumns' => $allExamColumns, 'midExams' => $midExams, 'eotExams' => $eotExams,
-            'midCount' => $midExams->count(), 'eotCount' => $eotExams->count(),
+            'allExamColumns' => $allExamColumns,
+            'midCount' => count($monthlySets), 'eotCount' => count($termSets),
             'stdLink' => $stdLink,
             'total' => $total, 'grade' => $grade, 'examinedSubjectCount' => $examinedSubjectCount,
-            'eotAgg' => $eotPoints['points'] ?? ($grade['agg'] ?? null),
+            'eotAgg' => $withheldSets !== [] ? null : ($eotPoints['points'] ?? ($grade['agg'] ?? null)),
             'school' => $school,
             'schoolIdentity' => $schoolIdentity,
             'isNursery' => $isNursery,
@@ -621,7 +843,6 @@ class StudentReportCardService
             'teacherComment' => $teacherComment,
             'headTeacherComment' => $headTeacherComment,
             'showAgg' => $showAgg,
-            'midStats' => $midStats,
             'eotDivision' => $eotDivision,
             'eotMarkBySubject' => $eotMarkBySubject,
             'streamName' => $streamName,
@@ -629,72 +850,207 @@ class StudentReportCardService
             'streamTotal' => $streamTotal,
             'midSittings' => $midSittings,
             'logoPath' => $logoPath,
-        ]);
+            'countMissingAsZero' => $countMissingAsZero,
+            'eotCells' => $eotCells,
+            'monthlySets' => $monthlySets,
+            'termSets' => $termSets,
+            'setColumns' => $setColumns,
+            'divisionRanges' => $divisionRanges,
+            'rankingBasis' => $rankingBasis,
+            'incompleteSets' => $incompleteSets,
+            'noCombinedMark' => $noCombinedMark,
+            'withheldSets' => $withheldSets,
+            'withheldSentence' => $withheldSentence,
+            'sampleForApproval' => $sample,
+            'printBlackAndWhite' => $printBlackAndWhite,
+            'compositionLine' => $compositionLine,
+            'ownReports' => $ownReports,
+        ];
+        if ($this->collectingClassCards) {
+            $this->classCardHtml[] = view($view['view'], $data)->render();
+
+            return '';
+        }
+
+        $pdf = Pdf::loadView($view['view'], $data);
         $pdf->setPaper('a4', 'portrait');
 
         return $pdf->output();
     }
 
-    private function classSheet(int $schoolId, int $sectionId, int $academicTermId, int $standardId, ?int $studentId = null): ?ResultSheet
+    /**
+     * Counting sets where this learner has a missing mark or an absence.
+     *
+     * @return list<string>
+     */
+    public function incompleteSetNames(ResultSheet $sheet, int $studentId): array
+    {
+        $names = [];
+        foreach ($sheet->sittings as $sitting) {
+            if (! $sitting->contributesToReport) {
+                continue;
+            }
+            $student = $sitting->student($studentId);
+            if ($student === null) {
+                continue;
+            }
+            foreach ($student->cells as $cell) {
+                if ($cell->status === ResultCell::MISSING || $cell->status === ResultCell::ABSENT) {
+                    $names[] = $sitting->name;
+                    break;
+                }
+            }
+        }
+
+        return $names;
+    }
+
+    /**
+     * Counting-set names, keyed by learner id, for the class report list.
+     *
+     * @return array<int, list<string>>
+     */
+    public function incompleteSetsForClass(int $schoolId, StandardLink $stdLink, ?int $academicTermId = null): array
+    {
+        $exam = $this->resolveExam($schoolId, $stdLink, $academicTermId);
+        if ($exam === null) {
+            return [];
+        }
+        $sheet = $this->classSheet(
+            $schoolId,
+            (int) $stdLink->section_id,
+            (int) $exam->academic_term_id,
+            (int) $stdLink->standard_id,
+        );
+        if (! $sheet instanceof ResultSheet) {
+            return [];
+        }
+        $out = [];
+        foreach ($sheet->students as $student) {
+            $names = $this->incompleteSetNames($sheet, $student->studentId);
+            if ($names !== []) {
+                $out[$student->studentId] = $names;
+            }
+        }
+
+        return $out;
+    }
+
+    private function classSheet(int $schoolId, int $sectionId, int $academicTermId, int $standardId, ?int $studentId = null, ?array $onlyExamTypeIds = null): ?ResultSheet
     {
         if ($sectionId < 1 || $academicTermId < 1) {
             return null;
         }
 
-        return app(ResultsService::class)->sheet(
+        $cacheKey = null;
+        if ($this->classSheetCache !== null) {
+            $cacheKey = $schoolId.'|'.$sectionId.'|'.$academicTermId.'|'.$standardId.'|'.json_encode($onlyExamTypeIds);
+            if (array_key_exists($cacheKey, $this->classSheetCache)) {
+                return $this->classSheetCache[$cacheKey];
+            }
+            $studentId = null;
+        }
+
+        $sheet = app(ResultsService::class)->sheet(
             new ResultsQuery(
                 schoolId: $schoolId,
                 sectionId: $sectionId,
                 academicTermId: $academicTermId,
                 studentId: $studentId,
+                examTypeIds: $onlyExamTypeIds,
             ),
-            $this->resultsPolicy($schoolId, $standardId),
+            $this->resultsPolicy($schoolId, $standardId, $sectionId, $academicTermId),
         );
+        if ($cacheKey !== null) {
+            $this->classSheetCache[$cacheKey] = $sheet;
+        }
+
+        return $sheet;
     }
 
     /**
      * Same basis the class list already used: points when the school has
      * them, otherwise the mark total. A package replaces the scale and the
      * division rule. This choice does not add a curriculum.
+     *
+     * An unreleased card counts a blank as zero. A release stamped with the
+     * older rule keeps that card on the older maths.
      */
-    private function resultsPolicy(int $schoolId, int $standardId): ResultsPolicy
+    private function resultsPolicy(int $schoolId, int $standardId, int $sectionId, int $academicTermId): ResultsPolicy
     {
-        $usesPoints = \App\Models\Academics\SchoolGradingSystem::query()
-            ->where('school_id', $schoolId)
-            ->where('standard_id', $standardId)
-            ->get()
-            ->contains(fn ($row) => \App\Helpers\GradingHelper::effectivePoints($row) !== null);
+        $scoring = app(\App\Services\Reports\ReportScoring::class);
 
-        return new ResultsPolicy(
-            app(GradingScale::class),
-            app(DivisionRule::class),
-            $usesPoints ? ResultsPolicy::BASIS_AGGREGATE : ResultsPolicy::BASIS_TOTAL,
-            higherIsBetter: ! $usesPoints,
-        );
+        return $scoring->policyForTerm($schoolId, $standardId, $sectionId, $academicTermId);
     }
 
     /**
-     * One mid-term row per sitting, with every subject in that sitting.
+     * Grade rows copied onto the release, so the printed grade uses the
+     * bands from release day.
      *
-     * @param  Collection<int, Exam>  $midExams
-     * @return list<array{label: string, cells: array<int, \App\Services\Results\ResultCell>, total: ?float, pos: ?int, of: int, division: string}>
+     * @param  list<array<string, mixed>>  $bands
+     * @return \Illuminate\Support\Collection<int, \App\Models\Academics\SchoolGradingSystem>
      */
-    private function midSittings(ResultSheet $sheet, int $studentId, Collection $midExams): array
+    private function storedGradingRows(int $schoolId, int $standardId, array $bands): \Illuminate\Support\Collection
+    {
+        return collect($bands)->map(function (array $band) use ($schoolId, $standardId) {
+            return new \App\Models\Academics\SchoolGradingSystem([
+                'school_id' => $schoolId,
+                'standard_id' => $standardId,
+                'grade' => $band['grade'] ?? '',
+                'points' => $band['points'] ?? null,
+                'min_score' => $band['min_score'] ?? null,
+                'max_score' => $band['max_score'] ?? null,
+                'remark' => $band['remark'] ?? null,
+            ]);
+        });
+    }
+
+    /**
+     * Drop an exam set that nobody in the class has a mark or an absence for.
+     * A subject inside a set that has started stays, so its blank can show.
+     *
+     * @param  Collection<int, Exam>  $exams
+     * @return Collection<int, Exam>
+     */
+    private function examsOnStartedSets(int $schoolId, Collection $exams, bool $countMissingAsZero): Collection
+    {
+        if (! $countMissingAsZero || $exams->isEmpty()) {
+            return $exams;
+        }
+
+        $marks = Marks::query()
+            ->where('school_id', $schoolId)
+            ->whereIn('exam_id', $exams->pluck('id'))
+            ->get();
+        $active = \App\Services\Results\CountedExamTypes::typeIds($exams, $marks);
+
+        return $exams
+            ->filter(fn ($row) => isset($active[(int) $row->exam_type_id]))
+            ->values();
+    }
+
+    /**
+     * One column per exam set, in the sheet's date order.
+     * The heading is the set's own name.
+     *
+     * @return list<array{label: string, cells: array<int, \App\Services\Results\ResultCell>, total: ?float, aggregate: ?int, pos: ?int, of: int, division: string}>
+     */
+    private function sittingColumns(ResultSheet $sheet, int $studentId, ?bool $contributing): array
     {
         $rows = [];
         foreach ($sheet->sittings as $sitting) {
-            if ($sitting->contributesToReport) {
+            if ($contributing !== null && $sitting->contributesToReport !== $contributing) {
                 continue;
             }
             $student = $sitting->student($studentId);
             if (! $student instanceof ResultStudent) {
                 continue;
             }
-            $sample = $midExams->first(fn ($exam) => (int) $exam->exam_type_id === $sitting->examTypeId);
             $rows[] = [
-                'label' => $sample ? self::midExamMonthRowLabel($sample) : $sitting->name,
+                'label' => $sitting->name,
                 'cells' => $student->cells,
                 'total' => $student->total,
+                'aggregate' => $student->aggregate,
                 'pos' => $student->classPosition,
                 'of' => $student->classOutOf,
                 'division' => $student->division ?? '-',
@@ -728,6 +1084,47 @@ class StudentReportCardService
         }
 
         return $chosen;
+    }
+
+    /**
+     * Marks the card prints. A numeric mark is the chosen row. An absence
+     * prints ABS. A subject on this report with no mark prints Missing.
+     * The total comes from the results sheet, which counts both as 0.
+     *
+     * @param  array<int, Marks>  $chosen
+     * @param  Collection<int, Marks>  $marks
+     * @param  Collection<int, Exam>  $exams
+     * @return array<int, Marks>
+     */
+    private function displayMarksBySubject(array $chosen, Collection $marks, Collection $exams): array
+    {
+        $byId = $exams->keyBy('id');
+        $display = $chosen;
+        foreach ($marks as $mark) {
+            if (! $byId->has($mark->exam_id) || ($mark->marks !== null && ! $mark->isAbsent())) {
+                continue;
+            }
+            $subjectId = (int) $mark->subject_id;
+            if (! isset($display[$subjectId])) {
+                $display[$subjectId] = $mark;
+            }
+        }
+
+        foreach ($exams as $exam) {
+            $subjectId = (int) $exam->subject_id;
+            if ($subjectId < 1 || isset($display[$subjectId])) {
+                continue;
+            }
+            $display[$subjectId] = new Marks([
+                'subject_id' => $subjectId,
+                'exam_id' => (int) $exam->id,
+                'school_id' => (int) $exam->school_id,
+                'marks' => null,
+                'absent' => false,
+            ]);
+        }
+
+        return $display;
     }
 
     private function markIsLater(Marks $candidate, Marks $current, Collection $exams): bool

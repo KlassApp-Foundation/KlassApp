@@ -138,11 +138,12 @@ class MarksFollowUpTest extends TestCase
         $this->assertEquals(80.0, $rows[$this->amina->id]->average);
         $this->assertSame('1', $rows[$this->amina->id]->division);
         $this->assertSame(1, $rows[$this->amina->id]->classPosition);
-        $this->assertSame(1, $rows[$this->amina->id]->classOutOf);
-        $this->assertNull($rows[$this->brian->id]->total);
-        $this->assertNull($rows[$this->brian->id]->average);
-        $this->assertNull($rows[$this->brian->id]->division);
-        $this->assertNull($rows[$this->brian->id]->classPosition);
+        $this->assertSame(2, $rows[$this->amina->id]->classOutOf);
+        $this->assertEquals(0.0, $rows[$this->brian->id]->total);
+        $this->assertEquals(0.0, $rows[$this->brian->id]->average);
+        $this->assertSame('1', $rows[$this->brian->id]->division);
+        $this->assertSame(1, $rows[$this->brian->id]->classPosition);
+        $this->assertSame(2, $rows[$this->brian->id]->classOutOf);
         $this->assertSame(ResultCell::ABSENT, $rows[$this->brian->id]->cell((int) $this->subject->id)->status);
         $summary = collect($sheet->summary->subjects)->firstWhere('subjectId', (int) $this->subject->id);
         $this->assertEquals(80.0, $summary['average']);
@@ -152,11 +153,55 @@ class MarksFollowUpTest extends TestCase
             ->get(route('teacher.exam.marks.enter', $this->exam))
             ->assertOk()
             ->getContent();
-        $this->assertStringContainsString('value="AB"', $html);
+        $this->assertStringContainsString('value="ABS"', $html);
+        $this->assertStringContainsString('Type ABS when a student was absent.', $html);
+        $this->assertStringNotContainsString('value="AB"', $html);
         $this->assertStringContainsString('value="80"', $html);
 
         app(MarksSubmissionService::class)->submit($this->exam, $this->teacher);
         $this->assertSame('submitted', ExamMarksSubmission::query()->where('exam_id', $this->exam->id)->value('status'));
+    }
+
+    public function test_typing_abs_stores_the_absence_and_the_screen_shows_abs(): void
+    {
+        app(ExamMarkWriter::class)->save($this->teacher, $this->exam, $this->brian->id, 'abs');
+
+        $absent = Marks::query()->where('student_id', $this->brian->id)->first();
+        $this->assertTrue($absent->isAbsent());
+        $this->assertNull($absent->marks);
+        $this->assertSame('AB', $absent->grade);
+
+        $sheet = $this->actingAs($this->admin)->get(route('admin.marks.filter', [
+            'class' => $this->section->id,
+            'term' => $this->term->id,
+            'examType' => $this->exam->exam_type_id,
+        ]))->assertOk()->getContent();
+        $this->assertStringContainsString('data-testid="marks-cell-absent">ABS<', $sheet);
+        $this->assertStringNotContainsString('data-testid="marks-cell-absent">AB<', $sheet);
+
+        $release = $this->actingAs($this->admin)
+            ->get(route('admin.marks.releases.create', ['exam_id' => $this->exam->id]))
+            ->assertOk()
+            ->getContent();
+        $this->assertStringContainsString('>ABS<', $release);
+        $this->assertStringNotContainsString('>AB<', $release);
+
+        $parent = view('parent.partials.grades-panel', [
+            'grades' => [
+                'exam_groups' => [[
+                    'exam_type' => 'Opening paper',
+                    'subjects' => [[
+                        'name' => 'Science',
+                        'score' => 0,
+                        'total' => 100,
+                        'grade' => '—',
+                        'shown' => 'ABS',
+                    ]],
+                ]],
+            ],
+        ])->render();
+        $this->assertStringContainsString('>ABS<', $parent);
+        $this->assertStringNotContainsString('>AB<', $parent);
     }
 
     public function test_the_report_card_prints_ab_and_does_not_add_it(): void
@@ -184,7 +229,8 @@ class MarksFollowUpTest extends TestCase
             'nextTerm' => null,
         ])->render();
 
-        $this->assertMatchesRegularExpression('/Mark Gained[\s\S]*\bAB\b/', $html);
+        $this->assertMatchesRegularExpression('/Mark Gained[\s\S]*\bABS\b/', $html);
+        $this->assertDoesNotMatchRegularExpression('/Mark Gained[\s\S]*\bAB\b/', $html);
         $this->assertMatchesRegularExpression('/TOTAL<\/strong><\/td>\s*<td>[^<]*<\/td>\s*<td><strong>\s*<\/strong>/', $html);
         $this->assertStringNotContainsString('>0<', $html);
     }
@@ -210,7 +256,7 @@ class MarksFollowUpTest extends TestCase
         ]))->assertOk()->getContent();
         $this->assertStringContainsString('data-testid="marks-phone-card"', $sheet);
         $this->assertStringContainsString('Amina Follow', $sheet);
-        $this->assertStringContainsString('Total —', $sheet);
+        $this->assertMatchesRegularExpression('/data-testid="marks-phone-total">\s*—\s*</', $sheet);
 
         $release = $this->actingAs($this->admin)
             ->get(route('admin.marks.releases.create', ['exam_id' => $this->exam->id]))
@@ -255,7 +301,7 @@ class MarksFollowUpTest extends TestCase
 
         $html = $this->actingAs($this->teacher)->get(route('teacher.exam.marks.enter', $this->exam))->assertOk()->getContent();
         $this->assertStringContainsString('data-testid="mark-above-maximum-'.$this->amina->id.'"', $html);
-        $this->assertStringContainsString('Above 100. Check the mark.', $html);
+        $this->assertStringContainsString('Above 100', $html);
 
         try {
             app(MarksSubmissionService::class)->submit($this->exam, $this->teacher);
@@ -340,11 +386,14 @@ class MarksFollowUpTest extends TestCase
         $first->refresh();
         $second->refresh();
         $foreign->refresh();
+        $this->assertSame('approved', $first->status);
         $this->assertSame('approved', $first->approval_status);
         $this->assertSame((int) $this->admin->id, (int) $first->approved_by);
         $this->assertNotNull($first->approved_at);
+        $this->assertSame('approved', $second->status);
         $this->assertSame('approved', $second->approval_status);
         $this->assertSame((int) $this->admin->id, (int) $second->approved_by);
+        $this->assertSame('submitted', $foreign->status);
         $this->assertSame('pending', $foreign->approval_status);
 
         try {

@@ -24,7 +24,7 @@
                 <span class="settings-hub-icon bg-blue-50 text-blue-600"><x-icons.sidebar name="classes"/></span>
                 <span><strong>Academic years</strong><small>The school year and which one is current</small></span>
             </a>
-            <a href="{{ url('/admin/academic-term/create') }}" class="ds-card ds-card-hover settings-hub-card">
+            <a href="{{ route('admin.academic-term') }}" class="ds-card ds-card-hover settings-hub-card">
                 <span class="settings-hub-icon bg-blue-50 text-blue-600"><x-icons.sidebar name="exams"/></span>
                 <span><strong>Academic terms</strong><small>Term dates and which term is current</small></span>
             </a>

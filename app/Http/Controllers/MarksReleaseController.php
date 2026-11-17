@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Academics\Exam;
+use App\Models\Academics\ExamMarksSubmission;
 use App\Models\MarksRelease;
 use App\Models\User;
 use App\Support\ClassLevelOrder;
+use App\Services\Marks\MarksSubmissionService;
 use App\Services\MarksRelease\MarksReleaseService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,9 +17,9 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 /**
- * "Release marks" for school admins (/admin/marks/releases) and class
- * teachers (/teacher/marks/releases): choose, preview, confirm, see the
- * result. The service decides who may release which class.
+ * "Release marks" for school admins and head teachers (/admin/marks/releases)
+ * and class teachers (/teacher/marks/releases): choose, preview, confirm, see
+ * the result. The service decides who may release which class.
  */
 class MarksReleaseController extends Controller
 {
@@ -35,7 +37,10 @@ class MarksReleaseController extends Controller
             ->limit(50)
             ->get();
 
-        return view('marks-releases.index', $this->shared($request) + ['list' => $list]);
+        return view('marks-releases.index', $this->shared($request) + [
+            'list' => $list,
+            'releaserNames' => $this->releaserNames($user, $list->pluck('created_by')),
+        ]);
     }
 
     public function create(Request $request): View
@@ -50,6 +55,16 @@ class MarksReleaseController extends Controller
     }
 
     public function preview(Request $request): View
+    {
+        try {
+            return $this->previewRelease($request);
+        } catch (ValidationException $exception) {
+            $this->sendFailureToReleaseForm($request, $exception);
+            throw $exception;
+        }
+    }
+
+    private function previewRelease(Request $request): View
     {
         $user = $this->user();
         $data = $this->validated($request);
@@ -71,13 +86,35 @@ class MarksReleaseController extends Controller
             'timezone' => $timezone,
             'confirm_past' => $data['confirm_past'],
             'whatsapp_send' => $data['whatsapp_send'],
+            'pilot' => $data['pilot'],
+            'pilot_learners' => $data['pilot_learners'],
+            'pilot_parents' => $data['pilot_parents'],
+            'pilot_recipients' => $data['pilot_recipients'],
         ], true));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|View
+    {
+        try {
+            return $this->storeRelease($request);
+        } catch (ValidationException $exception) {
+            // The confirm step is often reached from the preview POST. Sending
+            // the error back there is a GET to a POST-only URL, which is a 405,
+            // and the approval message never renders.
+            $this->sendFailureToReleaseForm($request, $exception);
+            throw $exception;
+        }
+    }
+
+    private function storeRelease(Request $request): RedirectResponse|View
     {
         $user = $this->user();
         $data = $this->validated($request);
+        // A pilot is never released on the first post. The preview names every
+        // recipient and the message, and only the confirm step may send.
+        if ($data['pilot_recipients'] !== null && ! $data['pilot_confirmed']) {
+            return $this->preview($request);
+        }
         // The same class list the screen used, whether it came from the
         // class/stream picker, a standard_link_id on the URL, or both.
         $targets = $this->releaseTargets($user, $data);
@@ -89,7 +126,7 @@ class MarksReleaseController extends Controller
         $localWhen = $data['when'] === 'schedule' ? $data['scheduled_for'] : null;
         $created = [];
         if ($targets === null) {
-            $created[] = $this->releases->create($user, $data['exam_id'], null, $localWhen, $data['timezone'], $data['confirm_past'], $data['whatsapp_send'], $data['release_reason']);
+            $created[] = $this->releases->create($user, $data['exam_id'], null, $localWhen, $data['timezone'], $data['confirm_past'], $data['whatsapp_send'], $data['release_reason'], $data['pilot_recipients']);
         } else {
             // Every class is checked before any release row is written.
             foreach ($targets as $linkId) {
@@ -98,7 +135,7 @@ class MarksReleaseController extends Controller
                 $this->releases->requirePastConfirmation($anchor, $data['confirm_past']);
             }
             foreach ($targets as $linkId) {
-                $created[] = $this->releases->create($user, $data['exam_id'], $linkId, $localWhen, $data['timezone'], $data['confirm_past'], $data['whatsapp_send'], $data['release_reason']);
+                $created[] = $this->releases->create($user, $data['exam_id'], $linkId, $localWhen, $data['timezone'], $data['confirm_past'], $data['whatsapp_send'], $data['release_reason'], $data['pilot_recipients']);
             }
         }
         if ($data['when'] !== 'schedule') {
@@ -124,20 +161,111 @@ class MarksReleaseController extends Controller
 
     public function show(Request $request, int $release): View
     {
-        $user = $this->user();
+        $user = $this->viewer();
         $row = MarksRelease::query()
-            ->with(['exam.examType', 'exam.academicTerm', 'standardLink.section', 'creator'])
+            ->with(['exam.examType', 'exam.academicTerm', 'exam.section', 'standardLink.section', 'creator'])
             ->where('school_id', $user->school_id)
             ->findOrFail($release);
-        if (! $this->releases->isSchoolAdmin($user)
+        if (! $this->canReopenSitting($user)
+            && ! $this->releases->isSchoolAdmin($user)
             && ! ($row->scope === 'class' && $this->releases->links($user)->contains('id', $row->standard_link_id))) {
             abort(404);
         }
 
-        return view('marks-releases.show', $this->shared($request) + ['release' => $row]);
+        $releasedBy = null;
+        if ($row->created_by) {
+            $releasedBy = User::query()
+                ->where('school_id', $user->school_id)
+                ->where('id', (int) $row->created_by)
+                ->value('name');
+        }
+
+        return view('marks-releases.show', $this->shared($request) + [
+            'release' => $row,
+            'releasedBy' => $releasedBy,
+            'canReopen' => $this->canReopenSitting($user)
+                && $row->status === MarksRelease::STATUS_RELEASED
+                && $row->released_at !== null,
+            'reopenOpen' => $request->session()->get('errors')?->has('reason') === true,
+        ]);
     }
 
-    /** @return array{exam_id:int, standard_link_id:int|null, class:string, stream:string, when:string, scheduled_for:string|null, timezone:string|null, confirm_past:bool, whatsapp_send:bool} */
+    public function reopen(Request $request, int $release, MarksSubmissionService $submissions): RedirectResponse
+    {
+        $user = Auth::user();
+        abort_unless($user instanceof User && $this->canReopenSitting($user), 403);
+
+        $row = MarksRelease::query()
+            ->with(['exam', 'standardLink'])
+            ->where('school_id', $user->school_id)
+            ->findOrFail($release);
+
+        if ($row->status !== MarksRelease::STATUS_RELEASED || $row->released_at === null) {
+            throw ValidationException::withMessages([
+                'reason' => 'Only a released set can be reopened.',
+            ]);
+        }
+
+        $reason = trim((string) $request->input('reason', ''));
+        if (mb_strlen($reason) < 10) {
+            throw ValidationException::withMessages([
+                'reason' => 'Give a reason of at least 10 characters.',
+            ]);
+        }
+        if (mb_strlen($reason) > 500) {
+            throw ValidationException::withMessages([
+                'reason' => 'Keep the reason under 500 characters.',
+            ]);
+        }
+
+        $anchor = $row->exam;
+        abort_if($anchor === null, 404);
+
+        $examIds = Exam::query()
+            ->where('school_id', $row->school_id)
+            ->where('exam_type_id', $anchor->exam_type_id)
+            ->where('academic_term_id', $anchor->academic_term_id)
+            ->whereNull('deleted_at')
+            ->when($row->scope !== 'school', function ($query) use ($row, $anchor): void {
+                $sectionId = (int) ($row->standardLink?->section_id ?: $anchor->section_id);
+                $query->where('section_id', $sectionId);
+            })
+            ->pluck('id');
+
+        $locked = ExamMarksSubmission::query()
+            ->where('school_id', $row->school_id)
+            ->whereIn('exam_id', $examIds)
+            ->get()
+            ->filter(fn (ExamMarksSubmission $submission): bool => $submission->isLocked() || $submission->isApproved());
+
+        if ($locked->isEmpty()) {
+            throw ValidationException::withMessages([
+                'reason' => 'Only a locked or approved subject can be reopened.',
+            ]);
+        }
+
+        foreach ($locked as $submission) {
+            $exam = Exam::query()->where('school_id', $row->school_id)->whereKey($submission->exam_id)->first();
+            if ($exam === null) {
+                continue;
+            }
+            $submissions->reopen($user, $exam, (int) $submission->class_id, (int) $submission->subject_id, $reason);
+        }
+
+        // Unlock editing. The frozen mix and the released time stay, so families
+        // keep the report they already have until the next release.
+        if ($row->status === MarksRelease::STATUS_RELEASED) {
+            $row->forceFill(['status' => MarksRelease::STATUS_REOPENED])->save();
+        }
+
+        return redirect()
+            ->route('admin.marks.releases.show', $row)
+            ->with('status', 'Reopened. Families keep seeing the released results until you release again.');
+    }
+
+    /**
+     * @return array{exam_id:int, standard_link_id:int|null, class:string, stream:string, when:string, scheduled_for:string|null, timezone:string|null, confirm_past:bool, whatsapp_send:bool, pilot:string, pilot_learners:list<int>, pilot_parents:list<string>, pilot_recipients:list<array{student_id:int, parent_id:int|null}>|null, pilot_confirmed:bool, release_reason:string}
+     */
     private function validated(Request $request): array
     {
         $data = $request->validate([
@@ -151,7 +279,23 @@ class MarksReleaseController extends Controller
             'confirm_past' => ['nullable', 'boolean'],
             'whatsapp_send' => ['nullable', 'boolean'],
             'release_reason' => ['nullable', 'string', 'max:500'],
+            'pilot' => ['nullable', 'in:class,chosen'],
+            'pilot_learners' => ['nullable', 'array'],
+            'pilot_learners.*' => ['integer'],
+            'pilot_parents' => ['nullable', 'array'],
+            'pilot_parents.*' => ['string', 'max:40'],
+            'pilot_confirmed' => ['nullable', 'boolean'],
         ]);
+
+        $pilot = ($data['pilot'] ?? 'class') === 'chosen' ? 'chosen' : 'class';
+        $learners = array_map('intval', $data['pilot_learners'] ?? []);
+        $parents = array_map(fn ($token) => trim((string) $token), $data['pilot_parents'] ?? []);
+        $recipients = $this->releases->chosenRecipients($pilot, $learners, $parents);
+        if ($recipients === []) {
+            throw ValidationException::withMessages([
+                'pilot' => 'Choose at least one parent or learner. The class is not told.',
+            ]);
+        }
 
         return [
             'exam_id' => (int) $data['exam_id'],
@@ -164,6 +308,11 @@ class MarksReleaseController extends Controller
             'confirm_past' => filter_var($data['confirm_past'] ?? false, FILTER_VALIDATE_BOOLEAN),
             'whatsapp_send' => filter_var($data['whatsapp_send'] ?? false, FILTER_VALIDATE_BOOLEAN),
             'release_reason' => trim((string) ($data['release_reason'] ?? '')),
+            'pilot' => $pilot,
+            'pilot_learners' => $learners,
+            'pilot_parents' => $parents,
+            'pilot_recipients' => $recipients,
+            'pilot_confirmed' => filter_var($data['pilot_confirmed'] ?? false, FILTER_VALIDATE_BOOLEAN),
         ];
     }
 
@@ -175,9 +324,40 @@ class MarksReleaseController extends Controller
         return $user;
     }
 
+    /**
+     * A class teacher may open a release they made. Reopening is only for
+     * an admin or head teacher of this school.
+     */
+    private function viewer(): User
+    {
+        $user = Auth::user();
+        abort_unless($user instanceof User, 403);
+        abort_unless($this->releases->canRelease($user) || $this->canReopenSitting($user), 403);
+
+        return $user;
+    }
+
+    private function canReopenSitting(User $user): bool
+    {
+        return $user->school_id !== null && in_array((int) $user->usergroup_id, [1, 3, 4], true);
+    }
+
     private function area(Request $request): string
     {
         return str_starts_with((string) $request->route()?->getName(), 'teacher.') ? 'teacher' : 'admin';
+    }
+
+    /**
+     * Validation from confirm or preview belongs on the release form, which is a GET.
+     * Never send the browser to the preview URL.
+     */
+    private function sendFailureToReleaseForm(Request $request, ValidationException $exception): void
+    {
+        if ($exception->redirectTo !== null) {
+            return;
+        }
+
+        $exception->redirectTo(route($this->area($request).'.marks.releases.create'));
     }
 
     /**
@@ -219,11 +399,47 @@ class MarksReleaseController extends Controller
             ? $this->releases->preview($user, $examId, $previewId)
             : '';
         $count = (int) array_sum(array_column($sheet['groups'], 'count'));
+        $missingCount = 0;
+        foreach ($sheet['groups'] as $group) {
+            foreach ($group['students'] ?? [] as $student) {
+                foreach ($sheet['subjects'] as $subject) {
+                    if (($student['cells'][$subject['key']] ?? null) === null) {
+                        $missingCount++;
+                    }
+                }
+            }
+        }
         $who = $this->audience($examLinks, $class, $stream, $targets);
-        $noun = $count === 1 ? 'student' : 'students';
-        $verb = ($old['when'] ?? 'now') === 'schedule' ? 'Schedule for' : 'Release to';
+        $selectedLinks = $targets === null
+            ? $examLinks
+            : $examLinks->whereIn('id', $targets)->values();
+        $classCount = $selectedLinks
+            ->map(fn ($link) => (int) $link->section_id)
+            ->unique()
+            ->filter(fn (int $id) => $id > 0)
+            ->count();
+        $examName = 'this exam';
+        if ($known) {
+            $label = (string) ($exams->firstWhere('id', $examId)['label'] ?? '');
+            $typeName = trim(explode('·', $label)[0]);
+            if ($typeName !== '') {
+                $examName = $typeName;
+            }
+        }
+        $classNoun = $classCount === 1 ? 'class' : 'classes';
+        $action = ($old['when'] ?? 'now') === 'schedule' ? 'Schedule' : 'Release';
+        $history = $this->releaseHistory($user, $known ? $examId : 0);
+        $releaserNames = $this->releaserNames($user, $history->pluck('created_by'));
         $old['class'] = $class;
         $old['stream'] = $stream;
+        $pilot = ($old['pilot'] ?? 'class') === 'chosen' ? 'chosen' : 'class';
+        $old['pilot'] = $pilot;
+        $recipients = array_key_exists('pilot_recipients', $old)
+            ? $old['pilot_recipients']
+            : $this->releases->chosenRecipients($pilot, $old['pilot_learners'] ?? [], $old['pilot_parents'] ?? []);
+        $pilotLines = ($confirming && is_array($recipients) && $examId && $known)
+            ? $this->pilotLines($user, $examId, $targets, $recipients, (bool) ($old['whatsapp_send'] ?? false))
+            : [];
 
         return $this->shared($request) + [
             'exams' => $exams,
@@ -235,18 +451,28 @@ class MarksReleaseController extends Controller
             'confirming' => $confirming,
             'whenLabel' => 'Now',
             'sheet' => $sheet,
+            'missingCount' => $missingCount,
             'approvals' => $approvals,
             'pastSitting' => $pastSitting,
             'needsReason' => $examId > 0 && $known && $this->needsReason($user, $examId, $targets),
             'releaseReasonPrompt' => $this->releaseReasonPrompt($this->releasedClassNames($user, $examId, $known ? $targets : [])),
             'previewMessage' => $previewMessage,
+            'pilotChoices' => ($examId && $known)
+                ? $this->releases->pilotChoices($user, $examId, $targets)
+                : [],
+            'pilotLines' => $pilotLines,
             'audience' => ($examId && $known)
                 ? $this->releases->audienceSummary($user, $examId, $targets)
                 : ['classes' => [], 'parents' => 0, 'whatsapp' => 0],
             'subjectsApproved' => $approvals !== [] && collect($approvals)->every(fn (array $row) => $row['state'] === 'approved'),
             'wide' => count($sheet['subjects']) > 6,
-            'buttonLabel' => $verb . ' ' . $who . ' (' . $count . ' ' . $noun . ')',
-            'releaseTo' => $who . ' (' . $count . ' ' . $noun . ')',
+            'examName' => $examName,
+            'classCount' => $classCount,
+            'buttonLabel' => $action.' '.$examName.' marks to '.$classCount.' '.$classNoun,
+            'releaseTo' => $who . ' (' . $count . ' ' . ($count === 1 ? 'student' : 'students') . ')',
+            'releaseHistory' => $history,
+            'releaserNames' => $releaserNames,
+            'releasedLock' => $this->lockFromHistory($history, $known ? $targets : [], $releaserNames),
         ];
     }
 
@@ -282,7 +508,34 @@ class MarksReleaseController extends Controller
             'scheduled_for' => (string) $request->input('scheduled_for', ''),
             'timezone' => (string) $request->input('timezone', 'Africa/Kampala'),
             'whatsapp_send' => $request->boolean('whatsapp_send'),
+            'pilot' => old('pilot', $request->input('pilot', 'class')) === 'chosen' ? 'chosen' : 'class',
+            'pilot_learners' => array_map('intval', (array) old('pilot_learners', $request->input('pilot_learners', []))),
+            'pilot_parents' => array_map('strval', (array) old('pilot_parents', $request->input('pilot_parents', []))),
         ];
+    }
+
+    /**
+     * One line per chosen person. A person who is in any selected class keeps that line.
+     *
+     * @param  array<int, int>|null  $targets
+     * @param  list<array{student_id:int, parent_id:int|null}>  $recipients
+     * @return list<array{learner:string, parent:string, number:string, message:string, told:bool, reason:?string}>
+     */
+    private function pilotLines(User $user, int $examId, ?array $targets, array $recipients, bool $whatsappSend): array
+    {
+        $scopes = $targets === null ? [null] : $targets;
+        $lines = [];
+        foreach ($scopes as $linkId) {
+            foreach ($this->releases->pilotPreview($user, $examId, $linkId, $recipients, $whatsappSend) as $line) {
+                $key = $line['learner']."\0".$line['parent'];
+                $kept = $lines[$key] ?? null;
+                if ($kept === null || ($kept['told'] === false && $line['told'] === true) || ($kept['reason'] === 'This learner is not in this class' && $line['reason'] !== 'This learner is not in this class')) {
+                    $lines[$key] = $line;
+                }
+            }
+        }
+
+        return array_values($lines);
     }
 
     /** @param  array<string, mixed>|null  $exam */
@@ -481,6 +734,90 @@ class MarksReleaseController extends Controller
         $classes = ClassLevelOrder::sort(collect($classes), fn (string $name) => $name)->all();
 
         return $whole ? array_merge(['The whole school'], $classes) : $classes;
+    }
+
+    /**
+     * Released rows for this sitting, newest first. A class teacher only sees their own classes.
+     *
+     * @return Collection<int, MarksRelease>
+     */
+    private function releaseHistory(User $user, int $examId): Collection
+    {
+        if ($examId <= 0) {
+            return collect();
+        }
+
+        $anchor = Exam::query()->where('school_id', $user->school_id)->find($examId);
+        if ($anchor === null) {
+            return collect();
+        }
+
+        $linkIds = $this->releases->links($user)->pluck('id')->all();
+
+        return MarksRelease::query()
+            ->with(['exam.examType', 'exam.academicTerm', 'standardLink.section'])
+            ->where('school_id', $user->school_id)
+            ->where('status', MarksRelease::STATUS_RELEASED)
+            ->whereHas('exam', fn ($query) => $query
+                ->where('school_id', $user->school_id)
+                ->where('exam_type_id', $anchor->exam_type_id)
+                ->where('academic_term_id', $anchor->academic_term_id))
+            ->when(! $this->releases->isSchoolAdmin($user), fn ($query) => $query->where('scope', 'class')->whereIn('standard_link_id', $linkIds))
+            ->orderByDesc('released_at')
+            ->orderByDesc('id')
+            ->limit(8)
+            ->get();
+    }
+
+    /**
+     * @param  Collection<int, mixed>  $ids
+     * @return Collection<int|string, string>
+     */
+    private function releaserNames(User $user, $ids): Collection
+    {
+        $idList = collect($ids)->filter()->map(fn ($id) => (int) $id)->unique()->values()->all();
+        if ($idList === []) {
+            return collect();
+        }
+
+        return User::query()
+            ->where('school_id', $user->school_id)
+            ->whereIn('id', $idList)
+            ->pluck('name', 'id');
+    }
+
+    /**
+     * @param  Collection<int, MarksRelease>  $history
+     * @param  array<int, int>|null  $targets
+     * @param  Collection<int|string, string>  $names
+     * @return array{at:mixed, timezone:string, name:string, release_id:int}|null
+     */
+    private function lockFromHistory(Collection $history, ?array $targets, Collection $names): ?array
+    {
+        if ($targets === []) {
+            return null;
+        }
+
+        $match = $history->first(function (MarksRelease $release) use ($targets) {
+            if ($release->released_at === null) {
+                return false;
+            }
+            if ($targets === null || $release->scope === 'school') {
+                return true;
+            }
+
+            return in_array((int) $release->standard_link_id, $targets, true);
+        });
+        if ($match === null) {
+            return null;
+        }
+
+        return [
+            'at' => $match->released_at,
+            'timezone' => $match->timezone ?: 'Africa/Kampala',
+            'name' => (string) ($names[(int) $match->created_by] ?? 'Unknown'),
+            'release_id' => (int) $match->id,
+        ];
     }
 
     /** @param  list<string>  $names */

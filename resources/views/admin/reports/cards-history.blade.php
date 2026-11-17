@@ -13,6 +13,9 @@
     'subtitle' => 'Generate and download student report cards by class.',
 ])
 
+@include('partials.message')
+@include('admin.reports.partials.report-kind')
+
 <div class="relative mt-4">
     <div class="bg-white rounded-lg shadow p-4 flex items-center justify-between">
         <form method="GET" class="flex items-center gap-3">
@@ -72,11 +75,27 @@
 
                     <div class="p-3 flex items-center justify-between gap-2 bg-white">
                         <span class="text-sm font-medium text-gray-800">{{ $tpl['label'] }}</span>
-                        <a href="{{ route('admin.reports.cards.preview', $key) }}" target="_blank"
-                           onclick="event.stopPropagation()"
-                           class="text-xs text-blue-600 hover:underline whitespace-nowrap">
-                            Open full preview
-                        </a>
+                        <span class="text-xs whitespace-nowrap">
+                            <a href="{{ route('admin.reports.cards.preview', $key) }}" target="_blank"
+                               onclick="event.stopPropagation()"
+                               class="text-blue-600 hover:underline">
+                                Open full preview
+                            </a>
+                            @if ($key === 'progressive')
+                                · <a href="{{ route('admin.reports.cards.preview', ['template' => $key, 'sample' => 1]) }}" target="_blank"
+                                   onclick="event.stopPropagation()"
+                                   data-testid="open-sample"
+                                   class="text-blue-600 hover:underline">
+                                    Open sample
+                                </a>
+                                · <a href="{{ route('admin.reports.cards.preview', ['template' => $key, 'bw' => 1]) }}" target="_blank"
+                                   onclick="event.stopPropagation()"
+                                   data-testid="open-printer-friendly"
+                                   class="text-blue-600 hover:underline">
+                                    Printer-friendly
+                                </a>
+                            @endif
+                        </span>
                     </div>
                 </label>
             @endforeach

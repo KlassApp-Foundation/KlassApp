@@ -19,6 +19,8 @@ final class ResultSheet
         public readonly array $students,
         public readonly array $sittings,
         public readonly ResultSummary $summary,
+        /** @var list<string> Weighted sets in this term that have not been released. */
+        public readonly array $unreleasedWeightedSets = [],
     ) {
     }
 

@@ -26,7 +26,7 @@ class ExamController extends Controller
     {
         //
         $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
-        $student = User::where('id',$student_id)->first();
+        $student = $this->studentInSchool($student_id);
         $exam = Exam::with('schedule')->where([['school_id',Auth::user()->school_id],['academic_year_id',$academic_year->id],['standard_id',$student->studentAcademicLatest->standardLink_id]])->whereHas('schedule', function ($query)
             {
                 $query->where('start_time','>=',date('Y-m-d'));
@@ -47,11 +47,11 @@ class ExamController extends Controller
      */
     public function pastExam($student_id)
     {
-        //
+        $student = $this->studentInSchool($student_id);
+
          try
         {
         $academic_year = SiteHelper::getAcademicYear(Auth::user()->school_id);
-        $student = User::where('id',$student_id)->first();
         $exam = Exam::with('schedule')->where([['school_id',Auth::user()->school_id],['academic_year_id',$academic_year->id],['standard_id',$student->studentAcademicLatest->standardLink_id]])->whereHas('schedule', function ($query)
             {
                 $query->where('start_time','<',date('Y-m-d'));
@@ -69,6 +69,18 @@ class ExamController extends Controller
         {
             dd($e->getMessage());
         }
+    }
+
+    /**
+     * The learner for this request, only when they belong to the signed-in school.
+     * Another school and a missing id are both not found.
+     */
+    private function studentInSchool(int|string $studentId): User
+    {
+        return User::query()
+            ->where('school_id', Auth::user()->school_id)
+            ->whereKey($studentId)
+            ->firstOrFail();
     }
 
     /**

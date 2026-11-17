@@ -3839,12 +3839,28 @@ body.sidebar-collapsed #admin-sidebar .dashboard-sidebar-footer .dashboard-sideb
         min-width: 0;
     }
     .dashboard-themed-header .nav-brand > a.h-10 { display: none; }
+    .dashboard-themed-header .nav-brand a.nav-school-line {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        overflow: hidden;
+    }
+    .dashboard-themed-header .nav-school-logo {
+        width: 28px;
+        height: 28px;
+        flex: 0 0 28px;
+        object-fit: contain;
+    }
     .dashboard-themed-header .nav-brand a {
         min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
         display: block;
+    }
+    body.toshi-collapsed .dashboard-content-area {
+        padding-right: 64px;
     }
     .dashboard-themed-header .nav-brand strong {
         display: block;

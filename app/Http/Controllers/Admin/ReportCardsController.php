@@ -8,7 +8,10 @@ use App\Models\Section;
 use App\Models\StandardLink;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
+use App\Models\School;
+use App\Models\SchoolReportKindChange;
 use App\Services\ReportCardCommentService;
+use App\Services\Reports\ReportKindSetting;
 use App\Services\StudentReportCardService;
 use App\Support\ClassListOrder;
 use App\Exports\CombinedMarksheetExport;
@@ -44,6 +47,8 @@ class ReportCardsController extends Controller
         $sort = $request->query('sort') === 'name' ? 'name' : 'position';
         $data = ($class && $sitting) ? $screen->build($schoolId, $class, $sitting, $streamId, $sort) : null;
 
+        $school = School::query()->find($schoolId);
+
         return view('admin.reports.cards', [
             'classes' => $classes,
             'class' => $class,
@@ -53,7 +58,37 @@ class ReportCardsController extends Controller
             'sort' => $sort,
             'data' => $data,
             'links' => $class['links'] ?? [],
+            'reportKind' => app(ReportKindSetting::class)->current($school),
+            'reportKindChanges' => $this->reportKindChanges($schoolId),
         ]);
+    }
+
+    public function updateReportKind(Request $request, ReportKindSetting $setting)
+    {
+        $user = Auth::user();
+        $school = School::query()->findOrFail((int) $user->school_id);
+
+        $data = $request->validate([
+            'report_kind' => ['required', 'string', 'in:'.implode(',', array_keys(ReportKindSetting::OPTIONS))],
+        ]);
+
+        $setting->change($school, $user, $data['report_kind']);
+
+        return back()->with(
+            'successmessage',
+            'Report type saved as '.$setting->label($data['report_kind']).'. This applies from the next release. Reports already released stay as they are.'
+        );
+    }
+
+    /** @return \Illuminate\Support\Collection<int, SchoolReportKindChange> */
+    private function reportKindChanges(int $schoolId)
+    {
+        return SchoolReportKindChange::query()
+            ->where('school_id', $schoolId)
+            ->with('user')
+            ->orderByDesc('id')
+            ->limit(5)
+            ->get();
     }
 
     /** The earlier per-term page: report template, recent PDFs, and every class at once. */
@@ -109,8 +144,10 @@ class ReportCardsController extends Controller
 
         $school = \App\Models\School::find($schoolId);
         $reportTemplate = $school->report_template ?? 'formal';
+        $reportKind = app(ReportKindSetting::class)->current($school);
+        $reportKindChanges = $this->reportKindChanges((int) $schoolId);
 
-        return view('admin.reports.cards-history', compact('stdLinks', 'terms', 'selectedTerm', 'eotKpis', 'recentGenerations', 'reportTemplate', 'school'));
+        return view('admin.reports.cards-history', compact('stdLinks', 'terms', 'selectedTerm', 'eotKpis', 'recentGenerations', 'reportTemplate', 'school', 'reportKind', 'reportKindChanges'));
     }
 
     public function updateTemplate(Request $request)
@@ -150,6 +187,8 @@ class ReportCardsController extends Controller
 
     public function downloadClass(StandardLink $stdLink)
     {
+        $this->abortUnlessOwnSchool($stdLink->school_id);
+
         return $this->dispatchGeneration($stdLink, 'zip');
     }
 
@@ -191,11 +230,12 @@ class ReportCardsController extends Controller
     {
         $schoolId = Auth::user()->school_id;
 
-        $exam = $this->resolveExam($schoolId, $stdLink, $this->requestedTermId($schoolId));
-        if (!$exam) return back()->with('failmessage', 'No EOT exam found for this class.');
+        $termId = $this->requestedTermId($schoolId);
+        $exam = $this->resolveExam($schoolId, $stdLink, $termId);
+        if (!$exam) return back()->with('failmessage', 'No exam set found for this class.');
 
-        $studentIds = $this->studentIds($exam);
-        if ($studentIds->isEmpty()) return back()->with('failmessage', 'No students with marks.');
+        $learners = app(StudentReportCardService::class)->reportLearners($schoolId, $stdLink, $termId);
+        if ($learners->isEmpty()) return back()->with('failmessage', 'No learners in this class.');
 
         $className = Section::find($stdLink->section_id)->name ?? 'class';
 
@@ -302,14 +342,18 @@ class ReportCardsController extends Controller
 
     private function singleStudentResponse(StandardLink $stdLink, \App\Models\User $learner, bool $download)
     {
-        try {
-            $schoolId = Auth::user()?->school_id;
-            if (!$schoolId) return back()->with('failmessage', 'Your account is not linked to a school.');
+        $schoolId = Auth::user()?->school_id;
+        if (! $schoolId
+            || (int) $stdLink->school_id !== (int) $schoolId
+            || (int) $learner->school_id !== (int) $schoolId) {
+            abort(404);
+        }
 
+        try {
             $reports = app(StudentReportCardService::class);
             $termId = $this->requestedTermId($schoolId);
             $exam = $reports->resolveExam($schoolId, $stdLink, $termId);
-            if (!$exam) return back()->with('failmessage', 'No EOT exam found for this class.');
+            if (!$exam) return back()->with('failmessage', 'No exam set found for this class.');
 
             $pdfContent = $reports->pdfForStudent($schoolId, $stdLink, $learner, null, $termId);
 
@@ -334,6 +378,16 @@ class ReportCardsController extends Controller
     private function resolveExam(int $schoolId, StandardLink $stdLink, ?int $academicTermId = null): ?Exam
     {
         return app(StudentReportCardService::class)->resolveExam($schoolId, $stdLink, $academicTermId);
+    }
+
+    /**
+     * Another school's class or learner is the same response as a missing id.
+     */
+    private function abortUnlessOwnSchool(int|string|null $ownerSchoolId): void
+    {
+        if ((int) $ownerSchoolId !== (int) Auth::user()?->school_id) {
+            abort(404);
+        }
     }
 
     /**
@@ -368,7 +422,7 @@ class ReportCardsController extends Controller
      * Backward-compatible entry point for jobs/commands. Real implementation:
      * StudentReportCardService::generatePdf().
      */
-    public static function generatePdf(int $sid, Exam $exam, StandardLink $stdLink, int $schoolId, $helper, ReportCardCommentService $svc, int $totalLearners, int $myPos = 0, ?string $templateKey = null): string
+    public static function generatePdf(int $sid, Exam $exam, StandardLink $stdLink, int $schoolId, $helper, ReportCardCommentService $svc, int $totalLearners, int $myPos = 0, ?string $templateKey = null, bool $sample = false, bool $printBlackAndWhite = false, ?array $onlyExamTypeIds = null): string
     {
         return app(StudentReportCardService::class)->generatePdf(
             $sid,
@@ -379,11 +433,14 @@ class ReportCardsController extends Controller
             $svc,
             $totalLearners,
             $myPos,
-            $templateKey
+            $templateKey,
+            $sample,
+            $printBlackAndWhite,
+            $onlyExamTypeIds,
         );
     }
 
-    public function previewTemplate(string $template)
+    public function previewTemplate(Request $request, string $template)
     {
         abort_unless(isset(self::TEMPLATES[$template]), 404);
 
@@ -421,7 +478,19 @@ class ReportCardsController extends Controller
         $positionMap = $reports->computePositionMap($exam, $schoolId);
         $myPos = $positionMap[$learner->id] ?? 0;
 
-        $pdf = $reports->generatePdf($learner->id, $exam, $stdLink, $schoolId, $helper, $svc, $totalLearners, $myPos, $template);
+        $pdf = $reports->generatePdf(
+            $learner->id,
+            $exam,
+            $stdLink,
+            $schoolId,
+            $helper,
+            $svc,
+            $totalLearners,
+            $myPos,
+            $template,
+            $request->boolean('sample') && $template === 'progressive',
+            $request->boolean('bw') && $template === 'progressive',
+        );
 
         return response($pdf)
             ->header('Content-Type', 'application/pdf')

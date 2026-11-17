@@ -92,7 +92,8 @@
                 @endphp
                 <a class="nav-school-line" href="{{ route($brandRoute) }}">
                     @if($schoolLogo)
-                        <img src="{{ $schoolLogo }}" class="nav-school-logo" alt="{{ $schoolTitle }}">
+                        <img src="{{ $schoolLogo }}" class="nav-school-logo" alt=""
+                             onerror="this.onerror=null;this.remove();">
                     @endif
                     <span class="{{ $nameClass }}"><strong>{{ $schoolTitle }}</strong></span>
                     @if($schoolTerm !== '')

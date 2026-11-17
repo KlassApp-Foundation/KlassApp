@@ -152,7 +152,7 @@ class LevelPipelineAuditTest extends TestCase
         $this->app->instance('dompdf.wrapper', $pdf);
 
         $ctx['school']->forceFill(['report_template' => $template])->save();
-        app(StudentReportCardService::class)->pdfForStudent((int) $ctx['school']->id, $ctx['link'], $ctx['student'], null, null, $template);
+        app(StudentReportCardService::class)->pdfForStudent((int) $ctx['school']->id, $ctx['link'], $ctx['student'], $template);
 
         $this->assertNotNull($captured, 'the report card view was never built');
 

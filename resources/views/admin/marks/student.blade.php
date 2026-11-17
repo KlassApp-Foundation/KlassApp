@@ -32,9 +32,15 @@
                         @foreach ($sittings as $sitting)
                             @php
                                 $cell = $sitting->student($student->studentId)?->cell($subjectId);
-                                $mark = ($cell && $cell->status === 'marked' && $cell->mark !== null) ? $cell->mark : null;
+                                if ($cell && $cell->status === \App\Services\Results\ResultCell::ABSENT) {
+                                    $mark = 'ABS';
+                                } elseif ($cell && $cell->status === 'marked' && $cell->mark !== null) {
+                                    $mark = $cell->mark;
+                                } else {
+                                    $mark = '—';
+                                }
                             @endphp
-                            <td>{{ $mark === null ? '—' : $mark }}</td>
+                            <td>{{ $mark }}</td>
                         @endforeach
                     </tr>
                 @endforeach
@@ -42,11 +48,18 @@
         </table>
     </div>
 
+    @if (! empty($withheldSentence))
+        <p data-kind="withheld">{{ $withheldSentence }}</p>
+    @endif
+    @if (! empty($incompleteSets))
+        <p data-kind="incomplete">Incomplete: {{ implode(', ', $incompleteSets) }}.</p>
+    @endif
     <table class="ds-table w-full mt-6">
         <thead>
             <tr>
                 <th>Total</th>
                 <th>Aggregate</th>
+                <th>Division</th>
                 <th>Position</th>
                 <th>Out of</th>
             </tr>
@@ -55,6 +68,7 @@
             <tr>
                 <td data-testid="student-result-total">{{ $student->displayTotal ?? '—' }}</td>
                 <td data-testid="student-result-aggregate">{{ $student->aggregate ?? '—' }}</td>
+                <td data-testid="student-result-division">{{ $student->division ?? '—' }}</td>
                 <td data-testid="student-result-position">{{ $student->classPosition ?? '—' }}</td>
                 <td>{{ $student->classOutOf }}</td>
             </tr>

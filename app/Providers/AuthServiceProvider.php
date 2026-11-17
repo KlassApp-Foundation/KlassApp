@@ -15,6 +15,7 @@ use App\Models\TeacherLeaveApplication;
 use App\Models\Teacherlink;
 use App\Models\User;
 use App\Policies\ConversationPolicy;
+use App\Support\SchoolAdmin;
 use Laravel\Ai\Models\Conversation;
 
 class AuthServiceProvider extends ServiceProvider
@@ -59,14 +60,14 @@ class AuthServiceProvider extends ServiceProvider
     {
       $this->registerPolicies();
 
-      // Sidebar `condition => school_admin` (usergroup 3) hides school details,
-      // academic years and terms, and the data exports index from a head teacher
-      // (usergroup 4). Settings already uses fullschooladmin. This gate is the
-      // same allow-list (site admin, and school admin) and fails with 403.
+      // Site admin, co-admin, school admin, and head teacher. A head teacher
+      // opens school details and the academic terms list. The gate still fails
+      // closed for a class teacher. A head teacher is limited to their own
+      // school where the URL names a school.
       // Fee and parent CSV downloads are linked from Fees and Parents, which
       // stay in the head-teacher menu, so those two URLs are not on this gate.
       Gate::define('full-school-admin', function ($user) {
-        return in_array((int) $user->usergroup_id, [1, 2, 3], true);
+        return (int) $user->usergroup_id === 2 || \App\Support\SchoolAdmin::is($user);
       });
 
       Gate::define('event', function ($user, $event) {
@@ -80,15 +81,7 @@ class AuthServiceProvider extends ServiceProvider
           return false;
         }
 
-        if ((int) $user->usergroup_id === 1) {
-          return true;
-        }
-
-        if ((int) $user->usergroup_id === 3) {
-          return (int) $user->school_id === (int) $event->school_id;
-        }
-
-        return false;
+        return SchoolAdmin::managesSchool($user, $event->school_id);
       });
 
       Gate::define('member', function ($user, $member) {
@@ -122,15 +115,7 @@ class AuthServiceProvider extends ServiceProvider
           return false;
         }
 
-        if ((int) $user->usergroup_id === 1) {
-          return true;
-        }
-
-        if ((int) $user->usergroup_id === 3) {
-          return (int) $user->school_id === (int) $homework->school_id;
-        }
-
-        return false;
+        return SchoolAdmin::managesSchool($user, $homework->school_id);
       });
 
       Gate::define('document', function ($user, $document) {
@@ -166,15 +151,7 @@ class AuthServiceProvider extends ServiceProvider
           return true;
         }
 
-        if ((int) $user->usergroup_id === 1) {
-          return true;
-        }
-
-        if ((int) $user->usergroup_id === 3) {
-          return (int) $user->school_id === (int) $post->school_id;
-        }
-
-        return false;
+        return SchoolAdmin::managesSchool($user, $post->school_id);
       });
 
       Gate::define('post_reply', function ($user, $post) {
@@ -274,12 +251,8 @@ class AuthServiceProvider extends ServiceProvider
           return false;
         }
 
-        if ((int) $user->usergroup_id === 1) {
+        if (SchoolAdmin::managesSchool($user, $homework->school_id)) {
           return true;
-        }
-
-        if ((int) $user->usergroup_id === 3) {
-          return (int) $user->school_id === (int) $homework->school_id;
         }
 
         if ((int) $user->usergroup_id === 5) {
@@ -327,12 +300,8 @@ class AuthServiceProvider extends ServiceProvider
           return false;
         }
 
-        if ((int) $user->usergroup_id === 1) {
+        if (SchoolAdmin::managesSchool($user, $assignment->school_id)) {
           return true;
-        }
-
-        if ((int) $user->usergroup_id === 3) {
-          return (int) $user->school_id === (int) $assignment->school_id;
         }
 
         if ((int) $user->usergroup_id === 5) {
@@ -382,15 +351,7 @@ class AuthServiceProvider extends ServiceProvider
           return false;
         }
 
-        if ((int) $user->usergroup_id === 1) {
-          return true;
-        }
-
-        if ((int) $user->usergroup_id === 3) {
-          return (int) $user->school_id === (int) $leave->school_id;
-        }
-
-        return false;
+        return SchoolAdmin::managesSchool($user, $leave->school_id);
       });
 
       Gate::define('parent-link-request-manage', function ($user, $linkRequest) {
@@ -398,15 +359,7 @@ class AuthServiceProvider extends ServiceProvider
           return false;
         }
 
-        if ((int) $user->usergroup_id === 1) {
-          return true;
-        }
-
-        if ((int) $user->usergroup_id === 3) {
-          return (int) $user->school_id === (int) $linkRequest->school_id;
-        }
-
-        return false;
+        return SchoolAdmin::managesSchool($user, $linkRequest->school_id);
       });
 
       Gate::define('subscription', function ($user, $subscription) {

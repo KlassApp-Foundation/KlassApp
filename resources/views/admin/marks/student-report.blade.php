@@ -161,6 +161,28 @@
     <div class="header-divider"></div>
 
     <div class="report-title">PROGRESSIVE REPORT</div>
+    @if (!empty($compositionLine ?? null))
+    {{-- design review: the end-of-term mix line is specified in the handoff, not drawn on the A4 cards. --}}
+    <div data-testid="eot-composition">{{ $compositionLine }}</div>
+    @endif
+
+    @php
+        $reportDivision = $division ?? null;
+        if ($reportDivision === null && empty($isNursery) && isset($stdLink)) {
+            $reportTermId = null;
+            if (isset($eotExams) && $eotExams->first()) {
+                $reportTermId = (int) ($eotExams->first()->academic_term_id ?? 0);
+                $reportTermId = $reportTermId > 0 ? $reportTermId : null;
+            }
+            $reportAggregate = (isset($grade['agg']) && is_numeric($grade['agg'])) ? (int) $grade['agg'] : null;
+            $reportDivision = app(\App\Services\Reports\ReportScoring::class)->divisionRuleForTerm(
+                (int) $stdLink->school_id,
+                (int) $stdLink->standard_id,
+                isset($stdLink->section_id) ? (int) $stdLink->section_id : null,
+                $reportTermId,
+            )->division($reportAggregate, (int) ($examinedSubjectCount ?? 0));
+        }
+    @endphp
 
     {{-- ═══ STUDENT INFO CARD ═══ --}}
     <table class="info-table">
@@ -176,6 +198,10 @@
             <td>
                 <div class="info-label">Aggregate</div>
                 <div class="info-value">@if(!empty($isNursery)) &mdash; @else {{ $grade['agg'] ?? '&mdash;' }} @endif</div>
+            </td>
+            <td>
+                <div class="info-label">Division</div>
+                <div class="info-value" data-testid="student-report-division">@if(!empty($isNursery)) &mdash; @else {{ $reportDivision ?? '—' }} @endif</div>
             </td>
         </tr>
     </table>
@@ -194,9 +220,22 @@
             @endforeach
         </table>
     @else
-        {{-- ═══ MID TERM — MONTHLY RESULTS (subjects as columns, exams as rows) ═══ --}}
+        @php
+            $labels = $typeLabels ?? [];
+            $labelFor = function ($exam) use ($labels) {
+                $id = (int) ($exam->exam_type_id ?? 0);
+                $custom = trim((string) ($labels[(string) $id] ?? $labels[$id] ?? ''));
+                if ($custom !== '') {
+                    return $custom;
+                }
+
+                return $exam->examType->name ?? null;
+            };
+            $aloneNames = $midExams->map($labelFor)->filter()->unique()->implode(' · ');
+            $countNames = $eotExams->map($labelFor)->filter()->unique()->implode(' · ');
+        @endphp
         @if ($midExams->isNotEmpty())
-        <div class="grades-heading">MONTHLY RESULTS — MID TERM</div>
+        <div class="grades-heading">{{ $aloneNames !== '' ? $aloneNames : 'Exam sets shown on their own' }}</div>
         <table class="marks-table">
             <tr>
                 <th style="width:12%">Month Of</th>
@@ -222,7 +261,7 @@
                                     $midGrade = $g ? 'D' . $g->points : '-';
                                 }
                             @endphp
-                            <td>@if($midMark && $midMark->isAbsent()) AB @elseif($midMark && $midMark->marks !== null) {{ floor($midMark->marks) }} @else &mdash; @endif</td>
+                            <td>@if($midMark && $midMark->isAbsent()) ABS @elseif($midMark && $midMark->marks !== null) {{ floor($midMark->marks) }} @else &mdash; @endif</td>
                             <td>{{ $midGrade }}</td>
                         @endif
                     @endforeach
@@ -231,9 +270,11 @@
         </table>
         @endif
 
-        {{-- ═══ END OF TERM (subjects as rows, full column set) ═══ --}}
         @if ($eotExams->isNotEmpty())
-        <div class="grades-heading" style="color: #1E6FD9;">END OF TERM EXAMINATION</div>
+        <div class="grades-heading" style="color: #1E6FD9;">{{ $countNames !== '' ? $countNames : 'Combined report' }}</div>
+        @if (!empty($madeUpOf))
+            <p data-testid="report-made-up-of">{{ $madeUpOf }}</p>
+        @endif
         <table class="marks-table">
             <tr>
                 <th>Subject</th>
@@ -274,7 +315,7 @@
                 <tr>
                     <td class="left strong">{{ $subject->name }}</td>
                     <td>100</td>
-                    <td>@if($eotMark && $eotMark->isAbsent()) AB @elseif($eotMark && $eotMark->marks !== null) {{ floor($eotMark->marks) }} @else &mdash; @endif</td>
+                    <td>@if($eotMark && $eotMark->isAbsent()) ABS @elseif($eotMark && $eotMark->marks !== null) {{ floor($eotMark->marks) }} @else &mdash; @endif</td>
                     <td>{{ $eotGrade }}</td>
                     <td>{{ $eotComment }}</td>
                     <td>{{ $teacherName }}</td>

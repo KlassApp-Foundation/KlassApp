@@ -250,7 +250,7 @@ class MarksSubmissionTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        $this->assertStringNotContainsString('data-testid="marks-submit-button"', $empty);
+        $this->assertMatchesRegularExpression('/data-testid="marks-submit-button"[^>]*disabled/', $empty);
 
         $this->savedMark();
 
@@ -261,10 +261,11 @@ class MarksSubmissionTest extends TestCase
 
         $this->assertStringContainsString('data-testid="marks-submit-button"', $html);
         $this->assertStringContainsString(route('teacher.exam.marks.submit', $this->examA), $html);
-        $this->assertDoesNotMatchRegularExpression(
-            '/<form[^>]*marks\/save[\s\S]*marks-submit-button/',
-            $html
-        );
+        $buttonAt = strpos($html, 'data-testid="marks-submit-button"');
+        $formAt = strpos($html, 'id="marks-save-form"');
+        $this->assertNotFalse($buttonAt);
+        $this->assertNotFalse($formAt);
+        $this->assertLessThan($formAt, $buttonAt);
     }
 
     public function test_submit_with_nothing_saved_does_not_write_a_row(): void

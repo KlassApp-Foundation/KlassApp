@@ -58,7 +58,365 @@
   .ka-filter-panel{display:none}
   .ka-filter-panel.is-open{display:flex;flex-direction:column;gap:14px;position:fixed;z-index:80;left:0;right:0;bottom:0;background:#fff;border-radius:20px 20px 0 0;padding:10px 16px 20px;max-height:85vh;overflow:auto}
   .ka-filter-backdrop.is-open{display:block;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:70}
-  .ka-mark{width:100% !important;min-height:52px !important;font-size:1.1rem !important}
+  .ka-mark{width:76px !important;height:48px !important;min-height:48px !important;max-width:76px !important;font-size:1.05rem !important}
+  .ka-marks-sheet{overflow:visible;max-width:100%}
+  .ka-marks-roster thead{display:none}
+  .ka-marks-roster,.ka-marks-roster tbody{display:block;width:100%}
+  .ka-marks-roster tr.ka-learner{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;padding:10px 14px;margin:0 0 10px}
+  .ka-marks-roster tr.ka-learner.is-invalid{background:#FEF2F2}
+  .ka-marks-roster tr.ka-learner td{display:block;width:auto;padding:0;border:0}
+  .ka-learner-id{grid-column:1;grid-row:1}
+  .ka-stream-cell{grid-column:1;grid-row:2;color:#64748B;font-size:.75rem}
+  .ka-mark-cell{grid-column:2;grid-row:1 / span 2;justify-self:end}
+  .ka-sticky.ka-marks-bar{position:fixed;left:0;right:0;bottom:0;z-index:45;margin:0;flex-direction:column;align-items:stretch;background:#FFFFFF;border-top:1px solid #E2E8F0}
+  .ka-marks-page{padding-bottom:150px}
+  .ka-entry-streams .ka-filter-launch,.ka-entry-streams .ka-filter-backdrop{display:none !important}
+  .ka-entry-streams .ka-filter-panel{display:flex !important;flex-direction:row;flex-wrap:wrap;position:static;max-height:none;overflow:visible;padding:0;background:transparent;border-radius:0;z-index:auto}
+  .ka-entry-streams .ka-chip{min-height:44px}
   .ka-sheet-table{display:none}
   .ka-phone-cards{display:flex;flex-direction:column;gap:10px}
 }
+/* End-of-term report settings. Phone first; two columns from 768px. */
+.ka-compose{display:flex;flex-direction:column;gap:12px;color:#1E293B;font-family:'DM Sans',system-ui,sans-serif;padding-bottom:96px}
+.ka-compose-lead{margin:6px 0 0;max-width:70ch;color:#334155;font-size:.85rem}
+.ka-compose-error{margin:0 0 8px;color:#B91C1C;font-size:.85rem}
+.ka-compose-layout{display:flex;flex-direction:column;gap:12px}
+.ka-compose-main{display:flex;flex-direction:column;gap:16px}
+.ka-compose-side{display:flex;flex-direction:column;gap:12px}
+.ka-lbl{font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#475569}
+.ka-quick{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.ka-choice{min-height:44px;padding:0 14px;border-radius:999px;border:1px solid #64748B;background:#fff;color:#1E293B;font:600 .82rem 'DM Sans',sans-serif;white-space:nowrap;cursor:pointer}
+.ka-choice[aria-pressed="true"]{border-color:#0F172A;background:#0F172A;color:#fff}
+.ka-choice-long{display:none}
+.ka-choice-short{display:inline}
+.ka-mix-list{display:flex;flex-direction:column;background:#fff;border:1px solid #E2E8F0;border-radius:14px;overflow:hidden}
+.ka-mix-row{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #E2E8F0;background:#fff}
+.ka-mix-row.is-off{background:#FAFAF5}
+.ka-mix-label{display:flex;align-items:center;gap:10px;min-height:48px;flex:1;min-width:0;cursor:pointer}
+.ka-mix-name{display:flex;flex-direction:column;min-width:0}
+.ka-mix-name strong{font-size:.92rem}
+.ka-mix-name [data-mix-detail]{font-size:.75rem;color:#475569}
+.ka-switch{appearance:none;-webkit-appearance:none;width:44px;height:26px;border-radius:999px;background:#64748B;position:relative;flex-shrink:0;margin:0;cursor:pointer}
+.ka-switch::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s ease}
+.ka-switch:checked{background:#15803D}
+.ka-switch:checked::after{left:21px}
+.ka-switch:focus-visible{outline:2px solid #1E6FD9;outline-offset:2px}
+.ka-weight{width:64px;min-height:48px;text-align:right;font-weight:700;border:1px solid #CBD5E1;border-radius:10px;padding:0 8px;color:#1E293B;background:#fff}
+.ka-weight:disabled{background:#F1F5F9;color:#64748B}
+.ka-weight-label,.ka-weight-unit{font-size:.85rem;color:#334155}
+.ka-mix-total{display:flex;align-items:center;gap:10px;padding:12px 14px;border-top:2px solid #1E293B}
+.ka-mix-total>strong:first-child{flex:1}
+.ka-mix-sum{font:700 1.1rem 'Sora',sans-serif;font-variant-numeric:tabular-nums}
+.ka-adds{display:inline-flex;align-items:center;gap:4px;color:#B91C1C;font-weight:700;font-size:.78rem}
+.ka-adds svg{display:none}
+.ka-adds.is-ok{color:#166534}
+.ka-adds.is-ok svg{display:block}
+.ka-mix-bar{display:flex;height:40px;border-radius:10px;overflow:hidden;border:1px solid #94A3B8;font-size:.75rem;font-weight:700}
+.ka-mix-bar:empty{background:#F1F5F9;border-color:#E2E8F0}
+.ka-mix-bar .is-part,.ka-mix-bar .is-last{display:flex;align-items:center;justify-content:center;min-width:0;padding:0 4px;overflow:hidden;white-space:nowrap}
+.ka-mix-bar .is-part{background:#DBEAFE;color:#1E3A8A;border-right:2px solid #fff}
+.ka-mix-bar .is-last{background:#15803D;color:#fff}
+.ka-note{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:12px;background:#EFF6FF;border:1px solid #BFDBFE;color:#1E3A8A;font-size:.82rem;line-height:1.45}
+.ka-note svg{flex-shrink:0;margin-top:1px}
+.ka-compose-foot{display:flex;flex-direction:column;gap:10px}
+.ka-compose-who{margin:0;font-size:.78rem;color:#475569}
+.ka-compose-actions{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;gap:10px;padding:12px 16px calc(20px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid #E2E8F0}
+.ka-compose-actions .ds-btn{min-height:48px;justify-content:center}
+.ka-compose-actions a{flex:1;text-decoration:none}
+.ka-compose-actions button{flex:1.6}
+.ka-made{margin:0;font-size:.82rem;color:#334155}
+.ka-made-wait{margin:8px 0 0;font-size:.8rem;color:#475569}
+.ka-own-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #E2E8F0;font-size:.84rem}
+.ka-own-row strong{flex:1;min-width:0}
+.ka-own-note,.ka-log{margin:8px 0 0;font-size:.8rem;color:#475569}
+@media (prefers-reduced-motion:reduce){.ka-switch::after{transition:none}}
+@media (min-width:768px){
+  .ka-compose{padding-bottom:0;gap:18px}
+  .ka-compose-lead{font-size:1rem}
+  .ka-compose-layout{display:grid;grid-template-columns:minmax(0,3fr) minmax(280px,2fr);gap:18px;align-items:start}
+  .ka-compose-side{gap:18px}
+  .ka-quick{flex-wrap:wrap;overflow:visible;gap:8px}
+  .ka-choice{font-size:.85rem}
+  .ka-choice-long{display:inline}
+  .ka-choice-short{display:none}
+  .ka-mix-list{gap:8px;background:transparent;border:0;overflow:visible}
+  .ka-mix-row{border:1px solid #E2E8F0;border-radius:12px;gap:12px}
+  .ka-mix-label{min-height:44px}
+  .ka-weight{width:76px;min-height:44px}
+  .ka-mix-total{border:0;border-top:2px solid #1E293B;border-radius:0;padding-left:0;padding-right:0}
+  .ka-mix-sum{font-size:1.2rem}
+  .ka-adds{font-size:.85rem;gap:6px}
+  .ka-mix-bar{font-size:.8rem}
+  .ka-note{font-size:.85rem}
+  .ka-compose-foot{flex-direction:row;flex-wrap:wrap;align-items:center}
+  .ka-compose-who{flex:1 1 200px;font-size:.8rem}
+  .ka-compose-actions{position:static;padding:0;border:0;background:transparent;margin-left:auto}
+  .ka-compose-actions .ds-btn{min-height:44px}
+  .ka-compose-actions a,.ka-compose-actions button{flex:0 0 auto}
+  .ka-made{font-size:.9rem}
+}
+
+/* Phone: quick choices scroll inside their row. The page itself does not. */
+@media (max-width: 767px) {
+  .ka-compose, .ka-compose-layout, .ka-compose-main, .ka-quick-wrap { min-width: 0; max-width: 100%; }
+  .ka-quick { max-width: 100%; }
+  .ka-compose select.ds-form-input { width: 100% !important; max-width: 100%; box-sizing: border-box; }
+  .ka-compose table { display: block; width: 100%; max-width: 100%; overflow-x: auto; }
+}
+
+/* Exam types at 375: the page does not scroll sideways. A wide table scrolls inside itself. */
+.ka-type-name { width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; min-height: 44px; }
+@media (max-width: 767px) {
+  .ka-exam-types { overflow-x: clip; max-width: 100%; min-width: 0; }
+  .ka-exam-types .ka-mix-row { flex-wrap: wrap; align-items: flex-start; }
+  .ka-exam-types .ka-mix-label { flex: 1 1 100%; flex-wrap: wrap; min-width: 0; }
+  .ka-exam-types .ka-type-name { flex: 1 1 100%; }
+  .ka-exam-types .ka-mix-bar { max-width: 100%; }
+  .ka-exam-types .ds-form-input,
+  .ka-exam-types select,
+  .ka-exam-types input[type="text"] { max-width: 100% !important; width: 100% !important; box-sizing: border-box; }
+  .ka-exam-types form .flex { flex-direction: column; align-items: stretch; }
+  .ka-exam-types form .flex > div { width: 100%; max-width: 100%; }
+  .ka-exam-types table { display: block; max-width: 100%; overflow-x: auto; }
+  .ka-exam-types .ml-3 { margin-left: 0 !important; margin-top: 8px; }
+}
+
+.ka-marks-form{order:1}
+.ka-marks-bar{order:2}
+.ka-marks-actions{display:flex;gap:10px;flex-wrap:wrap}
+.ka-marks-actions button,.ka-marks-actions .ds-btn{min-height:48px;flex:1 1 140px}
+.ka-progress{margin:0;font-size:.82rem;color:#334155}
+.ka-progress strong{color:#1E293B}
+.ka-still-needed{margin:0;font-size:.82rem;color:#334155}
+.ka-draft-saved{margin:6px 0 0;font-size:.8rem;color:#64748B}
+.ka-learner-name{font-weight:600;font-size:.92rem;color:#1E293B}
+.ka-learner-kls{font-size:.75rem;color:#64748B}
+.ka-mark-controls{display:flex;align-items:center;gap:8px}
+.ka-mark{width:76px;height:48px;min-height:48px;border:1px solid #CBD5E1;border-radius:10px;text-align:center;font-weight:700;color:#1E293B;background:#FFFFFF;box-sizing:border-box}
+.ka-mark.is-blank{border:1px dashed #CBD5E1}
+.ka-mark.is-invalid{border:2px solid #B91C1C}
+.ka-abs{min-width:44px;min-height:44px;padding:0 12px;border-radius:10px;border:1px solid #CBD5E1;background:#FFFFFF;color:#1E293B;font-weight:700}
+.ka-abs[aria-pressed="true"]{border:2px solid #1E293B;background:#F1F5F9}
+.ka-saved-check{color:#15803D;font-weight:700;min-width:24px}
+.ka-not-saved{display:inline-block;margin-top:4px;color:#92400E;background:#FFFBEB;font-size:.75rem;font-weight:700;border-radius:8px;padding:4px 8px}
+.ka-mark-cell [data-mark-error]{font-size:.75rem;color:#B91C1C;font-weight:700;margin-top:3px}
+.ka-submit-approval:not(:disabled){background:#15803D;color:#FFFFFF;border:1px solid #15803D}
+.ka-submit-approval:disabled{background:#FFFFFF;color:#64748B;border:1px solid #CBD5E1}
+.ka-nursery-sheet{overflow-x:auto}
+@media (min-width:768px){
+  .ka-marks-sheet{overflow-x:auto}
+}
+.ka-entry-list{display:flex;flex-direction:column;background:#fff;border:1px solid #E2E8F0;border-radius:14px;overflow:hidden}
+.ka-entry-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid #E2E8F0;background:#fff}
+.ka-entry-row[data-state="pending"]{background:#FFFBEB}
+.ka-entry-row[data-state="error"]{background:#FEF2F2}
+.ka-entry-row[data-state="typing"]{background:#EFF6FF}
+.ka-entry-who{flex:1;min-width:0}
+.ka-entry-meta{font-size:.75rem;color:#475569}
+.ka-entry-status{display:flex;align-items:center;gap:4px;margin-top:2px;font-size:.75rem;font-weight:700}
+.ka-entry-row[data-state="saved"] .ka-entry-status,.ka-entry-row[data-state="absent"] .ka-entry-status{color:#166534}
+.ka-entry-row[data-state="pending"] .ka-entry-status{color:#92400E}
+.ka-entry-row[data-state="error"] .ka-entry-status{color:#B91C1C}
+.ka-entry-row[data-state="typing"] .ka-entry-status{color:#1D4ED8}
+.ka-entry-row[data-state="blank"] .ka-entry-status{color:#475569}
+.ka-entry-list .ka-mark{width:76px;height:48px;min-height:48px;max-width:76px;border-radius:10px;text-align:center;font-weight:700;font-size:1.05rem;color:#1E293B;background:#fff;box-sizing:border-box}
+.ka-entry-row[data-state="saved"] .ka-mark{border:1px solid #64748B;background:#fff}
+.ka-entry-row[data-state="absent"] .ka-mark{border:1px solid #94A3B8;background:#F1F5F9;color:#334155}
+.ka-entry-row[data-state="pending"] .ka-mark{border:2px solid #B45309;background:#fff}
+.ka-entry-row[data-state="error"] .ka-mark{border:2px solid #B91C1C;background:#fff}
+.ka-entry-row[data-state="typing"] .ka-mark{border:2px solid #1D4ED8;box-shadow:0 0 0 3px #BFDBFE;background:#fff}
+.ka-entry-row[data-state="blank"] .ka-mark{border:1px dashed #64748B;background:#FAFAF5}
+.ka-entry-list .ka-abs{min-width:52px;width:52px;height:48px;min-height:48px;padding:0 8px;border-radius:10px;border:1px solid #64748B;background:#fff;color:#334155;font:700 .78rem 'DM Sans',sans-serif}
+.ka-entry-list .ka-abs[aria-pressed="true"]{border:1px solid #0F172A;background:#0F172A;color:#fff}
+.ka-offline{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;background:#FFFBEB;border:1px solid #FDE68A;color:#92400E;font-size:.85rem;line-height:1.4}
+.ka-next{flex:1;min-height:48px;border-radius:10px;border:1px solid #0F172A;background:#0F172A;color:#fff;font:700 .92rem 'DM Sans',sans-serif}
+.ka-prev{width:52px;min-height:48px;border-radius:10px;border:1px solid #64748B;background:#fff;color:#1E293B;display:inline-flex;align-items:center;justify-content:center}
+.ka-entry-help{margin:0;font-size:.75rem;color:#475569}
+.ka-entry-tally{font-size:.8rem;color:#475569}
+.ka-marks-sheet.ka-entry-list{overflow:hidden}
+.ka-marks-page{padding-bottom:240px}
+/* Marks on the teacher and admin dashboards. Phone layout is the default. */
+.ka-marks-groups{display:flex;flex-direction:column;gap:10px;min-width:0;max-width:100%;overflow-x:hidden}
+.ka-marks-row{display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:12px 14px;border:1px solid #E2E8F0;border-radius:14px;background:#FFFFFF;min-width:0;max-width:100%}
+.ka-marks-copy{min-width:0;flex:1 1 auto}
+.ka-marks-copy h3{margin:0;font-size:.95rem;color:#1E293B;overflow-wrap:anywhere}
+.ka-marks-detail{margin:4px 0 0;font-size:.8rem;color:#475569}
+.ka-marks-note{margin:4px 0 0;font-size:.8rem;color:#7F1D1D}
+.ka-marks-row a{min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:0 14px;border-radius:10px;text-decoration:none;font-weight:600;box-sizing:border-box;width:100%}
+.ka-marks-desk{display:flex;flex-direction:column;gap:10px;min-width:0;max-width:100%;overflow-x:hidden;margin:0 0 16px}
+.ka-marks-desk h2{margin:0;font:600 1rem 'Sora',system-ui,sans-serif;color:#1E293B}
+.ka-marks-desk-cards{display:flex;flex-direction:column;gap:10px;min-width:0}
+.ka-marks-desk-card{display:flex;flex-direction:column;justify-content:center;gap:4px;min-height:44px;padding:12px 14px;border:1px solid #E2E8F0;border-radius:14px;background:#FFFFFF;color:#1E293B;text-decoration:none;box-sizing:border-box;width:100%}
+.ka-marks-desk-card strong{font:700 1.3rem 'Sora',system-ui,sans-serif;color:#1E293B}
+.ka-marks-desk-card span{font-size:.8rem;color:#475569}
+@media (min-width:768px){
+  .ka-marks-row{flex-direction:row;flex-wrap:wrap;align-items:center}
+  .ka-marks-row a{width:auto}
+  .ka-marks-desk-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+}
+
+.ka-phone-cards{overflow-x:hidden}
+.ka-learner-meta{font-size:.78rem;color:#475569}
+.ka-learner-card{border:1px solid #E2E8F0;border-radius:14px;background:#fff;padding:12px 14px;display:flex;flex-direction:column;gap:8px;max-width:100%}
+.ka-learner-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 10px}
+.ka-learner-pos{font:700 1.1rem 'Sora',sans-serif;color:#1E293B}
+.ka-learner-subjects{margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(72px,1fr));gap:4px}
+.ka-learner-subjects div{background:#F1F5F9;border-radius:8px;padding:6px 4px;text-align:center;min-width:0}
+.ka-learner-subjects dt{color:#475569;font-size:.78rem;overflow-wrap:anywhere}
+.ka-learner-subjects dd{margin:0;font-weight:700;color:#1E293B}
+.ka-learner-total{background:#EFF6FF}
+.ka-learner-total dt{color:#1D4ED8}
+.ka-exam-tabs{margin-bottom:8px}
+.ka-other-exam{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px}
+.ka-sheet-more{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+.ka-marks-error{margin:0 0 16px}
+.ka-filter-panel .ds-form-select,
+.ka-filter-panel .ds-btn,
+.ka-other-exam .ds-form-select,
+.ka-other-exam .ds-btn,
+.ka-sheet-actions .ds-btn{min-height:44px}
+@media (max-width:767px){
+  [data-testid="exams-marks"]{overflow-x:hidden}
+  .ka-sheet-pages{display:none}
+}
+
+/* Mark sheet: year, term, then exam-set tabs (MarkSheetTabs). Phone first. */
+.ka-marks-layout{display:flex;flex-direction:column;gap:12px;min-width:0;max-width:100%}
+.ka-block-life,.ka-legacy-kpis{display:none}
+.ka-year-term{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;min-width:0;width:100%}
+.ka-field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ka-field .ds-label{font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#475569}
+.ka-sheet-filters .ds-form-select,.ka-other-exam .ds-form-select{min-height:44px;max-width:100%}
+.ka-term-pills,.ka-stream-pills{display:none}
+.ka-choice{min-height:44px;padding:0 14px;border-radius:9px;background:transparent;color:#475569;text-decoration:none;display:inline-flex;align-items:center;font:600 .85rem 'DM Sans',sans-serif}
+.ka-choice.is-on{background:#fff;box-shadow:0 0 0 1px #CBD5E1;font-weight:700;color:#1E293B}
+.ka-class-launch{width:100%;justify-content:flex-start;gap:8px;min-height:44px}
+.ka-download-desk{display:none}
+.ka-block-tabs{min-width:0;max-width:100%}
+.ka-exam-tabs{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;overscroll-behavior-x:contain;border:0;margin:0;max-width:100%;min-width:0}
+.ka-exam-tabs a{flex:0 0 auto;min-height:60px;padding:8px 10px;border-radius:12px;border:1px solid #94A3B8;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-decoration:none;color:#1E293B;text-align:center;font-weight:700;box-sizing:border-box;white-space:nowrap}
+.ka-exam-tabs a[aria-current=page],.ka-exam-tabs a.is-on{border:2px solid #15803D;background:#F0FDF4;margin:0;color:#1E293B}
+.ka-exam-name{display:inline-flex;align-items:center;justify-content:center;gap:4px;max-width:100%}
+.ka-exam-long,.ka-exam-status-long,.ka-exam-note{display:none}
+.ka-exam-short{font:700 .85rem 'Sora',sans-serif}
+.ka-exam-status-short{font-size:.7rem;font-weight:700}
+.ka-status-released .ka-exam-status-short{color:#166534}
+.ka-status-approving .ka-exam-status-short{color:#92400E}
+.ka-status-coming .ka-exam-status-short{color:#334155}
+.ka-status-pill{padding:2px 10px;border-radius:999px;font-size:.72rem;font-weight:700;white-space:nowrap}
+.ka-status-released .ka-status-pill{background:#F0FDF4;color:#166534;border:1px solid #BBF7D0}
+.ka-status-approving .ka-status-pill{background:#FFFBEB;color:#92400E;border:1px solid #FDE68A}
+.ka-status-coming .ka-status-pill{background:#F1F5F9;color:#334155;border:1px solid #CBD5E1}
+.ka-subject-chips{display:flex;flex-wrap:wrap;gap:8px;min-width:0;max-width:100%}
+.ka-subject-chip{display:inline-flex;gap:8px;align-items:center;padding:6px 12px;border:1px solid #E2E8F0;border-radius:999px;font-size:.82rem;background:#fff;max-width:100%}
+.ka-life-pill{display:inline-flex;padding:2px 10px;border-radius:999px;font-size:.72rem;font-weight:700}
+.ka-life-approved{background:#F0FDF4;color:#166534;border:1px solid #BBF7D0}
+.ka-life-submitted{background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE}
+.ka-life-returned{background:#FEF2F2;color:#B91C1C;border:1px solid #FECACA}
+.ka-life-saved,.ka-life-muted{background:#F1F5F9;color:#334155;border:1px solid #CBD5E1}
+.ka-life-long{display:none}
+.ka-life-short{display:inline}
+.ka-sheet-summary{font-size:.82rem;color:#334155;min-width:0}
+.ka-sheet-foot{margin:0;font-size:.75rem;color:#475569}
+.ka-sheet-actions{display:flex;gap:8px;width:100%}
+.ka-sheet-actions .ds-btn{flex:1;min-height:48px;display:inline-flex;align-items:center;justify-content:center}
+.ka-sheet-actions .ds-btn-primary{flex:1.4}
+.ka-kls-line{font-size:.75rem;color:#475569;margin-top:-4px}
+.ka-learner-head strong{flex:1;min-width:0}
+.ka-learner-name{color:inherit;font-weight:600;text-decoration:none}
+.ka-learner-subjects div.ka-tile-abs{background:#FFFBEB;box-shadow:inset 0 0 0 1px #FDE68A}
+.ka-cell-abs{font-weight:700;color:#92400E;text-align:right}
+.ka-num{text-align:right;font-variant-numeric:tabular-nums}
+.ka-sheet-table .ds-grid-marks .gm-subject-code{display:none}
+.ka-other-exam{min-width:0;max-width:100%}
+@media (max-width:767px){
+  .ka-block-filters,#marks-sheet-filters,#marks-sheet-filters > .ka-sheet-filters,.ka-block-meta{display:contents}
+  .ka-block-title{order:1}
+  .ka-block-nav,.ka-block-message,.ka-block-empty{order:2}
+  .ka-year-term{order:3}
+  .ka-block-tabs,.ka-block-error{order:4}
+  .ka-class-launch{order:5}
+  .ka-block-chips{order:6}
+  .ka-block-summary{order:7}
+  .ka-block-grid{order:8}
+  .ka-block-actions{order:9}
+  .ka-block-foot{order:10}
+  .ka-sheet-more{min-height:48px;width:100%}
+  .ka-sheet-table,.ka-block-grid,.ds-table-wrap{max-width:100%}
+}
+@media (min-width:768px){
+  .ka-marks-layout{gap:18px}
+  .ka-year-term{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 16px;width:auto}
+  .ka-field-year{width:130px}
+  .ka-field-class{width:170px}
+  #marks-sheet-filters > .ka-sheet-filters{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 16px;width:100%}
+  #marks-sheet-filters .ka-filter-panel{display:contents}
+  .ka-term-pills,.ka-stream-pills{display:inline-flex;flex-wrap:wrap;padding:4px;border-radius:12px;background:#F1F5F9;gap:4px}
+  .ka-term-select,.ka-stream-select,.ka-sheet-apply,.ka-summary-phone{display:none}
+  .ka-download-desk{display:inline-flex;margin-left:auto;min-height:44px}
+  .ka-exam-tabs{display:flex;flex-wrap:wrap;gap:10px;overflow-x:visible}
+  .ka-exam-tabs a{flex:1 1 240px;min-height:72px;padding:12px 16px;border-radius:14px;align-items:flex-start;text-align:left;gap:6px;white-space:normal}
+  .ka-exam-name{justify-content:flex-start}
+  .ka-exam-long{display:inline;font:700 .98rem 'Sora',sans-serif}
+  .ka-exam-short,.ka-exam-status-short{display:none}
+  .ka-exam-status-long{display:inline-flex}
+  .ka-exam-note{display:block;font-size:.78rem;color:#475569;font-weight:400}
+  .ka-block-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+  .ka-block-summary{flex:1 1 220px}
+  .ka-sheet-actions{width:auto;margin-left:auto}
+  .ka-sheet-actions .ds-btn{flex:none;min-height:44px}
+  .ka-life-long{display:inline}
+  .ka-life-short{display:none}
+  .ka-sheet-foot{font-size:.8rem}
+  .ka-sheet-table{border:1px solid #E2E8F0;border-radius:14px;overflow-x:auto}
+}
+.ka-queue{display:flex;flex-direction:column;gap:10px}
+.ka-queue-tools{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.ka-queue-card{background:#fff;border:1px solid #E2E8F0;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.ka-queue-main{display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px}
+.ka-queue-main input{width:22px;height:22px;min-width:22px;min-height:22px;accent-color:#15803D;margin-top:2px}
+.ka-action-row{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch}
+.ka-action-row>form{display:flex;flex:1 1 120px;min-width:0}
+.ka-action-row .ds-btn,.ka-action-row button,.ka-action-row a{min-height:44px;flex:1 1 120px}
+.ka-return-box{display:flex;flex-direction:column;gap:8px;padding:14px;border:1px solid #FECACA;background:#FEF2F2;border-radius:12px}
+.ka-return-box[hidden]{display:none}
+.ka-return-box textarea{width:100%;min-height:72px;border:1px solid #CBD5E1;border-radius:8px;padding:8px;background:#fff;color:#1E293B;font:inherit}
+.ka-filter-field{display:flex;flex-direction:column;gap:4px;font-size:.8rem;color:#64748B;min-width:0}
+.ka-filter-field select{min-height:44px;width:100%}
+.ka-released{display:inline-flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:.82rem;color:#334155}
+.ka-lock{width:16px;height:16px;flex:0 0 auto;color:#166534}
+.ka-release-go .mr-btn{min-height:44px}
+@media (max-width:767px){
+  .ka-detail-table{overflow:visible}
+  .ka-detail-table table,.ka-detail-table tbody,.ka-detail-table tr,.ka-detail-table td,.ka-detail-table th{display:block;width:100%;min-width:0;box-sizing:border-box}
+  .ka-detail-table thead.ka-colhead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+  .ka-release-go{position:sticky;bottom:0;z-index:30;background:#fff;padding:12px 0 8px;border-top:1px solid #E2E8F0}
+  .ka-release-go .mr-btn{width:100%;min-height:52px}
+  .mr-error,.ka-alert-error{max-width:100%}
+}
+.ka-released-pill{display:inline-flex;align-items:center;gap:6px}
+.ka-released-pill .ka-lock{width:14px;height:14px}
+.ka-release-reopen{display:none;flex-direction:column;gap:12px;border:2px solid #1E293B;border-radius:14px;padding:18px 20px;background:#fff;margin-top:16px}
+.ka-release-open:checked ~ .ka-release-reopen{display:flex}
+.ka-release-reopen ul{margin:0;padding-left:18px;color:#334155;display:flex;flex-direction:column;gap:4px}
+.ka-release-reopen label{font-weight:600}
+.ka-release-required{color:#B91C1C}
+.ka-release-reopen textarea{min-height:84px;width:100%;border:1px solid #CBD5E1;border-radius:8px;padding:8px;color:#1E293B;font:inherit;background:#fff}
+.ka-release-reopen-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}
+.ka-release-reopen-actions .ds-btn{min-height:44px}
+.ka-release-reopen-bar{display:none}
+@media (max-width:767px){
+  .ka-release-reopen-bar{display:flex;flex-direction:column;gap:6px;position:sticky;bottom:0;z-index:20;background:#fff;border-top:1px solid #E2E8F0;padding:12px 0 4px}
+  .ka-release-reopen-bar .ds-btn{min-height:48px;justify-content:center}
+  .ka-release-reopen-bar span{text-align:center;font-size:.75rem;color:#475569}
+}
+.ka-mark-row{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:44px;padding:8px 0;border-top:1px solid #E2E8F0;font-size:.9rem}
+.ka-hit{min-height:44px;display:inline-flex;align-items:center}
+@media (max-width:767px){
+  .family-page,.rc{overflow-x:hidden;max-width:100%}
+  a.ka-report-download{display:flex;width:100%;min-height:48px;justify-content:center}
+}
+.ka-own{display:flex;flex-direction:column;gap:0;margin-top:12px;padding:12px 14px;border:1px solid #E2E8F0;border-radius:14px;background:#fff}
+.ka-own h2{margin:0 0 4px;font:600 .95rem 'Sora',sans-serif;color:#1E293B}
+.ka-own-row{display:flex;align-items:center;gap:8px;min-height:44px;padding:8px 0;border-bottom:1px solid #E2E8F0;font-size:.84rem;color:#1E293B}
+.ka-own-row strong{flex:1;min-width:0}

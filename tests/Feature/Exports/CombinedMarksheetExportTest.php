@@ -149,7 +149,7 @@ class CombinedMarksheetExportTest extends TestCase
     {
         $alice = $this->student('Alice A', 'alice.combined@t.sch.ug', 'active');
         $bob = $this->student('Bob B', 'bob.combined@t.sch.ug', 'active');
-        $this->student('Charlie C', 'charlie.combined@t.sch.ug', 'active');
+        $charlie = $this->student('Charlie C', 'charlie.combined@t.sch.ug', 'active');
         $dave = $this->student('Dave D', 'dave.combined@t.sch.ug', 'inactive');
 
         // Alice: full marks except July Math (blank) — and a Dave mark to prove exclusion.
@@ -167,7 +167,13 @@ class CombinedMarksheetExportTest extends TestCase
         $this->mark($bob, $this->eot, $this->english, 58);
         $this->mark($bob, $this->eot, $this->math, 61);
 
-        // Charlie: no marks at all (blank rows).
+        // Charlie: absent for June English. July and the counting set stay blank.
+        Marks::create([
+            'student_id' => $charlie->id, 'exam_id' => $this->juneMid->id,
+            'school_id' => $this->school->id, 'subject_id' => $this->english->id,
+            'teacher_id' => $this->juneMid->teacher_id, 'section_id' => $this->section->id,
+            'marks' => null, 'grade' => 'AB', 'absent' => true,
+        ]);
         // Dave: inactive — has a mark but must be excluded from the roster.
         $this->mark($dave, $this->juneMid, $this->english, 99);
     }
@@ -205,61 +211,67 @@ class CombinedMarksheetExportTest extends TestCase
         @unlink($tmp);
 
         return [
-            $reader->getSheetByName('MONTHLY RESULTS'),
-            $reader->getSheetByName('END OF TERM'),
+            $reader->getSheetByName('Mid Term JUNE'),
+            $reader->getSheetByName('Mid Term JULY'),
+            $reader->getSheetByName('End Of Term'),
         ];
     }
 
     public function test_workbook_has_both_sheets_with_correct_values(): void
     {
         $binary = Excel::raw(new CombinedMarksheetExport($this->stdLink, $this->term), \Maatwebsite\Excel\Excel::XLSX);
-        [$monthly, $eot] = $this->sheetsFromBinary($binary);
+        $tmp = tempnam(sys_get_temp_dir(), 'cm').'.xlsx';
+        file_put_contents($tmp, $binary);
+        $book = IOFactory::load($tmp);
+        @unlink($tmp);
 
-        $this->assertNotNull($monthly, 'MONTHLY RESULTS sheet missing');
-        $this->assertNotNull($eot, 'END OF TERM sheet missing');
+        $this->assertNull($book->getSheetByName('MONTHLY RESULTS'));
+        $this->assertNull($book->getSheetByName('END OF TERM'));
+        $this->assertSame(['Mid Term JUNE', 'Mid Term JULY', 'End Of Term'], $book->getSheetNames());
 
-        $monthlyRows = $monthly->toArray();
+        [$june, $july, $eot] = $this->sheetsFromBinary($binary);
+
+        $this->assertNotNull($june, 'June set sheet missing');
+        $this->assertNotNull($july, 'July set sheet missing');
+        $this->assertNotNull($eot, 'Counting set sheet missing');
+
+        $juneRows = $june->toArray();
+        $julyRows = $july->toArray();
         $eotRows = $eot->toArray();
 
-        $this->assertSame(['STUDENT NAME', 'MONTH', 'ENGLISH', 'MATHEMATICS'], $monthlyRows[0]);
-        $this->assertSame(['STUDENT NAME', 'ENGLISH', 'MATHEMATICS'], $eotRows[0]);
+        $this->assertSame(['STUDENT NAME', 'ENGLISH', 'MATHEMATICS'], $juneRows[0]);
+        $this->assertSame(['STUDENT NAME', 'ENGLISH', 'MATHEMATICS'], $julyRows[0]);
+        $this->assertSame(['STUDENT NAME', 'ENGLISH', 'MATHEMATICS', 'DIVISION'], $eotRows[0]);
 
-        // Monthly: 3 active students x 2 MID months = 6 data rows.
-        $this->assertCount(7, $monthlyRows);
-        $this->assertSame('Alice A', $monthlyRows[1][0]);
-        $this->assertSame('JUNE', $monthlyRows[1][1]);
-        $this->assertEquals(45, $monthlyRows[1][2]);
-        $this->assertEquals(50, $monthlyRows[1][3]);
+        $this->assertCount(4, $juneRows);
+        $this->assertSame('Alice A', $juneRows[1][0]);
+        $this->assertEquals(45, $juneRows[1][1]);
+        $this->assertEquals(50, $juneRows[1][2]);
 
-        $this->assertSame('Alice A', $monthlyRows[2][0]);
-        $this->assertSame('JULY', $monthlyRows[2][1]);
-        $this->assertEquals(48, $monthlyRows[2][2]);
-        $this->assertBlank($monthlyRows[2][3]);
+        $this->assertSame('Bob B', $juneRows[2][0]);
+        $this->assertEquals(40, $juneRows[2][1]);
+        $this->assertEquals(42, $juneRows[2][2]);
 
-        $this->assertSame('Bob B', $monthlyRows[3][0]);
-        $this->assertSame('JUNE', $monthlyRows[3][1]);
-        $this->assertEquals(40, $monthlyRows[3][2]);
-        $this->assertEquals(42, $monthlyRows[3][3]);
+        $this->assertSame('Charlie C', $juneRows[3][0]);
+        $this->assertSame('ABS', $juneRows[3][1]);
+        $this->assertBlank($juneRows[3][2]);
 
-        $this->assertSame('Bob B', $monthlyRows[4][0]);
-        $this->assertSame('JULY', $monthlyRows[4][1]);
-        $this->assertEquals(44, $monthlyRows[4][2]);
-        $this->assertEquals(46, $monthlyRows[4][3]);
+        $this->assertCount(4, $julyRows);
+        $this->assertSame('Alice A', $julyRows[1][0]);
+        $this->assertEquals(48, $julyRows[1][1]);
+        $this->assertBlank($julyRows[1][2]);
 
-        $this->assertSame('Charlie C', $monthlyRows[5][0]);
-        $this->assertSame('JUNE', $monthlyRows[5][1]);
-        $this->assertBlank($monthlyRows[5][2]);
-        $this->assertBlank($monthlyRows[5][3]);
+        $this->assertSame('Bob B', $julyRows[2][0]);
+        $this->assertEquals(44, $julyRows[2][1]);
+        $this->assertEquals(46, $julyRows[2][2]);
 
-        $this->assertSame('Charlie C', $monthlyRows[6][0]);
-        $this->assertSame('JULY', $monthlyRows[6][1]);
-        $this->assertBlank($monthlyRows[6][2]);
-        $this->assertBlank($monthlyRows[6][3]);
+        $this->assertSame('Charlie C', $julyRows[3][0]);
+        $this->assertBlank($julyRows[3][1]);
+        $this->assertBlank($julyRows[3][2]);
 
-        // EOT: 3 active students, one row each; Dave (inactive) excluded.
         $this->assertCount(4, $eotRows);
-        $this->assertEquals(['Alice A', 60, 65], $eotRows[1]);
-        $this->assertEquals(['Bob B', 58, 61], $eotRows[2]);
+        $this->assertEquals(['Alice A', 60, 65], array_slice($eotRows[1], 0, 3));
+        $this->assertEquals(['Bob B', 58, 61], array_slice($eotRows[2], 0, 3));
         $this->assertSame('Charlie C', $eotRows[3][0]);
         $this->assertBlank($eotRows[3][1]);
         $this->assertBlank($eotRows[3][2]);

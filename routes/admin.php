@@ -72,9 +72,9 @@ Route::get( '/dashboard/workAnniversary', 'BirthdayController@workAnniversaryCre
 Route::post( '/dashboard/workAnniversary', 'BirthdayController@workAnniversaryMessage' );
 
 //school details
-// Hidden from head teachers (sidebar condition school_admin). The gate matches
-// MustBeFullSchoolAdmin and answers 403.
-Route::middleware('can:full-school-admin')->group(function () {
+// A head teacher may open their own school. Another school's id is not found.
+// fullschooladmin also keeps co-admin (usergroup 2) on this gate.
+Route::middleware(['fullschooladmin', 'can:full-school-admin'])->group(function () {
 Route::get( '/schooldetails', 'SchoolDetailsController@index' );
 //Route::get( '/schooldetails/list', 'SchoolDetailsController@list' );
 //Route::get( '/schooldetails/create', 'SchoolDetailsController@create' );
@@ -666,6 +666,10 @@ Route::get( '/magazine/download/{id}', 'BulletinsController@downloadattachments'
 // Report Cards (per-class batch PDF generation + download)
 Route::prefix('reports/cards')->name('admin.reports.cards.')->group(function () {
     Route::get('/', 'ReportCardsController@index')->name('index');
+    Route::post('/report-kind', 'ReportCardsController@updateReportKind')->name('report-kind');
+    Route::get('/progressive-rules', 'ProgressiveReportRulesController@edit')->name('progressive-rules');
+    Route::post('/progressive-rules', 'ProgressiveReportRulesController@update')->name('progressive-rules.update');
+    Route::post('/progressive-rules/reset', 'ProgressiveReportRulesController@reset')->name('progressive-rules.reset');
     Route::get('/history', 'ReportCardsController@history')->name('history');
     Route::post('/template', 'ReportCardsController@updateTemplate')->name('template');
     Route::get('/preview/{template}', 'ReportCardsController@previewTemplate')->name('preview');
@@ -939,6 +943,7 @@ Route::get('/marks/releases/new', [\App\Http\Controllers\MarksReleaseController:
 Route::post('/marks/releases/preview', [\App\Http\Controllers\MarksReleaseController::class, 'preview'])->name('admin.marks.releases.preview');
 Route::post('/marks/releases', [\App\Http\Controllers\MarksReleaseController::class, 'store'])->name('admin.marks.releases.store');
 Route::get('/marks/releases/{release}', [\App\Http\Controllers\MarksReleaseController::class, 'show'])->whereNumber('release')->name('admin.marks.releases.show');
+Route::post('/marks/releases/{release}/reopen', [\App\Http\Controllers\MarksReleaseController::class, 'reopen'])->whereNumber('release')->name('admin.marks.releases.reopen');
 Route::post('/promotion', "MarksController@promoteStudents")->name('admin.students.promote');
 Route::get("/marks/student/{user}/class/{class}/{exam}", "GetStudentsMarks@GetStudentMarks")->name("admin.marks.student.class");
 Route::get("/report/student/{learner}/class/{class}/{exam}", "GetStudentsMarks@redirectLegacyReport")->name("admin.report.student.class");
@@ -957,6 +962,10 @@ Route::post('/marks/submissions/{exam}/reject', 'ExamMarksSubmissionController@r
 // Route::resource('exams', 'Admin\ExamController')->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
 // handle classes — same hidden Classes and streams item.
 Route::middleware('can:full-school-admin')->group(function () {
+Route::get("/school-identity", "SchoolIdentityController@edit")->name("admin.school-identity");
+Route::post("/school-identity", "SchoolIdentityController@update")->name("admin.school-identity.update");
+Route::get("/classes/link-section/{section}", "ClassLinkController@confirm")->whereNumber('section')->name("admin.classes.link-section");
+Route::post("/classes/link-section/{section}", "ClassLinkController@store")->whereNumber('section')->name("admin.classes.link-section.store");
 Route::get("/classes/add", "ClassesController@create")->name("admin.classes.add");
 Route::post("/classes/store", "ClassesController@store")->name("admin.classes.store");
 });
@@ -970,6 +979,8 @@ Route::post("/academic-term/store", "Academics\AcademicTermController@store")->n
 Route::get("/academic-term/{term}/edit", "Academics\AcademicTermController@edit")->name("admin.academic-term.edit");
 Route::patch("/academic-term/{termId}/update", "Academics\AcademicTermController@update")->name("admin.academic-term.update");
 Route::delete("/academic-term/{termId}/destroy", "Academics\AcademicTermController@destroy")->name("admin.academic-term.destroy");
+Route::get("/academic-term/{termId}/make-current", "Academics\AcademicTermController@confirmCurrent")->whereNumber('termId')->name("admin.academic-term.make-current");
+Route::post("/academic-term/{termId}/make-current", "Academics\AcademicTermController@makeCurrent")->whereNumber('termId')->name("admin.academic-term.make-current.store");
 });
 
 // ============== FEES STRUCTURE =================

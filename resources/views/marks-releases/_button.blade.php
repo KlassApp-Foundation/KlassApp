@@ -1,5 +1,5 @@
 {{-- SPDX-License-Identifier: MIT --}}
-{{-- "Release marks" link, shown only to someone who may release (school admin, class teacher). --}}
+{{-- "Release marks" link, shown only to someone who may release (school admin, head teacher, class teacher). --}}
 @php
     $mrUser = auth()->user();
     $mrCan = $mrUser && app(\App\Services\MarksRelease\MarksReleaseService::class)->canRelease($mrUser);

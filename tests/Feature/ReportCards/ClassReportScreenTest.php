@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\ReportCards;
 
+use App\Models\Academics\Marks;
 use App\Models\ReportGeneration;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\ReleasedExam;
@@ -47,6 +48,20 @@ class ClassReportScreenTest extends TestCase
             ->assertSee('Amara Okoro')
             ->assertSee('/admin/reports/cards/'.$this->link->id.'/student/'.$this->student->id.'/download?term='.$this->term->id, false)
             ->assertSee('Download report card for Amara Okoro');
+    }
+
+    public function test_an_absence_shows_as_abs_on_report_cards(): void
+    {
+        $math = Marks::query()->where('exam_id', $this->exams['Mathematics']->id)->first();
+        $math->update(['marks' => null, 'grade' => 'AB', 'absent' => true]);
+        $this->release('English');
+        $this->release('Mathematics');
+
+        $html = $this->screen()->assertOk()->getContent();
+
+        $this->assertStringContainsString('>ABS<', $html);
+        $this->assertStringContainsString('>74<', $html);
+        $this->assertStringNotContainsString('>AB<', $html);
     }
 
     public function test_a_release_for_another_class_does_not_open_this_class(): void
@@ -98,6 +113,10 @@ class ClassReportScreenTest extends TestCase
 
     public function test_the_earlier_page_is_kept_at_history(): void
     {
-        $this->actingAs($this->admin)->get('/admin/reports/cards/history')->assertOk()->assertSee('Report Card Template');
+        $this->actingAs($this->admin)->get('/admin/reports/cards/history')->assertOk()
+            ->assertSee('Report Card Template')
+            ->assertSee('New look')
+            ->assertSee('Printer-friendly')
+            ->assertSee('data-testid="open-printer-friendly"', false);
     }
 }

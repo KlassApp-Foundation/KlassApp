@@ -1,0 +1,41 @@
+SNAPSHOT PRIMARY SCHOOL
+Tel: 0709000001
+PROGRESSIVE REPORT
+TERM I 2026
+Made up of: End Of Term 100%
+Each exam set has its own report
+Mid Term — Not released yet
+End Of Term — Not released yet
+STUDENT
+AMINA KATO
+CLASS
+P.5
+KLS ID
+KLS0090001
+MONTHLY RESULTS
+SUBJECT	MID TERM	AGG
+ENGLISH	62	C5
+MATHEMATICS	71	C4
+TOTAL	133
+POSITION	1st
+AGGREGATE	9
+DIVISION	1
+END OF TERM EXAMINATION
+SUBJECT
+FULL
+MARK
+END OF TERM	AGG	COMMENT
+TR
+INITIALS
+ENGLISH	100	80	C3	Good	-
+MATHEMATICS	100	70	C4	F.Good/Q.Good	-
+TOTAL	200	150	7	DIVISION: 1
+AGGREGATE	7
+CLASSTEACHER'S COMMENT
+There is still room for improvement.
+SIGN ____________________
+HEADTEACHER'S COMMENT
+Let us work together to turn this around next term.
+SIGN & STAMP  ____________________
+Snapshot Primary School Tel: 0709000001
+Powered by klassapp.xyz

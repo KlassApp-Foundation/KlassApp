@@ -21,18 +21,23 @@ class MarksRelease extends Model
     public const STATUS_FAILED = 'failed';
     public const STATUS_CANCELLED = 'cancelled';
 
+    public const STATUS_REOPENED = 'reopened';
+
     protected $table = 'marks_releases';
 
     protected $fillable = [
         'school_id', 'exam_id', 'scope', 'standard_link_id', 'scheduled_at', 'released_at',
-        'status', 'created_by', 'timezone', 'result', 'whatsapp_send', 'release_reason',
+        'status', 'report_kind', 'scoring_rule', 'progressive_rules', 'report_composition', 'created_by', 'timezone', 'result', 'whatsapp_send', 'release_reason', 'pilot_recipients',
     ];
 
     protected $casts = [
         'scheduled_at' => UtcDateTime::class,
         'released_at' => UtcDateTime::class,
         'result' => 'array',
+        'progressive_rules' => 'array',
+        'pilot_recipients' => 'array',
         'whatsapp_send' => 'boolean',
+        'report_composition' => 'array',
     ];
 
     public function school(): BelongsTo

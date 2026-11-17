@@ -1,0 +1,4526 @@
+{
+ "school": "Sample Junior School",
+ "class": "Primary Five",
+ "term": "Third Term · 2026",
+ "subjects": [
+  "English",
+  "Mathematics",
+  "Science",
+  "Social Studies"
+ ],
+ "sets": [
+  "Beginning of Term",
+  "Mid Term"
+ ],
+ "rank_by": "aggregate",
+ "rules": "see reference/calc_reference.py",
+ "learners": [
+  {
+   "kls": "KLS9000001",
+   "name": "PUPIL 001",
+   "marks": [
+    [
+     59,
+     51,
+     28,
+     43
+    ],
+    [
+     49,
+     49,
+     32,
+     49
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000002",
+   "name": "PUPIL 002",
+   "marks": [
+    [
+     89,
+     54,
+     59,
+     58
+    ],
+    [
+     66,
+     63,
+     50,
+     65
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000003",
+   "name": "PUPIL 003",
+   "marks": [
+    [
+     77,
+     87,
+     73,
+     98
+    ],
+    [
+     81,
+     88,
+     92,
+     86
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000004",
+   "name": "PUPIL 004",
+   "marks": [
+    [
+     35,
+     35,
+     35,
+     33
+    ],
+    [
+     42,
+     22,
+     20,
+     58
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000005",
+   "name": "PUPIL 005",
+   "marks": [
+    [
+     58,
+     66,
+     69,
+     74
+    ],
+    [
+     69,
+     45,
+     67,
+     81
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000006",
+   "name": "PUPIL 006",
+   "marks": [
+    [
+     54,
+     44,
+     47,
+     55
+    ],
+    [
+     43,
+     44,
+     46,
+     55
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000007",
+   "name": "PUPIL 007",
+   "marks": [
+    [
+     64,
+     49,
+     33,
+     67
+    ],
+    [
+     57,
+     58,
+     46,
+     54
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000008",
+   "name": "PUPIL 008",
+   "marks": [
+    [
+     42,
+     46,
+     40,
+     48
+    ],
+    [
+     29,
+     44,
+     30,
+     53
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000009",
+   "name": "PUPIL 009",
+   "marks": [
+    [
+     12,
+     33,
+     8,
+     27
+    ],
+    [
+     38,
+     44,
+     31,
+     39
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000010",
+   "name": "PUPIL 010",
+   "marks": [
+    [
+     80,
+     58,
+     64,
+     52
+    ],
+    [
+     97,
+     72,
+     "ABS",
+     81
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000011",
+   "name": "PUPIL 011",
+   "marks": [
+    [
+     36,
+     34,
+     10,
+     8
+    ],
+    [
+     26,
+     23,
+     17,
+     32
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000012",
+   "name": "PUPIL 012",
+   "marks": [
+    [
+     87,
+     75,
+     83,
+     89
+    ],
+    [
+     87,
+     87,
+     82,
+     100
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000013",
+   "name": "PUPIL 013",
+   "marks": [
+    [
+     100,
+     100,
+     100,
+     100
+    ],
+    [
+     100,
+     100,
+     100,
+     100
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000014",
+   "name": "PUPIL 014",
+   "marks": [
+    [
+     34,
+     56,
+     24,
+     48
+    ],
+    [
+     39,
+     57,
+     51,
+     54
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000015",
+   "name": "PUPIL 015",
+   "marks": [
+    [
+     50,
+     48,
+     28,
+     49
+    ],
+    [
+     75,
+     66,
+     68,
+     61
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000016",
+   "name": "PUPIL 016",
+   "marks": [
+    [
+     68,
+     76,
+     67,
+     60
+    ],
+    [
+     62,
+     76,
+     46,
+     60
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000017",
+   "name": "PUPIL 017",
+   "marks": [
+    [
+     43,
+     38,
+     46,
+     36
+    ],
+    [
+     62,
+     49,
+     29,
+     46
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000018",
+   "name": "PUPIL 018",
+   "marks": [
+    [
+     35,
+     40,
+     8,
+     51
+    ],
+    [
+     41,
+     34,
+     20,
+     7
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000019",
+   "name": "PUPIL 019",
+   "marks": [
+    [
+     6,
+     8,
+     18,
+     23
+    ],
+    [
+     15,
+     26,
+     23,
+     38
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000020",
+   "name": "PUPIL 020",
+   "marks": [
+    [
+     100,
+     86,
+     71,
+     80
+    ],
+    [
+     94,
+     73,
+     73,
+     85
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000021",
+   "name": "PUPIL 021",
+   "marks": [
+    [
+     74,
+     78,
+     56,
+     79
+    ],
+    [
+     82,
+     75,
+     70,
+     73
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000022",
+   "name": "PUPIL 022",
+   "marks": [
+    [
+     91,
+     100,
+     100,
+     97
+    ],
+    [
+     96,
+     100,
+     100,
+     100
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000023",
+   "name": "PUPIL 023",
+   "marks": [
+    [
+     22,
+     2,
+     0,
+     17
+    ],
+    [
+     15,
+     13,
+     11,
+     23
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000024",
+   "name": "PUPIL 024",
+   "marks": [
+    [
+     59,
+     72,
+     61,
+     86
+    ],
+    [
+     73,
+     75,
+     96,
+     76
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000025",
+   "name": "PUPIL 025",
+   "marks": [
+    [
+     39,
+     34,
+     14,
+     42
+    ],
+    [
+     29,
+     34,
+     31,
+     31
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000026",
+   "name": "PUPIL 026",
+   "marks": [
+    [
+     69,
+     73,
+     66,
+     60
+    ],
+    [
+     75,
+     54,
+     52,
+     77
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000027",
+   "name": "PUPIL 027",
+   "marks": [
+    [
+     55,
+     53,
+     41,
+     68
+    ],
+    [
+     73,
+     52,
+     56,
+     64
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000028",
+   "name": "PUPIL 028",
+   "marks": [
+    [
+     87,
+     86,
+     70,
+     65
+    ],
+    [
+     100,
+     99,
+     76,
+     98
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000029",
+   "name": "PUPIL 029",
+   "marks": [
+    [
+     79,
+     100,
+     88,
+     100
+    ],
+    [
+     96,
+     98,
+     93,
+     98
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000030",
+   "name": "PUPIL 030",
+   "marks": [
+    [
+     28,
+     0,
+     8,
+     19
+    ],
+    [
+     17,
+     15,
+     11,
+     9
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000031",
+   "name": "PUPIL 031",
+   "marks": [
+    [
+     95,
+     82,
+     83,
+     85
+    ],
+    [
+     86,
+     91,
+     99,
+     96
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000032",
+   "name": "PUPIL 032",
+   "marks": [
+    [
+     43,
+     53,
+     51,
+     33
+    ],
+    [
+     75,
+     30,
+     52,
+     51
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000033",
+   "name": "PUPIL 033",
+   "marks": [
+    [
+     "ABS",
+     70,
+     58,
+     74
+    ],
+    [
+     66,
+     45,
+     47,
+     55
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000034",
+   "name": "PUPIL 034",
+   "marks": [
+    [
+     62,
+     58,
+     52,
+     35
+    ],
+    [
+     51,
+     52,
+     25,
+     51
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000035",
+   "name": "PUPIL 035",
+   "marks": [
+    [
+     48,
+     60,
+     46,
+     49
+    ],
+    [
+     51,
+     55,
+     47,
+     68
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000036",
+   "name": "PUPIL 036",
+   "marks": [
+    [
+     100,
+     100,
+     98,
+     100
+    ],
+    [
+     97,
+     100,
+     97,
+     100
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000037",
+   "name": "PUPIL 037",
+   "marks": [
+    [
+     18,
+     25,
+     36,
+     23
+    ],
+    [
+     40,
+     20,
+     28,
+     38
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000038",
+   "name": "PUPIL 038",
+   "marks": [
+    [
+     25,
+     9,
+     4,
+     8
+    ],
+    [
+     4,
+     23,
+     16,
+     9
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000039",
+   "name": "PUPIL 039",
+   "marks": [
+    [
+     46,
+     29,
+     30,
+     35
+    ],
+    [
+     53,
+     40,
+     37,
+     55
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000040",
+   "name": "PUPIL 040",
+   "marks": [
+    [
+     63,
+     53,
+     52,
+     44
+    ],
+    [
+     65,
+     78,
+     70,
+     79
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000041",
+   "name": "PUPIL 041",
+   "marks": [
+    [
+     12,
+     0,
+     1,
+     4
+    ],
+    [
+     37,
+     44,
+     37,
+     46
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000042",
+   "name": "PUPIL 042",
+   "marks": [
+    [
+     36,
+     34,
+     32,
+     35
+    ],
+    [
+     37,
+     44,
+     37,
+     46
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000043",
+   "name": "PUPIL 043",
+   "marks": [
+    [
+     60,
+     49,
+     48,
+     47
+    ],
+    [
+     59,
+     56,
+     76,
+     54
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000044",
+   "name": "PUPIL 044",
+   "marks": [
+    [
+     37,
+     31,
+     37,
+     31
+    ],
+    [
+     21,
+     41,
+     39,
+     51
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000045",
+   "name": "PUPIL 045",
+   "marks": [
+    [
+     58,
+     41,
+     47,
+     57
+    ],
+    [
+     42,
+     57,
+     55,
+     43
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000046",
+   "name": "PUPIL 046",
+   "marks": [
+    [
+     0,
+     13,
+     20,
+     26
+    ],
+    [
+     14,
+     18,
+     29,
+     36
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000047",
+   "name": "PUPIL 047",
+   "marks": [
+    [
+     44,
+     18,
+     17,
+     15
+    ],
+    [
+     27,
+     20,
+     40,
+     28
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000048",
+   "name": "PUPIL 048",
+   "marks": [
+    [
+     20,
+     49,
+     39,
+     33
+    ],
+    [
+     34,
+     52,
+     41,
+     43
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000049",
+   "name": "PUPIL 049",
+   "marks": [
+    [
+     59,
+     60,
+     66,
+     53
+    ],
+    [
+     87,
+     82,
+     72,
+     68
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000050",
+   "name": "PUPIL 050",
+   "marks": [
+    [
+     29,
+     30,
+     41,
+     31
+    ],
+    [
+     44,
+     40,
+     15,
+     38
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000051",
+   "name": "PUPIL 051",
+   "marks": [
+    [
+     100,
+     99,
+     69,
+     100
+    ],
+    [
+     96,
+     100,
+     92,
+     89
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000052",
+   "name": "PUPIL 052",
+   "marks": [
+    [
+     62,
+     54,
+     43,
+     50
+    ],
+    [
+     49,
+     77,
+     48,
+     52
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000053",
+   "name": "PUPIL 053",
+   "marks": [
+    [
+     72,
+     90,
+     77,
+     87
+    ],
+    [
+     88,
+     82,
+     76,
+     88
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000054",
+   "name": "PUPIL 054",
+   "marks": [
+    [
+     30,
+     35,
+     17,
+     18
+    ],
+    [
+     29,
+     30,
+     42,
+     47
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000055",
+   "name": "PUPIL 055",
+   "marks": [
+    [
+     79,
+     94,
+     80,
+     73
+    ],
+    [
+     69,
+     98,
+     77,
+     88
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000056",
+   "name": "PUPIL 056",
+   "marks": [
+    [
+     57,
+     64,
+     61,
+     72
+    ],
+    [
+     80,
+     70,
+     66,
+     81
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000057",
+   "name": "PUPIL 057",
+   "marks": [
+    [
+     28,
+     14,
+     5,
+     24
+    ],
+    [
+     25,
+     23,
+     15,
+     19
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000058",
+   "name": "PUPIL 058",
+   "marks": [
+    [
+     19,
+     39,
+     32,
+     32
+    ],
+    [
+     30,
+     12,
+     24,
+     31
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000059",
+   "name": "PUPIL 059",
+   "marks": [
+    [
+     15,
+     34,
+     17,
+     39
+    ],
+    [
+     54,
+     28,
+     19,
+     35
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000060",
+   "name": "PUPIL 060",
+   "marks": [
+    [
+     72,
+     85,
+     67,
+     67
+    ],
+    [
+     91,
+     90,
+     72,
+     88
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000061",
+   "name": "PUPIL 061",
+   "marks": [
+    [
+     50,
+     69,
+     58,
+     66
+    ],
+    [
+     75,
+     64,
+     68,
+     73
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000062",
+   "name": "PUPIL 062",
+   "marks": [
+    [
+     56,
+     56,
+     37,
+     55
+    ],
+    [
+     56,
+     56,
+     33,
+     55
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000063",
+   "name": "PUPIL 063",
+   "marks": [
+    [
+     95,
+     79,
+     76,
+     78
+    ],
+    [
+     75,
+     79,
+     68,
+     73
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000064",
+   "name": "PUPIL 064",
+   "marks": [
+    [
+     94,
+     76,
+     88,
+     68
+    ],
+    [
+     90,
+     92,
+     82,
+     89
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000065",
+   "name": "PUPIL 065",
+   "marks": [
+    [
+     53,
+     57,
+     44,
+     65
+    ],
+    [
+     50,
+     64,
+     69,
+     54
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000066",
+   "name": "PUPIL 066",
+   "marks": [
+    [
+     93,
+     100,
+     80,
+     78
+    ],
+    [
+     89,
+     95,
+     95,
+     94
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000067",
+   "name": "PUPIL 067",
+   "marks": [
+    [
+     32,
+     41,
+     47,
+     32
+    ],
+    [
+     41,
+     46,
+     34,
+     32
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000068",
+   "name": "PUPIL 068",
+   "marks": [
+    [
+     7,
+     40,
+     17,
+     37
+    ],
+    [
+     28,
+     44,
+     21,
+     37
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000069",
+   "name": "PUPIL 069",
+   "marks": [
+    [
+     16,
+     21,
+     35,
+     33
+    ],
+    [
+     45,
+     23,
+     39,
+     36
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000070",
+   "name": "PUPIL 070",
+   "marks": [
+    [
+     37,
+     47,
+     32,
+     44
+    ],
+    [
+     46,
+     35,
+     29,
+     28
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000071",
+   "name": "PUPIL 071",
+   "marks": [
+    [
+     100,
+     100,
+     100,
+     100
+    ],
+    [
+     85,
+     100,
+     100,
+     100
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000072",
+   "name": "PUPIL 072",
+   "marks": [
+    [
+     59,
+     61,
+     47,
+     50
+    ],
+    [
+     68,
+     63,
+     50,
+     56
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000073",
+   "name": "PUPIL 073",
+   "marks": [
+    [
+     0,
+     21,
+     0,
+     9
+    ],
+    [
+     15,
+     21,
+     7,
+     24
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000074",
+   "name": "PUPIL 074",
+   "marks": [
+    [
+     49,
+     74,
+     50,
+     79
+    ],
+    [
+     60,
+     54,
+     57,
+     58
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000075",
+   "name": "PUPIL 075",
+   "marks": [
+    [
+     2,
+     30,
+     17,
+     14
+    ],
+    [
+     47,
+     35,
+     23,
+     29
+    ]
+   ]
+  },
+  {
+   "kls": "KLS9000076",
+   "name": "PUPIL 076",
+   "marks": [
+    [
+     26,
+     null,
+     null,
+     43
+    ],
+    [
+     40,
+     63,
+     43,
+     56
+    ]
+   ]
+  }
+ ],
+ "expected": [
+  {
+   "kls": "KLS9000001",
+   "sets": [
+    {
+     "grades": [
+      "C6",
+      "C6",
+      "F9",
+      "P8"
+     ],
+     "points": [
+      6,
+      6,
+      9,
+      8
+     ],
+     "total": 181,
+     "aggregate": 29,
+     "division": "4",
+     "position": 42
+    },
+    {
+     "grades": [
+      "P7",
+      "P7",
+      "F9",
+      "P7"
+     ],
+     "points": [
+      7,
+      7,
+      9,
+      7
+     ],
+     "total": 179,
+     "aggregate": 30,
+     "division": "4",
+     "position": 48
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000002",
+   "sets": [
+    {
+     "grades": [
+      "C3",
+      "C6",
+      "C6",
+      "C6"
+     ],
+     "points": [
+      3,
+      6,
+      6,
+      6
+     ],
+     "total": 260,
+     "aggregate": 21,
+     "division": "2",
+     "position": 27
+    },
+    {
+     "grades": [
+      "C4",
+      "C5",
+      "C6",
+      "C4"
+     ],
+     "points": [
+      4,
+      5,
+      6,
+      4
+     ],
+     "total": 244,
+     "aggregate": 19,
+     "division": "2",
+     "position": 28
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000003",
+   "sets": [
+    {
+     "grades": [
+      "C3",
+      "C3",
+      "C4",
+      "D1"
+     ],
+     "points": [
+      3,
+      3,
+      4,
+      1
+     ],
+     "total": 335,
+     "aggregate": 11,
+     "division": "1",
+     "position": 10
+    },
+    {
+     "grades": [
+      "C3",
+      "C3",
+      "D2",
+      "C3"
+     ],
+     "points": [
+      3,
+      3,
+      2,
+      3
+     ],
+     "total": 347,
+     "aggregate": 11,
+     "division": "1",
+     "position": 12
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000004",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 138,
+     "aggregate": 36,
+     "division": "U",
+     "position": 58
+    },
+    {
+     "grades": [
+      "P8",
+      "F9",
+      "F9",
+      "C6"
+     ],
+     "points": [
+      8,
+      9,
+      9,
+      6
+     ],
+     "total": 142,
+     "aggregate": 32,
+     "division": "4",
+     "position": 50
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000005",
+   "sets": [
+    {
+     "grades": [
+      "C6",
+      "C4",
+      "C4",
+      "C4"
+     ],
+     "points": [
+      6,
+      4,
+      4,
+      4
+     ],
+     "total": 267,
+     "aggregate": 18,
+     "division": "2",
+     "position": 21
+    },
+    {
+     "grades": [
+      "C4",
+      "P7",
+      "C4",
+      "C3"
+     ],
+     "points": [
+      4,
+      7,
+      4,
+      3
+     ],
+     "total": 262,
+     "aggregate": 18,
+     "division": "2",
+     "position": 26
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000006",
+   "sets": [
+    {
+     "grades": [
+      "C6",
+      "P8",
+      "P7",
+      "C6"
+     ],
+     "points": [
+      6,
+      8,
+      7,
+      6
+     ],
+     "total": 200,
+     "aggregate": 27,
+     "division": "3",
+     "position": 39
+    },
+    {
+     "grades": [
+      "P8",
+      "P8",
+      "P7",
+      "C6"
+     ],
+     "points": [
+      8,
+      8,
+      7,
+      6
+     ],
+     "total": 188,
+     "aggregate": 29,
+     "division": "4",
+     "position": 46
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000007",
+   "sets": [
+    {
+     "grades": [
+      "C5",
+      "P7",
+      "F9",
+      "C4"
+     ],
+     "points": [
+      5,
+      7,
+      9,
+      4
+     ],
+     "total": 213,
+     "aggregate": 25,
+     "division": "3",
+     "position": 33
+    },
+    {
+     "grades": [
+      "C6",
+      "C6",
+      "P7",
+      "C6"
+     ],
+     "points": [
+      6,
+      6,
+      7,
+      6
+     ],
+     "total": 215,
+     "aggregate": 25,
+     "division": "3",
+     "position": 39
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000008",
+   "sets": [
+    {
+     "grades": [
+      "P8",
+      "P7",
+      "P8",
+      "P7"
+     ],
+     "points": [
+      8,
+      7,
+      8,
+      7
+     ],
+     "total": 176,
+     "aggregate": 30,
+     "division": "4",
+     "position": 45
+    },
+    {
+     "grades": [
+      "F9",
+      "P8",
+      "F9",
+      "C6"
+     ],
+     "points": [
+      9,
+      8,
+      9,
+      6
+     ],
+     "total": 156,
+     "aggregate": 32,
+     "division": "4",
+     "position": 50
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000009",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 80,
+     "aggregate": 36,
+     "division": "U",
+     "position": 58
+    },
+    {
+     "grades": [
+      "F9",
+      "P8",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      8,
+      9,
+      9
+     ],
+     "total": 152,
+     "aggregate": 35,
+     "division": "U",
+     "position": 62
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000010",
+   "sets": [
+    {
+     "grades": [
+      "C3",
+      "C6",
+      "C5",
+      "C6"
+     ],
+     "points": [
+      3,
+      6,
+      5,
+      6
+     ],
+     "total": 254,
+     "aggregate": 20,
+     "division": "2",
+     "position": 23
+    },
+    {
+     "grades": [
+      "D1",
+      "C4",
+      "F9",
+      "C3"
+     ],
+     "points": [
+      1,
+      4,
+      9,
+      3
+     ],
+     "total": 250,
+     "aggregate": 17,
+     "division": "2",
+     "position": 25
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000011",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 88,
+     "aggregate": 36,
+     "division": "U",
+     "position": 58
+    },
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 98,
+     "aggregate": 36,
+     "division": "U",
+     "position": 67
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000012",
+   "sets": [
+    {
+     "grades": [
+      "C3",
+      "C3",
+      "C3",
+      "C3"
+     ],
+     "points": [
+      3,
+      3,
+      3,
+      3
+     ],
+     "total": 334,
+     "aggregate": 12,
+     "division": "1",
+     "position": 12
+    },
+    {
+     "grades": [
+      "C3",
+      "C3",
+      "C3",
+      "D1"
+     ],
+     "points": [
+      3,
+      3,
+      3,
+      1
+     ],
+     "total": 356,
+     "aggregate": 10,
+     "division": "1",
+     "position": 10
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000013",
+   "sets": [
+    {
+     "grades": [
+      "D1",
+      "D1",
+      "D1",
+      "D1"
+     ],
+     "points": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "total": 400,
+     "aggregate": 4,
+     "division": "1",
+     "position": 1
+    },
+    {
+     "grades": [
+      "D1",
+      "D1",
+      "D1",
+      "D1"
+     ],
+     "points": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "total": 400,
+     "aggregate": 4,
+     "division": "1",
+     "position": 1
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000014",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "C6",
+      "F9",
+      "P7"
+     ],
+     "points": [
+      9,
+      6,
+      9,
+      7
+     ],
+     "total": 162,
+     "aggregate": 31,
+     "division": "4",
+     "position": 46
+    },
+    {
+     "grades": [
+      "F9",
+      "C6",
+      "C6",
+      "C6"
+     ],
+     "points": [
+      9,
+      6,
+      6,
+      6
+     ],
+     "total": 201,
+     "aggregate": 27,
+     "division": "3",
+     "position": 40
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000015",
+   "sets": [
+    {
+     "grades": [
+      "C6",
+      "P7",
+      "F9",
+      "P7"
+     ],
+     "points": [
+      6,
+      7,
+      9,
+      7
+     ],
+     "total": 175,
+     "aggregate": 29,
+     "division": "4",
+     "position": 42
+    },
+    {
+     "grades": [
+      "C3",
+      "C4",
+      "C4",
+      "C5"
+     ],
+     "points": [
+      3,
+      4,
+      4,
+      5
+     ],
+     "total": 270,
+     "aggregate": 16,
+     "division": "2",
+     "position": 23
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000016",
+   "sets": [
+    {
+     "grades": [
+      "C4",
+      "C3",
+      "C4",
+      "C5"
+     ],
+     "points": [
+      4,
+      3,
+      4,
+      5
+     ],
+     "total": 271,
+     "aggregate": 16,
+     "division": "2",
+     "position": 18
+    },
+    {
+     "grades": [
+      "C5",
+      "C3",
+      "P7",
+      "C5"
+     ],
+     "points": [
+      5,
+      3,
+      7,
+      5
+     ],
+     "total": 244,
+     "aggregate": 20,
+     "division": "2",
+     "position": 29
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000017",
+   "sets": [
+    {
+     "grades": [
+      "P8",
+      "F9",
+      "P7",
+      "F9"
+     ],
+     "points": [
+      8,
+      9,
+      7,
+      9
+     ],
+     "total": 163,
+     "aggregate": 33,
+     "division": "U",
+     "position": 48
+    },
+    {
+     "grades": [
+      "C5",
+      "P7",
+      "F9",
+      "P7"
+     ],
+     "points": [
+      5,
+      7,
+      9,
+      7
+     ],
+     "total": 186,
+     "aggregate": 28,
+     "division": "3",
+     "position": 44
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000018",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "P8",
+      "F9",
+      "C6"
+     ],
+     "points": [
+      9,
+      8,
+      9,
+      6
+     ],
+     "total": 134,
+     "aggregate": 32,
+     "division": "4",
+     "position": 47
+    },
+    {
+     "grades": [
+      "P8",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      8,
+      9,
+      9,
+      9
+     ],
+     "total": 102,
+     "aggregate": 35,
+     "division": "U",
+     "position": 62
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000019",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 55,
+     "aggregate": 36,
+     "division": "U",
+     "position": 58
+    },
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 102,
+     "aggregate": 36,
+     "division": "U",
+     "position": 67
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000020",
+   "sets": [
+    {
+     "grades": [
+      "D1",
+      "C3",
+      "C4",
+      "C3"
+     ],
+     "points": [
+      1,
+      3,
+      4,
+      3
+     ],
+     "total": 337,
+     "aggregate": 11,
+     "division": "1",
+     "position": 10
+    },
+    {
+     "grades": [
+      "D2",
+      "C4",
+      "C4",
+      "C3"
+     ],
+     "points": [
+      2,
+      4,
+      4,
+      3
+     ],
+     "total": 325,
+     "aggregate": 13,
+     "division": "2",
+     "position": 17
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000021",
+   "sets": [
+    {
+     "grades": [
+      "C4",
+      "C3",
+      "C6",
+      "C3"
+     ],
+     "points": [
+      4,
+      3,
+      6,
+      3
+     ],
+     "total": 287,
+     "aggregate": 16,
+     "division": "2",
+     "position": 18
+    },
+    {
+     "grades": [
+      "C3",
+      "C3",
+      "C4",
+      "C4"
+     ],
+     "points": [
+      3,
+      3,
+      4,
+      4
+     ],
+     "total": 300,
+     "aggregate": 14,
+     "division": "2",
+     "position": 18
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000022",
+   "sets": [
+    {
+     "grades": [
+      "D2",
+      "D1",
+      "D1",
+      "D1"
+     ],
+     "points": [
+      2,
+      1,
+      1,
+      1
+     ],
+     "total": 388,
+     "aggregate": 5,
+     "division": "1",
+     "position": 4
+    },
+    {
+     "grades": [
+      "D1",
+      "D1",
+      "D1",
+      "D1"
+     ],
+     "points": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "total": 396,
+     "aggregate": 4,
+     "division": "1",
+     "position": 1
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000023",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 41,
+     "aggregate": 36,
+     "division": "U",
+     "position": 58
+    },
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 62,
+     "aggregate": 36,
+     "division": "U",
+     "position": 67
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000024",
+   "sets": [
+    {
+     "grades": [
+      "C6",
+      "C4",
+      "C5",
+      "C3"
+     ],
+     "points": [
+      6,
+      4,
+      5,
+      3
+     ],
+     "total": 278,
+     "aggregate": 18,
+     "division": "2",
+     "position": 21
+    },
+    {
+     "grades": [
+      "C4",
+      "C3",
+      "D1",
+      "C3"
+     ],
+     "points": [
+      4,
+      3,
+      1,
+      3
+     ],
+     "total": 320,
+     "aggregate": 11,
+     "division": "1",
+     "position": 12
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000025",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "P8"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      8
+     ],
+     "total": 129,
+     "aggregate": 35,
+     "division": "U",
+     "position": 53
+    },
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 125,
+     "aggregate": 36,
+     "division": "U",
+     "position": 67
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000026",
+   "sets": [
+    {
+     "grades": [
+      "C4",
+      "C4",
+      "C4",
+      "C5"
+     ],
+     "points": [
+      4,
+      4,
+      4,
+      5
+     ],
+     "total": 268,
+     "aggregate": 17,
+     "division": "2",
+     "position": 20
+    },
+    {
+     "grades": [
+      "C3",
+      "C6",
+      "C6",
+      "C3"
+     ],
+     "points": [
+      3,
+      6,
+      6,
+      3
+     ],
+     "total": 258,
+     "aggregate": 18,
+     "division": "2",
+     "position": 26
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000027",
+   "sets": [
+    {
+     "grades": [
+      "C6",
+      "C6",
+      "P8",
+      "C4"
+     ],
+     "points": [
+      6,
+      6,
+      8,
+      4
+     ],
+     "total": 217,
+     "aggregate": 24,
+     "division": "2",
+     "position": 30
+    },
+    {
+     "grades": [
+      "C4",
+      "C6",
+      "C6",
+      "C5"
+     ],
+     "points": [
+      4,
+      6,
+      6,
+      5
+     ],
+     "total": 245,
+     "aggregate": 21,
+     "division": "2",
+     "position": 30
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000028",
+   "sets": [
+    {
+     "grades": [
+      "C3",
+      "C3",
+      "C4",
+      "C4"
+     ],
+     "points": [
+      3,
+      3,
+      4,
+      4
+     ],
+     "total": 308,
+     "aggregate": 14,
+     "division": "2",
+     "position": 16
+    },
+    {
+     "grades": [
+      "D1",
+      "D1",
+      "C3",
+      "D1"
+     ],
+     "points": [
+      1,
+      1,
+      3,
+      1
+     ],
+     "total": 373,
+     "aggregate": 6,
+     "division": "1",
+     "position": 5
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000029",
+   "sets": [
+    {
+     "grades": [
+      "C3",
+      "D1",
+      "C3",
+      "D1"
+     ],
+     "points": [
+      3,
+      1,
+      3,
+      1
+     ],
+     "total": 367,
+     "aggregate": 8,
+     "division": "1",
+     "position": 6
+    },
+    {
+     "grades": [
+      "D1",
+      "D1",
+      "D2",
+      "D1"
+     ],
+     "points": [
+      1,
+      1,
+      2,
+      1
+     ],
+     "total": 385,
+     "aggregate": 5,
+     "division": "1",
+     "position": 4
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000030",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 55,
+     "aggregate": 36,
+     "division": "U",
+     "position": 58
+    },
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 52,
+     "aggregate": 36,
+     "division": "U",
+     "position": 67
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000031",
+   "sets": [
+    {
+     "grades": [
+      "D1",
+      "C3",
+      "C3",
+      "C3"
+     ],
+     "points": [
+      1,
+      3,
+      3,
+      3
+     ],
+     "total": 345,
+     "aggregate": 10,
+     "division": "1",
+     "position": 8
+    },
+    {
+     "grades": [
+      "C3",
+      "D2",
+      "D1",
+      "D1"
+     ],
+     "points": [
+      3,
+      2,
+      1,
+      1
+     ],
+     "total": 372,
+     "aggregate": 7,
+     "division": "1",
+     "position": 7
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000032",
+   "sets": [
+    {
+     "grades": [
+      "P8",
+      "C6",
+      "C6",
+      "F9"
+     ],
+     "points": [
+      8,
+      6,
+      6,
+      9
+     ],
+     "total": 180,
+     "aggregate": 29,
+     "division": "4",
+     "position": 42
+    },
+    {
+     "grades": [
+      "C3",
+      "F9",
+      "C6",
+      "C6"
+     ],
+     "points": [
+      3,
+      9,
+      6,
+      6
+     ],
+     "total": 208,
+     "aggregate": 24,
+     "division": "2",
+     "position": 37
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000033",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "C4",
+      "C6",
+      "C4"
+     ],
+     "points": [
+      9,
+      4,
+      6,
+      4
+     ],
+     "total": 202,
+     "aggregate": 23,
+     "division": "2",
+     "position": 29
+    },
+    {
+     "grades": [
+      "C4",
+      "P7",
+      "P7",
+      "C6"
+     ],
+     "points": [
+      4,
+      7,
+      7,
+      6
+     ],
+     "total": 213,
+     "aggregate": 24,
+     "division": "2",
+     "position": 37
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000034",
+   "sets": [
+    {
+     "grades": [
+      "C5",
+      "C6",
+      "C6",
+      "F9"
+     ],
+     "points": [
+      5,
+      6,
+      6,
+      9
+     ],
+     "total": 207,
+     "aggregate": 26,
+     "division": "3",
+     "position": 36
+    },
+    {
+     "grades": [
+      "C6",
+      "C6",
+      "F9",
+      "C6"
+     ],
+     "points": [
+      6,
+      6,
+      9,
+      6
+     ],
+     "total": 179,
+     "aggregate": 27,
+     "division": "3",
+     "position": 40
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000035",
+   "sets": [
+    {
+     "grades": [
+      "P7",
+      "C5",
+      "P7",
+      "P7"
+     ],
+     "points": [
+      7,
+      5,
+      7,
+      7
+     ],
+     "total": 203,
+     "aggregate": 26,
+     "division": "3",
+     "position": 36
+    },
+    {
+     "grades": [
+      "C6",
+      "C6",
+      "P7",
+      "C4"
+     ],
+     "points": [
+      6,
+      6,
+      7,
+      4
+     ],
+     "total": 221,
+     "aggregate": 23,
+     "division": "2",
+     "position": 34
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000036",
+   "sets": [
+    {
+     "grades": [
+      "D1",
+      "D1",
+      "D1",
+      "D1"
+     ],
+     "points": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "total": 398,
+     "aggregate": 4,
+     "division": "1",
+     "position": 1
+    },
+    {
+     "grades": [
+      "D1",
+      "D1",
+      "D1",
+      "D1"
+     ],
+     "points": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "total": 394,
+     "aggregate": 4,
+     "division": "1",
+     "position": 1
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000037",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 102,
+     "aggregate": 36,
+     "division": "U",
+     "position": 58
+    },
+    {
+     "grades": [
+      "P8",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      8,
+      9,
+      9,
+      9
+     ],
+     "total": 126,
+     "aggregate": 35,
+     "division": "U",
+     "position": 62
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000038",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 46,
+     "aggregate": 36,
+     "division": "U",
+     "position": 58
+    },
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 52,
+     "aggregate": 36,
+     "division": "U",
+     "position": 67
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000039",
+   "sets": [
+    {
+     "grades": [
+      "P7",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      7,
+      9,
+      9,
+      9
+     ],
+     "total": 140,
+     "aggregate": 34,
+     "division": "U",
+     "position": 51
+    },
+    {
+     "grades": [
+      "C6",
+      "P8",
+      "F9",
+      "C6"
+     ],
+     "points": [
+      6,
+      8,
+      9,
+      6
+     ],
+     "total": 185,
+     "aggregate": 29,
+     "division": "4",
+     "position": 46
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000040",
+   "sets": [
+    {
+     "grades": [
+      "C5",
+      "C6",
+      "C6",
+      "P8"
+     ],
+     "points": [
+      5,
+      6,
+      6,
+      8
+     ],
+     "total": 212,
+     "aggregate": 25,
+     "division": "3",
+     "position": 33
+    },
+    {
+     "grades": [
+      "C4",
+      "C3",
+      "C4",
+      "C3"
+     ],
+     "points": [
+      4,
+      3,
+      4,
+      3
+     ],
+     "total": 292,
+     "aggregate": 14,
+     "division": "2",
+     "position": 18
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000041",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 17,
+     "aggregate": 36,
+     "division": "U",
+     "position": 58
+    },
+    {
+     "grades": [
+      "F9",
+      "P8",
+      "F9",
+      "P7"
+     ],
+     "points": [
+      9,
+      8,
+      9,
+      7
+     ],
+     "total": 164,
+     "aggregate": 33,
+     "division": "U",
+     "position": 53
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000042",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 137,
+     "aggregate": 36,
+     "division": "U",
+     "position": 58
+    },
+    {
+     "grades": [
+      "F9",
+      "P8",
+      "F9",
+      "P7"
+     ],
+     "points": [
+      9,
+      8,
+      9,
+      7
+     ],
+     "total": 164,
+     "aggregate": 33,
+     "division": "U",
+     "position": 53
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000043",
+   "sets": [
+    {
+     "grades": [
+      "C5",
+      "P7",
+      "P7",
+      "P7"
+     ],
+     "points": [
+      5,
+      7,
+      7,
+      7
+     ],
+     "total": 204,
+     "aggregate": 26,
+     "division": "3",
+     "position": 36
+    },
+    {
+     "grades": [
+      "C6",
+      "C6",
+      "C3",
+      "C6"
+     ],
+     "points": [
+      6,
+      6,
+      3,
+      6
+     ],
+     "total": 245,
+     "aggregate": 21,
+     "division": "2",
+     "position": 30
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000044",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 136,
+     "aggregate": 36,
+     "division": "U",
+     "position": 58
+    },
+    {
+     "grades": [
+      "F9",
+      "P8",
+      "F9",
+      "C6"
+     ],
+     "points": [
+      9,
+      8,
+      9,
+      6
+     ],
+     "total": 152,
+     "aggregate": 32,
+     "division": "4",
+     "position": 50
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000045",
+   "sets": [
+    {
+     "grades": [
+      "C6",
+      "P8",
+      "P7",
+      "C6"
+     ],
+     "points": [
+      6,
+      8,
+      7,
+      6
+     ],
+     "total": 203,
+     "aggregate": 27,
+     "division": "3",
+     "position": 39
+    },
+    {
+     "grades": [
+      "P8",
+      "C6",
+      "C6",
+      "P8"
+     ],
+     "points": [
+      8,
+      6,
+      6,
+      8
+     ],
+     "total": 197,
+     "aggregate": 28,
+     "division": "3",
+     "position": 44
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000046",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 59,
+     "aggregate": 36,
+     "division": "U",
+     "position": 58
+    },
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 97,
+     "aggregate": 36,
+     "division": "U",
+     "position": 67
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000047",
+   "sets": [
+    {
+     "grades": [
+      "P8",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      8,
+      9,
+      9,
+      9
+     ],
+     "total": 94,
+     "aggregate": 35,
+     "division": "U",
+     "position": 53
+    },
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "P8",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      8,
+      9
+     ],
+     "total": 115,
+     "aggregate": 35,
+     "division": "U",
+     "position": 62
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000048",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "P7",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      7,
+      9,
+      9
+     ],
+     "total": 141,
+     "aggregate": 34,
+     "division": "U",
+     "position": 51
+    },
+    {
+     "grades": [
+      "F9",
+      "C6",
+      "P8",
+      "P8"
+     ],
+     "points": [
+      9,
+      6,
+      8,
+      8
+     ],
+     "total": 170,
+     "aggregate": 31,
+     "division": "4",
+     "position": 49
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000049",
+   "sets": [
+    {
+     "grades": [
+      "C6",
+      "C5",
+      "C4",
+      "C6"
+     ],
+     "points": [
+      6,
+      5,
+      4,
+      6
+     ],
+     "total": 238,
+     "aggregate": 21,
+     "division": "2",
+     "position": 27
+    },
+    {
+     "grades": [
+      "C3",
+      "C3",
+      "C4",
+      "C4"
+     ],
+     "points": [
+      3,
+      3,
+      4,
+      4
+     ],
+     "total": 309,
+     "aggregate": 14,
+     "division": "2",
+     "position": 18
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000050",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "P8",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      8,
+      9
+     ],
+     "total": 131,
+     "aggregate": 35,
+     "division": "U",
+     "position": 53
+    },
+    {
+     "grades": [
+      "P8",
+      "P8",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      8,
+      8,
+      9,
+      9
+     ],
+     "total": 137,
+     "aggregate": 34,
+     "division": "U",
+     "position": 58
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000051",
+   "sets": [
+    {
+     "grades": [
+      "D1",
+      "D1",
+      "C4",
+      "D1"
+     ],
+     "points": [
+      1,
+      1,
+      4,
+      1
+     ],
+     "total": 368,
+     "aggregate": 7,
+     "division": "1",
+     "position": 5
+    },
+    {
+     "grades": [
+      "D1",
+      "D1",
+      "D2",
+      "C3"
+     ],
+     "points": [
+      1,
+      1,
+      2,
+      3
+     ],
+     "total": 377,
+     "aggregate": 7,
+     "division": "1",
+     "position": 7
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000052",
+   "sets": [
+    {
+     "grades": [
+      "C5",
+      "C6",
+      "P8",
+      "C6"
+     ],
+     "points": [
+      5,
+      6,
+      8,
+      6
+     ],
+     "total": 209,
+     "aggregate": 25,
+     "division": "3",
+     "position": 33
+    },
+    {
+     "grades": [
+      "P7",
+      "C3",
+      "P7",
+      "C6"
+     ],
+     "points": [
+      7,
+      3,
+      7,
+      6
+     ],
+     "total": 226,
+     "aggregate": 23,
+     "division": "2",
+     "position": 34
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000053",
+   "sets": [
+    {
+     "grades": [
+      "C4",
+      "D2",
+      "C3",
+      "C3"
+     ],
+     "points": [
+      4,
+      2,
+      3,
+      3
+     ],
+     "total": 326,
+     "aggregate": 12,
+     "division": "1",
+     "position": 12
+    },
+    {
+     "grades": [
+      "C3",
+      "C3",
+      "C3",
+      "C3"
+     ],
+     "points": [
+      3,
+      3,
+      3,
+      3
+     ],
+     "total": 334,
+     "aggregate": 12,
+     "division": "1",
+     "position": 16
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000054",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 100,
+     "aggregate": 36,
+     "division": "U",
+     "position": 58
+    },
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "P8",
+      "P7"
+     ],
+     "points": [
+      9,
+      9,
+      8,
+      7
+     ],
+     "total": 148,
+     "aggregate": 33,
+     "division": "U",
+     "position": 53
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000055",
+   "sets": [
+    {
+     "grades": [
+      "C3",
+      "D2",
+      "C3",
+      "C4"
+     ],
+     "points": [
+      3,
+      2,
+      3,
+      4
+     ],
+     "total": 326,
+     "aggregate": 12,
+     "division": "1",
+     "position": 12
+    },
+    {
+     "grades": [
+      "C4",
+      "D1",
+      "C3",
+      "C3"
+     ],
+     "points": [
+      4,
+      1,
+      3,
+      3
+     ],
+     "total": 332,
+     "aggregate": 11,
+     "division": "1",
+     "position": 12
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000056",
+   "sets": [
+    {
+     "grades": [
+      "C6",
+      "C5",
+      "C5",
+      "C4"
+     ],
+     "points": [
+      6,
+      5,
+      5,
+      4
+     ],
+     "total": 254,
+     "aggregate": 20,
+     "division": "2",
+     "position": 23
+    },
+    {
+     "grades": [
+      "C3",
+      "C4",
+      "C4",
+      "C3"
+     ],
+     "points": [
+      3,
+      4,
+      4,
+      3
+     ],
+     "total": 297,
+     "aggregate": 14,
+     "division": "2",
+     "position": 18
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000057",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 71,
+     "aggregate": 36,
+     "division": "U",
+     "position": 58
+    },
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 82,
+     "aggregate": 36,
+     "division": "U",
+     "position": 67
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000058",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 122,
+     "aggregate": 36,
+     "division": "U",
+     "position": 58
+    },
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 97,
+     "aggregate": 36,
+     "division": "U",
+     "position": 67
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000059",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 105,
+     "aggregate": 36,
+     "division": "U",
+     "position": 58
+    },
+    {
+     "grades": [
+      "C6",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      6,
+      9,
+      9,
+      9
+     ],
+     "total": 136,
+     "aggregate": 33,
+     "division": "U",
+     "position": 53
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000060",
+   "sets": [
+    {
+     "grades": [
+      "C4",
+      "C3",
+      "C4",
+      "C4"
+     ],
+     "points": [
+      4,
+      3,
+      4,
+      4
+     ],
+     "total": 291,
+     "aggregate": 15,
+     "division": "2",
+     "position": 17
+    },
+    {
+     "grades": [
+      "D2",
+      "D2",
+      "C4",
+      "C3"
+     ],
+     "points": [
+      2,
+      2,
+      4,
+      3
+     ],
+     "total": 341,
+     "aggregate": 11,
+     "division": "1",
+     "position": 12
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000061",
+   "sets": [
+    {
+     "grades": [
+      "C6",
+      "C4",
+      "C6",
+      "C4"
+     ],
+     "points": [
+      6,
+      4,
+      6,
+      4
+     ],
+     "total": 243,
+     "aggregate": 20,
+     "division": "2",
+     "position": 23
+    },
+    {
+     "grades": [
+      "C3",
+      "C5",
+      "C4",
+      "C4"
+     ],
+     "points": [
+      3,
+      5,
+      4,
+      4
+     ],
+     "total": 280,
+     "aggregate": 16,
+     "division": "2",
+     "position": 23
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000062",
+   "sets": [
+    {
+     "grades": [
+      "C6",
+      "C6",
+      "F9",
+      "C6"
+     ],
+     "points": [
+      6,
+      6,
+      9,
+      6
+     ],
+     "total": 204,
+     "aggregate": 27,
+     "division": "3",
+     "position": 39
+    },
+    {
+     "grades": [
+      "C6",
+      "C6",
+      "F9",
+      "C6"
+     ],
+     "points": [
+      6,
+      6,
+      9,
+      6
+     ],
+     "total": 200,
+     "aggregate": 27,
+     "division": "3",
+     "position": 40
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000063",
+   "sets": [
+    {
+     "grades": [
+      "D1",
+      "C3",
+      "C3",
+      "C3"
+     ],
+     "points": [
+      1,
+      3,
+      3,
+      3
+     ],
+     "total": 328,
+     "aggregate": 10,
+     "division": "1",
+     "position": 8
+    },
+    {
+     "grades": [
+      "C3",
+      "C3",
+      "C4",
+      "C4"
+     ],
+     "points": [
+      3,
+      3,
+      4,
+      4
+     ],
+     "total": 295,
+     "aggregate": 14,
+     "division": "2",
+     "position": 18
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000064",
+   "sets": [
+    {
+     "grades": [
+      "D2",
+      "C3",
+      "C3",
+      "C4"
+     ],
+     "points": [
+      2,
+      3,
+      3,
+      4
+     ],
+     "total": 326,
+     "aggregate": 12,
+     "division": "1",
+     "position": 12
+    },
+    {
+     "grades": [
+      "D2",
+      "D2",
+      "C3",
+      "C3"
+     ],
+     "points": [
+      2,
+      2,
+      3,
+      3
+     ],
+     "total": 353,
+     "aggregate": 10,
+     "division": "1",
+     "position": 10
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000065",
+   "sets": [
+    {
+     "grades": [
+      "C6",
+      "C6",
+      "P8",
+      "C4"
+     ],
+     "points": [
+      6,
+      6,
+      8,
+      4
+     ],
+     "total": 219,
+     "aggregate": 24,
+     "division": "2",
+     "position": 30
+    },
+    {
+     "grades": [
+      "C6",
+      "C5",
+      "C4",
+      "C6"
+     ],
+     "points": [
+      6,
+      5,
+      4,
+      6
+     ],
+     "total": 237,
+     "aggregate": 21,
+     "division": "2",
+     "position": 30
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000066",
+   "sets": [
+    {
+     "grades": [
+      "D2",
+      "D1",
+      "C3",
+      "C3"
+     ],
+     "points": [
+      2,
+      1,
+      3,
+      3
+     ],
+     "total": 351,
+     "aggregate": 9,
+     "division": "1",
+     "position": 7
+    },
+    {
+     "grades": [
+      "C3",
+      "D1",
+      "D1",
+      "D2"
+     ],
+     "points": [
+      3,
+      1,
+      1,
+      2
+     ],
+     "total": 373,
+     "aggregate": 7,
+     "division": "1",
+     "position": 7
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000067",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "P8",
+      "P7",
+      "F9"
+     ],
+     "points": [
+      9,
+      8,
+      7,
+      9
+     ],
+     "total": 152,
+     "aggregate": 33,
+     "division": "U",
+     "position": 48
+    },
+    {
+     "grades": [
+      "P8",
+      "P7",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      8,
+      7,
+      9,
+      9
+     ],
+     "total": 153,
+     "aggregate": 33,
+     "division": "U",
+     "position": 53
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000068",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "P8",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      8,
+      9,
+      9
+     ],
+     "total": 101,
+     "aggregate": 35,
+     "division": "U",
+     "position": 53
+    },
+    {
+     "grades": [
+      "F9",
+      "P8",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      8,
+      9,
+      9
+     ],
+     "total": 130,
+     "aggregate": 35,
+     "division": "U",
+     "position": 62
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000069",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 105,
+     "aggregate": 36,
+     "division": "U",
+     "position": 58
+    },
+    {
+     "grades": [
+      "P7",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      7,
+      9,
+      9,
+      9
+     ],
+     "total": 143,
+     "aggregate": 34,
+     "division": "U",
+     "position": 58
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000070",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "P7",
+      "F9",
+      "P8"
+     ],
+     "points": [
+      9,
+      7,
+      9,
+      8
+     ],
+     "total": 160,
+     "aggregate": 33,
+     "division": "U",
+     "position": 48
+    },
+    {
+     "grades": [
+      "P7",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      7,
+      9,
+      9,
+      9
+     ],
+     "total": 138,
+     "aggregate": 34,
+     "division": "U",
+     "position": 58
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000071",
+   "sets": [
+    {
+     "grades": [
+      "D1",
+      "D1",
+      "D1",
+      "D1"
+     ],
+     "points": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "total": 400,
+     "aggregate": 4,
+     "division": "1",
+     "position": 1
+    },
+    {
+     "grades": [
+      "C3",
+      "D1",
+      "D1",
+      "D1"
+     ],
+     "points": [
+      3,
+      1,
+      1,
+      1
+     ],
+     "total": 385,
+     "aggregate": 6,
+     "division": "1",
+     "position": 5
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000072",
+   "sets": [
+    {
+     "grades": [
+      "C6",
+      "C5",
+      "P7",
+      "C6"
+     ],
+     "points": [
+      6,
+      5,
+      7,
+      6
+     ],
+     "total": 217,
+     "aggregate": 24,
+     "division": "2",
+     "position": 30
+    },
+    {
+     "grades": [
+      "C4",
+      "C5",
+      "C6",
+      "C6"
+     ],
+     "points": [
+      4,
+      5,
+      6,
+      6
+     ],
+     "total": 237,
+     "aggregate": 21,
+     "division": "2",
+     "position": 30
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000073",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 30,
+     "aggregate": 36,
+     "division": "U",
+     "position": 58
+    },
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 67,
+     "aggregate": 36,
+     "division": "U",
+     "position": 67
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000074",
+   "sets": [
+    {
+     "grades": [
+      "P7",
+      "C4",
+      "C6",
+      "C3"
+     ],
+     "points": [
+      7,
+      4,
+      6,
+      3
+     ],
+     "total": 252,
+     "aggregate": 20,
+     "division": "2",
+     "position": 23
+    },
+    {
+     "grades": [
+      "C5",
+      "C6",
+      "C6",
+      "C6"
+     ],
+     "points": [
+      5,
+      6,
+      6,
+      6
+     ],
+     "total": 229,
+     "aggregate": 23,
+     "division": "2",
+     "position": 34
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000075",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      9
+     ],
+     "total": 63,
+     "aggregate": 36,
+     "division": "U",
+     "position": 58
+    },
+    {
+     "grades": [
+      "P7",
+      "F9",
+      "F9",
+      "F9"
+     ],
+     "points": [
+      7,
+      9,
+      9,
+      9
+     ],
+     "total": 134,
+     "aggregate": 34,
+     "division": "U",
+     "position": 58
+    }
+   ]
+  },
+  {
+   "kls": "KLS9000076",
+   "sets": [
+    {
+     "grades": [
+      "F9",
+      "F9",
+      "F9",
+      "P8"
+     ],
+     "points": [
+      9,
+      9,
+      9,
+      8
+     ],
+     "total": 69,
+     "aggregate": 35,
+     "division": "U",
+     "position": 53
+    },
+    {
+     "grades": [
+      "P8",
+      "C5",
+      "P8",
+      "C6"
+     ],
+     "points": [
+      8,
+      5,
+      8,
+      6
+     ],
+     "total": 202,
+     "aggregate": 27,
+     "division": "3",
+     "position": 40
+    }
+   ]
+  }
+ ],
+ "division_counts": {
+  "Beginning of Term": {
+   "1": 15,
+   "2": 17,
+   "3": 9,
+   "4": 6,
+   "U": 29
+  },
+  "Mid Term": {
+   "1": 16,
+   "2": 22,
+   "3": 7,
+   "4": 7,
+   "U": 24
+  }
+ },
+ "notes": [
+  "All names, numbers and KLS numbers are invented.",
+  "null = missing mark; 'ABS' = absent. Both count as 0 (F9, 9 points).",
+  "PUPIL 041 and PUPIL 042 have identical Mid Term marks, so they share a place."
+ ]
+}

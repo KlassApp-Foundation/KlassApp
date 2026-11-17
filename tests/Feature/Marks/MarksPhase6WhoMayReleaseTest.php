@@ -7,7 +7,9 @@ use App\Models\MarksRelease;
 use App\Models\SchoolDetail;
 use App\Models\Section;
 use App\Models\StandardLink;
+use App\Models\User;
 use App\Services\DemoSchoolCommsGuard;
+use App\Services\MarksRelease\MarksReleaseService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -154,6 +156,39 @@ class MarksPhase6WhoMayReleaseTest extends TestCase
             ->assertForbidden();
 
         $this->assertSame(0, MarksRelease::count());
+    }
+
+    public function test_a_head_teacher_releases_every_class_in_their_own_school(): void
+    {
+        $head = $this->headTeacher();
+        $service = app(MarksReleaseService::class);
+
+        $this->actingAs($head)->get('/admin/marks/releases/new')->assertOk();
+        $this->actingAs($head)->get('/teacher/marks/releases/new')->assertNotFound();
+        $this->actingAs($head)->post('/admin/marks/releases', $this->scheduled())->assertRedirect();
+
+        $release = MarksRelease::sole();
+        $this->assertSame('school', $release->scope);
+        $this->assertNull($release->standard_link_id);
+        $this->assertSame((int) $head->id, (int) $release->created_by);
+        $this->assertSame((int) $head->school_id, (int) $release->school_id);
+
+        $other = $this->headTeacher('real');
+        $this->actingAs($other)->get('/admin/marks/releases/'.$release->id)->assertNotFound();
+        $this->actingAs($other)
+            ->post('/admin/marks/releases', $this->scheduled('demo'))
+            ->assertNotFound();
+
+        $this->assertSame(1, MarksRelease::count());
+
+        $site = new User([
+            'usergroup_id' => 1,
+            'school_id' => $head->school_id,
+        ]);
+        $this->assertFalse($service->isSchoolAdmin($site));
+
+        $head->school_id = null;
+        $this->assertFalse($service->isSchoolAdmin($head));
     }
 
     public function test_a_school_admin_releases_whether_the_setting_is_off_or_on(): void
