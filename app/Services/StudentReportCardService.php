@@ -880,6 +880,7 @@ class StudentReportCardService
 
     /**
      * Counting sets where this learner has a missing mark or an absence.
+     * A dashed subject still counts here when the underlying mark is missing.
      *
      * @return list<string>
      */
@@ -895,7 +896,7 @@ class StudentReportCardService
                 continue;
             }
             foreach ($student->cells as $cell) {
-                if ($cell->status === ResultCell::MISSING || $cell->status === ResultCell::ABSENT) {
+                if ($cell->namesIncompleteSet()) {
                     $names[] = $sitting->name;
                     break;
                 }

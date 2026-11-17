@@ -86,6 +86,19 @@ final class ResultCell
         public readonly ?string $grade,
         public readonly ?int $points,
         public readonly string $status,
+        public readonly bool $gap = false,
     ) {
+    }
+
+    /**
+     * A counting set is incomplete when this learner has no mark or was absent.
+     * A subject that is not approved still prints a dash. The gap flag keeps
+     * the missing mark or the absence visible to that sentence.
+     */
+    public function namesIncompleteSet(): bool
+    {
+        return $this->gap
+            || $this->status === self::MISSING
+            || $this->status === self::ABSENT;
     }
 }

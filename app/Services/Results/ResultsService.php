@@ -622,13 +622,21 @@ final class ResultsService
 
                     continue;
                 }
+                $choice = $this->merged($chosen, $typeIds, $studentId, $subjectId, $weights, $policy->countMissingAsZero);
+                $real = $this->cell($policy, $schoolId, $standardId, $subjectId, $choice);
                 if ($countApprovedSubjects && ($subject['submission'] ?? '') !== 'Approved') {
-                    $cells[$subjectId] = new ResultCell($subjectId, null, null, null, ResultCell::UNAPPROVED);
+                    $cells[$subjectId] = new ResultCell(
+                        $subjectId,
+                        null,
+                        null,
+                        null,
+                        ResultCell::UNAPPROVED,
+                        $real->namesIncompleteSet(),
+                    );
 
                     continue;
                 }
-                $choice = $this->merged($chosen, $typeIds, $studentId, $subjectId, $weights, $policy->countMissingAsZero);
-                $cells[$subjectId] = $this->cell($policy, $schoolId, $standardId, $subjectId, $choice);
+                $cells[$subjectId] = $real;
             }
             [$total, $counted, $average, $aggregate, $division, $displayTotal, $displayAverage] = $this->totals(
                 $policy,
