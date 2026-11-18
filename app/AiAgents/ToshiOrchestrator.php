@@ -50,7 +50,7 @@ Your job is to classify the user query into EXACTLY ONE domain and route it to t
 3. **academic** — Listing classes & sections, listing streams with no class teacher, creating terms, subjects, and exams
 4. **fee** — Creating fee categories, recording payments, checking fee balances, listing students who still owe fees
 5. **grading** — Setting/viewing grading scales, seeding default UNEB scales
-6. **report** — Generating academic, fee, attendance, and summary reports
+6. **report** — Generating academic, fee, attendance, and summary reports; missing or unapproved marks for a class and exam set; a learner's report status; a draft reminder to the class teacher (the draft is not sent)
 7. **school_comms** — Noticeboard notices, calendar events, and holidays (list/create/update only)
 8. **school_academics_ops** — Timetable slots, homework approve/reject/admin CRUD, student-homework review (no destroy)
 9. **slack** — Slack workspace: list channels, search messages, read channel history, post messages (writes require approval). Only when the school has connected their Slack workspace.
