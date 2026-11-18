@@ -93,7 +93,7 @@ class TeacherOperationsToolsTest extends TestCase
 
         $this->assertNotContains(AddCoAdminTool::class, $classes);
         $this->assertContains(MarkAttendanceTool::class, $classes);
-        $this->assertCount(13, $classes);
+        $this->assertCount(16, $classes);
     }
 
     public function test_toshi_school_action_gate_denies_teacher(): void
