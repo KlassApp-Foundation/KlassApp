@@ -10,6 +10,8 @@ Three Toshi tools read the marks overview (`CombinedSheetPage::viewData`), the r
 
 PHPUnit on `169c092c`: `Tests: 3897, Assertions: 42104, Skipped: 4, Incomplete: 5, Risky: 2.` Exit 0. On the head: `Tests: 3905, Assertions: 42209, Skipped: 4, Incomplete: 5, Risky: 2.` Exit 0. The local preview panel says Coming soon and messaging is paused, so the tools are not reachable from the UI.
 
+Class names use `ToshiActionService::classNameKey` (case, spaces, and dots). A partial name does not match. `test_class_name_ignores_case_spaces_and_dots_and_is_not_partial` covers "P4", "p 4", "P. 4", a bare "P", and another class typed as "P6".
+
 ## Session note — 2026-11-05 — parent and student portals (page 9, draft)
 
 Stacked on `cursor/parent-student-portal-0657` (#1266, not merged). Branch `cursor/parent-student-portals-page9-6ada`. Dashboard cards open Marks, Attendance and Fees. Both portals read `ParentPortalService` released results only. Attendance is one row per session: both sessions present is one day, one present session is a half day, shown as `4½ days present`, `4 days present`, `½ day present`, or `1 day present`. The same wording is on the student dashboard in #1281 (`cursor/base-class-fixes-1cb2`) and on the teacher week chart in #1283 (a half-present student counts as ½). Fees pages do not show attendance days. No new WhatsApp or Toshi messages. Drafts only; not merged, not deployed, and not rebased onto #1265.

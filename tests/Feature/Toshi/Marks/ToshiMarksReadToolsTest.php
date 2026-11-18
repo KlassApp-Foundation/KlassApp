@@ -248,6 +248,39 @@ class ToshiMarksReadToolsTest extends TestCase
         $this->assertSame([], $own['subjects']);
     }
 
+    public function test_class_name_ignores_case_spaces_and_dots_and_is_not_partial(): void
+    {
+        $this->actingAs($this->classTeacher);
+
+        $canonical = json_decode((new MissingMarksTool)->handle(new ToolRequest([
+            'class' => 'P.4',
+            'exam_set' => 'Mid term',
+        ])), true);
+
+        foreach (['P4', 'p 4', 'P. 4', 'p.4'] as $typed) {
+            $payload = json_decode((new MissingMarksTool)->handle(new ToolRequest([
+                'class' => $typed,
+                'exam_set' => 'Mid term',
+            ])), true);
+            $this->assertSame($canonical['subjects'], $payload['subjects'], $typed);
+            $this->assertSame('P.4', $payload['class'], $typed);
+        }
+
+        $partial = (new MissingMarksTool)->handle(new ToolRequest([
+            'class' => 'P',
+            'exam_set' => 'Mid term',
+        ]));
+        $this->assertSame('❌ That class is not in your school.', $partial);
+        $this->assertStringNotContainsString('ENGLISH', $partial);
+        $this->assertStringNotContainsString('SCIENCE', $partial);
+
+        $otherClass = (new MissingMarksTool)->handle(new ToolRequest([
+            'class' => 'P6',
+            'exam_set' => 'Mid term',
+        ]));
+        $this->assertSame('❌ You can only open your own class.', $otherClass);
+    }
+
     public function test_user_cannot_read_another_school(): void
     {
         $this->actingAs($this->admin);

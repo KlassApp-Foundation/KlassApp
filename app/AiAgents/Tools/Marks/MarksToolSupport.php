@@ -16,6 +16,7 @@ use App\Services\Results\ReportComposition;
 use App\Services\Results\ResultsQuery;
 use App\Services\Results\ResultsService;
 use App\Services\StudentReportCardService;
+use App\Services\ToshiActionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -306,8 +307,8 @@ final class MarksToolSupport
      */
     private function section(int $schoolId, string $className, ?array $allowed): Section|string
     {
-        $needle = $this->needle($className);
-        if ($needle === '') {
+        $key = ToshiActionService::classNameKey($className);
+        if ($key === '') {
             return '❌ A class name is required.';
         }
 
@@ -317,7 +318,9 @@ final class MarksToolSupport
             ->orderBy('name')
             ->orderBy('id')
             ->get();
-        $named = $this->byName($inSchool, $needle);
+        $named = $inSchool->filter(
+            fn (Section $section) => ToshiActionService::classNameKey((string) $section->name) === $key
+        )->values();
         if ($named->isEmpty()) {
             return '❌ That class is not in your school.';
         }
