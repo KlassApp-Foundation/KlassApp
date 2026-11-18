@@ -23,6 +23,7 @@
                             {{ $sitting->periodLabel !== '' ? $sitting->periodLabel : $sitting->name }}
                         </th>
                     @endforeach
+                    <th data-testid="student-combined">Combined</th>
                 </tr>
             </thead>
             <tbody>
@@ -32,16 +33,14 @@
                         @foreach ($sittings as $sitting)
                             @php
                                 $cell = $sitting->student($student->studentId)?->cell($subjectId);
-                                if ($cell && $cell->status === \App\Services\Results\ResultCell::ABSENT) {
-                                    $mark = 'ABS';
-                                } elseif ($cell && $cell->status === 'marked' && $cell->mark !== null) {
-                                    $mark = $cell->mark;
-                                } else {
-                                    $mark = '—';
-                                }
+                                $mark = $cell ? \App\Services\Results\ResultCell::printedMark($cell) : '—';
                             @endphp
                             <td>{{ $mark }}</td>
                         @endforeach
+                        @php
+                            $combined = $student->cell((int) $subjectId);
+                        @endphp
+                        <td data-testid="student-combined-mark">{{ $combined ? \App\Services\Results\ResultCell::printedMark($combined) : '—' }}</td>
                     </tr>
                 @endforeach
             </tbody>
