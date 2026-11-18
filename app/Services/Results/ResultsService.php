@@ -792,7 +792,7 @@ final class ResultsService
         }
 
         return [
-            'mark' => round($sum / $weightSum, 2),
+            'mark' => $sum / $weightSum,
             'grade' => '',
             'scheduled' => $best['scheduled'] ?? 0,
             'examId' => $best['examId'] ?? 0,
@@ -838,7 +838,7 @@ final class ResultsService
         }
 
         return [
-            'mark' => round($sum / $weightSum, 2),
+            'mark' => $sum / $weightSum,
             'grade' => '',
             'scheduled' => $best['scheduled'] ?? 0,
             'examId' => $best['examId'] ?? 0,
@@ -866,7 +866,7 @@ final class ResultsService
             return $this->blankCell($policy, $schoolId, $standardId, $subjectId, ResultCell::MISSING);
         }
 
-        $mark = $choice['mark'];
+        $mark = $policy->round((float) $choice['mark']);
 
         return new ResultCell(
             $subjectId,
@@ -935,7 +935,7 @@ final class ResultsService
             $average,
             $aggregate,
             $policy->divisionRule->division($aggregate, $counted),
-            $policy->round($total),
+            $total,
             $policy->round($average),
         ];
     }

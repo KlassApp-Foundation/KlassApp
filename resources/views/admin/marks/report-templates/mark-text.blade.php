@@ -10,7 +10,7 @@
         } elseif ($mark->status === \App\Services\Results\ResultCell::MISSING || $mark->mark === null) {
             $printed = 'Missing';
         } elseif ($mark->mark !== null) {
-            $printed = (string) (int) floor($mark->mark);
+            $printed = $mark->sheetLabel();
         }
     }
 @endphp

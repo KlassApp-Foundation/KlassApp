@@ -69,8 +69,17 @@ final class ResultsPolicy
         return false;
     }
 
+    /**
+     * The only rounding rule. A printed mark, average, or raw row uses this.
+     * Half goes up: 53.4 is 53, 53.5 and 53.6 are 54.
+     */
+    public static function roundTo(float $value, int $decimals = 0): float
+    {
+        return round($value, $decimals, PHP_ROUND_HALF_UP);
+    }
+
     public function round(float $value): float
     {
-        return round($value, $this->roundingDecimals, PHP_ROUND_HALF_UP);
+        return self::roundTo($value, $this->roundingDecimals);
     }
 }

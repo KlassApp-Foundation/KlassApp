@@ -681,10 +681,10 @@ class StudentReportCardService
             $ranked = [];
             foreach ($streamRows as $rankedSid) {
                 $chosen = $this->chosenMarksBySubject($streamMarks->get($rankedSid, collect()), $contributing);
-                $ranked[$rankedSid] = (int) round(array_sum(array_map(
-                    fn ($mark) => (float) $mark->marks,
+                $ranked[$rankedSid] = array_sum(array_map(
+                    fn ($mark) => ResultsPolicy::roundTo((float) $mark->marks),
                     $chosen
-                )));
+                ));
             }
             arsort($ranked);
             $streamPos = 0;
@@ -697,7 +697,10 @@ class StudentReportCardService
             $streamTotal = count($ranked);
         }
 
-        $total = array_sum(array_map(fn ($mark) => (float) $mark->marks, $eotMarkBySubject));
+        $total = array_sum(array_map(
+            fn ($mark) => ResultsPolicy::roundTo((float) $mark->marks),
+            $eotMarkBySubject
+        ));
         $midSittings = [];
         $sheet = $this->classSheet($schoolId, (int) $stdLink->section_id, (int) $exam->academic_term_id, (int) $stdLink->standard_id, (int) $learner->id, $onlyExamTypeIds);
         $resultRow = $sheet?->student((int) $learner->id);

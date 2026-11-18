@@ -53,18 +53,11 @@ final class ResultCell
                 return 'Missing';
             }
 
-            return (string) (int) floor($source->mark);
+            return $source->sheetLabel();
         }
 
         if ($source instanceof \App\Models\Academics\Marks) {
-            if ($source->isAbsent()) {
-                return 'ABS';
-            }
-            if ($source->marks === null) {
-                return 'Missing';
-            }
-
-            return (string) (int) floor((float) $source->marks);
+            return $source->displayMark();
         }
 
         return 'Missing';

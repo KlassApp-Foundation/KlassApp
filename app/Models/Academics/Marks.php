@@ -40,7 +40,7 @@ class Marks extends Model
             return 'Missing';
         }
 
-        return (string) (int) floor((float) $this->marks);
+        return (string) (int) \App\Services\Results\ResultsPolicy::roundTo((float) $this->marks);
     }
     public function student(){
         return $this->belongsTo(User::class, "student_id");

@@ -374,7 +374,7 @@
                                 $setGrade = \App\Helpers\GradingHelper::formatAggLabel($g) ?? '-';
                             }
                         @endphp
-                        <td>{{ $markValue !== null ? floor($markValue) : (\App\Services\Reports\MarkCellText::isCountedBlank($cell, !empty($countMissingAsZero)) ? \App\Services\Reports\MarkCellText::word($cell) : '-') }}</td>
+                        <td>{{ $markValue !== null ? $cell->sheetLabel() : (\App\Services\Reports\MarkCellText::isCountedBlank($cell, !empty($countMissingAsZero)) ? \App\Services\Reports\MarkCellText::word($cell) : '-') }}</td>
                         @if ($showAgg) <td>{{ $setGrade }}</td> @endif
                     @endforeach
                 </tr>
@@ -472,7 +472,7 @@
                     <td>100</td>
                     @foreach ($termSets as $set)
                         @php $setCell = $set['cells'][$subject->id] ?? null; @endphp
-                        <td>{{ $setCell && $setCell->mark !== null ? floor($setCell->mark) : (\App\Services\Reports\MarkCellText::isCountedBlank($setCell, !empty($countMissingAsZero)) ? \App\Services\Reports\MarkCellText::word($setCell) : '-') }}</td>
+                        <td>{{ $setCell && $setCell->mark !== null ? $setCell->sheetLabel() : (\App\Services\Reports\MarkCellText::isCountedBlank($setCell, !empty($countMissingAsZero)) ? \App\Services\Reports\MarkCellText::word($setCell) : '-') }}</td>
                     @endforeach
                     @if ($showAgg) <td>{{ $eotGrade }}</td> @endif
                     <td>{{ $eotComment }}</td>
