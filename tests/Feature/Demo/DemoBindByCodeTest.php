@@ -224,7 +224,7 @@ class DemoBindByCodeTest extends TestCase
             . "Social Studies      40  P8\n"
             . "-----------------------------\n"
             . "Total              160\n"
-            . "Average           40.0\n"
+            . "Average             40\n"
             . '```';
         $sent = $this->outbound();
         $this->assertCount(1, $sent);
@@ -253,7 +253,7 @@ class DemoBindByCodeTest extends TestCase
             . "Social Studies      55  C6\n"
             . "-----------------------------\n"
             . "Total              288\n"
-            . "Average           72.0\n"
+            . "Average             72\n"
             . '```';
         $sent = $this->outbound();
         $this->assertCount(2, $sent);
