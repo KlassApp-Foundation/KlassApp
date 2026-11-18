@@ -5,6 +5,7 @@ namespace App\Services\Toshi;
 use App\Contracts\Results\ReleaseGate;
 use App\Models\Academics\Marks;
 use App\Models\User;
+use App\Services\Results\ResultsPolicy;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
@@ -37,7 +38,7 @@ class AlumniActionService
         $records = $marks->map(fn ($mark) => [
             'subject' => $mark->subject->name ?? 'Subject',
             'exam'    => $mark->exam->examType->name ?? ('Exam #'.($mark->exam_id ?? '')),
-            'marks'   => $mark->marks,
+            'marks'   => $mark->marks === null ? null : ResultsPolicy::printWhole(ResultsPolicy::roundTo((float) $mark->marks)),
             'grade'   => $mark->grade,
             'date'    => optional($mark->created_at)->toDateString(),
         ])->all();

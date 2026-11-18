@@ -16,7 +16,7 @@
     foreach ($scores as $i => $score) {
         $x = $count === 1 ? $left + ($plotW / 2) : $left + ($plotW * ($i / max(1, $count - 1)));
         $y = $top + $plotH - ((max(0, min(100, (float) $score)) / 100) * $plotH);
-        $points[] = [round($x, 1), round($y, 1), (int) round((float) $score), (string) ($labels[$i] ?? '')];
+        $points[] = [round($x, 1), round($y, 1), \App\Services\Results\ResultsPolicy::printWhole((float) $score), (string) ($labels[$i] ?? '')];
     }
     $poly = implode(' ', array_map(fn ($point) => $point[0].','.$point[1], $points));
     $described = implode(', ', array_map(fn ($point) => $point[3].' '.$point[2], $points));

@@ -88,7 +88,10 @@ $filteredMarks = $learner->marks->filter(
             $eot = $marksByType["End of Term"]->marks ?? null;
 
             $values = collect([$bot, $mot, $eot])->filter(fn($v) =>$v !== null);
-            $average = $values->count() > 0 ? round($values->avg(), 1) : null;
+            $wholes = $values->map(fn ($v) => \App\Services\Results\ResultsPolicy::roundTo((float) $v));
+            $average = $wholes->count() > 0
+                ? \App\Services\Results\ResultsPolicy::roundTo($wholes->sum() / $wholes->count())
+                : null;
 
             $subjectAverages[] = $average ?? 0;
             $totalAverages = count($subjectAverages) ? array_sum($subjectAverages) : null;
@@ -129,7 +132,7 @@ $filteredMarks = $learner->marks->filter(
             <td>{{ $bot ?? "-" }}</td>
             <td>{{ $mot ?? "-" }}</td>
             <td>{{ $eot ?? "-" }}</td>
-            <td class="font-semibold">{{$average ?? "-"}}</td>
+            <td class="font-semibold">{{ $average === null ? '-' : \App\Services\Results\ResultsPolicy::printWhole((float) $average) }}</td>
             <td>{{ $grade }}</td>
             <td>{{$remark}}</td>
             <td>{{$learner->marks->first()->teacher->name ?? '-'}}</td>
@@ -154,7 +157,7 @@ $filteredMarks = $learner->marks->filter(
              <td>{{ $botTotal }}</td>
              <td>{{ $motTotal }}</td>
              <td>{{ $eotTotal }}</td>
-             <td>{{ $totalAverages }}</td>
+             <td>{{ $totalAverages === null ? '' : \App\Services\Results\ResultsPolicy::printWhole((float) $totalAverages) }}</td>
              <td></td>
              <td></td>
              <td></td>

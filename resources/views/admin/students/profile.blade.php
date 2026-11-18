@@ -99,7 +99,7 @@
                 @php
                     $pts = []; $n = count($perf['chart']);
                     foreach ($perf['chart'] as $i => $p) { $pts[] = [10 + ($n > 1 ? $i * 220 / ($n - 1) : 0), 54 - max(0, min(100, $p['average'])) * 0.44]; }
-                    $desc = collect($perf['chart'])->map(fn ($p) => 'Average '.rtrim(rtrim(number_format($p['average'], 1), '0'), '.').' at '.$p['label'])->implode(', ');
+                    $desc = collect($perf['chart'])->map(fn ($p) => 'Average '.\App\Services\Results\ResultsPolicy::printWhole((float) $p['average']).' at '.$p['label'])->implode(', ');
                 @endphp
                 <svg viewBox="0 0 240 60" role="img" aria-label="{{ $desc }}" style="width:100%;height:60px;"><polyline points="{{ collect($pts)->map(fn ($p) => round($p[0], 1).','.round($p[1], 1))->implode(' ') }}" fill="none" stroke="#1E6FD9" stroke-width="2.5"/>@foreach($pts as $p)<circle cx="{{ round($p[0], 1) }}" cy="{{ round($p[1], 1) }}" r="4" fill="#1E6FD9"/>@endforeach</svg>
             @endif

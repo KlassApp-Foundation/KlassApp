@@ -15,6 +15,7 @@ use App\Models\StudentHealthIncident;
 use App\Models\StudentParentLink;
 use App\Models\User;
 use App\Services\ClassStructureService;
+use App\Services\Results\ResultsPolicy;
 use App\Services\StudentFeeResolver;
 use App\Services\StudentReportCardService;
 use App\Support\AttendanceDays;
@@ -539,15 +540,15 @@ class ParentPortalService
                 foreach ($exam->marks as $mark) {
                     $absent = $mark->isAbsent();
                     $blank = ! $absent && $mark->marks === null;
-                    $score = ($absent || $blank) ? 0.0 : (float) $mark->marks;
+                    $whole = ($absent || $blank) ? 0.0 : ResultsPolicy::roundTo((float) $mark->marks);
                     $label = $absent ? 'ABS' : ($blank ? 'Missing' : null);
                     $subjects[] = [
                         'name' => $mark->subject?->name ?? $exam->subject?->name ?? 'Subject',
-                        'score' => $score,
+                        'score' => $whole,
                         'total' => 100,
                         'grade' => $label !== null ? '—' : ($mark->grade ?? '-'),
                         'shown' => $label,
-                        'display' => $label ?? (string) (int) round($score),
+                        'display' => $label ?? ResultsPolicy::printWhole($whole),
                     ];
                 }
             }
@@ -559,9 +560,10 @@ class ParentPortalService
             ], fn ($part) => $part !== null && $part !== ''));
 
             $counted = array_values(array_filter($subjects, fn (array $row) => $row['score'] !== null));
-            $average = $counted === []
+            $wholes = array_map(fn (array $row) => (float) $row['score'], $counted);
+            $average = $wholes === []
                 ? 0.0
-                : round(array_sum(array_column($counted, 'score')) / count($counted), 1);
+                : ResultsPolicy::roundTo(array_sum($wholes) / count($wholes));
 
             $termKey = ((int) ($first->academic_term_id ?? 0)).'|'.((int) ($first->section_id ?? 0));
             $examGroups[] = [
@@ -764,11 +766,11 @@ class ParentPortalService
         $groups = $pack['exam_groups'] ?? [];
         $latest = $groups === [] ? null : $groups[array_key_last($groups)];
         $previous = count($groups) > 1 ? $groups[count($groups) - 2] : null;
-        $average = $latest === null ? null : (int) round((float) $latest['average']);
+        $average = $latest === null ? null : (int) ResultsPolicy::printWhole((float) $latest['average']);
         $delta = null;
         $since = null;
         if ($latest !== null && $previous !== null) {
-            $delta = (int) round((float) $latest['average'] - (float) $previous['average']);
+            $delta = (int) ((float) $latest['average'] - (float) $previous['average']);
             $since = (string) $previous['exam_type'];
         }
 

@@ -28,12 +28,7 @@ final class ResultCell
         if ($this->status === self::MISSING || $this->mark === null) {
             return 'Missing';
         }
-        $rounded = round($this->mark, 2);
-        if (abs($rounded - (int) $rounded) < 0.001) {
-            return (string) (int) $rounded;
-        }
-
-        return rtrim(rtrim(number_format($rounded, 2, '.', ''), '0'), '.');
+        return ResultsPolicy::printWhole((float) $this->mark);
     }
 
     /**

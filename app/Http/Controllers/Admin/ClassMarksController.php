@@ -105,7 +105,7 @@ class ClassMarksController extends Controller
                             'subject' => $subject['name'],
                             'mark' => $fromSheet
                                 ? $cell->sheetLabel()
-                                : ($storedWhole !== null ? (string) (int) $storedWhole : '–'),
+                                : ($storedWhole !== null ? ResultsPolicy::printWhole($storedWhole) : '–'),
                             'grade' => $fromSheet
                                 ? $grades->subject($schoolId, $result->standardId, $cell->mark, $mark?->grade)
                                 : ($mark

@@ -22,6 +22,7 @@ use App\Services\Demo\DemoFollowAlong;
 use App\Services\Demo\LatestExamMarks;
 use App\Services\Results\DisplayedGrade;
 use App\Services\Results\ResultCell;
+use App\Services\Results\ResultsPolicy;
 use App\Services\Results\ResultSheet;
 use App\Services\Results\ResultsQuery;
 use App\Services\Results\ResultsService;
@@ -848,22 +849,22 @@ final class MarksReleaseService
 
                 continue;
             }
-            $value = $cell->mark;
+            $value = (float) $cell->mark;
             $cells[$key] = [
-                'mark' => fmod($value, 1.0) === 0.0 ? (string) (int) $value : number_format($value, 1),
+                'mark' => ResultsPolicy::printWhole($value),
                 'grade' => $grades->subject($schoolId, $row->standardId, $value, $stored[$studentId][$subjectId] ?? null),
             ];
         }
-        $total = $row?->total;
-        $average = $row?->average;
+        $total = $row?->displayTotal;
+        $average = $row?->displayAverage;
 
         return [
             'id' => $studentId,
             'name' => (string) ($student->name ?? 'Student'),
             'cells' => $cells,
-            'total' => $total === null ? '—' : (fmod($total, 1.0) === 0.0 ? (string) (int) $total : number_format($total, 1)),
-            'average' => $average === null ? '—' : number_format($average, 1),
-            'grade' => ($average === null || $row === null) ? '—' : $grades->overall($schoolId, $row->standardId, $average),
+            'total' => $total === null ? '—' : ResultsPolicy::printWhole((float) $total),
+            'average' => $average === null ? '—' : ResultsPolicy::printWhole((float) $average),
+            'grade' => ($average === null || $row === null) ? '—' : $grades->overall($schoolId, $row->standardId, (float) $average),
             'sort_total' => $total ?? -1,
             'sort_average' => $average ?? -1,
         ];

@@ -7,6 +7,7 @@ use App\Models\StudentAcademic;
 use App\Models\StudentParentLink;
 use App\Models\User;
 use App\Models\WhatsAppUser;
+use App\Services\Results\ResultsPolicy;
 use App\Services\WhatsAppBusinessService;
 use App\Support\DemoStudentCode;
 use Illuminate\Support\Facades\Log;
@@ -256,24 +257,21 @@ final class DemoBindReplies
             if (! $mark) {
                 continue;
             }
-            $total += (float) $mark->marks;
+            $whole = $mark->marks === null ? 0.0 : ResultsPolicy::roundTo((float) $mark->marks);
+            $total += $whole;
             $count++;
             $lines[] = str_pad($subject['name'], $width)
-                . str_pad($this->number((float) $mark->marks), 6, ' ', STR_PAD_LEFT)
+                . str_pad(ResultsPolicy::printWhole($whole), 6, ' ', STR_PAD_LEFT)
                 . '  ' . (string) $mark->grade;
         }
+        $average = $count > 0 ? ResultsPolicy::roundTo($total / $count) : 0.0;
         $lines[] = str_repeat('-', $width + 13);
-        $lines[] = str_pad('Total', $width) . str_pad($this->number($total), 6, ' ', STR_PAD_LEFT);
-        $lines[] = str_pad('Average', $width) . str_pad(number_format($count ? $total / $count : 0, 1), 6, ' ', STR_PAD_LEFT);
+        $lines[] = str_pad('Total', $width) . str_pad(ResultsPolicy::printWhole($total), 6, ' ', STR_PAD_LEFT);
+        $lines[] = str_pad('Average', $width) . str_pad(ResultsPolicy::printWhole($average), 6, ' ', STR_PAD_LEFT);
 
         return "📊 *Marks for {$name}*" . ($class !== '' ? " · {$class}" : '') . "\n"
             . $exam['label'] . "\n\n"
             . "```\n" . implode("\n", $lines) . "\n```";
-    }
-
-    private function number(float $value): string
-    {
-        return fmod($value, 1.0) === 0.0 ? (string) (int) $value : number_format($value, 1);
     }
 
     private function unknownCodeText(string $code): string

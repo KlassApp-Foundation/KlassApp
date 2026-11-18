@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Helpers\WhatsAppPhoneHelper;
 use App\Models\Academics\Exam;
+use App\Models\StudentAcademic;
 use App\Models\User;
+use App\Services\Results\ResultsPolicy;
 use App\Models\WhatsAppPendingNotification;
 use App\Models\WhatsAppUser;
 use Illuminate\Support\Facades\Log;
@@ -530,21 +532,23 @@ class OutboundWhatsAppService
      */
     public function composeGradesOverview(User $student, string $examName, array $subjects): string
     {
-        $className = $student->studentAcademic?->standard?->name ?? 'N/A';
+        $academic = $student->relationLoaded('studentAcademic') ? $student->getRelation('studentAcademic') : null;
+        $className = $academic instanceof StudentAcademic ? ($academic->standard?->name ?? 'N/A') : 'N/A';
         $rows = [];
-        $totalScore = 0;
+        $wholes = [];
 
         foreach ($subjects as $sub) {
-            $rows[] = "• {$sub['name']}: {$sub['score']}/{$sub['total']} ({$sub['grade']})";
-            $totalScore += $sub['score'] ?? 0;
+            $whole = ResultsPolicy::roundTo((float) ($sub['score'] ?? 0));
+            $wholes[] = $whole;
+            $rows[] = '• '.$sub['name'].': '.ResultsPolicy::printWhole($whole).'/'.$sub['total'].' ('.$sub['grade'].')';
         }
 
-        $avg = count($subjects) > 0 ? round($totalScore / count($subjects), 1) : 0;
+        $avg = $wholes === [] ? 0.0 : ResultsPolicy::roundTo(array_sum($wholes) / count($wholes));
 
         $message = "📊 *{$examName} — {$className}*\n_{$this->displayNameFor($student)}_\n\n";
         $message .= implode("\n", $rows);
         $message .= "\n· · · · · · · · · · · · · · · ·\n";
-        $message .= "_Average: {$avg}%_\n";
+        $message .= '_Average: '.ResultsPolicy::printWhole($avg)."%_\n";
 
         if ($avg >= 80) {
             $message .= "🎉 *Well done, {$this->displayNameFor($student)}!* Strong results across the board.\n";

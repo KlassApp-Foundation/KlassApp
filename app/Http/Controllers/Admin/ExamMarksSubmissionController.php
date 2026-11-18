@@ -11,6 +11,7 @@ use App\Models\Section;
 use App\Models\User;
 use App\Helpers\SiteHelper;
 use App\Services\ExamAuthorization;
+use App\Services\Results\ResultsPolicy;
 use App\Services\Marks\MarksSubmissionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -270,23 +271,20 @@ class ExamMarksSubmissionController extends Controller
                     && (int) $mark->subject_id === (int) $submission->subject_id
                     && (int) $mark->section_id === (int) $submission->class_id;
             });
-            $numeric = $rows->filter(fn (Marks $mark) => ! $mark->isAbsent() && $mark->marks !== null)->pluck('marks');
+            $wholes = $rows
+                ->filter(fn (Marks $mark) => ! $mark->isAbsent() && $mark->marks !== null)
+                ->map(fn (Marks $mark) => ResultsPolicy::roundTo((float) $mark->marks))
+                ->values()
+                ->all();
             $stats[(int) $submission->id] = [
                 'count' => $rows->count(),
-                'average' => $numeric->isEmpty() ? null : $this->markNumber($numeric->avg()),
-                'min' => $numeric->isEmpty() ? null : $this->markNumber($numeric->min()),
-                'max' => $numeric->isEmpty() ? null : $this->markNumber($numeric->max()),
+                'average' => $wholes === [] ? null : ResultsPolicy::printWhole(ResultsPolicy::roundTo(array_sum($wholes) / count($wholes))),
+                'min' => $wholes === [] ? null : ResultsPolicy::printWhole(min($wholes)),
+                'max' => $wholes === [] ? null : ResultsPolicy::printWhole(max($wholes)),
             ];
         }
 
         return $stats;
-    }
-
-    private function markNumber(mixed $value): string
-    {
-        $number = (float) $value;
-
-        return fmod($number, 1.0) === 0.0 ? (string) (int) $number : number_format($number, 1);
     }
 
     /**

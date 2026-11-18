@@ -10,9 +10,8 @@
  * aggregates on EVERY dashboard load and every report-cards load.
  *
  * The contract:
- *   - `computeLive()` — the original aggregate, unchanged, still the single source
- *     of truth (the rebuild calls it, so what is stored is exactly what KlassApp
- *     always computed).
+ *   - `computeLive()` — each stored mark is rounded once, then the average of those
+ *     whole numbers is rounded once. The rebuild stores that result.
  *   - `rebuild()`     — truncate + rebuild into `report_kpi_snapshots`.
  *   - `kpis()`        — the read path used by dashboards/report cards: the snapshot
  *     when present and fresh, otherwise live compute. A missing, never-built or
@@ -22,6 +21,7 @@
 
 namespace App\Services;
 
+use App\Services\Results\ResultsPolicy;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -201,64 +201,98 @@ class ReportKpiSnapshotService
     }
 
     /**
-     * The original live aggregate, unchanged (moved here verbatim so the snapshot
-     * and the live fallback can never drift from KlassApp's established numbers).
+     * Live aggregate. Each stored mark is rounded once. A class or gender figure
+     * is the average of those per-learner totals, rounded once. A subject figure
+     * is the average of the rounded marks, rounded once.
+     *
+     * @return array{perClass: list<object>, perSubject: list<object>, perGender: list<object>}
      */
     public function computeLive(int $schoolId, ?int $academicTermId = null): array
     {
-        // --- Per class: average of per-student EOT totals, grouped by section ---
-        $perClass = DB::table('marks as m')
-            ->join('exams as e', 'm.exam_id', '=', 'e.id')
-            ->join('exam_types as et', 'e.exam_type_id', '=', 'et.id')
-            ->where('m.school_id', $schoolId)
-            ->where('et.contributes_to_report_total', 1)
-            ->when($academicTermId, fn ($q) => $q->where('e.academic_term_id', $academicTermId))
-            ->select('m.section_id', DB::raw('SUM(m.marks) as total'))
-            ->groupBy('m.student_id', 'm.section_id');
-
-        $perClass = DB::table(DB::raw("({$perClass->toSql()}) as student_totals"))
-            ->mergeBindings($perClass)
-            ->join('sections as s', 'student_totals.section_id', '=', 's.id')
-            ->select('s.name as label', DB::raw('ROUND(AVG(student_totals.total), 1) as value'))
-            ->groupBy('s.name', 'student_totals.section_id')
-            ->orderBy('s.name')
-            ->get()
-            ->toArray();
-
-        // --- Per subject: average mark per subject ---
-        $perSubject = DB::table('marks as m')
+        $rows = DB::table('marks as m')
             ->join('exams as e', 'm.exam_id', '=', 'e.id')
             ->join('exam_types as et', 'e.exam_type_id', '=', 'et.id')
             ->join('subjects as sub', 'm.subject_id', '=', 'sub.id')
+            ->leftJoin('sections as s', 'm.section_id', '=', 's.id')
+            ->leftJoin('userprofiles as up', 'm.student_id', '=', 'up.user_id')
             ->where('m.school_id', $schoolId)
             ->where('et.contributes_to_report_total', 1)
+            ->whereNotNull('m.marks')
             ->when($academicTermId, fn ($q) => $q->where('e.academic_term_id', $academicTermId))
-            ->select('sub.name as label', DB::raw('ROUND(AVG(m.marks), 1) as value'))
-            ->groupBy('sub.name', 'm.subject_id')
-            ->orderBy('sub.name')
-            ->get()
-            ->toArray();
+            ->orderBy('m.id')
+            ->get([
+                'm.id',
+                'm.student_id',
+                'm.section_id',
+                'm.subject_id',
+                'm.marks',
+                's.name as section_name',
+                'sub.name as subject_name',
+                'up.gender',
+            ])
+            ->unique('id');
 
-        // --- Per gender: average of per-student EOT totals, split by gender ---
-        $studentTotalsForGender = DB::table('marks as m')
-            ->join('exams as e', 'm.exam_id', '=', 'e.id')
-            ->join('exam_types as et', 'e.exam_type_id', '=', 'et.id')
-            ->where('m.school_id', $schoolId)
-            ->where('et.contributes_to_report_total', 1)
-            ->when($academicTermId, fn ($q) => $q->where('e.academic_term_id', $academicTermId))
-            ->select('m.student_id', DB::raw('SUM(m.marks) as total'))
-            ->groupBy('m.student_id');
+        $bySubject = [];
+        $byStudentSection = [];
+        $byStudent = [];
+        foreach ($rows as $row) {
+            $whole = ResultsPolicy::roundTo((float) $row->marks);
+            $subjectId = (int) $row->subject_id;
+            $bySubject[$subjectId]['label'] = (string) $row->subject_name;
+            $bySubject[$subjectId]['marks'][] = $whole;
 
-        $perGender = DB::table(DB::raw("({$studentTotalsForGender->toSql()}) as student_totals"))
-            ->mergeBindings($studentTotalsForGender)
-            ->join('users as u', 'student_totals.student_id', '=', 'u.id')
-            ->join('userprofiles as up', 'u.id', '=', 'up.user_id')
-            ->whereIn('up.gender', ['male', 'female'])
-            ->select(DB::raw("CASE WHEN up.gender = 'male' THEN 'Male' ELSE 'Female' END as label"), DB::raw('ROUND(AVG(student_totals.total), 1) as value'))
-            ->groupBy('up.gender')
-            ->orderBy('up.gender')
-            ->get()
-            ->toArray();
+            if ($row->section_name !== null && $row->section_id !== null) {
+                $sectionKey = ((int) $row->student_id).'|'.((int) $row->section_id);
+                $byStudentSection[$sectionKey]['section_id'] = (int) $row->section_id;
+                $byStudentSection[$sectionKey]['label'] = (string) $row->section_name;
+                $byStudentSection[$sectionKey]['total'] = ($byStudentSection[$sectionKey]['total'] ?? 0.0) + $whole;
+            }
+
+            if (in_array($row->gender, ['male', 'female'], true)) {
+                $studentId = (int) $row->student_id;
+                $byStudent[$studentId]['gender'] = (string) $row->gender;
+                $byStudent[$studentId]['total'] = ($byStudent[$studentId]['total'] ?? 0.0) + $whole;
+            }
+        }
+
+        $perSubject = [];
+        foreach ($bySubject as $bucket) {
+            $perSubject[] = (object) [
+                'label' => $bucket['label'],
+                'value' => ResultsPolicy::roundTo(array_sum($bucket['marks']) / count($bucket['marks'])),
+            ];
+        }
+        usort($perSubject, fn (object $a, object $b) => strcmp($a->label, $b->label));
+
+        $bySection = [];
+        foreach ($byStudentSection as $bucket) {
+            $sectionId = $bucket['section_id'];
+            $bySection[$sectionId]['label'] = $bucket['label'];
+            $bySection[$sectionId]['totals'][] = $bucket['total'];
+        }
+        $perClass = [];
+        foreach ($bySection as $bucket) {
+            $perClass[] = (object) [
+                'label' => $bucket['label'],
+                'value' => ResultsPolicy::roundTo(array_sum($bucket['totals']) / count($bucket['totals'])),
+            ];
+        }
+        usort($perClass, fn (object $a, object $b) => strcmp($a->label, $b->label));
+
+        $byGender = ['female' => [], 'male' => []];
+        foreach ($byStudent as $bucket) {
+            $byGender[$bucket['gender']][] = $bucket['total'];
+        }
+        $perGender = [];
+        foreach (['female' => 'Female', 'male' => 'Male'] as $gender => $label) {
+            if ($byGender[$gender] === []) {
+                continue;
+            }
+            $perGender[] = (object) [
+                'label' => $label,
+                'value' => ResultsPolicy::roundTo(array_sum($byGender[$gender]) / count($byGender[$gender])),
+            ];
+        }
 
         return [
             'perClass' => $perClass,

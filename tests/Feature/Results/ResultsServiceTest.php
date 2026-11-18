@@ -237,6 +237,33 @@ class ResultsServiceTest extends TestCase
         $this->assertSame($stored, Marks::query()->orderBy('id')->pluck('marks', 'id')->all());
     }
 
+    public function test_a_half_rounds_up_and_a_missing_subject_counts_as_zero(): void
+    {
+        $ctx = $this->school();
+        $term = $this->term($ctx);
+        $this->bands($ctx, [
+            ['grade' => 'F', 'points' => 9, 'min' => 0, 'max' => 100],
+        ]);
+        $english = $this->exam($ctx, $term, $ctx['english'], '2026-04-01');
+        $this->exam($ctx, $term, $ctx['maths'], '2026-04-02');
+
+        $half = $this->student($ctx, 'Half Up Student');
+        $this->mark($ctx, $english, $ctx['english'], $half, 53.5, '');
+        $stored = Marks::query()->where('student_id', $half->id)->value('marks');
+
+        $sheet = $this->sheet($ctx, $term, $this->policy(countMissingAsZero: true));
+        $row = $sheet->student($half->id);
+
+        $this->assertSame(54.0, $row->cell($ctx['english']->id)->mark);
+        $this->assertSame('54', $row->cell($ctx['english']->id)->sheetLabel());
+        $this->assertSame('missing', $row->cell($ctx['maths']->id)->status);
+        $this->assertSame('Missing', $row->cell($ctx['maths']->id)->sheetLabel());
+        $this->assertSame(54.0, $row->displayTotal);
+        $this->assertSame(27.0, $row->displayAverage);
+        $this->assertSame(2, $row->subjectsCounted);
+        $this->assertEquals(53.5, $stored);
+    }
+
     public function test_ties_share_a_position_and_the_next_rank_skips(): void
     {
         $ctx = $this->school();
