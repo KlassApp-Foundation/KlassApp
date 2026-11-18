@@ -13,7 +13,7 @@ class RouteToReportingSkillTool implements Tool
     use AuthorizesToshiAction;
     public function description(): string
     {
-        return 'Route a reporting/analytics query to the Reporting skill. Handles: generating academic, fee, attendance, and summary reports. Call this when the user asks for reports, analytics, breakdowns, summaries, or data exports.';
+        return 'Route a reporting or marks-read query to the Reporting skill. Handles: academic, fee, attendance, and summary reports; missing or unapproved marks for a class and exam set; a learner\'s report status; a draft reminder to the class teacher (nothing is sent). Call this when the user asks for reports, analytics, missing marks, report status, or a reminder about marks.';
     }
 
     public function schema(JsonSchema $schema): array

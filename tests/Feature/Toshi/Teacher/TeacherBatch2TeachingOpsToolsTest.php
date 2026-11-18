@@ -388,7 +388,7 @@ class TeacherBatch2TeachingOpsToolsTest extends TestCase
         $agentTools = collect((new TeacherOperationsAgent)->tools())->map(fn ($t) => $t::class)->all();
         $this->assertContains(RouteToTeacherTeachingOpsSkillTool::class, $agentTools);
         $this->assertNotContains(AddCoAdminTool::class, $agentTools);
-        $this->assertCount(13, $agentTools);
+        $this->assertCount(16, $agentTools);
 
         $skillTools = collect((new TeacherTeachingOpsSkill)->tools())->map(fn ($t) => $t::class)->all();
         $this->assertCount(9, $skillTools);

@@ -19,6 +19,9 @@ use App\AiAgents\Tools\CreateTimetableSlotTool;
 use App\AiAgents\Tools\EnterMarkTool;
 use App\AiAgents\Tools\FindStudentTool;
 use App\AiAgents\Tools\GenerateReportTool;
+use App\AiAgents\Tools\Marks\LearnerReportStatusTool;
+use App\AiAgents\Tools\Marks\MissingMarksTool;
+use App\AiAgents\Tools\Marks\PrepareClassTeacherReminderTool;
 use App\AiAgents\Tools\GetFeeBalanceTool;
 use App\AiAgents\Tools\GetStudentCountTool;
 use App\AiAgents\Tools\ListClassesTool;
@@ -94,9 +97,11 @@ class DeputyAdminOperationsAgent implements Agent, HasTools
         return <<<PROMPT
 You are Toshi assisting a **deputy school administrator** at {$schoolName}.
 
-You have school-operations tools: students, parents, teachers (add/assign/list — not co-admins), academics (classes, sections, terms, subjects, exams, streams missing a class teacher), fees (including a read-only list of students who still owe), grading scales, attendance (including a read-only class summary over a date range), marks, reports, school communications (notices, events, holidays — list/create/update only), and academic ops (timetable slots, homework approve/reject, student-homework review — no destroy).
+You have school-operations tools: students, parents, teachers (add/assign/list — not co-admins), academics (classes, sections, terms, subjects, exams, streams missing a class teacher), fees (including a read-only list of students who still owe), grading scales, attendance (including a read-only class summary over a date range), marks, missing marks, a learner's report status, a draft reminder to the class teacher, reports, school communications (notices, events, holidays — list/create/update only), and academic ops (timetable slots, homework approve/reject, student-homework review — no destroy).
 
 Rules:
+- Do not calculate or restate a mark, total, aggregate, or division. Pass through what the marks tools return.
+- A class-teacher reminder is a draft. Confirming it does not send a message.
 - Do **not** attempt owner-level changes: school Settings (curriculum / academic-year config), or creating co-admins (ug3).
 - Prefer clear confirmations before writes.
 - Be concise and confirm outcomes clearly.
@@ -140,6 +145,9 @@ PROMPT;
             new SeedDefaultGradingTool,
             // Reporting skill surface
             new GenerateReportTool,
+            new MissingMarksTool,
+            new LearnerReportStatusTool,
+            new PrepareClassTeacherReminderTool,
             // School Comms skill surface (Batch 1 — not Settings-adjacent)
             new ListNoticesTool,
             new CreateNoticeTool,

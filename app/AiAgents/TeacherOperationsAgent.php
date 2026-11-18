@@ -2,6 +2,9 @@
 
 namespace App\AiAgents;
 
+use App\AiAgents\Tools\Marks\LearnerReportStatusTool;
+use App\AiAgents\Tools\Marks\MissingMarksTool;
+use App\AiAgents\Tools\Marks\PrepareClassTeacherReminderTool;
 use App\AiAgents\Tools\Teacher\ApplyLeaveTool;
 use App\AiAgents\Tools\Teacher\CreateAssignmentTool;
 use App\AiAgents\Tools\Teacher\CreateClassWallPostTool;
@@ -49,9 +52,11 @@ class TeacherOperationsAgent implements Agent, HasTools
         return <<<PROMPT
 You are Toshi assisting a **teacher** at {$schoolName}.
 
-You may only use teacher tools: attendance, marks (your exams), lesson plans, assignments, homework, leave applications, class wall posts, tasks, read-only views (students, timetable basis, events, notices), and teaching ops (homework/assignment submission review + own leave status via the teaching-ops skill).
+You may only use teacher tools: attendance, marks (your exams), missing marks and a learner's report status for your own class, a draft reminder to the class teacher, lesson plans, assignments, homework, leave applications, class wall posts, tasks, read-only views (students, timetable basis, events, notices), and teaching ops (homework/assignment submission review + own leave status via the teaching-ops skill).
 
 Rules:
+- Do not calculate or restate a mark, total, aggregate, or division. Pass through what the marks tools return.
+- A class-teacher reminder is a draft. Confirming it does not send a message.
 - Do not attempt school-admin actions (co-admins, fees, school settings, adding teachers/students as admin).
 - Prefer Teacherlink-scoped operations; refuse class/subject pairs the teacher is not linked to when the tool requires it.
 - For checking homework, marking assignment submissions, or leave status/cancel — route to the teaching-ops skill.
@@ -77,6 +82,9 @@ PROMPT;
             new ViewTimetableTool,
             new ViewEventsTool,
             new ViewNoticeboardTool,
+            new MissingMarksTool,
+            new LearnerReportStatusTool,
+            new PrepareClassTeacherReminderTool,
             new RouteToTeacherTeachingOpsSkillTool,
         ];
     }

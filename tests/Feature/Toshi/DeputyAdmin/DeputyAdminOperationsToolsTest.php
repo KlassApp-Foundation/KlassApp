@@ -106,7 +106,7 @@ class DeputyAdminOperationsToolsTest extends TestCase
         $this->assertContains(\App\AiAgents\Tools\ListUnpaidFeeBalancesTool::class, $classes);
         $this->assertContains(\App\AiAgents\Tools\ListStreamsWithoutClassTeacherTool::class, $classes);
         $this->assertContains(\App\AiAgents\Tools\SummarizeClassAttendanceTool::class, $classes);
-        $this->assertCount(45, $classes);
+        $this->assertCount(48, $classes);
     }
 
     public function test_ug3_teacher_skill_still_includes_add_coadmin(): void
