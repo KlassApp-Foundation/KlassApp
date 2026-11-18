@@ -441,6 +441,9 @@
                             $showSubject = true;
                         }
                     }
+                    if (! $showSubject && count($termSets) === 1 && $eotCell && $eotCell->mark !== null) {
+                        $showSubject = true;
+                    }
                 @endphp
                 @if (! $showSubject) @continue @endif
                 @php
@@ -471,8 +474,11 @@
                     <td class="left"><strong>{{ $subject->name }}</strong></td>
                     <td>100</td>
                     @foreach ($termSets as $set)
-                        @php $setCell = $set['cells'][$subject->id] ?? null; @endphp
-                        <td>{{ $setCell && $setCell->mark !== null ? $setCell->sheetLabel() : (\App\Services\Reports\MarkCellText::isCountedBlank($setCell, !empty($countMissingAsZero)) ? \App\Services\Reports\MarkCellText::word($setCell) : '-') }}</td>
+                        @php
+                            $setCell = $set['cells'][$subject->id] ?? null;
+                            $printedCell = (count($termSets) === 1 && $eotCell && $eotCell->mark !== null) ? $eotCell : $setCell;
+                        @endphp
+                        <td>{{ $printedCell && $printedCell->mark !== null ? $printedCell->sheetLabel() : (\App\Services\Reports\MarkCellText::isCountedBlank($printedCell, !empty($countMissingAsZero)) ? \App\Services\Reports\MarkCellText::word($printedCell) : '-') }}</td>
                     @endforeach
                     @if ($showAgg) <td>{{ $eotGrade }}</td> @endif
                     <td>{{ $eotComment }}</td>
