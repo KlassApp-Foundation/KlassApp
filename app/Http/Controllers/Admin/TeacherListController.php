@@ -47,10 +47,11 @@ class TeacherListController extends Controller
 
     public function destroy($name)
     {
+        // Resolved outside the try so a 404 or the duplicate-name refusal is not swallowed.
+        $schoolId = Auth::user()->school_id;
+        $user = \App\Support\PersonByName::forWrite((string) $name, (int) $schoolId, [5]);
         try
         {
-            $schoolId = Auth::user()->school_id;
-            $user = User::where('name',$name)->where('school_id', $schoolId)->firstOrFail();
             $user->delete();
 
             $message=trans('messages.delete_success_msg',['module' => 'Teacher']);
