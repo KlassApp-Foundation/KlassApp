@@ -188,8 +188,8 @@ class SchoolExamSetReportTest extends TestCase
             'term' => $term->id,
             'examType' => $types['north']->id,
         ]))->assertOk()->getContent();
-        $this->assertStringContainsString('data-testid="marks-cell-missing"', $northPage);
-        $this->assertStringContainsString('Missing', $northPage);
+        $this->assertStringContainsString('data-testid="marks-cell-dash"', $northPage);
+        $this->assertStringNotContainsString('data-testid="marks-cell-missing"', $northPage);
         $this->refuseWorkarounds($northPage);
 
         $quizPage = $this->actingAs($ctx['admin'])->get('/admin/marks/filter?'.http_build_query([
@@ -197,8 +197,8 @@ class SchoolExamSetReportTest extends TestCase
             'term' => $term->id,
             'examType' => $types['quiz']->id,
         ]))->assertOk()->getContent();
-        $this->assertStringContainsString('data-testid="marks-cell-absent"', $quizPage);
-        $this->assertStringContainsString('>ABS<', $quizPage);
+        $this->assertStringContainsString('data-testid="marks-cell-dash"', $quizPage);
+        $this->assertStringNotContainsString('data-testid="marks-cell-absent"', $quizPage);
         $this->refuseWorkarounds($quizPage);
 
         $learnerPage = $this->actingAs($ctx['admin'])
