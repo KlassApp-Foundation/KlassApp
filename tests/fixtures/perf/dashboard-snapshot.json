@@ -1,0 +1,583 @@
+{
+    "dashboard": {
+        "schoolName": "Perf Fixture School",
+        "termLabel": "Third Term, 2026",
+        "state": "data",
+        "setup": {
+            "total": 14,
+            "done": 8,
+            "percent": 57,
+            "next": {
+                "key": "student_size",
+                "label": "Approximate school size",
+                "route": null
+            },
+            "labels": {
+                "school_name": "School name",
+                "student_size": "Approximate school size",
+                "country": "Country",
+                "curriculum": "Board / Curriculum",
+                "emis": "Registration code",
+                "academic_year": "Academic year",
+                "standards": "Structure & Class Teachers",
+                "subjects": "Subjects",
+                "teachers": "Teachers",
+                "students": "Students",
+                "terms": "Academic terms",
+                "fees": "Fee structures",
+                "whatsapp_verify": "WhatsApp verification",
+                "plan_selection": "Plan selection"
+            },
+            "incomplete": [
+                "student_size",
+                "curriculum",
+                "emis",
+                "teachers",
+                "whatsapp_verify",
+                "plan_selection"
+            ],
+            "routes": {
+                "school_name": null,
+                "student_size": null,
+                "country": null,
+                "curriculum": null,
+                "emis": null,
+                "academic_year": "/admin/academics",
+                "standards": "/admin/standard/create",
+                "subjects": "/admin/subjects",
+                "teachers": "/admin/teacher/add",
+                "students": "/admin/student/add",
+                "terms": "/admin/academic-term/create",
+                "fees": "/admin/fees-categories/create",
+                "whatsapp_verify": "/admin/whatsapp/phone",
+                "plan_selection": "/admin/subscriptions"
+            },
+            "destination": "http://127.0.0.1:8090/admin/onboarding/wizard?step=student_size",
+            "summary": [
+                "School name: Perf Fixture School",
+                "Country: Uganda",
+                "Academic year: 2026, 2026-01-01 to 2026-12-31",
+                "Classes: 30 classes, 0 streams",
+                "Subjects: 12 subjects",
+                "Students: 1000 students",
+                "Terms: Third Term, current Third Term",
+                "Fees: Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000, Term III fees 1200000"
+            ],
+            "dismissed": false
+        },
+        "kpis": {
+            "students": {
+                "value": 1000,
+                "detail": "+1000 this term",
+                "direction": "up"
+            },
+            "staff": {
+                "value": 1,
+                "detail": "0 teachers · 1 admin"
+            },
+            "attendance": {
+                "value": "–",
+                "detail": "No register taken yet",
+                "direction": null
+            },
+            "fees": {
+                "percent": 27,
+                "collected": 320000000,
+                "expected": 1200000000,
+                "collected_label": "UGX 320M",
+                "expected_label": "UGX 1200M",
+                "currency": "UGX",
+                "state": "ok"
+            },
+            "report_cards": {
+                "ready": 43,
+                "students": 1000,
+                "exam": "Mid Term Examination",
+                "percent": 4,
+                "state": "ok",
+                "complete": false
+            }
+        },
+        "charts": {
+            "per_class": [
+                {
+                    "label": "P.1-14",
+                    "section_id": 14,
+                    "value": 74.5
+                },
+                {
+                    "label": "P.1-21",
+                    "section_id": 21,
+                    "value": 75.5
+                },
+                {
+                    "label": "P.1-28",
+                    "section_id": 28,
+                    "value": 73.8
+                },
+                {
+                    "label": "P.1-7",
+                    "section_id": 7,
+                    "value": 75.7
+                },
+                {
+                    "label": "P.2-1",
+                    "section_id": 1,
+                    "value": 74.7
+                },
+                {
+                    "label": "P.2-15",
+                    "section_id": 15,
+                    "value": 74.4
+                },
+                {
+                    "label": "P.2-22",
+                    "section_id": 22,
+                    "value": 74.1
+                },
+                {
+                    "label": "P.2-29",
+                    "section_id": 29,
+                    "value": 74.7
+                },
+                {
+                    "label": "P.2-8",
+                    "section_id": 8,
+                    "value": 74.7
+                },
+                {
+                    "label": "P.3-16",
+                    "section_id": 16,
+                    "value": 75
+                },
+                {
+                    "label": "P.3-2",
+                    "section_id": 2,
+                    "value": 75.2
+                },
+                {
+                    "label": "P.3-23",
+                    "section_id": 23,
+                    "value": 74.1
+                },
+                {
+                    "label": "P.3-30",
+                    "section_id": 30,
+                    "value": 74.8
+                },
+                {
+                    "label": "P.3-9",
+                    "section_id": 9,
+                    "value": 74.1
+                },
+                {
+                    "label": "P.4-10",
+                    "section_id": 10,
+                    "value": 74.2
+                },
+                {
+                    "label": "P.4-17",
+                    "section_id": 17,
+                    "value": 75.2
+                },
+                {
+                    "label": "P.4-24",
+                    "section_id": 24,
+                    "value": 74.7
+                },
+                {
+                    "label": "P.4-3",
+                    "section_id": 3,
+                    "value": 75.4
+                },
+                {
+                    "label": "P.5-11",
+                    "section_id": 11,
+                    "value": 74
+                },
+                {
+                    "label": "P.5-18",
+                    "section_id": 18,
+                    "value": 73.8
+                },
+                {
+                    "label": "P.5-25",
+                    "section_id": 25,
+                    "value": 74.6
+                },
+                {
+                    "label": "P.5-4",
+                    "section_id": 4,
+                    "value": 74.9
+                },
+                {
+                    "label": "P.6-12",
+                    "section_id": 12,
+                    "value": 74
+                },
+                {
+                    "label": "P.6-19",
+                    "section_id": 19,
+                    "value": 75.5
+                },
+                {
+                    "label": "P.6-26",
+                    "section_id": 26,
+                    "value": 75.8
+                },
+                {
+                    "label": "P.6-5",
+                    "section_id": 5,
+                    "value": 73.9
+                },
+                {
+                    "label": "P.7-13",
+                    "section_id": 13,
+                    "value": 74.2
+                },
+                {
+                    "label": "P.7-20",
+                    "section_id": 20,
+                    "value": 74.3
+                },
+                {
+                    "label": "P.7-27",
+                    "section_id": 27,
+                    "value": 74.6
+                },
+                {
+                    "label": "P.7-6",
+                    "section_id": 6,
+                    "value": 74.3
+                }
+            ],
+            "exam": "End of term",
+            "attendance_weeks": [
+                {
+                    "label": "W1",
+                    "value": null
+                },
+                {
+                    "label": "W2",
+                    "value": null
+                },
+                {
+                    "label": "W3",
+                    "value": null
+                },
+                {
+                    "label": "W4",
+                    "value": null
+                },
+                {
+                    "label": "W5",
+                    "value": null
+                },
+                {
+                    "label": "W6",
+                    "value": null
+                },
+                {
+                    "label": "W7",
+                    "value": null
+                },
+                {
+                    "label": "W8",
+                    "value": null
+                },
+                {
+                    "label": "W9",
+                    "value": null
+                },
+                {
+                    "label": "W10",
+                    "value": null
+                },
+                {
+                    "label": "W11",
+                    "value": null
+                },
+                {
+                    "label": "W12",
+                    "value": null
+                }
+            ],
+            "gender_classes": [
+                {
+                    "label": "P.1-14",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.1-21",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.1-28",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.1-7",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.2-1",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.2-15",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.2-22",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.2-29",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.2-8",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.3-16",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.3-2",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.3-23",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.3-30",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 43
+                },
+                {
+                    "label": "P.3-9",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.4-10",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.4-17",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.4-24",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.4-3",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.5-11",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.5-18",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.5-25",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.5-4",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.6-12",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.6-19",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.6-26",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.6-5",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.7-13",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.7-20",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.7-27",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                },
+                {
+                    "label": "P.7-6",
+                    "girls": 0,
+                    "boys": 0,
+                    "not_specified": 33
+                }
+            ],
+            "gender": {
+                "girls": 0,
+                "boys": 0,
+                "not_specified": 1000,
+                "total": 1000
+            },
+            "fees_months": [
+                {
+                    "label": "Sep",
+                    "collected": 0,
+                    "expected": 400000000,
+                    "future": false
+                },
+                {
+                    "label": "Oct",
+                    "collected": 320000000,
+                    "expected": 800000000,
+                    "future": false
+                },
+                {
+                    "label": "Nov",
+                    "collected": 320000000,
+                    "expected": 1200000000,
+                    "future": false
+                }
+            ]
+        },
+        "activity": [
+            {
+                "icon": "clipboard-list",
+                "segments": [
+                    "ENGLISH marks entered for ",
+                    {
+                        "bold": "P.2-1"
+                    }
+                ],
+                "time": "10:00"
+            },
+            {
+                "icon": "user-plus",
+                "segments": [
+                    {
+                        "bold": "1000 students"
+                    },
+                    " added"
+                ],
+                "time": "10:00"
+            },
+            {
+                "icon": "wallet",
+                "segments": [
+                    "Payment of UGX 400,000 recorded for ",
+                    {
+                        "bold": "Learner 1000"
+                    }
+                ],
+                "time": "Mon"
+            }
+        ],
+        "currency": "UGX",
+        "marks": {
+            "waiting": 0,
+            "waiting_note": null,
+            "ready": 0,
+            "ready_note": null
+        }
+    },
+    "fee_position": {
+        "context": "Third Term 2026 · all classes",
+        "collected_raw": 320000000,
+        "expected_raw": 1200000000,
+        "outstanding_raw": 880000000,
+        "rate": 27,
+        "collected_label": "UGX 320M",
+        "collected_spark": [
+            0,
+            0,
+            0,
+            0,
+            320000000,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "outstanding_label": "UGX 880M",
+        "arrears_label": "1000",
+        "rate_label": "27%",
+        "arrears_direction": "flat",
+        "arrears_delta_label": null,
+        "arrears_hint": "vs term start"
+    }
+}
