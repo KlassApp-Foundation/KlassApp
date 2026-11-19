@@ -26,6 +26,18 @@ use Illuminate\Validation\ValidationException;
 class ClassStructureService
 {
     /**
+     * Base section by "schoolId:sectionId", filled once per request.
+     *
+     * The same service instance answers the dashboard's per-learner lookups, so
+     * a class is resolved by name once instead of once per student. Bound as a
+     * scoped singleton in AppServiceProvider: the map lives for one request and
+     * never leaks between requests or tests.
+     *
+     * @var array<string, Section>
+     */
+    private array $baseSections = [];
+
+    /**
      * Resolve the undivided base section for a section (itself, or its name prefix).
      */
     public function resolveBaseSection(Section $section): Section
@@ -33,6 +45,11 @@ class ClassStructureService
         $name = trim((string) $section->name);
         if ($name === '') {
             return $section;
+        }
+
+        $key = (int) $section->school_id.':'.(int) $section->id;
+        if (isset($this->baseSections[$key])) {
+            return $this->baseSections[$key];
         }
 
         $candidates = Section::query()
@@ -44,10 +61,13 @@ class ClassStructureService
             ->get();
 
         if ($candidates->isEmpty()) {
-            return $section;
+            return $this->baseSections[$key] = $section;
         }
 
-        return $candidates->sortBy(fn (Section $s) => strlen((string) $s->name))->first();
+        // Several matches are possible ("P.1" and "P.1 A"); the shortest name
+        // wins, exactly as before. sortBy is stable, so equal lengths keep the
+        // database order.
+        return $this->baseSections[$key] = $candidates->sortBy(fn (Section $s) => strlen((string) $s->name))->first();
     }
 
     /**

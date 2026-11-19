@@ -334,6 +334,9 @@ class AppServiceProvider extends ServiceProvider {
     * @return void
     */
     public function register() {
+        // One instance per request: ClassStructureService memoises resolved base
+        // sections, so the dashboard looks a class up once, not once per learner.
+        $this->app->scoped(\App\Services\ClassStructureService::class);
         // Named Mcp::client() resolutions always return auditing clients (closes raw callTool bypass).
         $this->app->singleton(ClientManager::class, fn (): ClientManager => new AuditingMcpClientManager);
         $this->app->singleton(ReleaseGate::class, EloquentReleaseGate::class);
