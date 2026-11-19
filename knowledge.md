@@ -2,6 +2,14 @@
 
 > **Canonical location**: `/Users/mac/projects/KlassApp/knowledge.md` (workspace root). Worktrees (e.g. `KlassApp-main-checkout`) should sync to that path when copies diverge — keep one body of truth; do not maintain parallel divergent session logs.
 
+## Session: 2026-11-19 — Open-PR scan + demo-flow priority pivot
+
+**Open-PR scan (rule #28):** 30 PRs open at scan time. #1380 (this session's docs PR, below) was the only non-draft; **29 are drafts**, #1350 through #1378, all in the report-cards/marks area, created 2026-11-14 through 2026-11-18 — the follow-up increment after #1325. None had passed CI to a known-green state at scan time (`mergeable_state` was `blocked` or `unknown` on every one checked). Full list and titles are in the PR tracker, not duplicated here to avoid drift.
+
+**#1380 merged via admin override** — `f77bb019` (confirmed `merged: true` via GitHub API, rule #21). Blocked only by the 1-approving-review ruleset (no CI failure); Rasta gave explicit per-occasion authorization (rule #32) because the content is docs-only and the priority is the demo flow, not a review queue.
+
+**Priority pivot, Rasta's explicit direction:** stop broad work; get a workable exam → marks → report **flow** demo-ready. Not "merge all 30" — most are still drafts, unverified. The local agent was redirected to prepare only the PRs load-bearing for that flow (shortlist started from: #1373 marks-overview aggregate scoped to the 4 core subjects, #1372 student-marks/grid/report-card agreement, #1370 marks-grid dash for unapproved subjects, #1369 released report names only released sets, #1374 report-cards class picker, #1371 student-marks mobile fit), verify each with a real browser pass (rule #22/#44), and only then open/undraft for merge. **This cloud session cannot run the app itself** — `main` requires PHP 8.4 (composer.lock / Dockerfile confirm), this sandbox has PHP 8.3.6 only, the PPA that would add 8.4 is blocked by the network allowlist, and Docker's daemon isn't available here (client only, no `dockerd`) — so any real-browser verification of this work has to happen on the local agent's machine, not here.
+
 ## Session: 2026-11-19 — Marks-to-report script: real-browser findings on #1325
 
 A local, fresh-checkout, real-browser walkthrough (`npm run build`, demo seed, `artisan serve`, Chrome, real clicks — not staging) of the full marks → report flow on `169c092c`, written up step-by-step so a presenter or a new user can follow it without guessing. Full script with routes, exact on-screen text, and screenshots: `evidence/marks-to-report-script.md` (local to that run, not in this repo).
