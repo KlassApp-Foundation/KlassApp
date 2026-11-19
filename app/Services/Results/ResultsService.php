@@ -609,6 +609,12 @@ final class ResultsService
      */
     private function buildStudents(ResultsPolicy $policy, int $schoolId, Collection $roster, array $chosen, array $typeIds, array $subjects, array $weights = [], bool $withholdCombined = false, bool $countApprovedSubjects = false): array
     {
+        $divisionSubjectIds = [];
+        foreach ($subjects as $subject) {
+            if ($this->countsInDivision((string) ($subject['name'] ?? ''))) {
+                $divisionSubjectIds[] = (int) $subject['id'];
+            }
+        }
         $drafts = [];
         foreach ($roster as $entry) {
             $user = $entry['user'];
@@ -641,6 +647,7 @@ final class ResultsService
             [$total, $counted, $average, $aggregate, $division, $displayTotal, $displayAverage] = $this->totals(
                 $policy,
                 $cells,
+                $divisionSubjectIds,
             );
             $drafts[] = [
                 'studentId' => $studentId,
@@ -912,11 +919,38 @@ final class ResultsService
     }
 
     /**
+     * English, Mathematics, Science, and Social Studies. Longer labels
+     * some schools already store are the same four subjects.
+     */
+    private function countsInDivision(string $name): bool
+    {
+        $normalised = mb_strtolower(trim((string) preg_replace('/\s+/', ' ', $name)));
+        $aliases = [
+            'english language' => 'english',
+            'integrated science' => 'science',
+            'sst' => 'social studies',
+        ];
+
+        return in_array($aliases[$normalised] ?? $normalised, [
+            'english',
+            'mathematics',
+            'science',
+            'social studies',
+        ], true);
+    }
+
+    /**
+     * The mark total still counts every subject. The aggregate passed to
+     * the existing division rule is only the four cores. A missing core
+     * already carries the school's zero-band points.
+     *
      * @param array<int, ResultCell> $cells
+     * @param list<int> $divisionSubjectIds
      * @return array{0: ?float, 1: int, 2: ?float, 3: ?int, 4: ?string, 5: ?float, 6: ?float}
      */
-    private function totals(ResultsPolicy $policy, array $cells, int $schoolId = 0, int $standardId = 0): array
+    private function totals(ResultsPolicy $policy, array $cells, array $divisionSubjectIds = []): array
     {
+        $inDivision = array_fill_keys($divisionSubjectIds, true);
         $total = 0.0;
         $counted = 0;
         $points = 0;
@@ -931,7 +965,7 @@ final class ResultsService
                 $total += $cell->mark;
             }
             $counted++;
-            if ($cell->points !== null) {
+            if ($cell->points !== null && isset($inDivision[$cell->subjectId])) {
                 $points += $cell->points;
                 $pointsSeen = true;
             }
