@@ -23,6 +23,12 @@ class SignupEmailVerificationTest extends TestCase
     {
         parent::setUp();
 
+        // phpunit.xml pins CACHE_STORE=file, so guest throttle:N,M counters
+        // (sha1 of "{route domain}|{ip}") outlive a test. A long run can
+        // arrive here with 127.0.0.1 already at the limit and 429
+        // POST /register/verify/resend (throttle:3,1).
+        RateLimiter::clear(sha1('|127.0.0.1'));
+
         DB::table('usergroups')->insert([
             ['id' => 1, 'name' => 'superadmin', 'created_at' => now(), 'updated_at' => now()],
             ['id' => 3, 'name' => 'schooladmin', 'created_at' => now(), 'updated_at' => now()],
