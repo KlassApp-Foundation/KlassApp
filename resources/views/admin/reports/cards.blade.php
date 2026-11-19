@@ -32,18 +32,22 @@
                 <p class="ka-compose" data-testid="eot-composition">{{ $data['composition_line'] }}</p>
             @endif
         </div>
-        @if($class && $sitting)
+        @if($class)
         <form method="GET" action="{{ url('/admin/reports/cards') }}" class="rc-filters" data-testid="desktop-filters">
             <label for="rc-class">Class</label>
-            <select id="rc-class" name="class" class="ds-input" style="width:160px;" onchange="this.form.exam.value=''; this.form.stream.value=''; this.form.submit()">
+            <select id="rc-class" name="class" class="ds-input" style="width:160px;max-width:100%;" onchange="this.form.exam.value=''; this.form.stream.value=''; this.form.submit()">
                 @foreach($classes as $c)<option value="{{ $c['id'] }}" @selected($c['id'] === $class['id'])>{{ $c['label'] }}</option>@endforeach
             </select>
+            @if($sitting)
             <label for="rc-exam">Exam</label>
-            <select id="rc-exam" name="exam" class="ds-input" style="width:220px;" onchange="this.form.submit()">
+            <select id="rc-exam" name="exam" class="ds-input" style="width:220px;max-width:100%;" onchange="this.form.submit()">
                 @foreach($sittings as $s)<option value="{{ $s['key'] }}" @selected($s['key'] === $sitting['key'])>{{ $s['label'] }}</option>@endforeach
             </select>
+            @else
+            <input type="hidden" name="exam" value="">
+            @endif
             @if($streamId)<input type="hidden" name="stream" value="{{ $streamId }}">@else<input type="hidden" name="stream" value="">@endif
-            <noscript><button class="ds-btn ds-btn-outline" type="submit">Show</button></noscript>
+            <noscript><button class="ds-btn ds-btn-outline" type="submit" style="min-height:44px;">Show</button></noscript>
         </form>
         <button type="button" class="ds-btn ds-btn-outline rc-sheet-btn" style="min-height:44px;" data-open-filters>Filters</button>
         @endif
@@ -192,13 +196,15 @@
 
     <p style="margin:0;font-size:.82rem;color:#475569;"><a href="{{ route('admin.reports.cards.history') }}">Report card template and earlier PDFs</a> · <a href="{{ route('admin.reports.cards.missing') }}">Missing marks report</a></p>
 
-    @if($class && $sitting)
+    @if($class)
     <dialog id="rc-filter-sheet" class="rc-dlg" aria-labelledby="fs-t">
         <span class="rc-grip" aria-hidden="true"></span>
         <form method="GET" action="{{ url('/admin/reports/cards') }}">
             <div style="display:flex;justify-content:space-between;align-items:center;"><h2 id="fs-t" style="margin:0;font:600 1.1rem 'Sora',sans-serif;">Filters</h2><a class="ds-btn ds-btn-ghost ds-btn-sm" style="min-height:44px;text-decoration:none;" href="{{ url('/admin/reports/cards') }}">Reset</a></div>
             <label class="f">Class<select name="class" class="ds-input">@foreach($classes as $c)<option value="{{ $c['id'] }}" @selected($c['id'] === $class['id'])>{{ $c['label'] }}</option>@endforeach</select></label>
+            @if($sitting)
             <label class="f">Exam<select name="exam" class="ds-input">@foreach($sittings as $s)<option value="{{ $s['key'] }}" @selected($s['key'] === $sitting['key'])>{{ $s['label'] }}</option>@endforeach</select></label>
+            @endif
             @if(count(array_filter(array_column($links, 'stream'))) > 0)
             <div class="f" style="display:flex;flex-direction:column;gap:6px;"><span style="font-size:.85rem;font-weight:600;">Stream</span>
                 <div class="rc-seg" role="radiogroup" aria-label="Stream" style="grid-template-columns:repeat(auto-fit,minmax(90px,1fr));">

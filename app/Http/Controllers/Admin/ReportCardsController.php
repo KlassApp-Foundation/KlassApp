@@ -36,7 +36,12 @@ class ReportCardsController extends Controller
     {
         $schoolId = (int) Auth::user()->school_id;
         $classes = $screen->classes($schoolId);
-        $class = collect($classes)->firstWhere('id', (int) $request->query('class')) ?? ($classes[0] ?? null);
+        $requestedClassId = (int) $request->query('class');
+        $class = $requestedClassId > 0 ? collect($classes)->firstWhere('id', $requestedClassId) : null;
+        // No choice yet: open a class that has an exam this term. The first
+        // class in the list is often a nursery class with no exam, and the
+        // picker used to disappear with it.
+        $class ??= $screen->firstWithCurrentTermExam($schoolId, $classes) ?? ($classes[0] ?? null);
         $sittings = $class ? $screen->sittings($schoolId, $class['id']) : [];
         $sitting = collect($sittings)->firstWhere('key', (string) $request->query('exam')) ?? ($sittings[0] ?? null);
 
