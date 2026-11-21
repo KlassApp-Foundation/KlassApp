@@ -3,6 +3,7 @@
 namespace App\Services\ReportCards;
 
 use App\Contracts\Results\ReleaseGate;
+use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\Academics\Exam;
 use App\Models\Academics\ExamType;
@@ -12,6 +13,7 @@ use App\Models\StandardLink;
 use App\Models\StudentAcademic;
 use App\Models\User;
 use App\Services\Results\ResultCell;
+use App\Services\Results\ResultsPolicy;
 use App\Services\Results\ResultsQuery;
 use App\Services\Results\ResultsService;
 use Illuminate\Support\Collection;
@@ -95,6 +97,46 @@ class ClassReportScreen
             ->map(fn (array $s) => array_diff_key($s, ['sort' => 1]))
             ->values()
             ->all();
+    }
+
+    /**
+     * The class the screen opens on when the person has not chosen one.
+     *
+     * Classes are ordered nursery-first. A nursery class with no exam, or with
+     * an exam only in another term, must not cover a class that has an exam
+     * in the current term. The same section rules as sittings() apply, including
+     * an exam that lives on the base section of a stream.
+     *
+     * @param  list<array{id: int, label: string, links: list<array{id: int, stream: string}>}>  $classes
+     * @return array{id: int, label: string, links: list<array{id: int, stream: string}>}|null
+     */
+    public function firstWithCurrentTermExam(int $schoolId, array $classes): ?array
+    {
+        $termId = AcademicTerm::query()
+            ->where('school_id', $schoolId)
+            ->where('status', 'current')
+            ->orderByDesc('starts_on')
+            ->orderByDesc('id')
+            ->value('id');
+        if ($termId === null) {
+            return null;
+        }
+
+        foreach ($classes as $class) {
+            $sectionIds = $this->sectionIdsFor($schoolId, (int) $class['id']);
+            $hasExam = Exam::query()
+                ->where('school_id', $schoolId)
+                ->whereIn('section_id', $sectionIds)
+                ->where('academic_term_id', (int) $termId)
+                ->whereNull('deleted_at')
+                ->whereNotNull('exam_type_id')
+                ->exists();
+            if ($hasExam) {
+                return $class;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -192,7 +234,7 @@ class ClassReportScreen
         $subjectAverages = [];
         foreach ($subjects as $subject) {
             $marks = $subjectTotals[$subject['id']] ?? [];
-            $subjectAverages[] = ['name' => $subject['name'], 'value' => $marks === [] ? null : round(array_sum($marks) / count($marks), 1)];
+            $subjectAverages[] = ['name' => $subject['name'], 'value' => $marks === [] ? null : ResultsPolicy::roundTo(array_sum($marks) / count($marks))];
         }
 
         $shown = array_values(array_filter($students, fn ($s) => $streamLinkId === null || $linkOf($s) === $streamLinkId));
@@ -237,7 +279,7 @@ class ClassReportScreen
             'division_labels' => self::DIVISION_LABELS,
             'kpis' => [
                 'ready' => count($students),
-                'average' => $averages === [] ? null : number_format(round(array_sum($averages) / count($averages), 1), 1),
+                'average' => $averages === [] ? null : ResultsPolicy::printWhole(ResultsPolicy::roundTo(array_sum($averages) / count($averages))),
                 'division_one' => $divisions['1'],
                 'ungraded' => $divisions['U'],
             ],
@@ -434,9 +476,9 @@ class ClassReportScreen
         return 'Missing';
     }
 
-    private function number(float $value): string
+    private function number(float $alreadyRounded): string
     {
-        return rtrim(rtrim(number_format($value, 1, '.', ''), '0'), '.');
+        return ResultsPolicy::printWhole($alreadyRounded);
     }
 
     private function shortName(string $name): string

@@ -261,7 +261,7 @@
                                     $midGrade = $g ? 'D' . $g->points : '-';
                                 }
                             @endphp
-                            <td>@if($midMark && $midMark->isAbsent()) ABS @elseif($midMark && $midMark->marks !== null) {{ floor($midMark->marks) }} @else &mdash; @endif</td>
+                            <td>@if($midMark && $midMark->isAbsent()) ABS @elseif($midMark && $midMark->marks !== null) {{ (int) \App\Services\Results\ResultsPolicy::roundTo((float) $midMark->marks) }} @else &mdash; @endif</td>
                             <td>{{ $midGrade }}</td>
                         @endif
                     @endforeach
@@ -315,7 +315,7 @@
                 <tr>
                     <td class="left strong">{{ $subject->name }}</td>
                     <td>100</td>
-                    <td>@if($eotMark && $eotMark->isAbsent()) ABS @elseif($eotMark && $eotMark->marks !== null) {{ floor($eotMark->marks) }} @else &mdash; @endif</td>
+                    <td>@if($eotMark && $eotMark->isAbsent()) ABS @elseif($eotMark && $eotMark->marks !== null) {{ (int) \App\Services\Results\ResultsPolicy::roundTo((float) $eotMark->marks) }} @else &mdash; @endif</td>
                     <td>{{ $eotGrade }}</td>
                     <td>{{ $eotComment }}</td>
                     <td>{{ $teacherName }}</td>

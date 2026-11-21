@@ -205,8 +205,12 @@ class SchoolExamSetReportTest extends TestCase
             ->get('/admin/marks/student/'.$ada->id.'/class/'.$ctx['section']->id.'/'.$northEnglish->id)
             ->assertOk()
             ->getContent();
-        $this->assertStringContainsString('Missing', $learnerPage);
-        $this->assertStringContainsString('ABS', $learnerPage);
+        // No submission row exists for these sets, so the student page treats
+        // every subject as not approved: a dash, not Missing and not ABS.
+        // The sheet assertions above still require those words.
+        $this->assertDoesNotMatchRegularExpression('/<td>\s*Missing\s*<\/td>/', $learnerPage);
+        $this->assertDoesNotMatchRegularExpression('/<td>\s*ABS\s*<\/td>/', $learnerPage);
+        $this->assertMatchesRegularExpression('/<td>\s*—\s*<\/td>/', $learnerPage);
         $this->assertMatchesRegularExpression('/data-testid="student-result-total">\s*—\s*</', $learnerPage);
         $this->assertMatchesRegularExpression('/data-testid="student-result-position">\s*—\s*</', $learnerPage);
         $this->assertStringContainsString('South Paper has not been released. No combined mark is shown.', $learnerPage);

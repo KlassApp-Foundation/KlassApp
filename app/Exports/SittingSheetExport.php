@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Services\Results\ResultCell;
+use App\Services\Results\ResultsPolicy;
 use App\Services\Results\ResultSheet;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -49,11 +50,11 @@ class SittingSheetExport implements FromArray, WithHeadings, WithTitle
                 $row[] = ($cell !== null && $cell->status === ResultCell::ABSENT)
                     ? 'ABS'
                     : (($cell !== null && $cell->status === ResultCell::MARKED && $cell->mark !== null)
-                        ? $cell->mark
+                        ? ResultsPolicy::printWhole((float) $cell->mark)
                         : '');
             }
-            $row[] = $student->displayTotal;
-            $row[] = $student->displayAverage;
+            $row[] = $student->displayTotal === null ? '' : ResultsPolicy::printWhole((float) $student->displayTotal);
+            $row[] = $student->displayAverage === null ? '' : ResultsPolicy::printWhole((float) $student->displayAverage);
             $row[] = $student->aggregate;
             $row[] = $student->placeLabel($this->byStream);
             $rows[] = $row;

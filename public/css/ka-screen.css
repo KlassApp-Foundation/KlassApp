@@ -369,6 +369,7 @@
   .ka-life-short{display:none}
   .ka-sheet-foot{font-size:.8rem}
   .ka-sheet-table{border:1px solid #E2E8F0;border-radius:14px;overflow-x:auto}
+  .ka-sheet-table a.ka-learner-name{display:inline-flex;align-items:center;min-height:44px;box-sizing:border-box}
 }
 .ka-queue{display:flex;flex-direction:column;gap:10px}
 .ka-queue-tools{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
@@ -411,6 +412,12 @@
   .ka-release-reopen-bar span{text-align:center;font-size:.75rem;color:#475569}
 }
 .ka-mark-row{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:44px;padding:8px 0;border-top:1px solid #E2E8F0;font-size:.9rem}
+[data-testid="student-results"]{max-width:100%;min-width:0}
+[data-testid="student-results"] .ka-phone-cards,[data-testid="student-results"] .ka-learner-card,[data-testid="student-results"] .ka-mark-row{min-width:0;max-width:100%}
+[data-testid="student-results"] .ka-mark-row span{min-width:0;overflow-wrap:anywhere}
+@media (max-width:767px){
+  [data-testid="student-results"]{overflow-x:hidden}
+}
 .ka-hit{min-height:44px;display:inline-flex;align-items:center}
 @media (max-width:767px){
   .family-page,.rc{overflow-x:hidden;max-width:100%}

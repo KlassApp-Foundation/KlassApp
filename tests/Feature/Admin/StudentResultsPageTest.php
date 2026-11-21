@@ -8,6 +8,7 @@ use App\Http\Middleware\VerifyCsrfToken;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\Academics\Exam;
+use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\Marks;
 use App\Models\School;
 use App\Models\Section;
@@ -22,7 +23,7 @@ use Tests\TestCase;
 
 /**
  * The per-student marks page reads ResultsService, including one column
- * per mid-term month. The old report URL redirects there.
+ * per mid-term sitting. The old report URL redirects there.
  */
 class StudentResultsPageTest extends TestCase
 {
@@ -155,6 +156,11 @@ class StudentResultsPageTest extends TestCase
         $this->mark($this->july, $this->english, 48);
         $this->mark($end, $this->english, 60);
         $this->mark($end, $math, 65);
+        $this->approve($this->june, $this->english);
+        $this->approve($this->june, $math);
+        $this->approve($this->july, $this->english);
+        $this->approve($end, $this->english);
+        $this->approve($end, $math);
     }
 
     public function test_class_grid_links_to_the_student_page_and_the_old_report_url_redirects(): void
@@ -169,7 +175,7 @@ class StudentResultsPageTest extends TestCase
             ->assertRedirect(route('admin.marks.student.class', [$this->student, $this->section->id, $this->june->id]));
     }
 
-    public function test_student_page_shows_the_name_and_each_mid_term_month(): void
+    public function test_student_page_shows_the_name_and_each_mid_term_sitting(): void
     {
         $this->actingAs($this->admin)
             ->get(route('admin.marks.student.class', [$this->student, $this->section->id, $this->june->id]))
@@ -180,14 +186,127 @@ class StudentResultsPageTest extends TestCase
             ->assertSee('P.3')
             ->assertSee('data-testid="student-result-term"', false)
             ->assertSee('Term 2')
-            ->assertSee('JUNE')
-            ->assertSee('JULY')
+            ->assertSee('data-testid="student-sitting-2026-06"', false)
+            ->assertSee('data-testid="student-sitting-2026-07"', false)
+            ->assertSee('Mid Term')
+            ->assertDontSee('JUNE')
+            ->assertDontSee('JULY')
             ->assertSee('45')
             ->assertSee('48')
             ->assertSee('data-testid="student-result-total"', false)
             ->assertSee('125')
-            ->assertSee('data-testid="student-result-position"', false);
+            ->assertSee('data-testid="student-result-position"', false)
+            ->assertSee('data-testid="student-phone-cards"', false)
+            ->assertSee('ka-sheet-table', false)
+            ->assertSee('ka-mark-row', false);
+        $this->assertCombinedColumnAddsUp($html = $this->actingAs($this->admin)
+            ->get(route('admin.marks.student.class', [$this->student, $this->section->id, $this->june->id]))
+            ->assertOk()
+            ->getContent());
+        $this->assertSame(125, $this->combinedSum($html));
     }
+
+    public function test_the_student_page_total_is_the_sum_of_the_rounded_combined_cells(): void
+    {
+        DB::table('exam_types')->insert([
+            ['id' => 4, 'name' => 'Opening paper', 'code' => 'OPN', 'contributes_to_report_total' => 0, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 6, 'name' => 'Closing paper', 'code' => 'CLS', 'contributes_to_report_total' => 0, 'created_at' => now(), 'updated_at' => now()],
+        ]);
+        $this->school->forceFill([
+            'report_composition' => [
+                '4' => ['include' => true, 'weight' => 50],
+                '6' => ['include' => true, 'weight' => 50],
+            ],
+        ])->save();
+        $math = Subject::query()->where('school_id', $this->school->id)->where('code', 'MTC')->firstOrFail();
+        $yearId = (int) $this->june->academic_year_id;
+        $standardId = (int) $this->june->standard_id;
+        $teacherId = (int) $this->june->teacher_id;
+        foreach ([4, 6] as $typeId) {
+            foreach ([$this->english, $math] as $subject) {
+                $exam = Exam::withoutEvents(fn () => Exam::create([
+                    'school_id' => $this->school->id,
+                    'standard_id' => $standardId,
+                    'section_id' => $this->section->id,
+                    'subject_id' => $subject->id,
+                    'teacher_id' => $teacherId,
+                    'exam_type_id' => $typeId,
+                    'academic_term_id' => $this->term->id,
+                    'academic_year_id' => $yearId,
+                    'scheduled_at' => '2026-06-20',
+                    'status' => 'submitted',
+                ]));
+                Marks::create([
+                    'student_id' => $this->student->id,
+                    'exam_id' => $exam->id,
+                    'school_id' => $this->school->id,
+                    'subject_id' => $subject->id,
+                    'teacher_id' => $teacherId,
+                    'section_id' => $this->section->id,
+                    'marks' => 0.6,
+                    'grade' => '',
+                ]);
+                \App\Models\MarksRelease::create([
+                    'school_id' => $this->school->id,
+                    'exam_id' => $exam->id,
+                    'scope' => 'class',
+                    'standard_link_id' => StudentAcademic::query()->where('user_id', $this->student->id)->value('standardLink_id'),
+                    'scheduled_at' => now(),
+                    'released_at' => now(),
+                    'status' => \App\Models\MarksRelease::STATUS_RELEASED,
+                    'timezone' => 'UTC',
+                ]);
+            }
+        }
+        Marks::query()->where('student_id', $this->student->id)->update(['grade' => '']);
+        $stored = Marks::query()->orderBy('id')->pluck('marks')->map(fn ($mark) => (float) $mark)->all();
+
+        $html = $this->actingAs($this->admin)
+            ->get(route('admin.marks.student.class', [$this->student, $this->section->id, $this->june->id]))
+            ->assertOk()
+            ->assertSee('60')
+            ->assertSee('65')
+            ->getContent();
+
+        $this->assertSame($stored, Marks::query()->orderBy('id')->pluck('marks')->map(fn ($mark) => (float) $mark)->all());
+        $this->assertSame([1, 1], $this->combinedMarks($html));
+        $this->assertSame('2', $this->combinedTotal($html));
+        $this->assertSame(2, $this->combinedSum($html));
+    }
+
+    private function assertCombinedColumnAddsUp(string $html): void
+    {
+        $this->assertSame($this->combinedSum($html), (int) $this->combinedTotal($html));
+    }
+
+    private function combinedSum(string $html): int
+    {
+        return array_sum($this->combinedMarks($html));
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function combinedMarks(string $html): array
+    {
+        preg_match_all('/data-testid="student-combined-mark">\s*([^<]*?)\s*</', $html, $marks);
+        $numbers = [];
+        foreach ($marks[1] as $mark) {
+            $mark = trim($mark);
+            if ($mark === '' || $mark === '—' || $mark === 'Missing' || $mark === 'ABS') {
+                continue;
+            }
+            $numbers[] = (int) $mark;
+        }
+
+        return $numbers;
+    }
+
+    private function combinedTotal(string $html): string
+    {
+        preg_match('/data-testid="student-result-total">\s*([^<]*?)\s*</', $html, $total);
+
+        return trim($total[1] ?? '');    }
 
     public function test_another_schools_student_or_exam_is_not_found(): void
     {
@@ -276,6 +395,21 @@ class StudentResultsPageTest extends TestCase
             'scheduled_at' => $when,
             'status' => 'submitted',
         ]));
+    }
+
+    private function approve(Exam $exam, Subject $subject): void
+    {
+        ExamMarksSubmission::create([
+            'school_id' => $this->school->id,
+            'exam_id' => $exam->id,
+            'class_id' => $this->section->id,
+            'subject_id' => $subject->id,
+            'teacher_id' => $exam->teacher_id,
+            'status' => 'locked',
+            'approval_status' => 'approved',
+            'submitted_at' => now(),
+            'approved_at' => now(),
+        ]);
     }
 
     private function mark(Exam $exam, Subject $subject, int $score): void

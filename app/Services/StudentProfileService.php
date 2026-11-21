@@ -14,6 +14,7 @@ use App\Models\StandardLink;
 use App\Models\StudentAcademic;
 use App\Models\User;
 use App\Models\WhatsAppUser;
+use App\Services\Results\ResultsPolicy;
 use App\Services\StudentProfile\StudentEnrollment;
 use Illuminate\Support\Carbon;
 
@@ -190,7 +191,7 @@ class StudentProfileService
             /** @var Exam $exam */
             $exam = $rows->first()->exam;
             $examTerm = $exam->academicTerm;
-            $average = round((float) $rows->avg('marks'), 1);
+            $average = $this->wholeAverage($rows);
             $released[] = [
                 'key' => (string) $key,
                 'label' => trim(($examTerm?->name ? $examTerm->name.' · ' : '').$this->sentenceCase((string) ($exam->examType?->name ?: 'Exam'))),
@@ -234,7 +235,7 @@ class StudentProfileService
 
         return [
             'label' => $types->count() === 1 ? (string) $types->first() : 'Current exams',
-            'average' => $this->markLabel(round((float) $rows->avg('marks'), 1)),
+            'average' => $this->markLabel($this->wholeAverage($rows)),
             'subjects' => $rows->count(),
             'download_url' => url('/admin/students/'.$student->id.'/progress-report'),
         ];
@@ -593,12 +594,30 @@ class StudentProfileService
         return $date->format('j M Y');
     }
 
-    private function markLabel(float $marks): string
+    /**
+     * Round each stored mark once, then round the average of those whole numbers once.
+     *
+     * @param \Illuminate\Support\Collection<int, Marks> $rows
+     */
+    private function wholeAverage($rows): float
     {
-        $rounded = round($marks, 1);
+        $wholes = [];
+        foreach ($rows as $row) {
+            if ($row->marks === null) {
+                continue;
+            }
+            $wholes[] = ResultsPolicy::roundTo((float) $row->marks);
+        }
+        if ($wholes === []) {
+            return 0.0;
+        }
 
-        return fmod($rounded, 1.0) === 0.0
-            ? (string) (int) $rounded
-            : number_format($rounded, 1);
+        return ResultsPolicy::roundTo(array_sum($wholes) / count($wholes));
+    }
+
+    /** Text for a value wholeAverage or roundTo already made whole. */
+    private function markLabel(float $alreadyRounded): string
+    {
+        return ResultsPolicy::printWhole($alreadyRounded);
     }
 }

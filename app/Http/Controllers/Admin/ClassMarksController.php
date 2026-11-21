@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\Demo\LatestExamMarks;
 use App\Services\Results\DisplayedGrade;
 use App\Services\Results\ResultCell;
+use App\Services\Results\ResultsPolicy;
 use App\Services\Results\ResultsQuery;
 use App\Services\Results\ResultsService;
 use App\Support\ClassLevelOrder;
@@ -97,16 +98,19 @@ class ClassMarksController extends Controller
                             continue;
                         }
                         $fromSheet = $cell !== null && $cell->status === ResultCell::MARKED && $cell->mark !== null && $result !== null;
+                        $storedWhole = ($mark && $mark->marks !== null)
+                            ? ResultsPolicy::roundTo((float) $mark->marks)
+                            : null;
                         $rows[] = [
                             'subject' => $subject['name'],
                             'mark' => $fromSheet
-                                ? rtrim(rtrim(number_format($cell->mark, 1, '.', ''), '0'), '.')
-                                : ($mark ? rtrim(rtrim(number_format((float) $mark->marks, 1, '.', ''), '0'), '.') : '–'),
+                                ? $cell->sheetLabel()
+                                : ($storedWhole !== null ? ResultsPolicy::printWhole($storedWhole) : '–'),
                             'grade' => $fromSheet
                                 ? $grades->subject($schoolId, $result->standardId, $cell->mark, $mark?->grade)
                                 : ($mark
-                                    ? ($mark->marks !== null
-                                        ? $grades->subject($schoolId, $standardId, (float) $mark->marks, $mark->grade)
+                                    ? ($storedWhole !== null
+                                        ? $grades->subject($schoolId, $standardId, $storedWhole, $mark->grade)
                                         : (string) $mark->grade)
                                     : ''),
                         ];

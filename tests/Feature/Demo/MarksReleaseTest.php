@@ -159,7 +159,7 @@ class MarksReleaseTest extends TestCase
             . "Social Studies      55  C6\n"
             . "-----------------------------\n"
             . "Total              288\n"
-            . "Average           72.0\n"
+            . "Average             72\n"
             . '```';
     }
 

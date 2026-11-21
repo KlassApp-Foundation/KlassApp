@@ -217,7 +217,8 @@ class SchoolExamSetReportScreenTest extends TestCase
         $ready->assertSee('Each exam set has its own report');
         $ready->assertSee('Missing');
         $ready->assertSee('ABS');
-        $ready->assertSee('23.3');
+        $ready->assertSee('class="rc-r">23<', false);
+        $ready->assertDontSee('23.3');
         $this->assertMatchesRegularExpression('/<strong>1<\/strong>.*?Ada North/s', $html);
         $this->assertMatchesRegularExpression('/<strong>2<\/strong>.*?Ben Gap/s', $html);
         $this->assertMatchesRegularExpression('/<strong>3<\/strong>.*?Cho Away/s', $html);

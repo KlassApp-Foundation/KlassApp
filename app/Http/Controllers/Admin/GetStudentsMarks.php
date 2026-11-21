@@ -83,6 +83,7 @@ class GetStudentsMarks extends Controller
             sectionId: $sectionId,
             academicTermId: (int) $term->id,
             studentId: (int) $user->id,
+            countApprovedSubjects: true,
         ), app(ReportScoring::class)->displayPolicy($schoolId, $sectionId, (int) $term->id, null, true));
 
         $student = $sheet->student((int) $user->id);

@@ -15,6 +15,7 @@ use App\Models\StudentAssignment;
 use App\Models\StudentHomework;
 use App\Models\Task;
 use App\Models\User;
+use App\Services\Results\ResultsPolicy;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -150,7 +151,13 @@ class StudentActionService
             return self::result(true, 'No marks recorded for you yet.', ['count' => 0]);
         }
 
-        $lines = $rows->map(fn ($m) => "- Mark #{$m->id}: score {$m->marks}".($m->grade ? " (grade {$m->grade})" : ''))->implode("\n");
+        $lines = $rows->map(function ($m) {
+            $score = $m->marks === null
+                ? 'Missing'
+                : ResultsPolicy::printWhole(ResultsPolicy::roundTo((float) $m->marks));
+
+            return "- Mark #{$m->id}: score {$score}".($m->grade ? " (grade {$m->grade})" : '');
+        })->implode("\n");
 
         return self::result(true, "**Your marks:**\n{$lines}", [
             'count' => $rows->count(),
