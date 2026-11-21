@@ -136,7 +136,7 @@ final class ResultsService
             $this->subjectIdsFor($exams, $marks, $mainTypeIds),
             $this->submissionLabels($query->schoolId, $exams, $mainTypeIds),
         );
-        $students = $this->buildStudents($policy, $query->schoolId, $roster, $chosen, $mainTypeIds, $subjects, $weights, $withholdCombined);
+        $students = $this->buildStudents($policy, $query->schoolId, $roster, $chosen, $mainTypeIds, $subjects, $weights, $withholdCombined, $query->countApprovedSubjects);
         $summary = $this->summary($subjects, $students);
 
         $sittings = [];
@@ -161,6 +161,7 @@ final class ResultsService
                 $sittingSubjects,
                 [],
                 false,
+                $query->countApprovedSubjects && $query->studentId !== null,
             );
             $sittings[] = new ResultSitting(
                 $plan['typeId'],
@@ -606,7 +607,7 @@ final class ResultsService
      * @param list<array{id: int, name: string, code: string, submission: string}> $subjects
      * @return list<ResultStudent>
      */
-    private function buildStudents(ResultsPolicy $policy, int $schoolId, Collection $roster, array $chosen, array $typeIds, array $subjects, array $weights = [], bool $withholdCombined = false): array
+    private function buildStudents(ResultsPolicy $policy, int $schoolId, Collection $roster, array $chosen, array $typeIds, array $subjects, array $weights = [], bool $withholdCombined = false, bool $countApprovedSubjects = false): array
     {
         $drafts = [];
         foreach ($roster as $entry) {
@@ -622,7 +623,20 @@ final class ResultsService
                     continue;
                 }
                 $choice = $this->merged($chosen, $typeIds, $studentId, $subjectId, $weights, $policy->countMissingAsZero);
-                $cells[$subjectId] = $this->cell($policy, $schoolId, $standardId, $subjectId, $choice);
+                $real = $this->cell($policy, $schoolId, $standardId, $subjectId, $choice);
+                if ($countApprovedSubjects && ($subject['submission'] ?? '') !== 'Approved') {
+                    $cells[$subjectId] = new ResultCell(
+                        $subjectId,
+                        null,
+                        null,
+                        null,
+                        ResultCell::UNAPPROVED,
+                        $real->namesIncompleteSet(),
+                    );
+
+                    continue;
+                }
+                $cells[$subjectId] = $real;
             }
             [$total, $counted, $average, $aggregate, $division, $displayTotal, $displayAverage] = $this->totals(
                 $policy,

@@ -298,13 +298,16 @@ class MarksOverviewTest extends TestCase
         ));
         $ada = $sheet->student($this->ada->id);
         $bea = $sheet->student($this->bea->id);
-        $this->assertSame(218.0, $ada->displayTotal);
+        $this->assertSame(50.0, $ada->displayTotal);
         $this->assertSame(1, $ada->classPosition);
         $this->assertSame(1, $ada->classOutOf);
-        $this->assertSame(ResultCell::MARKED, $ada->cell($this->science->id)->status);
-        $this->assertSame(91.0, $ada->cell($this->science->id)->mark);
-        $this->assertSame(ResultCell::MARKED, $ada->cell($this->reading->id)->status);
-        $this->assertSame(77.0, $ada->cell($this->reading->id)->mark);
+        $this->assertSame(ResultCell::MARKED, $ada->cell($this->english->id)->status);
+        $this->assertSame(50.0, $ada->cell($this->english->id)->mark);
+        $this->assertSame(ResultCell::UNAPPROVED, $ada->cell($this->science->id)->status);
+        $this->assertNull($ada->cell($this->science->id)->mark);
+        $this->assertSame('—', $ada->cell($this->science->id)->sheetLabel());
+        $this->assertSame(ResultCell::UNAPPROVED, $ada->cell($this->reading->id)->status);
+        $this->assertNull($ada->cell($this->reading->id)->mark);
         $this->assertNull($bea->displayTotal);
         $this->assertNull($bea->classPosition);
         $this->assertSame(ResultCell::ABSENT, $bea->cell($this->english->id)->status);
@@ -313,21 +316,58 @@ class MarksOverviewTest extends TestCase
         $html = $this->page();
         $science = $this->innerCells($html, $this->science->id);
         $this->assertNotEmpty($science);
-        $this->assertTrue($this->cellHas($science, '91'));
-        $this->assertTrue($this->cellHas($science, 'marks-cell-missing'));
-        $this->assertFalse($this->cellHas($science, '—'));
-        $this->assertStringContainsString('marks-cell-missing', $html);
-        $this->assertTrue($this->cellHas($this->innerCells($html, $this->reading->id), '77'));
-        $this->assertMatchesRegularExpression('/data-testid="marks-phone-total">\s*218(?:\.0)?\s*</', $html);
+        $this->assertFalse($this->cellHas($science, '91'));
+        $this->assertTrue($this->cellHas($science, 'marks-cell-dash'));
+        $this->assertTrue($this->cellHas($science, '—'));
+        $this->assertFalse($this->cellHas($science, 'marks-cell-missing'));
+        $this->assertTrue($this->cellHas($this->innerCells($html, $this->reading->id), 'marks-cell-dash'));
+        $this->assertFalse($this->cellHas($this->innerCells($html, $this->reading->id), '77'));
+        $this->assertMatchesRegularExpression('/data-testid="marks-phone-total">\s*50(?:\.0)?\s*</', $html);
         $this->assertDoesNotMatchRegularExpression('/data-testid="marks-phone-total">\s*Total/', $html);
         $this->assertStringNotContainsString('Total 127', $html);
         $this->assertStringNotContainsString('Total 218', $html);
+        $this->assertStringNotContainsString('Each missing mark counts as 0', $html);
+        $this->assertStringNotContainsString('still missing marks', $html);
+        $this->assertStringContainsString('is not approved', $html);
+        $this->assertStringContainsString('left out of the total', $html);
         $this->assertStringContainsString('>ABS<', $html);
         $this->assertStringNotContainsString('marks-cell-absent">AB<', $html);
         $this->assertSame(
             'AB',
             Marks::query()->where('student_id', $this->bea->id)->where('subject_id', $this->english->id)->value('grade')
         );
+    }
+
+    public function test_a_set_with_no_approved_subject_shows_dashes_and_no_total(): void
+    {
+        $englishEnd = Exam::query()
+            ->where('school_id', $this->school->id)
+            ->where('exam_type_id', $this->end->id)
+            ->where('subject_id', $this->english->id)
+            ->firstOrFail();
+        $this->mark($englishEnd, $this->english, $this->ada, 40, '');
+        $this->submission($englishEnd, $this->english, 'draft', 'pending');
+
+        $sheet = app(ResultsService::class)->sheet(new ResultsQuery(
+            schoolId: (int) $this->school->id,
+            sectionId: (int) $this->section->id,
+            academicTermId: (int) $this->term->id,
+            examTypeId: (int) $this->end->id,
+            countApprovedSubjects: true,
+        ));
+        $ada = $sheet->student($this->ada->id);
+        $this->assertSame(ResultCell::UNAPPROVED, $ada->cell($this->english->id)->status);
+        $this->assertNull($ada->cell($this->english->id)->mark);
+        $this->assertNull($ada->displayTotal);
+        $this->assertNull($ada->classPosition);
+
+        $html = $this->page(['examType' => $this->end->id]);
+        $cells = $this->innerCells($html, $this->english->id);
+        $this->assertNotEmpty($cells);
+        $this->assertTrue($this->cellHas($cells, 'marks-cell-dash'));
+        $this->assertFalse($this->cellHas($cells, '40'));
+        $this->assertStringNotContainsString('Each missing mark counts as 0', $html);
+        $this->assertMatchesRegularExpression('/data-testid="marks-phone-total">\s*—\s*</', $html);
     }
 
     public function test_the_phone_card_includes_the_kls_number_and_subjects(): void

@@ -188,8 +188,8 @@ class SchoolExamSetReportTest extends TestCase
             'term' => $term->id,
             'examType' => $types['north']->id,
         ]))->assertOk()->getContent();
-        $this->assertStringContainsString('data-testid="marks-cell-missing"', $northPage);
-        $this->assertStringContainsString('Missing', $northPage);
+        $this->assertStringContainsString('data-testid="marks-cell-dash"', $northPage);
+        $this->assertStringNotContainsString('data-testid="marks-cell-missing"', $northPage);
         $this->refuseWorkarounds($northPage);
 
         $quizPage = $this->actingAs($ctx['admin'])->get('/admin/marks/filter?'.http_build_query([
@@ -197,16 +197,20 @@ class SchoolExamSetReportTest extends TestCase
             'term' => $term->id,
             'examType' => $types['quiz']->id,
         ]))->assertOk()->getContent();
-        $this->assertStringContainsString('data-testid="marks-cell-absent"', $quizPage);
-        $this->assertStringContainsString('>ABS<', $quizPage);
+        $this->assertStringContainsString('data-testid="marks-cell-dash"', $quizPage);
+        $this->assertStringNotContainsString('data-testid="marks-cell-absent"', $quizPage);
         $this->refuseWorkarounds($quizPage);
 
         $learnerPage = $this->actingAs($ctx['admin'])
             ->get('/admin/marks/student/'.$ada->id.'/class/'.$ctx['section']->id.'/'.$northEnglish->id)
             ->assertOk()
             ->getContent();
-        $this->assertStringContainsString('Missing', $learnerPage);
-        $this->assertStringContainsString('ABS', $learnerPage);
+        // No submission row exists for these sets, so the student page treats
+        // every subject as not approved: a dash, not Missing and not ABS.
+        // The sheet assertions above still require those words.
+        $this->assertDoesNotMatchRegularExpression('/<td>\s*Missing\s*<\/td>/', $learnerPage);
+        $this->assertDoesNotMatchRegularExpression('/<td>\s*ABS\s*<\/td>/', $learnerPage);
+        $this->assertMatchesRegularExpression('/<td>\s*—\s*<\/td>/', $learnerPage);
         $this->assertMatchesRegularExpression('/data-testid="student-result-total">\s*—\s*</', $learnerPage);
         $this->assertMatchesRegularExpression('/data-testid="student-result-position">\s*—\s*</', $learnerPage);
         $this->assertStringContainsString('South Paper has not been released. No combined mark is shown.', $learnerPage);
