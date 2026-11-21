@@ -195,7 +195,10 @@ class StudentResultsPageTest extends TestCase
             ->assertSee('48')
             ->assertSee('data-testid="student-result-total"', false)
             ->assertSee('125')
-            ->assertSee('data-testid="student-result-position"', false);
+            ->assertSee('data-testid="student-result-position"', false)
+            ->assertSee('data-testid="student-phone-cards"', false)
+            ->assertSee('ka-sheet-table', false)
+            ->assertSee('ka-mark-row', false);
     }
 
     public function test_another_schools_student_or_exam_is_not_found(): void
