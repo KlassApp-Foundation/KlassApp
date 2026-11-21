@@ -341,7 +341,7 @@ class ProgressiveHeadingsTest extends TestCase
         $this->app->instance('dompdf.wrapper', $pdf);
         app(StudentReportCardService::class)->pdfForStudent((int) $school->id, $link, $learner);
 
-        $this->assertSame(['End paper'], array_column($captured['termSets'], 'label'));
+        $this->assertSame(['Combined'], array_column($captured['termSets'], 'label'));
         $this->assertSame(2.0, (float) $captured['total']);
         $this->assertSame($stored, Marks::query()->orderBy('id')->pluck('marks')->map(fn ($mark) => (float) $mark)->all());
 

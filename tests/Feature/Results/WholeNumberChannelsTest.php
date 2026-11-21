@@ -10,6 +10,7 @@ use App\Http\Middleware\VerifyCsrfToken;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\Academics\Exam;
+use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\Marks;
 use App\Models\MarksRelease;
 use App\Models\School;
@@ -80,8 +81,16 @@ class WholeNumberChannelsTest extends TestCase
     {
         $ctx = $this->school();
         $this->learner($ctx, 'Amina Kato');
-        $exam = $this->sitting($ctx, $ctx['english'], 53.5);
-        $this->sitting($ctx, $ctx['maths'], null);
+        $examEng = $this->sitting($ctx, $ctx['english'], 53.5);
+        $examMaths = $this->sitting($ctx, $ctx['maths'], null);
+        foreach ([$examEng, $examMaths] as $exam) {
+            ExamMarksSubmission::create([
+                'school_id' => $ctx['school']->id, 'exam_id' => $exam->id, 'class_id' => $ctx['section']->id,
+                'subject_id' => $exam->subject_id, 'teacher_id' => $ctx['teacher']->id, 'status' => 'locked',
+                'approval_status' => 'approved', 'submitted_at' => now(), 'approved_at' => now(),
+            ]);
+        }
+        $exam = $examEng;
 
         $html = $this->actingAs($ctx['admin'])->get('/admin/marks/filter?'.http_build_query([
             'class' => $ctx['section']->id,
