@@ -161,7 +161,7 @@ final class ResultsService
                 $sittingSubjects,
                 [],
                 false,
-                $query->countApprovedSubjects,
+                $query->countApprovedSubjects && $query->studentId !== null,
             );
             $sittings[] = new ResultSitting(
                 $plan['typeId'],

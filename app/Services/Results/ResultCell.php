@@ -13,7 +13,7 @@ final class ResultCell
     /** A combined mark is withheld because a weighted set has not been released. */
     public const WITHHELD = 'withheld';
 
-    /** Saved or blank, but the subject is not approved, so the grid leaves it out. */
+    /** Saved or blank, but the subject is not approved, so the sheet leaves it out. */
     public const UNAPPROVED = 'unapproved';
 
     /**
