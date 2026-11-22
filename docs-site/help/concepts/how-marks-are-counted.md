@@ -81,6 +81,9 @@ When an admin releases marks, KlassApp stamps the release with the rules in forc
 
 ## Where you see these rules
 
-- **Teachers** see **–** on the marks entry screen for any learner without a mark, and a count of how many are left before submitting.
-- **Admins** see Total, Agg and Div on the release sheet before releasing, and the same values on the Report cards page.
-- **Parents and students** see the released Division, Aggregate and Total, the subject marks, and the report card. The WhatsApp message uses the same numbers.
+Every place that shows results shows the same four things: **Total**, the **grade and points** for each subject, the **Aggregate** and the **Division**.
+
+- **Teachers** see **–** on the marks entry screen for any learner without a mark, the grade and points next to each mark they enter, and a count of how many are left before submitting.
+- **Admins** see Total, grade points, Agg and Div on the release sheet before releasing, on the Report cards page, and in the latest-results preview on the dashboard.
+- **Parents and students** see each subject's mark, grade and points, then the Total, Aggregate and Division, and can open the full report card.
+- **The WhatsApp results message** lists each subject's mark and grade, then the Total, Aggregate and Division.
