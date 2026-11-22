@@ -48,8 +48,44 @@ class ReleaseAndDashboardReadResultsTest extends TestCase
         $row = $sheet['groups'][0]['students'][0];
 
         $this->assertSame('B', $row['cells']['english']['grade']);
-        $this->assertSame('B', $row['grade']);
+        // Row-level summary is now AGG (sum of grade points) + Division, not a letter grade.
+        // School grading: B = 2 pts → AGG 2 → Division 1 (ThresholdDivisionRule: AGG ≤ 12 → I).
+        $this->assertSame('2', $row['agg']);
+        $this->assertSame('1', $row['division']);
+        $this->assertArrayNotHasKey('grade', $row);
         $this->assertSame('80', $row['cells']['english']['mark']);
+    }
+
+    public function test_release_sheet_row_has_agg_and_division_not_grade(): void
+    {
+        // Two EOT subjects: English (C3=3 pts) + Mathematics (C4=4 pts) → AGG=7 → Division '1'.
+        $ctx = $this->school();
+        foreach (['C3' => [75, 89, 3], 'C4' => [65, 74, 4]] as $grade => [$min, $max, $pts]) {
+            SchoolGradingSystem::create([
+                'school_id' => $ctx['school']->id,
+                'standard_id' => $ctx['standard']->id,
+                'grade' => $grade,
+                'points' => $pts,
+                'min_score' => $min,
+                'max_score' => $max,
+                'remark' => $grade,
+            ]);
+        }
+        $student = $this->student($ctx, 'Agg Student');
+        $examEng = $this->exam($ctx, $ctx['english'], '2026-08-01');
+        $examMth = $this->exam($ctx, $ctx['maths'], '2026-08-10');
+        $this->mark($ctx, $examEng, $ctx['english'], $student, 80, 'C3'); // 80 → C3 → 3 pts
+        $this->mark($ctx, $examMth, $ctx['maths'], $student, 68, 'C4'); // 68 → C4 → 4 pts
+
+        $sheet = app(MarksReleaseService::class)->combinedSheet($ctx['admin'], $examEng->id, $ctx['link']->id);
+        $row = $sheet['groups'][0]['students'][0];
+
+        $this->assertArrayHasKey('agg', $row);
+        $this->assertArrayHasKey('division', $row);
+        $this->assertArrayNotHasKey('grade', $row);
+        // combinedSheet covers the full class sitting: English C3 (3 pts) + Maths C4 (4 pts) = 7.
+        $this->assertSame('7', $row['agg']);
+        $this->assertSame('1', $row['division']); // AGG 7 ≤ 12 → Division I
     }
 
     public function test_performance_tile_averages_the_sitting_not_only_the_latest_exam_row(): void

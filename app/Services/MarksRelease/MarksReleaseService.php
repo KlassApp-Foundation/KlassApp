@@ -864,7 +864,8 @@ final class MarksReleaseService
             'cells' => $cells,
             'total' => $total === null ? '—' : ResultsPolicy::printWhole((float) $total),
             'average' => $average === null ? '—' : ResultsPolicy::printWhole((float) $average),
-            'grade' => ($average === null || $row === null) ? '—' : $grades->overall($schoolId, $row->standardId, (float) $average),
+            'agg'      => $row?->aggregate !== null ? (string) $row->aggregate : '—',
+            'division' => $row?->division ?? '—',
             'sort_total' => $total ?? -1,
             'sort_average' => $average ?? -1,
         ];
