@@ -3,19 +3,6 @@
 
 @php
     $termPosition = $term?->positionLabel() ?? '-';
-    $sittingLabel = function ($sitting): string {
-        return $sitting->periodLabel !== '' ? $sitting->periodLabel : $sitting->name;
-    };
-    $markText = function ($cell): string {
-        if ($cell && $cell->status === \App\Services\Results\ResultCell::ABSENT) {
-            return 'ABS';
-        }
-        if ($cell && $cell->status === 'marked' && $cell->mark !== null) {
-            return (string) $cell->mark;
-        }
-
-        return '—';
-    };
 @endphp
 
 <div class="dashboard-shell dashboard-shell--admin px-4 md:px-6 py-4" data-testid="student-results">
@@ -33,7 +20,7 @@
                     <th>Subject</th>
                     @foreach ($sittings as $sitting)
                         <th data-testid="student-sitting-{{ $sitting->periodKey !== '' ? $sitting->periodKey : $sitting->code }}">
-                            {{ $sittingLabel($sitting) }}
+                            {{ $sitting->name }}
                         </th>
                     @endforeach
                 </tr>
@@ -43,10 +30,24 @@
                     <tr>
                         <td>{{ $subjectName }}</td>
                         @foreach ($sittings as $sitting)
-                            <td>{{ $markText($sitting->student($student->studentId)?->cell($subjectId)) }}</td>
+                            @php
+                                $cell = $sitting->student($student->studentId)?->cell($subjectId);
+                                $mark = $cell ? $cell->sheetLabel() : '—';
+                            @endphp
+                            <td>{{ $mark }}</td>
                         @endforeach
                     </tr>
                 @endforeach
+                <tr>
+                    <td>Total</td>
+                    @foreach ($sittings as $sitting)
+                        @php
+                            $sittingTotal = $sitting->student($student->studentId)?->total;
+                            $sittingKey = $sitting->periodKey !== '' ? $sitting->periodKey : $sitting->code;
+                        @endphp
+                        <td data-testid="student-sitting-total-{{ $sittingKey }}">{{ $sittingTotal === null ? '—' : $sittingTotal }}</td>
+                    @endforeach
+                </tr>
             </tbody>
         </table>
     </div>
@@ -57,8 +58,12 @@
                 <strong>{{ $subjectName }}</strong>
                 @foreach ($sittings as $sitting)
                     <div class="ka-mark-row">
-                        <span>{{ $sittingLabel($sitting) }}</span>
-                        <span>{{ $markText($sitting->student($student->studentId)?->cell($subjectId)) }}</span>
+                        <span>{{ $sitting->name }}</span>
+                        @php
+                            $cell = $sitting->student($student->studentId)?->cell($subjectId);
+                            $mark = $cell ? $cell->sheetLabel() : '—';
+                        @endphp
+                        <span>{{ $mark }}</span>
                     </div>
                 @endforeach
             </section>
@@ -106,7 +111,7 @@
         </thead>
         <tbody>
             <tr>
-                <td data-testid="student-result-total">{{ $student->displayTotal ?? '—' }}</td>
+                <td data-testid="student-result-total">{{ $student->total === null ? '—' : $student->total }}</td>
                 <td data-testid="student-result-aggregate">{{ $student->aggregate ?? '—' }}</td>
                 <td data-testid="student-result-division">{{ $student->division ?? '—' }}</td>
                 <td data-testid="student-result-position">{{ $student->classPosition ?? '—' }}</td>

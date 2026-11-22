@@ -8,6 +8,7 @@ use App\Http\Middleware\VerifyCsrfToken;
 use App\Models\AcademicTerm;
 use App\Models\AcademicYear;
 use App\Models\Academics\Exam;
+use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\Marks;
 use App\Models\School;
 use App\Models\Section;
@@ -22,7 +23,7 @@ use Tests\TestCase;
 
 /**
  * The per-student marks page reads ResultsService, including one column
- * per mid-term month. The old report URL redirects there.
+ * per mid-term sitting. The old report URL redirects there.
  */
 class StudentResultsPageTest extends TestCase
 {
@@ -155,6 +156,11 @@ class StudentResultsPageTest extends TestCase
         $this->mark($this->july, $this->english, 48);
         $this->mark($end, $this->english, 60);
         $this->mark($end, $math, 65);
+        $this->approve($this->june, $this->english);
+        $this->approve($this->june, $math);
+        $this->approve($this->july, $this->english);
+        $this->approve($end, $this->english);
+        $this->approve($end, $math);
     }
 
     public function test_class_grid_links_to_the_student_page_and_the_old_report_url_redirects(): void
@@ -169,7 +175,7 @@ class StudentResultsPageTest extends TestCase
             ->assertRedirect(route('admin.marks.student.class', [$this->student, $this->section->id, $this->june->id]));
     }
 
-    public function test_student_page_shows_the_name_and_each_mid_term_month(): void
+    public function test_student_page_shows_the_name_and_each_mid_term_sitting(): void
     {
         $this->actingAs($this->admin)
             ->get(route('admin.marks.student.class', [$this->student, $this->section->id, $this->june->id]))
@@ -180,8 +186,11 @@ class StudentResultsPageTest extends TestCase
             ->assertSee('P.3')
             ->assertSee('data-testid="student-result-term"', false)
             ->assertSee('Term 2')
-            ->assertSee('JUNE')
-            ->assertSee('JULY')
+            ->assertSee('data-testid="student-sitting-2026-06"', false)
+            ->assertSee('data-testid="student-sitting-2026-07"', false)
+            ->assertSee('Mid Term')
+            ->assertDontSee('JUNE')
+            ->assertDontSee('JULY')
             ->assertSee('45')
             ->assertSee('48')
             ->assertSee('data-testid="student-result-total"', false)
@@ -279,6 +288,21 @@ class StudentResultsPageTest extends TestCase
             'scheduled_at' => $when,
             'status' => 'submitted',
         ]));
+    }
+
+    private function approve(Exam $exam, Subject $subject): void
+    {
+        ExamMarksSubmission::create([
+            'school_id' => $this->school->id,
+            'exam_id' => $exam->id,
+            'class_id' => $this->section->id,
+            'subject_id' => $subject->id,
+            'teacher_id' => $exam->teacher_id,
+            'status' => 'locked',
+            'approval_status' => 'approved',
+            'submitted_at' => now(),
+            'approved_at' => now(),
+        ]);
     }
 
     private function mark(Exam $exam, Subject $subject, int $score): void
