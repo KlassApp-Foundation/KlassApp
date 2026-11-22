@@ -214,22 +214,22 @@ class SchoolExamSetTabsTest extends TestCase
         $this->assertStringNotContainsString('workaround', strtolower($html));
     }
 
-    public function test_a_released_set_shows_missing_and_an_open_set_keeps_a_dash(): void
+    public function test_a_subject_that_is_not_approved_shows_a_dash(): void
     {
         $released = $this->cells($this->page((int) $this->sets['North Paper']->id));
         $this->assertNotEmpty($released);
         foreach ($released as $cell) {
-            $this->assertStringContainsString('data-testid="marks-cell-missing"', $cell);
-            $this->assertStringContainsString('Missing', $cell);
-            $this->assertStringNotContainsString('—', $cell);
+            $this->assertStringContainsString('data-testid="marks-cell-dash"', $cell);
+            $this->assertStringContainsString('—', $cell);
+            $this->assertStringNotContainsString('Missing', $cell);
         }
 
         $open = $this->cells($this->page((int) $this->sets['South Paper']->id));
         $this->assertNotEmpty($open);
         foreach ($open as $cell) {
-            $this->assertStringContainsString('data-testid="marks-cell-missing"', $cell);
-            $this->assertStringContainsString('Missing', $cell);
-            $this->assertStringNotContainsString('—', $cell);
+            $this->assertStringContainsString('data-testid="marks-cell-dash"', $cell);
+            $this->assertStringContainsString('—', $cell);
+            $this->assertStringNotContainsString('Missing', $cell);
         }
 
         $quiz = $this->cells($this->page((int) $this->sets['Quiz Hour']->id));

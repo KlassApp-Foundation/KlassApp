@@ -31,8 +31,10 @@ use Tests\TestCase;
 
 /**
  * A school names its own exam sets. Two of them count toward one combined
- * report. The others are shown on their own. A missing mark is 0 and is
- * labelled Missing. ABS is 0 and stays ABS.
+ * report. The others stay on their own marks sheet. Once any set for the
+ * class is released, the report card names only released sets that count
+ * toward the combined report. A missing mark is 0 and is labelled Missing.
+ * ABS is 0 and stays ABS on the marks sheet.
  */
 class SchoolExamSetReportTest extends TestCase
 {
@@ -188,8 +190,8 @@ class SchoolExamSetReportTest extends TestCase
             'term' => $term->id,
             'examType' => $types['north']->id,
         ]))->assertOk()->getContent();
-        $this->assertStringContainsString('data-testid="marks-cell-missing"', $northPage);
-        $this->assertStringContainsString('Missing', $northPage);
+        $this->assertStringContainsString('data-testid="marks-cell-dash"', $northPage);
+        $this->assertStringNotContainsString('data-testid="marks-cell-missing"', $northPage);
         $this->refuseWorkarounds($northPage);
 
         $quizPage = $this->actingAs($ctx['admin'])->get('/admin/marks/filter?'.http_build_query([
@@ -197,16 +199,20 @@ class SchoolExamSetReportTest extends TestCase
             'term' => $term->id,
             'examType' => $types['quiz']->id,
         ]))->assertOk()->getContent();
-        $this->assertStringContainsString('data-testid="marks-cell-absent"', $quizPage);
-        $this->assertStringContainsString('>ABS<', $quizPage);
+        $this->assertStringContainsString('data-testid="marks-cell-dash"', $quizPage);
+        $this->assertStringNotContainsString('data-testid="marks-cell-absent"', $quizPage);
         $this->refuseWorkarounds($quizPage);
 
         $learnerPage = $this->actingAs($ctx['admin'])
             ->get('/admin/marks/student/'.$ada->id.'/class/'.$ctx['section']->id.'/'.$northEnglish->id)
             ->assertOk()
             ->getContent();
-        $this->assertStringContainsString('Missing', $learnerPage);
-        $this->assertStringContainsString('ABS', $learnerPage);
+        // No submission row exists for these sets, so the student page treats
+        // every subject as not approved: a dash, not Missing and not ABS.
+        // The sheet assertions above still require those words.
+        $this->assertDoesNotMatchRegularExpression('/<td>\s*Missing\s*<\/td>/', $learnerPage);
+        $this->assertDoesNotMatchRegularExpression('/<td>\s*ABS\s*<\/td>/', $learnerPage);
+        $this->assertMatchesRegularExpression('/<td>\s*—\s*<\/td>/', $learnerPage);
         $this->assertMatchesRegularExpression('/data-testid="student-result-total">\s*—\s*</', $learnerPage);
         $this->assertMatchesRegularExpression('/data-testid="student-result-position">\s*—\s*</', $learnerPage);
         $this->assertStringContainsString('South Paper has not been released. No combined mark is shown.', $learnerPage);
@@ -214,11 +220,11 @@ class SchoolExamSetReportTest extends TestCase
 
         $report = $this->renderReport($ctx, $ada);
         $this->assertStringContainsString('Missing', $report);
-        $this->assertStringContainsString('ABS', $report);
         $this->assertStringContainsString('Made up of: North Paper 40% · South Paper 60%', $report);
-        $this->assertStringContainsString('Quiz Hour', $report);
-        $this->assertStringContainsString('Late Paper', $report);
+        $this->assertStringNotContainsString('Quiz Hour', $report);
+        $this->assertStringNotContainsString('Late Paper', $report);
         $this->assertStringNotContainsString('Month Check', $report);
+        $this->assertStringNotContainsString('ABS', $report);
         $this->refuseWorkarounds($report);
 
         $frozen = MarksRelease::query()
