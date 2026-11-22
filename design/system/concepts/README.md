@@ -1,0 +1,1 @@
+Not approved, history only — nothing here is a spec. The single source of truth is the KlassApp Design System (https://claude.ai/artifact/HCtWey4rYX7fgr7VBDWLgZ); build only from items marked approved there.
