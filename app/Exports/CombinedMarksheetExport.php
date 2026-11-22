@@ -21,7 +21,7 @@ use Maatwebsite\Excel\Concerns\WithMultipleSheets;
  * One sheet per exam set. The sheet title is the name the school gave that
  * set. A set split by month keeps the month in the title. A set that counts
  * toward the term total also has a division column. A blank cell stays blank.
- * An absence is the word ABS.
+ * A missing mark or an absence is a dash. Never ABS: ABS is attendance only.
  */
 class CombinedMarksheetExport implements WithMultipleSheets
 {
@@ -166,10 +166,10 @@ class CombinedMarksheetExport implements WithMultipleSheets
     private function cellValue(?ResultCell $cell): string
     {
         if ($cell !== null && $cell->status === ResultCell::ABSENT) {
-            return 'ABS';
+            return ResultCell::DASH;
         }
         if ($cell === null || $cell->status !== ResultCell::MARKED || $cell->mark === null) {
-            return '';
+            return ResultCell::DASH;
         }
 
         return ResultsPolicy::printWhole((float) $cell->mark);

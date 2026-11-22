@@ -210,7 +210,7 @@ class StudentMarksAgreeWithCardTest extends TestCase
             ->assertDontSee('MARCH')
             ->assertDontSee('JUNE')
             ->assertSee('Missing')
-            ->assertSee('>ABS<', false)
+            ->assertSee('>–<', false)
             ->assertDontSee('>77<', false)
             ->getContent();
 

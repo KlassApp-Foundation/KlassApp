@@ -65,7 +65,7 @@ class ClassReportScreenTest extends TestCase
 
         $html = $this->screen()->assertOk()->getContent();
 
-        $this->assertStringContainsString('>ABS<', $html);
+        $this->assertStringContainsString('>–<', $html);
         $this->assertStringContainsString('>74<', $html);
         $this->assertStringNotContainsString('>AB<', $html);
     }

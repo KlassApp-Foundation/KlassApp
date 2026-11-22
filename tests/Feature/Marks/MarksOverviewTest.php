@@ -260,14 +260,14 @@ class MarksOverviewTest extends TestCase
         $this->assertStringContainsString('P.5 · all streams', $html);
         $this->assertStringContainsString('KLS number', $html);
         $this->assertStringContainsString('KLS0010001', $html);
-        $this->assertStringContainsString('ABS and Missing count as 0', $html);
+        $this->assertStringContainsString('a dash counts as 0', $html);
         $this->assertStringContainsString($this->science->name.' is saved but not submitted.', $html);
         $this->assertStringNotContainsString('Social Studies', $html);
         $this->assertStringNotContainsString('Further down', $html);
         $this->assertStringContainsString('/admin/marks/history?', $html);
         $this->assertStringContainsString('section='.$this->section->id, $html);
         $this->assertStringContainsString('ka-tile-abs', $html);
-        $this->assertStringContainsString('>ABS<', $html);
+        $this->assertStringContainsString('>–<', $html);
         $this->assertStringNotContainsString('data-testid="marks-other-exam"', $html);
         $this->assertStringNotContainsString('>Other exam<', $html);
         $this->assertMatchesRegularExpression(
@@ -279,7 +279,7 @@ class MarksOverviewTest extends TestCase
         $beginningCells = $this->innerCells($beginning, $this->english->id);
         $this->assertTrue($this->cellHas($beginningCells, '61'));
         $this->assertFalse($this->cellHas($beginningCells, '50'));
-        $this->assertTrue($this->cellHas($beginningCells, 'Missing'));
+        $this->assertTrue($this->cellHas($beginningCells, '–'));
         $this->assertStringContainsString('data-testid="marks-cell-missing"', $beginning);
         $this->assertMatchesRegularExpression(
             '/data-exam-set="beginning of term"[^>]*aria-current="page"/',
@@ -330,7 +330,7 @@ class MarksOverviewTest extends TestCase
         $this->assertStringNotContainsString('still missing marks', $html);
         $this->assertStringContainsString('is not approved', $html);
         $this->assertStringContainsString('left out of the total', $html);
-        $this->assertStringContainsString('>ABS<', $html);
+        $this->assertStringContainsString('>–<', $html);
         $this->assertStringNotContainsString('marks-cell-absent">AB<', $html);
         $this->assertSame(
             'AB',

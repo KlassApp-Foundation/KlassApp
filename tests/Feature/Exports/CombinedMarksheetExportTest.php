@@ -253,28 +253,28 @@ class CombinedMarksheetExportTest extends TestCase
         $this->assertEquals(42, $juneRows[2][2]);
 
         $this->assertSame('Charlie C', $juneRows[3][0]);
-        $this->assertSame('ABS', $juneRows[3][1]);
-        $this->assertBlank($juneRows[3][2]);
+        $this->assertSame('–', $juneRows[3][1]);
+        $this->assertSame('–', $juneRows[3][2]);
 
         $this->assertCount(4, $julyRows);
         $this->assertSame('Alice A', $julyRows[1][0]);
         $this->assertEquals(48, $julyRows[1][1]);
-        $this->assertBlank($julyRows[1][2]);
+        $this->assertSame('–', $julyRows[1][2]);
 
         $this->assertSame('Bob B', $julyRows[2][0]);
         $this->assertEquals(44, $julyRows[2][1]);
         $this->assertEquals(46, $julyRows[2][2]);
 
         $this->assertSame('Charlie C', $julyRows[3][0]);
-        $this->assertBlank($julyRows[3][1]);
-        $this->assertBlank($julyRows[3][2]);
+        $this->assertSame('–', $julyRows[3][1]);
+        $this->assertSame('–', $julyRows[3][2]);
 
         $this->assertCount(4, $eotRows);
         $this->assertEquals(['Alice A', 60, 65], array_slice($eotRows[1], 0, 3));
         $this->assertEquals(['Bob B', 58, 61], array_slice($eotRows[2], 0, 3));
         $this->assertSame('Charlie C', $eotRows[3][0]);
-        $this->assertBlank($eotRows[3][1]);
-        $this->assertBlank($eotRows[3][2]);
+        $this->assertSame('–', $eotRows[3][1]);
+        $this->assertSame('–', $eotRows[3][2]);
 
         $allNames = array_column(array_slice($eotRows, 1), 0);
         $this->assertNotContains('Dave D', $allNames);
@@ -328,8 +328,4 @@ class CombinedMarksheetExportTest extends TestCase
         ], $ordered);
     }
 
-    private function assertBlank($cell): void
-    {
-        $this->assertTrue($cell === null || $cell === '', 'Expected blank cell, got: ' . var_export($cell, true));
-    }
 }

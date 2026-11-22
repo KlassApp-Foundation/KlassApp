@@ -541,7 +541,7 @@ class ParentPortalService
                     $absent = $mark->isAbsent();
                     $blank = ! $absent && $mark->marks === null;
                     $whole = ($absent || $blank) ? 0.0 : ResultsPolicy::roundTo((float) $mark->marks);
-                    $label = $absent ? 'ABS' : ($blank ? 'Missing' : null);
+                    $label = ($absent || $blank) ? '–' : null;
                     $subjects[] = [
                         'name' => $mark->subject?->name ?? $exam->subject?->name ?? 'Subject',
                         'score' => $whole,

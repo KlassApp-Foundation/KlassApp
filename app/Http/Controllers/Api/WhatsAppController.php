@@ -2464,7 +2464,7 @@ class WhatsAppController extends Controller
                 if ($cell->status !== ResultCell::ABSENT) {
                     continue;
                 }
-                $lines .= '• '.($names[$cell->subjectId] ?? 'Subject').": ABS\n";
+                $lines .= '• '.($names[$cell->subjectId] ?? 'Subject').": –\n";
             }
             $avg = $row->displayAverage;
             if ($withRank) {
@@ -2482,7 +2482,7 @@ class WhatsAppController extends Controller
             foreach ($fallback->sortByDesc('marks')->take(10) as $mark) {
                 $subject = $mark->subject?->name ?? 'Subject';
                 if ($mark->isAbsent()) {
-                    $lines .= "• {$subject}: ABS\n";
+                    $lines .= "• {$subject}: –\n";
 
                     continue;
                 }

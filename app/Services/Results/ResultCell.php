@@ -16,10 +16,13 @@ final class ResultCell
     /** Saved or blank, but the subject is not approved, so the sheet leaves it out. */
     public const UNAPPROVED = 'unapproved';
 
+    /** What a learner sees when there is no mark. Never ABS: ABS is attendance only. */
+    public const DASH = '–';
+
     /**
-     * What a person sees. The number stays out of the label when the mark
-     * was never entered or the learner was absent: the total still uses 0.
-     * A subject that is not approved is a dash and is left out of the total.
+     * What a person sees. A missing mark and an absence are both a dash: the
+     * total still counts either as 0. A subject that is not approved is a
+     * dash too and is left out of the total.
      */
     public function sheetLabel(): string
     {
@@ -30,10 +33,10 @@ final class ResultCell
             return '—';
         }
         if ($this->status === self::ABSENT) {
-            return 'ABS';
+            return self::DASH;
         }
         if ($this->status === self::MISSING || $this->mark === null) {
-            return 'Missing';
+            return self::DASH;
         }
         return ResultsPolicy::printWhole((float) $this->mark);
     }
@@ -52,10 +55,10 @@ final class ResultCell
                 return '—';
             }
             if ($source->status === self::ABSENT) {
-                return 'ABS';
+                return self::DASH;
             }
             if ($source->status === self::MISSING || $source->mark === null) {
-                return 'Missing';
+                return self::DASH;
             }
 
             return $source->sheetLabel();

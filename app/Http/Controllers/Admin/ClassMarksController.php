@@ -91,7 +91,7 @@ class ClassMarksController extends Controller
                                 : '';
                             $rows[] = [
                                 'subject' => $subject['name'],
-                                'mark' => 'ABS',
+                                'mark' => '–',
                                 'grade' => $grade,
                             ];
 

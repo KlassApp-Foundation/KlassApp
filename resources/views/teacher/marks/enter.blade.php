@@ -10,7 +10,7 @@
     @if($errors->any())
         <div class="ka-alert ka-alert-error" role="alert" data-testid="marks-submit-error">{{ $errors->first() }}</div>
     @endif
-    <p class="ka-sub">Type ABS when a student was absent. Marks are out of 100.</p>
+    <p class="ka-sub">Type a whole number, or – when there is no mark. Marks are out of 100.</p>
     <!-- Page Header -->
 
     @php
@@ -100,7 +100,7 @@
     <div class="ka-sticky ka-marks-bar">
         @unless($isNursery)
             <p class="ka-progress" data-testid="marks-progress"><strong>{{ $enteredCount }} of {{ $total }}</strong> entered · {{ $fixCount }} to fix · {{ $unsavedCount }} not saved yet</p>
-            <p class="ka-still-needed" data-testid="marks-still-needed" @if(($missingMarkCount ?? 0) === 0) hidden @endif>A mark or ABS is missing for {{ $missingMarkCount }} {{ \Illuminate\Support\Str::plural('learner', $missingMarkCount) }}.</p>
+            <p class="ka-still-needed" data-testid="marks-still-needed" @if(($missingMarkCount ?? 0) === 0) hidden @endif>A mark is missing for {{ $missingMarkCount }} {{ \Illuminate\Support\Str::plural('learner', $missingMarkCount) }}.</p>
             <div style="display:flex;gap:10px;">
                 <button type="button" class="ka-prev" data-testid="marks-previous" aria-label="Previous learner">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
@@ -196,7 +196,7 @@
                     $enteredMark = (string) old('marks.'.$student->id, $storedMark);
                     $aboveMaximum = is_numeric($enteredMark) && (float) $enteredMark > 100;
                     $isBlank = trim($enteredMark) === '';
-                    $isAbs = in_array(strtoupper(trim($enteredMark)), ['AB', 'ABS'], true);
+                    $isNoMark = in_array(trim($enteredMark), ['-', '–', '—', 'AB', 'ABS'], true);
                     $savedMatch = trim($storedMark) !== '' && strcasecmp(trim($enteredMark), trim($storedMark)) === 0;
                     $learnerName = trim(($student->userprofile->firstname ?? '').' '.($student->userprofile->lastname ?? ''));
                     if ($learnerName === '') {
@@ -210,9 +210,9 @@
                     } elseif ($aboveMaximum) {
                         $entryState = 'error';
                         $statusLabel = 'Above 100';
-                    } elseif ($isAbs && $savedMatch) {
-                        $entryState = 'absent';
-                        $statusLabel = 'Saved · absent';
+                    } elseif ($isNoMark && $savedMatch) {
+                        $entryState = 'no_mark';
+                        $statusLabel = 'Saved · no mark';
                     } elseif ($savedMatch) {
                         $entryState = 'saved';
                         $statusLabel = 'Saved';
@@ -220,7 +220,7 @@
                         $entryState = 'pending';
                         $statusLabel = 'Not saved yet';
                     }
-                    $displayMark = $isAbs ? 'ABS' : $enteredMark;
+                    $displayMark = $isNoMark ? '–' : $enteredMark;
                 @endphp
                 <div class="ka-entry-row" data-state="{{ $entryState }}" data-learner="{{ $student->id }}" data-testid="mark-student-{{ $student->id }}">
                     <div class="ka-entry-who">
@@ -236,13 +236,13 @@
                             </div>
                         @endif
                         <div class="ka-entry-status" data-entry-status>
-                            @if($entryState === 'saved' || $entryState === 'absent')
+                            @if($entryState === 'saved' || $entryState === 'no_mark')
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"></path></svg>
                             @endif
                             <span data-status-label>{{ $statusLabel }}</span>
                         </div>
                     </div>
-                    <button type="button" class="ka-abs" data-testid="abs-toggle" aria-pressed="{{ $isAbs ? 'true' : 'false' }}" aria-label="Mark {{ $learnerName }} absent">ABS</button>
+                    <button type="button" class="ka-abs" data-testid="no-mark-toggle" aria-pressed="{{ $isNoMark ? 'true' : 'false' }}" aria-label="No mark for {{ $learnerName }}" title="No mark">–</button>
                     <input type="text"
                            name="marks[{{ $student->id }}]"
                            class="ka-mark"
@@ -300,15 +300,15 @@ document.addEventListener('DOMContentLoaded', function () {
     var canSubmit = {{ ($canSubmit ?? false) ? 'true' : 'false' }};
     var missingBlocks = {{ ($missingBlocksSubmit ?? false) ? 'true' : 'false' }};
 
-    function isAbs(value) {
-        var text = String(value || '').trim().toUpperCase();
-        return text === 'ABS' || text === 'AB';
+    function isNoMark(value) {
+        var text = String(value || '').trim();
+        return text === '-' || text === '–' || text === '—' || text === 'AB' || text.toUpperCase() === 'ABS';
     }
 
     function kindOf(value) {
         var text = String(value || '').trim();
         if (text === '') return 'blank';
-        if (isAbs(text)) return 'entered';
+        if (isNoMark(text)) return 'entered';
         var number = Number(text);
         if (text !== '' && !isNaN(number)) return number > 100 ? 'fix' : 'entered';
         return 'fix';
@@ -337,8 +337,8 @@ document.addEventListener('DOMContentLoaded', function () {
         var unsaved = 0;
         var savedCount = 0;
         inputs.forEach(function (input) {
-            if (isAbs(input.value) && String(input.value).trim().toUpperCase() !== 'ABS') {
-                input.value = 'ABS';
+            if (isNoMark(input.value)) {
+                input.value = '–';
             }
             var value = String(input.value).trim();
             var kind = kindOf(value);
@@ -351,15 +351,15 @@ document.addEventListener('DOMContentLoaded', function () {
             if (above) {
                 state = 'error';
                 label = 'Above 100';
-            } else if (focused && value !== '' && !same && !isAbs(value)) {
+            } else if (focused && value !== '' && !same && !isNoMark(value)) {
                 state = 'typing';
                 label = 'Typing';
             } else if (value === '') {
                 state = 'blank';
                 label = 'Not entered';
-            } else if (isAbs(value) && same) {
-                state = 'absent';
-                label = 'Saved · absent';
+            } else if (isNoMark(value) && same) {
+                state = 'no_mark';
+                label = 'Saved · no mark';
             } else if (same) {
                 state = 'saved';
                 label = 'Saved';
@@ -371,8 +371,8 @@ document.addEventListener('DOMContentLoaded', function () {
             var err = row && row.querySelector('[data-mark-error]');
             if (err) err.hidden = !above;
             input.setAttribute('aria-invalid', above ? 'true' : 'false');
-            var absBtn = row && row.querySelector('[data-testid="abs-toggle"]');
-            if (absBtn) absBtn.setAttribute('aria-pressed', isAbs(value) ? 'true' : 'false');
+            var noMarkBtn = row && row.querySelector('[data-testid="no-mark-toggle"]');
+            if (noMarkBtn) noMarkBtn.setAttribute('aria-pressed', isNoMark(value) ? 'true' : 'false');
             if (kind === 'entered') entered++;
             else if (kind === 'blank') { /* counted by the missing line */ }
             else fix++;
@@ -386,7 +386,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (missingLine) {
             var blanks = inputs.filter(function (input) { return String(input.value).trim() === ''; }).length;
             missingLine.hidden = blanks === 0;
-            missingLine.textContent = 'A mark or ABS is missing for ' + blanks + ' ' + (blanks === 1 ? 'learner' : 'learners') + '.';
+            missingLine.textContent = 'A mark is missing for ' + blanks + ' ' + (blanks === 1 ? 'learner' : 'learners') + '.';
         }
         if (tally) {
             var life = tally.getAttribute('data-life') || tally.textContent.split('·').pop().trim() || 'not submitted';
@@ -454,7 +454,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!response.ok && response.status !== 302) throw new Error('save failed');
             inputs.forEach(function (input) {
                 var value = String(input.value).trim();
-                input.setAttribute('data-saved', isAbs(value) ? 'ABS' : value);
+                input.setAttribute('data-saved', isNoMark(value) ? '–' : value);
             });
             if (banner) banner.hidden = true;
             paint();
@@ -475,12 +475,12 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     form.addEventListener('click', function (event) {
-        var button = event.target.closest('[data-testid="abs-toggle"]');
+        var button = event.target.closest('[data-testid="no-mark-toggle"]');
         if (!button) return;
         var row = button.closest('[data-learner]');
         var input = row && row.querySelector('input[name^="marks["]');
         if (!input) return;
-        input.value = isAbs(input.value) ? '' : 'ABS';
+        input.value = isNoMark(input.value) ? '' : '–';
         input.focus();
         paint();
     });

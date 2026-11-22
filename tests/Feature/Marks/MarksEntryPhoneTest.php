@@ -121,7 +121,7 @@ class MarksEntryPhoneTest extends TestCase
             ->getContent();
 
         $this->assertStringContainsString('data-testid="mark-input-', $html);
-        $this->assertStringContainsString('data-testid="abs-toggle"', $html);
+        $this->assertStringContainsString('data-testid="no-mark-toggle"', $html);
         $this->assertStringContainsString('data-testid="marks-progress"', $html);
         $this->assertStringContainsString('data-testid="marks-next"', $html);
         $this->assertStringContainsString('data-testid="marks-previous"', $html);
@@ -130,7 +130,7 @@ class MarksEntryPhoneTest extends TestCase
         $this->assertStringContainsString('Not entered', $html);
         $this->assertMatchesRegularExpression('/0 of 2<\/strong>\s*entered · 0 to fix · 0 not saved yet/', $html);
         $this->assertStringContainsString('A blank is allowed and will count as 0 on the card. Submit stays off while a mark is not saved yet or needs fixing.', $html);
-        $this->assertStringNotContainsString('every learner has a mark or ABS', $html);
+        $this->assertStringNotContainsString('every learner has a mark', $html);
         $this->assertStringContainsString("You're offline.", $html);
         $this->assertStringContainsString('enterkeyhint="next"', $html);
         $this->assertStringContainsString('inputmode="numeric"', $html);
@@ -167,8 +167,8 @@ class MarksEntryPhoneTest extends TestCase
             ->get(route('teacher.exam.marks.enter', $this->exam))
             ->assertOk()
             ->getContent();
-        $this->assertStringContainsString('value="ABS"', $html);
-        $this->assertStringContainsString('Saved · absent', $html);
+        $this->assertStringContainsString('value="–"', $html);
+        $this->assertStringContainsString('Saved · no mark', $html);
         $this->assertStringContainsString('1 saved', $html);
     }
 
@@ -208,12 +208,12 @@ class MarksEntryPhoneTest extends TestCase
 
         $this->assertMatchesRegularExpression('/value=""/', $html);
         $this->assertDoesNotMatchRegularExpression('/data-testid="marks-submit-button"[^>]*disabled/', $html);
-        $this->assertStringNotContainsString('every learner has a mark or ABS', $html);
+        $this->assertStringNotContainsString('every learner has a mark', $html);
 
         $accepted = $this->actingAs($this->subjectTeacher)
             ->post(route('teacher.exam.marks.submit', $this->exam));
         $accepted->assertRedirect(route('teacher.exam.marks.view', $this->exam));
-        $this->assertStringNotContainsString('A mark or ABS is missing', (string) session('failmessage'));
+        $this->assertStringNotContainsString('A mark is missing', (string) session('failmessage'));
         $this->assertSame(
             'submitted',
             ExamMarksSubmission::query()->where('exam_id', $this->exam->id)->value('status')
@@ -275,10 +275,10 @@ class MarksEntryPhoneTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        $this->assertStringContainsString('data-testid="submitted-mark-absent">ABS<', $html);
+        $this->assertStringContainsString('data-testid="submitted-mark-absent">–<', $html);
         $this->assertMatchesRegularExpression('/data-testid="submitted-mark-value"[^>]*>\s*70\s*</', $html);
         $this->assertStringNotContainsString('displayMark', $html);
-        $this->assertStringContainsString('Type ABS when a student was absent. Marks are out of 100.', $html);
+        $this->assertStringContainsString('Type a whole number, or – when there is no mark. Marks are out of 100.', $html);
     }
 
     public function test_a_subject_teacher_who_does_not_own_the_exam_cannot_save(): void

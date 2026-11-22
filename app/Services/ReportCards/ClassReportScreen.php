@@ -464,16 +464,16 @@ class ClassReportScreen
         }
         $grade = strtoupper(trim((string) $cell->grade));
         if ($cell->status === ResultCell::ABSENT || in_array($grade, ['AB', 'ABS'], true)) {
-            return 'ABS';
+            return ResultCell::DASH;
         }
         if ($cell->mark !== null) {
             return $this->number($cell->mark);
         }
         if ($cell->status === ResultCell::MISSING) {
-            return 'Missing';
+            return ResultCell::DASH;
         }
 
-        return 'Missing';
+        return ResultCell::DASH;
     }
 
     private function number(float $alreadyRounded): string

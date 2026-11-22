@@ -215,7 +215,7 @@ class MarksImportHttpTest extends TestCase
         $download = $this->actingAs($this->owner)->get(route('teacher.exam.marks.template', [$this->exam, 'format' => 'csv']));
         $download->assertOk();
         $rows = $this->csvRows($download);
-        $this->assertSame(['KLS number', 'student_name', 'Mark (out of 100, or ABS)'], $rows[0]);
+        $this->assertSame(['KLS number', 'student_name', 'Mark (out of 100, or –)'], $rows[0]);
 
         $lines = [];
         foreach (array_slice($rows, 1) as $i => $r) {
@@ -280,7 +280,7 @@ class MarksImportHttpTest extends TestCase
         foreach (['teacher' => $teacher, 'admin' => $admin] as $who => $ss) {
             $this->assertSame(['Marks', 'Exam info'], $ss->getSheetNames(), $who.' template sheet names');
             $marks = $ss->getSheetByName('Marks')->toArray(null, true, true, false);
-            $this->assertSame(['KLS number', 'student_name', 'Mark (out of 100, or ABS)'], $marks[0], $who.' headings');
+            $this->assertSame(['KLS number', 'student_name', 'Mark (out of 100, or –)'], $marks[0], $who.' headings');
 
             $info = [];
             foreach ($ss->getSheetByName('Exam info')->toArray() as $row) {

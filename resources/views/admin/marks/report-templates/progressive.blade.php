@@ -149,8 +149,8 @@
     $blankSentence = '';
     if ($needsBlankNote) {
         $blankSentence = ($zeroLabel !== null && $zeroPoints !== null)
-            ? 'Missing marks and ABS count as 0 (grade '.$zeroLabel.', '.$zeroPoints.' points). '
-            : 'Missing marks and ABS count as 0. ';
+            ? 'A dash counts as 0 (grade '.$zeroLabel.', '.$zeroPoints.' points). '
+            : 'A dash counts as 0. ';
     }
     $positionSentence = ($rankingBasis ?? '') === \App\Services\Results\ResultsPolicy::BASIS_TOTAL
         ? 'Position is by the total; learners with the same total share a place.'
@@ -285,7 +285,7 @@
                             $printedMark = $markText($cell);
                             $printedGrade = $gradeText($cell);
                         @endphp
-                        <td class="m" data-kind="mark" data-set="{{ $set['label'] }}" data-subject="{{ $subject->id }}">@if ($printedMark === 'Missing')<span class="miss">Missing</span>@else{{ $printedMark }}@endif</td>
+                        <td class="m" data-kind="mark" data-set="{{ $set['label'] }}" data-subject="{{ $subject->id }}">{{ $printedMark }}</td>
                         <td class="g" data-kind="grade" data-set="{{ $set['label'] }}" data-subject="{{ $subject->id }}">{{ $printedGrade }}</td>
                     @endforeach
                 </tr>

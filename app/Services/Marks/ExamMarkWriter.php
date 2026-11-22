@@ -46,7 +46,7 @@ class ExamMarkWriter
         $this->assertWritable($exam);
         $this->assertCorrectionReason($exam, $correctionReason);
 
-        if ($this->isAbsent($mark)) {
+        if ($this->isNoMark($mark)) {
             return Marks::updateOrCreate(
                 [
                     'student_id' => $student->id,
@@ -146,9 +146,28 @@ class ExamMarkWriter
         return $token === 'AB' || $token === 'ABS';
     }
 
+    /**
+     * No mark: a dash, a blank, or a legacy ABS/AB. Marks and attendance are
+     * separate vocabularies now — a mark is a number or no mark at all.
+     */
+    public function isNoMark(mixed $mark): bool
+    {
+        $token = trim((string) $mark);
+
+        if ($token === '') {
+            return true;
+        }
+
+        if (in_array($token, ['-', '–', '—'], true)) {
+            return true;
+        }
+
+        return $this->isAbsent($token);
+    }
+
     public function exceedsMaximum(Exam $exam, mixed $mark): bool
     {
-        if ($mark === null || $this->isAbsent($mark) || trim((string) $mark) === '' || ! is_numeric($mark)) {
+        if ($mark === null || $this->isNoMark($mark) || trim((string) $mark) === '' || ! is_numeric($mark)) {
             return false;
         }
 

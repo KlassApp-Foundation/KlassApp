@@ -93,11 +93,11 @@
                     @php
                         $mark = $student->marks->firstWhere('subject_id', $subject->id);
                     @endphp
-                    <td>{{ $mark && $mark->isAbsent() ? 'ABS' : ($mark && $mark->marks > 0 ? ceil($mark->marks) : '-') }}</td>
+                    <td>{{ $mark && $mark->isAbsent() ? '–' : ($mark && $mark->marks > 0 ? ceil($mark->marks) : '–') }}</td>
                 @endforeach
 
                 <td>{{ $student->total ?? '-' }}</td>
-                <td>{{ ($firstMark = $student->marks->first()) && $firstMark->isAbsent() ? 'ABS' : ($firstMark?->grade ?? '-') }}</td>
+                <td>{{ ($firstMark = $student->marks->first()) && $firstMark->isAbsent() ? '–' : ($firstMark?->grade ?? '–') }}</td>
                 <td>{{ $student->position ?? '-' }}</td>
             </tr>
         @endforeach

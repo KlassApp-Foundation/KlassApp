@@ -179,9 +179,9 @@ class SchoolExamSetReportTest extends TestCase
             $sittings[$sitting->name] = $sitting;
         }
         $this->assertSame('missing', $sittings['North Paper']->student($ada->id)->cell($ctx['maths']->id)->status);
-        $this->assertSame('Missing', $sittings['North Paper']->student($ada->id)->cell($ctx['maths']->id)->sheetLabel());
+        $this->assertSame('–', $sittings['North Paper']->student($ada->id)->cell($ctx['maths']->id)->sheetLabel());
         $this->assertSame('absent', $sittings['Quiz Hour']->student($ada->id)->cell($ctx['english']->id)->status);
-        $this->assertSame('ABS', $sittings['Quiz Hour']->student($ada->id)->cell($ctx['english']->id)->sheetLabel());
+        $this->assertSame('–', $sittings['Quiz Hour']->student($ada->id)->cell($ctx['english']->id)->sheetLabel());
         $this->assertSame(70.0, $sittings['Quiz Hour']->student($ada->id)->total);
         $this->assertArrayNotHasKey('Month Check', $sittings);
 
@@ -219,7 +219,7 @@ class SchoolExamSetReportTest extends TestCase
         $this->refuseWorkarounds($learnerPage);
 
         $report = $this->renderReport($ctx, $ada);
-        $this->assertStringContainsString('Missing', $report);
+        $this->assertStringContainsString('–', $report);
         $this->assertStringContainsString('Made up of: North Paper 40% · South Paper 60%', $report);
         $this->assertStringNotContainsString('Quiz Hour', $report);
         $this->assertStringNotContainsString('Late Paper', $report);
