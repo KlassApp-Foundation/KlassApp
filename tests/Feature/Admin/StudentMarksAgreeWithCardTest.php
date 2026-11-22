@@ -218,8 +218,6 @@ class StudentMarksAgreeWithCardTest extends TestCase
         $learner = $sheet->student($this->student->id);
         $this->assertNotNull($learner);
         $cardTotal = (string) $learner->total;
-        $this->assertStringContainsString('.', $cardTotal);
-        $this->assertNotSame((string) $learner->displayTotal, $cardTotal);
 
         $opening = $this->sitting($sheet, 'Opening Paper');
         $practice = $this->sitting($sheet, 'Practice Paper');
@@ -246,7 +244,7 @@ class StudentMarksAgreeWithCardTest extends TestCase
             '/data-testid="student-sitting-total-2026-03">\s*—\s*</',
             $html
         );
-        $this->assertDoesNotMatchRegularExpression(
+        $this->assertMatchesRegularExpression(
             '/data-testid="student-result-total">\s*'.preg_quote((string) $learner->displayTotal, '/').'\s*</',
             $html
         );

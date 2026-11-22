@@ -369,6 +369,7 @@
   .ka-life-short{display:none}
   .ka-sheet-foot{font-size:.8rem}
   .ka-sheet-table{border:1px solid #E2E8F0;border-radius:14px;overflow-x:auto}
+  .ka-sheet-table a.ka-learner-name{display:inline-flex;align-items:center;min-height:44px;box-sizing:border-box}
 }
 .ka-queue{display:flex;flex-direction:column;gap:10px}
 .ka-queue-tools{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}

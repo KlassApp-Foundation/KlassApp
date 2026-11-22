@@ -681,10 +681,10 @@ class StudentReportCardService
             $ranked = [];
             foreach ($streamRows as $rankedSid) {
                 $chosen = $this->chosenMarksBySubject($streamMarks->get($rankedSid, collect()), $contributing);
-                $ranked[$rankedSid] = (int) round(array_sum(array_map(
-                    fn ($mark) => (float) $mark->marks,
+                $ranked[$rankedSid] = array_sum(array_map(
+                    fn ($mark) => ResultsPolicy::roundTo((float) $mark->marks),
                     $chosen
-                )));
+                ));
             }
             arsort($ranked);
             $streamPos = 0;
@@ -697,7 +697,10 @@ class StudentReportCardService
             $streamTotal = count($ranked);
         }
 
-        $total = array_sum(array_map(fn ($mark) => (float) $mark->marks, $eotMarkBySubject));
+        $total = array_sum(array_map(
+            fn ($mark) => ResultsPolicy::roundTo((float) $mark->marks),
+            $eotMarkBySubject
+        ));
         $midSittings = [];
         $sheet = $this->classSheet($schoolId, (int) $stdLink->section_id, (int) $exam->academic_term_id, (int) $stdLink->standard_id, (int) $learner->id, $onlyExamTypeIds);
         $resultRow = $sheet?->student((int) $learner->id);
@@ -728,6 +731,28 @@ class StudentReportCardService
         $setColumns = $sheet instanceof ResultSheet
             ? $this->sittingColumns($sheet, (int) $learner->id, null)
             : [];
+        // When the school's report composition weights mid-term types (which
+        // have contributes_to_report_total = 0) and the anchor type (End paper)
+        // is NOT one of those weighted types, the displayed per-subject marks
+        // already come from the weighted composite via the $eotCell path in the
+        // template. Rename the contributing column 'Combined' so its header
+        // matches what is actually printed.
+        if ($termSets !== [] && $withheldSets === []) {
+            $reportComposition = is_array($school?->report_composition) ? $school->report_composition : [];
+            if ($reportComposition !== []) {
+                $weightedTypeIds = array_map('intval', array_keys(array_filter(
+                    $reportComposition,
+                    fn (array $s) => isset($s['weight']) && is_numeric($s['weight']) && (float) $s['weight'] > 0,
+                )));
+                $termSets = array_map(function (array $set) use ($weightedTypeIds): array {
+                    if (! in_array($set['typeId'], $weightedTypeIds, true)) {
+                        $set['label'] = 'Combined';
+                    }
+
+                    return $set;
+                }, $termSets);
+            }
+        }
         $standardId = (int) ($standard->id ?? $stdLink->standard_id);
         $progressiveRules = app(\App\Services\Reports\ProgressiveRules::class);
         if ($appliedRules['mode'] === \App\Services\Reports\ProgressiveRulesStamp::MODE_STORED
@@ -1160,6 +1185,7 @@ class StudentReportCardService
                 continue;
             }
             $rows[] = [
+                'typeId' => $sitting->examTypeId,
                 'label' => $sitting->name,
                 'typeId' => $sitting->examTypeId,
                 'cells' => $student->cells,

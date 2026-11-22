@@ -134,7 +134,7 @@
             <section class="rc-card" aria-labelledby="rc-subj">
                 <h2 id="rc-subj">Average by subject</h2>
                 @foreach($data['subject_averages'] as $s)
-                    <div class="rc-bar"><span>{{ $s['name'] }}</span><i aria-hidden="true"><b style="width:{{ min(100, max(0, $s['value'] ?? 0)) }}%"></b></i><strong class="rc-r">{{ $s['value'] !== null ? rtrim(rtrim(number_format($s['value'], 1), '0'), '.') : '—' }}</strong></div>
+                    <div class="rc-bar"><span>{{ $s['name'] }}</span><i aria-hidden="true"><b style="width:{{ min(100, max(0, $s['value'] ?? 0)) }}%"></b></i><strong class="rc-r">{{ $s['value'] !== null ? \App\Services\Results\ResultsPolicy::printWhole((float) $s['value']) : '—' }}</strong></div>
                 @endforeach
             </section>
             <section class="rc-card" aria-labelledby="rc-div">

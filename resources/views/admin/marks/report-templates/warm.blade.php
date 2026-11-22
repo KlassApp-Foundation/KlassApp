@@ -331,7 +331,7 @@
                                 $setGrade = \App\Helpers\GradingHelper::formatAggLabel($g) ?? '-';
                             }
                         @endphp
-                        <td>{{ $markValue !== null ? floor($markValue) : (\App\Services\Reports\MarkCellText::isCountedBlank($cell, !empty($countMissingAsZero)) ? \App\Services\Reports\MarkCellText::word($cell) : '-') }}</td>
+                        <td>{{ $markValue !== null ? $cell->sheetLabel() : (\App\Services\Reports\MarkCellText::isCountedBlank($cell, !empty($countMissingAsZero)) ? \App\Services\Reports\MarkCellText::word($cell) : '-') }}</td>
                         @if ($showAgg) <td>@if($setGrade !== '-')<span class="chip {{ $chipClass($setGrade) }}">{{ $setGrade }}</span>@else - @endif</td> @endif
                     @endforeach
                 </tr>
@@ -398,6 +398,9 @@
                             $showSubject = true;
                         }
                     }
+                    if (! $showSubject && count($termSets) === 1 && $eotCell && $eotCell->mark !== null) {
+                        $showSubject = true;
+                    }
                 @endphp
                 @if (! $showSubject) @continue @endif
                 @php
@@ -428,8 +431,11 @@
                     <td class="left">{{ $subject->name }}</td>
                     <td>100</td>
                     @foreach ($termSets as $set)
-                        @php $setCell = $set['cells'][$subject->id] ?? null; @endphp
-                        <td>{{ $setCell && $setCell->mark !== null ? floor($setCell->mark) : (\App\Services\Reports\MarkCellText::isCountedBlank($setCell, !empty($countMissingAsZero)) ? \App\Services\Reports\MarkCellText::word($setCell) : '-') }}</td>
+                        @php
+                            $setCell = $set['cells'][$subject->id] ?? null;
+                            $printedCell = (count($termSets) === 1 && $eotCell && $eotCell->mark !== null) ? $eotCell : $setCell;
+                        @endphp
+                        <td>{{ $printedCell && $printedCell->mark !== null ? $printedCell->sheetLabel() : (\App\Services\Reports\MarkCellText::isCountedBlank($printedCell, !empty($countMissingAsZero)) ? \App\Services\Reports\MarkCellText::word($printedCell) : '-') }}</td>
                     @endforeach
                     @if ($showAgg) <td>@if($eotGrade !== '-')<span class="chip {{ $chipClass($eotGrade) }}">{{ $eotGrade }}</span>@else - @endif</td> @endif
                     <td>{{ $eotComment }}</td>

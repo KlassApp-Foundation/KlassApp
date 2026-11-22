@@ -11,6 +11,7 @@ use App\Models\StandardLink;
 use App\Models\StudentAcademic;
 use App\Models\User;
 use App\Services\ExamAuthorization;
+use App\Services\Results\ResultsPolicy;
 use App\Support\AttendanceDays;
 use App\Support\DashboardGreeting;
 use Carbon\Carbon;
@@ -253,9 +254,18 @@ final class TeacherHomeBoard
 
         $rows = [];
         foreach ($marks as $name => $group) {
+            $wholes = [];
+            foreach ($group as $mark) {
+                if ($mark->marks === null) {
+                    continue;
+                }
+                $wholes[] = ResultsPolicy::roundTo((float) $mark->marks);
+            }
             $rows[] = [
                 'name' => (string) $name,
-                'average' => (int) round($group->avg('marks')),
+                'average' => $wholes === []
+                    ? null
+                    : (int) ResultsPolicy::printWhole(ResultsPolicy::roundTo(array_sum($wholes) / count($wholes))),
             ];
         }
 

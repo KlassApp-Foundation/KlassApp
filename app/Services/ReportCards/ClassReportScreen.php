@@ -13,6 +13,7 @@ use App\Models\StandardLink;
 use App\Models\StudentAcademic;
 use App\Models\User;
 use App\Services\Results\ResultCell;
+use App\Services\Results\ResultsPolicy;
 use App\Services\Results\ResultsQuery;
 use App\Services\Results\ResultsService;
 use Illuminate\Support\Collection;
@@ -233,7 +234,7 @@ class ClassReportScreen
         $subjectAverages = [];
         foreach ($subjects as $subject) {
             $marks = $subjectTotals[$subject['id']] ?? [];
-            $subjectAverages[] = ['name' => $subject['name'], 'value' => $marks === [] ? null : round(array_sum($marks) / count($marks), 1)];
+            $subjectAverages[] = ['name' => $subject['name'], 'value' => $marks === [] ? null : ResultsPolicy::roundTo(array_sum($marks) / count($marks))];
         }
 
         $shown = array_values(array_filter($students, fn ($s) => $streamLinkId === null || $linkOf($s) === $streamLinkId));
@@ -278,7 +279,7 @@ class ClassReportScreen
             'division_labels' => self::DIVISION_LABELS,
             'kpis' => [
                 'ready' => count($students),
-                'average' => $averages === [] ? null : number_format(round(array_sum($averages) / count($averages), 1), 1),
+                'average' => $averages === [] ? null : ResultsPolicy::printWhole(ResultsPolicy::roundTo(array_sum($averages) / count($averages))),
                 'division_one' => $divisions['1'],
                 'ungraded' => $divisions['U'],
             ],
@@ -475,9 +476,9 @@ class ClassReportScreen
         return 'Missing';
     }
 
-    private function number(float $value): string
+    private function number(float $alreadyRounded): string
     {
-        return rtrim(rtrim(number_format($value, 1, '.', ''), '0'), '.');
+        return ResultsPolicy::printWhole($alreadyRounded);
     }
 
     private function shortName(string $name): string

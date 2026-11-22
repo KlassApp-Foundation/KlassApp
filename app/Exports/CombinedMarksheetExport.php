@@ -7,6 +7,7 @@ use App\Models\Academics\Exam;
 use App\Models\StandardLink;
 use App\Models\Subject;
 use App\Services\Results\ResultCell;
+use App\Services\Results\ResultsPolicy;
 use App\Services\Results\ResultSitting;
 use App\Services\Results\ResultStudent;
 use App\Services\Reports\ReportScoring;
@@ -162,7 +163,7 @@ class CombinedMarksheetExport implements WithMultipleSheets
         return $title;
     }
 
-    private function cellValue(?ResultCell $cell): float|string
+    private function cellValue(?ResultCell $cell): string
     {
         if ($cell !== null && $cell->status === ResultCell::ABSENT) {
             return 'ABS';
@@ -171,6 +172,6 @@ class CombinedMarksheetExport implements WithMultipleSheets
             return '';
         }
 
-        return (float) $cell->mark;
+        return ResultsPolicy::printWhole((float) $cell->mark);
     }
 }

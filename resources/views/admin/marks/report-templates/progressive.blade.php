@@ -102,7 +102,7 @@
     };
     $markText = function ($cell) use ($countMissingAsZero) {
         if ($cell && $cell->mark !== null) {
-            return (string) (int) floor((float) $cell->mark);
+            return $cell->sheetLabel();
         }
         if (\App\Services\Reports\MarkCellText::isCountedBlank($cell, ! empty($countMissingAsZero))) {
             return \App\Services\Reports\MarkCellText::word($cell);

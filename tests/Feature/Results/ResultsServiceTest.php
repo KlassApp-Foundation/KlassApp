@@ -10,6 +10,7 @@ use App\Models\Academics\Exam;
 use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\Marks;
 use App\Models\Academics\SchoolGradingSystem;
+use App\Models\MarksRelease;
 use App\Models\School;
 use App\Models\Section;
 use App\Models\Standard;
@@ -141,9 +142,10 @@ class ResultsServiceTest extends TestCase
         $sheet = $this->sheet($ctx, $term, $this->policy(decimals: 0));
 
         $gap = $sheet->student($insideGap->id);
-        $this->assertSame(79.5, $gap->cell($ctx['english']->id)->mark);
-        $this->assertSame('F', $gap->cell($ctx['english']->id)->grade);
-        $this->assertSame(9, $gap->cell($ctx['english']->id)->points);
+        $this->assertSame(80.0, $gap->cell($ctx['english']->id)->mark);
+        $this->assertSame('D', $gap->cell($ctx['english']->id)->grade);
+        $this->assertSame(1, $gap->cell($ctx['english']->id)->points);
+        $this->assertSame(80.0, $gap->total);
         $this->assertSame(80.0, $gap->displayTotal);
 
         $band = $sheet->student($onBand->id);
@@ -152,16 +154,114 @@ class ResultsServiceTest extends TestCase
 
         $over = $sheet->student($above->id);
         $this->assertSame('marked', $over->cell($ctx['english']->id)->status);
-        $this->assertNull($over->cell($ctx['english']->id)->grade);
-        $this->assertNull($over->cell($ctx['english']->id)->points);
-        $this->assertSame(100.4, $over->total);
+        $this->assertSame(100.0, $over->cell($ctx['english']->id)->mark);
+        $this->assertSame('D', $over->cell($ctx['english']->id)->grade);
+        $this->assertSame(1, $over->cell($ctx['english']->id)->points);
+        $this->assertSame(100.0, $over->total);
         $this->assertSame(100.0, $over->displayTotal);
 
         $half = $this->student($ctx, 'Half Student');
         $this->mark($ctx, $english, $ctx['english'], $half, 10.5, 'stored');
+        $stored = Marks::query()->orderBy('id')->pluck('marks', 'id')->all();
         $rounded = $this->sheet($ctx, $term, $this->policy(decimals: 0));
-        $this->assertSame(10.5, $rounded->student($half->id)->total);
-        $this->assertSame(11.0, $rounded->student($half->id)->displayAverage);
+        $halfRow = $rounded->student($half->id);
+        $this->assertSame(11.0, $halfRow->cell($ctx['english']->id)->mark);
+        $this->assertSame(11.0, $halfRow->total);
+        $this->assertSame(11.0, $halfRow->displayTotal);
+        $this->assertSame(11.0, $halfRow->displayAverage);
+        $this->assertSame($stored, Marks::query()->orderBy('id')->pluck('marks', 'id')->all());
+    }
+
+    public function test_printed_marks_are_rounded_once_and_the_total_is_the_sum_of_those_cells(): void
+    {
+        $ctx = $this->school();
+        $term = $this->term($ctx);
+        $this->bands($ctx, [
+            ['grade' => 'F', 'points' => 9, 'min' => 0, 'max' => 100],
+        ]);
+        $ctx['school']->forceFill([
+            'exam_type_preferences' => ['1' => '1', '2' => '1'],
+            'report_composition' => [
+                '1' => ['include' => true, 'weight' => 50.0],
+                '2' => ['include' => true, 'weight' => 50.0],
+            ],
+        ])->save();
+
+        $down = $this->student($ctx, 'Down Student');
+        $up = $this->student($ctx, 'Up Student');
+        $sum = $this->student($ctx, 'Sum Student');
+        $finer = $this->student($ctx, 'Finer Student');
+
+        $midEnglish = $this->exam($ctx, $term, $ctx['english'], '2026-03-01', 1);
+        $endEnglish = $this->exam($ctx, $term, $ctx['english'], '2026-04-20', 2);
+        $midMaths = $this->exam($ctx, $term, $ctx['maths'], '2026-03-01', 1);
+        $endMaths = $this->exam($ctx, $term, $ctx['maths'], '2026-04-20', 2);
+        foreach ([$midEnglish, $endEnglish, $midMaths, $endMaths] as $exam) {
+            $this->release($ctx, $exam);
+        }
+
+        $this->mark($ctx, $midEnglish, $ctx['english'], $down, 53.4, '');
+        $this->mark($ctx, $endEnglish, $ctx['english'], $down, 53.4, '');
+        $this->mark($ctx, $midMaths, $ctx['maths'], $up, 53.6, '');
+        $this->mark($ctx, $endMaths, $ctx['maths'], $up, 53.6, '');
+        $this->mark($ctx, $midEnglish, $ctx['english'], $sum, 0.6, '');
+        $this->mark($ctx, $endEnglish, $ctx['english'], $sum, 0.6, '');
+        $this->mark($ctx, $midMaths, $ctx['maths'], $sum, 0.6, '');
+        $this->mark($ctx, $endMaths, $ctx['maths'], $sum, 0.6, '');
+        $this->mark($ctx, $midMaths, $ctx['maths'], $finer, 53.49, '');
+        $this->mark($ctx, $endMaths, $ctx['maths'], $finer, 53.50, '');
+
+        $stored = Marks::query()->orderBy('id')->pluck('marks', 'id')->all();
+        $sheet = $this->sheet($ctx, $term);
+
+        $this->assertSame(53.0, $sheet->student($down->id)->cell($ctx['english']->id)->mark);
+        $this->assertSame('53', $sheet->student($down->id)->cell($ctx['english']->id)->sheetLabel());
+        $this->assertSame(53.0, $sheet->student($down->id)->total);
+        $this->assertSame(53.0, $sheet->student($down->id)->displayTotal);
+
+        $this->assertSame(54.0, $sheet->student($up->id)->cell($ctx['maths']->id)->mark);
+        $this->assertSame('54', $sheet->student($up->id)->cell($ctx['maths']->id)->sheetLabel());
+        $this->assertSame(54.0, $sheet->student($up->id)->displayTotal);
+
+        $sumRow = $sheet->student($sum->id);
+        $this->assertSame(1.0, $sumRow->cell($ctx['english']->id)->mark);
+        $this->assertSame(1.0, $sumRow->cell($ctx['maths']->id)->mark);
+        $this->assertSame(2.0, $sumRow->total);
+        $this->assertSame(2.0, $sumRow->displayTotal);
+        $this->assertSame(1.0, $sumRow->average);
+        $this->assertSame(1.0, $sumRow->displayAverage);
+        $this->assertSame(18, $sumRow->aggregate);
+
+        $this->assertSame(53.0, $sheet->student($finer->id)->cell($ctx['maths']->id)->mark);
+        $this->assertSame(53.0, $sheet->student($finer->id)->displayTotal);
+        $this->assertSame($stored, Marks::query()->orderBy('id')->pluck('marks', 'id')->all());
+    }
+
+    public function test_a_half_rounds_up_and_a_missing_subject_counts_as_zero(): void
+    {
+        $ctx = $this->school();
+        $term = $this->term($ctx);
+        $this->bands($ctx, [
+            ['grade' => 'F', 'points' => 9, 'min' => 0, 'max' => 100],
+        ]);
+        $english = $this->exam($ctx, $term, $ctx['english'], '2026-04-01');
+        $this->exam($ctx, $term, $ctx['maths'], '2026-04-02');
+
+        $half = $this->student($ctx, 'Half Up Student');
+        $this->mark($ctx, $english, $ctx['english'], $half, 53.5, '');
+        $stored = Marks::query()->where('student_id', $half->id)->value('marks');
+
+        $sheet = $this->sheet($ctx, $term, $this->policy(countMissingAsZero: true));
+        $row = $sheet->student($half->id);
+
+        $this->assertSame(54.0, $row->cell($ctx['english']->id)->mark);
+        $this->assertSame('54', $row->cell($ctx['english']->id)->sheetLabel());
+        $this->assertSame('missing', $row->cell($ctx['maths']->id)->status);
+        $this->assertSame('Missing', $row->cell($ctx['maths']->id)->sheetLabel());
+        $this->assertSame(54.0, $row->displayTotal);
+        $this->assertSame(27.0, $row->displayAverage);
+        $this->assertSame(2, $row->subjectsCounted);
+        $this->assertEquals(53.5, $stored);
     }
 
     public function test_ties_share_a_position_and_the_next_rank_skips(): void
@@ -712,6 +812,20 @@ class ResultsServiceTest extends TestCase
             'scheduled_at' => $when,
             'status' => 'submitted',
         ]));
+    }
+
+    private function release(array $ctx, Exam $exam): void
+    {
+        MarksRelease::create([
+            'school_id' => $ctx['school']->id,
+            'exam_id' => $exam->id,
+            'scope' => 'class',
+            'standard_link_id' => $ctx['link']->id,
+            'scheduled_at' => now(),
+            'released_at' => now(),
+            'status' => MarksRelease::STATUS_RELEASED,
+            'timezone' => 'UTC',
+        ]);
     }
 
     private function mark(array $ctx, Exam $exam, Subject $subject, User $student, float $score, string $grade): void

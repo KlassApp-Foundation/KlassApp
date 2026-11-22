@@ -35,12 +35,7 @@ final class ResultCell
         if ($this->status === self::MISSING || $this->mark === null) {
             return 'Missing';
         }
-        $rounded = round($this->mark, 2);
-        if (abs($rounded - (int) $rounded) < 0.001) {
-            return (string) (int) $rounded;
-        }
-
-        return rtrim(rtrim(number_format($rounded, 2, '.', ''), '0'), '.');
+        return ResultsPolicy::printWhole((float) $this->mark);
     }
 
     /**
@@ -63,18 +58,11 @@ final class ResultCell
                 return 'Missing';
             }
 
-            return (string) (int) floor($source->mark);
+            return $source->sheetLabel();
         }
 
         if ($source instanceof \App\Models\Academics\Marks) {
-            if ($source->isAbsent()) {
-                return 'ABS';
-            }
-            if ($source->marks === null) {
-                return 'Missing';
-            }
-
-            return (string) (int) floor((float) $source->marks);
+            return $source->displayMark();
         }
 
         return 'Missing';

@@ -34,6 +34,7 @@ use App\Services\WhatsApp\WhatsAppUserInitiatedVerification;
 use App\Services\WhatsAppBusinessService;
 use App\Services\Results\DisplayedGrade;
 use App\Services\Results\ResultCell;
+use App\Services\Results\ResultsPolicy;
 use App\Services\Results\ResultsQuery;
 use App\Services\Results\ResultsService;
 use App\Services\WhatsAppReportCardDeliveryService;
@@ -2455,7 +2456,7 @@ class WhatsAppController extends Controller
             usort($cells, fn (ResultCell $left, ResultCell $right) => $right->mark <=> $left->mark);
             $grades = app(DisplayedGrade::class);
             foreach (array_slice($cells, 0, 10) as $cell) {
-                $score = fmod($cell->mark, 1.0) === 0.0 ? (string) (int) $cell->mark : (string) $cell->mark;
+                $score = ResultsPolicy::printWhole((float) $cell->mark);
                 $grade = $grades->subject($schoolId, $row->standardId, $cell->mark, $stored[$cell->subjectId] ?? null);
                 $lines .= '• '.($names[$cell->subjectId] ?? 'Subject').": {$score}/100 ({$grade})\n";
             }
@@ -2465,12 +2466,19 @@ class WhatsAppController extends Controller
                 }
                 $lines .= '• '.($names[$cell->subjectId] ?? 'Subject').": ABS\n";
             }
-            $avg = $row->average;
+            $avg = $row->displayAverage;
             if ($withRank) {
                 $rank = $row->classPosition;
                 $totalStudents = $row->classOutOf;
             }
         } else {
+            $wholes = [];
+            foreach ($fallback as $mark) {
+                if ($mark->marks === null) {
+                    continue;
+                }
+                $wholes[] = ResultsPolicy::roundTo((float) $mark->marks);
+            }
             foreach ($fallback->sortByDesc('marks')->take(10) as $mark) {
                 $subject = $mark->subject?->name ?? 'Subject';
                 if ($mark->isAbsent()) {
@@ -2478,15 +2486,15 @@ class WhatsAppController extends Controller
 
                     continue;
                 }
-                $score = $mark->marks ?? 0;
+                $score = ResultsPolicy::printWhole(ResultsPolicy::roundTo((float) ($mark->marks ?? 0)));
                 $grade = $mark->grade ?? '-';
                 $lines .= "• {$subject}: {$score}/100 ({$grade})\n";
             }
-            $avg = $fallback->avg('marks');
+            $avg = $wholes === [] ? null : ResultsPolicy::roundTo(array_sum($wholes) / count($wholes));
         }
 
         if ($avg) {
-            $avgRounded = round($avg, 1);
+            $avgRounded = ResultsPolicy::printWhole((float) $avg);
             $celebration = '';
             if ($withRank && $avg >= 80) {
                 $celebration = "🎉 *Well done, {$studentName}!* ";

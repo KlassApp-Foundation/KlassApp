@@ -23,6 +23,7 @@
                             {{ $sitting->name }}
                         </th>
                     @endforeach
+                    <th data-testid="student-combined">Combined</th>
                 </tr>
             </thead>
             <tbody>
@@ -32,10 +33,14 @@
                         @foreach ($sittings as $sitting)
                             @php
                                 $cell = $sitting->student($student->studentId)?->cell($subjectId);
-                                $mark = $cell ? $cell->sheetLabel() : '—';
+$mark = $cell ? $cell->sheetLabel() : '—';
                             @endphp
                             <td>{{ $mark }}</td>
                         @endforeach
+                        @php
+                            $combined = $student->cell((int) $subjectId);
+                        @endphp
+                        <td data-testid="student-combined-mark">{{ $combined ? \App\Services\Results\ResultCell::printedMark($combined) : '—' }}</td>
                     </tr>
                 @endforeach
                 <tr>

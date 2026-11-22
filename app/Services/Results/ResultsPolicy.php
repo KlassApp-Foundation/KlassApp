@@ -69,8 +69,25 @@ final class ResultsPolicy
         return false;
     }
 
+    /**
+     * The only rounding rule. Half goes up: 53.4 is 53, 53.5 and 53.6 are 54.
+     * Call this once, where the number is derived. Do not call it again to print.
+     */
+    public static function roundTo(float $value, int $decimals = 0): float
+    {
+        return round($value, $decimals, PHP_ROUND_HALF_UP);
+    }
+
+    /**
+     * Text for a value roundTo already made whole. This does not round.
+     */
+    public static function printWhole(float $alreadyRounded): string
+    {
+        return (string) $alreadyRounded;
+    }
+
     public function round(float $value): float
     {
-        return round($value, $this->roundingDecimals, PHP_ROUND_HALF_UP);
+        return self::roundTo($value, $this->roundingDecimals);
     }
 }

@@ -20,6 +20,7 @@ use App\Models\Subject;
 use App\Models\User;
 use App\Models\UserPreference;
 use App\Services\Results\ResultCell;
+use App\Services\Results\ResultsPolicy;
 use App\Services\Results\ResultsQuery;
 use App\Services\Results\ResultsService;
 use App\Support\ClassLevelOrder;
@@ -511,7 +512,7 @@ class DashboardV2DataService
             $perClass[] = [
                 'label' => (string) $section->name,
                 'section_id' => (int) $section->id,
-                'value' => $values === [] ? null : round(array_sum($values) / count($values), 1),
+                'value' => $values === [] ? null : ResultsPolicy::roundTo(array_sum($values) / count($values)),
             ];
             if ($values !== [] && $latest) {
                 $examLabel ??= (string) ($latest->name ?: 'End of term');

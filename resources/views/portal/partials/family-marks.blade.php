@@ -4,12 +4,12 @@
     $latest = $groups === [] ? null : $groups[array_key_last($groups)];
     $earlier = $groups === [] ? [] : array_slice($groups, 0, -1);
     $kls = trim((string) ($bundle['grades']['registration_number'] ?? ''));
-    $shown = fn (array $subject) => $subject['display'] ?? (string) (int) round((float) ($subject['score'] ?? 0));
+    $shown = fn (array $subject) => $subject['display'] ?? \App\Services\Results\ResultsPolicy::printWhole((float) ($subject['score'] ?? 0));
     $released = array_map(fn ($group) => [
         'label' => $group['exam_type'],
-        'average' => $group['average'],
+        'average' => \App\Services\Results\ResultsPolicy::printWhole((float) $group['average']),
         'division' => $group['division'] ?? null,
-        'scores' => array_map(fn ($subject) => [$subject['name'], $subject['score']], $group['subjects']),
+        'scores' => array_map(fn ($subject) => [$subject['name'], $subject['display'] ?? $subject['score']], $group['subjects']),
     ], $groups);
 @endphp
 <div data-released="{{ json_encode($released) }}">
