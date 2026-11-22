@@ -360,11 +360,11 @@ class DashboardV2Test extends TestCase
         $school = $this->makeSchool(['name' => 'Currency School']);
         $admin = $this->makeAdmin($school);
         $this->completeAllSteps($school, $admin);
+        $service = app(DashboardV2DataService::class);
 
         // Uganda: UGX applies without anyone setting it, so there is no hint.
-        $this->render(User::findOrFail($admin->id))->assertOk()
-            ->assertDontSee('Set your currency', false)
-            ->assertSee('UGX', false);
+        $this->render(User::findOrFail($admin->id))->assertOk()->assertDontSee('Set your currency', false);
+        $this->assertSame('UGX', $service->build($school->fresh(), User::findOrFail($admin->id))['currency']);
 
         // Switching to USD is an explicit setting and still silences the hint.
         \Illuminate\Support\Facades\DB::table('school_details')->insert([
@@ -372,9 +372,8 @@ class DashboardV2Test extends TestCase
             'created_at' => now(), 'updated_at' => now(),
         ]);
 
-        $this->render(User::findOrFail($admin->id))->assertOk()
-            ->assertSee('USD', false)
-            ->assertDontSee('Set your currency', false);
+        $this->render(User::findOrFail($admin->id))->assertOk()->assertDontSee('Set your currency', false);
+        $this->assertSame('USD', $service->build($school->fresh(), User::findOrFail($admin->id))['currency']);
     }
 
     public function test_first_screen_has_no_carousel_connected_tools_or_toshi_promo(): void
@@ -388,7 +387,7 @@ class DashboardV2Test extends TestCase
             ->assertDontSee('data-testid="toshi-pill"', false);
     }
 
-    public function test_every_kpi_card_is_one_whole_card_link_with_no_inner_action_links(): void
+    public function test_every_kpi_card_is_one_whole_card_link_with_no_nested_links(): void
     {
         $school = $this->makeSchool(['name' => 'Whole Card School']);
         $admin = $this->makeAdmin($school);
@@ -404,6 +403,12 @@ class DashboardV2Test extends TestCase
         $this->assertNotEmpty($cards[1], 'Expected dv2-kpi cards on the dashboard');
 
         foreach ($cards[1] as $i => $card) {
+            // The fees tile without a fee structure has no whole-card link: its one link is "Set up fees".
+            if (str_contains($card, 'dashboard-v2-kpi-fees-empty')) {
+                $this->assertStringContainsString('Set up fees', $card);
+
+                continue;
+            }
             $this->assertStringContainsString(
                 'class="dv2-kpi-link"',
                 $card,

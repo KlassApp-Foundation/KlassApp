@@ -9,7 +9,12 @@ use App\Models\Academics\Exam as ExamModel;
 use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\ExamType;
 use App\Models\Academics\Marks;
+use App\Models\MarksRelease;
+use App\Models\Section as SectionModel;
+use App\Models\StudentAcademic;
 use App\Services\Marks\MarksSubmissionService;
+use App\Services\MarksRelease\MarksReleaseService;
+use App\Services\Reports\ReportScoring;
 use App\Models\Attendance;
 use App\Models\FeePayment;
 use App\Models\FeesCategories;
@@ -59,17 +64,21 @@ class DashboardV2DataService
             'charts' => $this->charts($sid, $students, $term, $feeMonths),
             'activity' => $this->activity($sid),
             'currency' => $this->currencyFor($sid),
-            'marks' => $this->marksDesk($sid),
+            'marks' => $this->marksDesk($sid, $students),
+            'latestResults' => $this->latestResults($sid),
         ];
     }
 
     /**
-     * Submissions waiting for approval, and classes with every subject approved
-     * for at least one sitting this year. Both counts are this school only.
+     * "This term's results": three counts from the services that already own them.
+     *  - waiting: MarksSubmissionService::pendingCount, the count behind the sidebar badge;
+     *  - ready: classes whose subjects are all approved for a sitting that has not been released;
+     *  - cards: learners covered by a released sitting this term, of all active learners.
+     * Every count is this school only.
      *
-     * @return array{waiting: int|null, waiting_note: string|null, ready: int|null, ready_note: string|null}
+     * @return array{waiting: int|null, waiting_note: string|null, ready: int|null, ready_note: string|null, cards_released: int|null, cards_total: int, next_step: string}
      */
-    public function marksDesk(int $schoolId): array
+    public function marksDesk(int $schoolId, ?int $students = null): array
     {
         if ($schoolId <= 0) {
             return [
@@ -77,14 +86,200 @@ class DashboardV2DataService
                 'waiting_note' => 'This count is not available for this school.',
                 'ready' => null,
                 'ready_note' => 'This count is not available for this school.',
+                'cards_released' => null,
+                'cards_total' => 0,
+                'next_step' => 'Next step: enter and approve marks, then release a class.',
+            ];
+        }
+
+        $waiting = app(MarksSubmissionService::class)->pendingCount($schoolId);
+        $ready = $this->classesReadyToRelease($schoolId);
+        $total = $students ?? $this->studentsCount($schoolId);
+        $released = $this->releasedLearnerCount($schoolId);
+
+        if ($waiting > 0) {
+            $next = 'Next step: approve the marks waiting for you, then release a class.';
+        } elseif ($ready > 0) {
+            $next = 'Next step: release a class so parents can see its results.';
+        } elseif ($released > 0 && $released >= $total) {
+            $next = 'Every class has been released this term.';
+        } else {
+            $next = 'Next step: enter and approve marks, then release a class.';
+        }
+
+        return [
+            'waiting' => $waiting,
+            'waiting_note' => null,
+            'ready' => $ready,
+            'ready_note' => null,
+            'cards_released' => $released,
+            'cards_total' => $total,
+            'next_step' => $next,
+        ];
+    }
+
+    /**
+     * Distinct active learners covered by a released sitting this term. A class release covers
+     * the class and its streams; a school release covers every class that has that sitting.
+     */
+    private function releasedLearnerCount(int $schoolId): int
+    {
+        $year = SiteHelper::getAcademicYear($schoolId);
+        if ($year === null) {
+            return 0;
+        }
+        $termId = $this->currentTerm($schoolId, (int) $year->id)?->id;
+
+        $releases = MarksRelease::query()
+            ->with(['exam', 'standardLink.section'])
+            ->where('school_id', $schoolId)
+            ->where('status', MarksRelease::STATUS_RELEASED)
+            ->whereNotNull('released_at')
+            ->get()
+            ->filter(fn (MarksRelease $r) => $r->exam !== null
+                && (int) $r->exam->academic_year_id === (int) $year->id
+                && ($termId === null || (int) $r->exam->academic_term_id === (int) $termId));
+
+        $structure = app(ClassStructureService::class);
+        $sectionIds = [];
+        foreach ($releases as $release) {
+            if ($release->scope === 'class' && $release->standardLink?->section !== null) {
+                $sectionIds = array_merge($sectionIds, $structure->classSectionIds($release->standardLink->section));
+
+                continue;
+            }
+            $examSections = ExamModel::query()
+                ->where('school_id', $schoolId)
+                ->where('exam_type_id', $release->exam->exam_type_id)
+                ->where('academic_term_id', $release->exam->academic_term_id)
+                ->whereNull('deleted_at')
+                ->pluck('section_id');
+            foreach (SectionModel::query()->where('school_id', $schoolId)->whereIn('id', $examSections)->get() as $section) {
+                $sectionIds = array_merge($sectionIds, $structure->classSectionIds($section));
+            }
+        }
+        $sectionIds = array_values(array_unique(array_map('intval', $sectionIds)));
+        if ($sectionIds === []) {
+            return 0;
+        }
+
+        $linkIds = StandardLink::query()
+            ->where('school_id', $schoolId)
+            ->where('academic_year_id', (int) $year->id)
+            ->whereIn('section_id', $sectionIds)
+            ->pluck('id');
+
+        return StudentAcademic::query()
+            ->where('school_id', $schoolId)
+            ->where('academic_year_id', (int) $year->id)
+            ->whereIn('standardLink_id', $linkIds)
+            ->whereIn('user_id', User::query()
+                ->where('school_id', $schoolId)->where('usergroup_id', 6)->where('status', 'active')->whereNull('deleted_at')
+                ->select('id'))
+            ->distinct()
+            ->count('user_id');
+    }
+
+    /**
+     * The most recently released class: title, sitting, date, and a few learners with the Total,
+     * Aggregate and Division the report card uses (ResultsService with the card's own policy,
+     * ReportScoring::policyForTerm). Learners come in the order the release sheet lists them
+     * (by name). Null when nothing has been released.
+     *
+     * @return array{release_id: int, class: string, exam: string, released: string, url: string, rows: list<array{name: string, total: string, aggregate: string, division: string}>}|null
+     */
+    public function latestResults(int $schoolId, int $limit = 5): ?array
+    {
+        $release = MarksRelease::query()
+            ->with(['exam.examType', 'exam.academicTerm', 'exam.section', 'standardLink.section'])
+            ->where('school_id', $schoolId)
+            ->where('status', MarksRelease::STATUS_RELEASED)
+            ->whereNotNull('released_at')
+            ->orderByDesc('released_at')
+            ->orderByDesc('id')
+            ->first();
+        if ($release === null || $release->exam === null) {
+            return null;
+        }
+
+        $structure = app(ClassStructureService::class);
+        $section = $release->standardLink?->section ?? $release->exam->section;
+        if ($section === null || (int) $section->school_id !== $schoolId) {
+            return null;
+        }
+        $base = $structure->resolveBaseSection($section);
+        $exam = $release->exam;
+
+        $standardId = app(ReportScoring::class)->standardIdForSection($schoolId, (int) $base->id, $release->standard_link_id ? (int) $release->standard_link_id : null);
+        $policy = $standardId === null
+            ? null
+            : app(ReportScoring::class)->policyForTerm($schoolId, $standardId, (int) $base->id, (int) $exam->academic_term_id);
+        $sheet = app(ResultsService::class)->sheet(new ResultsQuery(
+            schoolId: $schoolId,
+            sectionId: (int) $base->id,
+            academicTermId: (int) $exam->academic_term_id,
+            standardLinkId: null,
+            examTypeId: (int) $exam->exam_type_id,
+        ), $policy);
+
+        $linkIds = StandardLink::query()
+            ->where('school_id', $schoolId)
+            ->where('academic_year_id', (int) $exam->academic_year_id)
+            ->whereIn('section_id', $release->scope === 'class' ? $structure->classSectionIds($section) : $structure->classSectionIds($base))
+            ->pluck('id');
+        $studentIds = StudentAcademic::query()
+            ->where('school_id', $schoolId)
+            ->where('academic_year_id', (int) $exam->academic_year_id)
+            ->whereIn('standardLink_id', $linkIds)
+            ->pluck('user_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        $people = User::query()
+            ->where('school_id', $schoolId)->where('usergroup_id', 6)->where('status', 'active')->whereNull('deleted_at')
+            ->whereIn('id', $studentIds === [] ? [-1] : $studentIds)
+            ->get(['id', 'name'])
+            ->sort(fn (User $a, User $b) => strcasecmp((string) $a->name, (string) $b->name))
+            ->take($limit);
+
+        $rows = [];
+        foreach ($people as $person) {
+            $row = $sheet->student((int) $person->id);
+            $rows[] = [
+                'name' => (string) $person->name,
+                'total' => $row?->displayTotal === null ? '—' : ResultsPolicy::printWhole((float) $row->displayTotal),
+                'aggregate' => $row?->aggregate === null ? '—' : (string) $row->aggregate,
+                'division' => ($row?->division === null || $row->division === '') ? '—' : (string) $row->division,
             ];
         }
 
         return [
-            'waiting' => app(MarksSubmissionService::class)->pendingCount($schoolId),
-            'waiting_note' => null,
-            'ready' => $this->classesReadyToRelease($schoolId),
-            'ready_note' => null,
+            'release_id' => (int) $release->id,
+            'class' => trim((string) $base->name),
+            'exam' => app(MarksReleaseService::class)->examLabel($exam),
+            'released' => $release->released_at->timezone(config('app.timezone'))->format('j M Y'),
+            'url' => route('admin.marks.releases.show', $release->id),
+            'rows' => $rows,
+        ];
+    }
+
+    /**
+     * The connectors card, in order. WhatsApp is the core channel.
+     *
+     * @return list<array{key: string, name: string, status: string, tone: string, sub: string|null, core: bool}>
+     */
+    public function connectors(bool $driveConnected): array
+    {
+        return [
+            ['key' => 'whatsapp', 'name' => 'WhatsApp', 'status' => 'Available', 'tone' => 'green', 'sub' => 'Results, fee reminders, absence alerts', 'core' => true],
+            ['key' => 'sms', 'name' => 'SMS', 'status' => 'Available', 'tone' => 'green', 'sub' => null, 'core' => false],
+            ['key' => 'email', 'name' => 'Email', 'status' => 'Available', 'tone' => 'green', 'sub' => null, 'core' => false],
+            $driveConnected
+                ? ['key' => 'google-drive', 'name' => 'Google Drive', 'status' => 'Connected', 'tone' => 'green', 'sub' => null, 'core' => false]
+                : ['key' => 'google-drive', 'name' => 'Google Drive', 'status' => 'Available', 'tone' => 'green', 'sub' => 'Onboard from your checklist', 'core' => false],
+            ['key' => 'google-calendar', 'name' => 'Google Calendar', 'status' => 'Preview', 'tone' => 'amber', 'sub' => null, 'core' => false],
+            ['key' => 'slack', 'name' => 'Slack', 'status' => 'Preview', 'tone' => 'amber', 'sub' => null, 'core' => false],
+            ['key' => 'more', 'name' => 'Sheets, Docs, Classroom, Tasks', 'status' => 'Coming', 'tone' => 'grey', 'sub' => null, 'core' => false],
         ];
     }
 
@@ -145,9 +340,30 @@ class DashboardV2DataService
             }
         }
 
+        // A sitting already released for the class is not "ready to release" any more.
+        $releasedKeys = [];
+        $structure = app(ClassStructureService::class);
+        $releases = MarksRelease::query()
+            ->with(['exam', 'standardLink.section'])
+            ->where('school_id', $schoolId)
+            ->where('status', MarksRelease::STATUS_RELEASED)
+            ->get();
+        foreach ($releases as $release) {
+            if ($release->exam === null) {
+                continue;
+            }
+            $ids = [(int) $release->exam->section_id];
+            if ($release->standardLink?->section !== null) {
+                $ids = array_merge($ids, array_map('intval', $structure->classSectionIds($release->standardLink->section)));
+            }
+            foreach ($ids as $id) {
+                $releasedKeys[$id.'|'.(int) $release->exam->exam_type_id.'|'.(int) $release->exam->academic_term_id] = true;
+            }
+        }
+
         $readySections = [];
-        foreach ($groups as $group) {
-            if ($group['ready']) {
+        foreach ($groups as $key => $group) {
+            if ($group['ready'] && ! isset($releasedKeys[$key])) {
                 $readySections[$group['section_id']] = true;
             }
         }

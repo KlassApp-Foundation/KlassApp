@@ -150,6 +150,11 @@ class DashboardController extends Controller
                 ->exists() : false,
         ];
 
+        if (is_array($v2Data)) {
+            $v2Data['connectors'] = app(\App\Services\DashboardV2DataService::class)
+                ->connectors((bool) $connectedTools['driveConnected']);
+        }
+
         return view( $dashboardView, [
             'connectedTools' => $connectedTools,
             'v2Data' => $v2Data,
