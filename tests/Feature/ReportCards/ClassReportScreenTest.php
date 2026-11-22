@@ -2,8 +2,14 @@
 
 namespace Tests\Feature\ReportCards;
 
+use App\Models\AcademicTerm;
+use App\Models\Academics\Exam;
 use App\Models\Academics\Marks;
 use App\Models\ReportGeneration;
+use App\Models\Section;
+use App\Models\Standard;
+use App\Models\StandardLink;
+use App\Models\Subject;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\ReleasedExam;
 use Tests\Support\StudentProfileFixture;
@@ -80,6 +86,92 @@ class ClassReportScreenTest extends TestCase
 
         $this->assertStringNotContainsString('Eve Other', $html);
         $this->assertStringContainsString('Grade 5', $html);
+    }
+
+    public function test_a_first_class_with_no_exam_still_shows_the_picker_and_opens_on_a_current_term_exam(): void
+    {
+        $nursery = Standard::create([
+            'school_id' => $this->school->id,
+            'name' => 'nursery',
+            'order' => 0,
+            'status' => 1,
+        ]);
+        $baby = Section::create([
+            'school_id' => $this->school->id,
+            'name' => 'Baby Class',
+            'status' => 1,
+        ]);
+        StandardLink::create([
+            'school_id' => $this->school->id,
+            'academic_year_id' => $this->year->id,
+            'standard_id' => $nursery->id,
+            'section_id' => $baby->id,
+            'status' => 1,
+        ]);
+        $middle = Section::create([
+            'school_id' => $this->school->id,
+            'name' => 'Middle Class',
+            'status' => 1,
+        ]);
+        StandardLink::create([
+            'school_id' => $this->school->id,
+            'academic_year_id' => $this->year->id,
+            'standard_id' => $nursery->id,
+            'section_id' => $middle->id,
+            'status' => 1,
+        ]);
+        $lastTerm = AcademicTerm::create([
+            'school_id' => $this->school->id,
+            'academic_year_id' => $this->year->id,
+            'name' => 'Term 1',
+            'status' => 'last',
+            'starts_on' => '2026-01-06',
+            'ends_on' => '2026-04-30',
+        ]);
+        $subject = Subject::create([
+            'school_id' => $this->school->id,
+            'academic_year_id' => $this->year->id,
+            'standard_id' => $nursery->id,
+            'section_id' => $middle->id,
+            'name' => 'Reading',
+            'code' => 'RD',
+            'type' => 'core',
+            'status' => 1,
+        ]);
+        Exam::withoutEvents(fn () => Exam::create([
+            'school_id' => $this->school->id,
+            'standard_id' => $nursery->id,
+            'section_id' => $middle->id,
+            'academic_year_id' => $this->year->id,
+            'academic_term_id' => $lastTerm->id,
+            'subject_id' => $subject->id,
+            'teacher_id' => $this->teacher->id,
+            'exam_type_id' => 2,
+            'status' => 'undone',
+        ]));
+
+        $opened = $this->screen()->assertOk()->getContent();
+
+        $this->assertStringContainsString('id="rc-class"', $opened);
+        $this->assertStringContainsString('data-open-filters', $opened);
+        $this->assertStringContainsString('Baby Class', $opened);
+        $this->assertStringNotContainsString('Baby Class has no exams yet', $opened);
+        $this->assertMatchesRegularExpression(
+            '/<option value="'.$this->section->id.'"[^>]*selected[^>]*>\\s*Grade 5\\s*<\\/option>/',
+            $opened
+        );
+
+        $empty = $this->screen('?class='.$baby->id)->assertOk()->getContent();
+
+        $this->assertStringContainsString('Baby Class has no exams yet', $empty);
+        $this->assertStringContainsString('id="rc-class"', $empty);
+        $this->assertStringContainsString('data-open-filters', $empty);
+        $this->assertStringContainsString('id="rc-filter-sheet"', $empty);
+        $this->assertStringContainsString('>Grade 5</option>', $empty);
+        $this->assertMatchesRegularExpression(
+            '/<option value="'.$baby->id.'"[^>]*selected[^>]*>\\s*Baby Class\\s*<\\/option>/',
+            $empty
+        );
     }
 
     public function test_phone_filters_sheet_carries_class_exam_stream_and_sort(): void
