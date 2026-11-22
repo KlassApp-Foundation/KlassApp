@@ -806,6 +806,42 @@ class StudentReportCardService
             $ownReports,
             fn (array $own): bool => in_array((int) ($own['id'] ?? 0), $startedTypeIds, true),
         ));
+        $printableSetIds = $this->printableSetIds($schoolId, (int) $exam->id, $ownReports);
+        $keepPrintedSet = function (array $row) use ($printableSetIds): bool {
+            return isset($printableSetIds[(int) ($row['typeId'] ?? 0)]);
+        };
+        $monthlySets = array_values(array_filter($monthlySets, $keepPrintedSet));
+        $midSittings = $monthlySets;
+        $termSets = array_values(array_filter($termSets, $keepPrintedSet));
+        $setColumns = array_values(array_filter($setColumns, $keepPrintedSet));
+        $printableNames = [];
+        foreach ($ownReports as $own) {
+            if (isset($printableSetIds[(int) ($own['id'] ?? 0)])) {
+                $printableNames[(string) $own['name']] = true;
+            }
+        }
+        $incompleteSets = array_values(array_filter(
+            $incompleteSets,
+            fn ($name): bool => isset($printableNames[(string) $name]),
+        ));
+        $ownReports = array_values(array_filter(
+            $ownReports,
+            fn (array $own): bool => isset($printableSetIds[(int) ($own['id'] ?? 0)]),
+        ));
+        $noCombinedMark = $setColumns !== [] && $termSets === [];
+        if ($termSets === [] && $withheldSets === [] && $total !== null && $resultRow !== null
+            && $this->weightedPrintableCount($schoolId, (int) $exam->id, $printableSetIds) >= 2) {
+            $termSets[] = [
+                'label' => 'Combined',
+                'typeId' => 0,
+                'cells' => $eotCells,
+                'total' => $total,
+                'aggregate' => is_array($eotPoints) ? ($eotPoints['points'] ?? null) : null,
+                'pos' => $myPos,
+                'of' => $totalLearners,
+                'division' => $eotDivision,
+            ];
+        }
         $logoPath = $this->resolveLogoPath($schoolId);
         $schoolIdentity = $this->resolveSchoolIdentity($school);
 
@@ -1031,6 +1067,82 @@ class StudentReportCardService
     }
 
     /**
+     * Sets that may be named on this card. A class that has not released a
+     * set still names every set that has started. Once one set is released,
+     * a set is named only when it is released and the mix has not excluded it.
+     *
+     * @param  list<array{id: int, name: string, status: string, released: bool}>  $ownReports
+     * @return array<int, true>
+     */
+    private function printableSetIds(int $schoolId, int $examId, array $ownReports): array
+    {
+        $composition = app(\App\Services\ReportCards\EndOfTermCompositionLine::class);
+        $mix = $composition->compositionFor($schoolId, $examId);
+        $types = \App\Models\Academics\ExamType::query()
+            ->whereIn('id', array_map(fn (array $row): int => (int) ($row['id'] ?? 0), $ownReports))
+            ->get()
+            ->keyBy(fn ($type): int => (int) $type->id);
+        $releaseGate = false;
+        foreach ($ownReports as $row) {
+            if (! empty($row['released'])) {
+                $releaseGate = true;
+                break;
+            }
+        }
+        $ids = [];
+        foreach ($ownReports as $row) {
+            $id = (int) ($row['id'] ?? 0);
+            $type = $types->get($id);
+            if ($id < 1 || $type === null) {
+                continue;
+            }
+            if ($releaseGate && (empty($row['released']) || $this->mixExcludes($mix, $id))) {
+                continue;
+            }
+            $ids[$id] = true;
+        }
+
+        return $ids;
+    }
+
+    /**
+     * @param  array<int|string, mixed>|null  $mix
+     */
+    private function mixExcludes(?array $mix, int $typeId): bool
+    {
+        if (! is_array($mix)) {
+            return false;
+        }
+        $row = $mix[(string) $typeId] ?? $mix[$typeId] ?? null;
+        if (! is_array($row)) {
+            return false;
+        }
+
+        return ($row['include'] ?? true) === false;
+    }
+
+    /**
+     * @param  array<int, true>  $printableSetIds
+     */
+    private function weightedPrintableCount(int $schoolId, int $examId, array $printableSetIds): int
+    {
+        $mix = app(\App\Services\ReportCards\EndOfTermCompositionLine::class)->compositionFor($schoolId, $examId);
+        if (! is_array($mix)) {
+            return 0;
+        }
+        $count = 0;
+        foreach (array_keys($printableSetIds) as $typeId) {
+            $row = $mix[(string) $typeId] ?? $mix[$typeId] ?? null;
+            $weight = is_array($row) ? ($row['weight'] ?? null) : null;
+            if (is_numeric($weight) && (float) $weight > 0) {
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
+    /**
      * One column per exam set, in the sheet's date order.
      * The heading is the set's own name.
      *
@@ -1049,6 +1161,7 @@ class StudentReportCardService
             }
             $rows[] = [
                 'label' => $sitting->name,
+                'typeId' => $sitting->examTypeId,
                 'cells' => $student->cells,
                 'total' => $student->total,
                 'aggregate' => $student->aggregate,
