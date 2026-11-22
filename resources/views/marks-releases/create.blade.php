@@ -243,13 +243,14 @@
                     @endforeach
                     <th class="mr-num"><button type="button" data-sort="total">Total</button></th>
                     <th class="mr-num"><button type="button" data-sort="average">Average</button></th>
-                    <th class="mr-num">Grade</th>
+                    <th class="mr-num">AGG</th>
+                    <th class="mr-num">Division</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($sheet['groups'] as $group)
                     <tr class="mr-group" data-class="{{ $group['class_name'] }}" data-stream="{{ $group['stream'] }}">
-                        <th colspan="{{ 4 + count($sheet['subjects']) }}">
+                        <th colspan="{{ 5 + count($sheet['subjects']) }}">
                             {{ $group['class_name'] !== '' ? $group['class_name'] : 'Class' }}
                             @if($group['stream'] !== '') · {{ $group['stream'] }} @endif
                             · {{ $group['count'] }} {{ $group['count'] === 1 ? 'student' : 'students' }}
@@ -273,11 +274,12 @@
                             @endforeach
                             <td class="mr-num">{{ $student['total'] }}</td>
                             <td class="mr-num">{{ $student['average'] }}</td>
-                            <td class="mr-num"><strong>{{ $student['grade'] }}</strong></td>
+                            <td class="mr-num"><strong>{{ $student['agg'] }}</strong></td>
+                            <td class="mr-num"><strong>{{ $student['division'] }}</strong></td>
                         </tr>
                     @endforeach
                 @empty
-                    <tr><td colspan="{{ 4 + count($sheet['subjects']) }}">No students in this exam yet.</td></tr>
+                    <tr><td colspan="{{ 5 + count($sheet['subjects']) }}">No students in this exam yet.</td></tr>
                 @endforelse
             </tbody>
         </table>

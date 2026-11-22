@@ -75,6 +75,67 @@
         return false;
     };
 
+    // Most-specific-match: when multiple items match the current request path,
+    // only the item with the longest matching pattern receives the active state.
+    // This prevents a broad wildcard (e.g. admin/marks*) from co-activating
+    // alongside a more-specific sibling (admin/marks/releases*), which previously
+    // caused double aria-current="page" on the Marks Release and Mark submissions
+    // pages, and wrong active state on teacher marks entry pages.
+    (function () use (&$navActive, $nav, $prefix): void {
+        $bestLen = -1;
+        $winner  = null;
+
+        $check = function (array $candidate) use ($prefix, &$bestLen, &$winner): void {
+            foreach ((array) ($candidate['paths'] ?? []) as $pattern) {
+                if (request()->is($pattern) && strlen($pattern) > $bestLen) {
+                    $bestLen = strlen($pattern);
+                    $winner  = $candidate;
+                }
+            }
+            if ($prefix !== '') {
+                foreach ((array) ($candidate['active'] ?? []) as $alias) {
+                    $expanded = $prefix.'/'.$alias.'*';
+                    if (request()->is($expanded) && strlen($expanded) > $bestLen) {
+                        $bestLen = strlen($expanded);
+                        $winner  = $candidate;
+                    }
+                }
+            }
+        };
+
+        // Flat items and grouped items (non-v3 layouts).
+        foreach ($nav['items'] ?? [] as $item) {
+            $check($item);
+        }
+        foreach ($nav['groups'] ?? [] as $group) {
+            foreach ($group['items'] ?? [] as $item) {
+                $check($item);
+            }
+        }
+        // V3 layout: children are the navigable leaf items; parent rows are
+        // ancestors that expand/collapse, not active targets themselves.
+        foreach ($nav['sections'] ?? [] as $section) {
+            foreach ($section['rows'] ?? [] as $row) {
+                if (! empty($row['children'])) {
+                    foreach ($row['children'] as $child) {
+                        $check($child);
+                    }
+                } else {
+                    $check($row);
+                }
+            }
+        }
+
+        if ($winner === null) {
+            return; // Nothing matched; $navActive (returns false) stays intact.
+        }
+
+        $raw = $navActive;
+        $navActive = function (array $item) use ($raw, $winner): bool {
+            return $raw($item) && $item === $winner;
+        };
+    })();
+
     // Class-teacher-only items (teacher sidebar). Resolved once, and only if a
     // visible item actually needs it.
     $ctLinks = null;
