@@ -14,7 +14,7 @@
                 @endforeach
                 <th class="ka-th ka-num" scope="col">Total</th>
                 <th class="ka-th ka-num" scope="col">Average</th>
-                <th class="ka-th ka-num" scope="col">Agg</th>
+                <th class="ka-th ka-num" scope="col">Aggregate</th>
                 <th class="ka-th" scope="col">Division</th>
                 <th class="ka-th" scope="col">Report</th>
             </tr>
@@ -52,7 +52,7 @@
                     @endforeach
                     <td class="gm-total ka-num" data-testid="marks-total">{{ $student->displayTotal ?? '—' }}</td>
                     <td class="ka-num" data-testid="marks-average">{{ $student->displayAverage ?? '—' }}</td>
-                    <td class="gm-agg">{{ $student->aggregate ?? '—' }}</td>
+                    <td class="gm-agg" data-testid="marks-aggregate">{{ $student->aggregate ?? '—' }}</td>
                     <td data-testid="marks-division">{{ $student->division ?? '—' }}</td>
                     <td>
                         @if($showReportLink && $exam && $class)
@@ -108,7 +108,7 @@
                 </div>
                 <div>
                     <dt>Aggregate</dt>
-                    <dd>{{ $student->aggregate ?? '—' }}</dd>
+                    <dd data-testid="marks-phone-aggregate">{{ $student->aggregate ?? '—' }}</dd>
                 </div>
                 <div>
                     <dt>Division</dt>
