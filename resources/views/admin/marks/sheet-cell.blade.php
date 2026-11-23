@@ -3,7 +3,7 @@
 @elseif($cell && $cell->status === \App\Services\Results\ResultCell::WITHHELD)
     <span data-testid="marks-cell-withheld">Withheld</span>
 @elseif($cell && $cell->status === \App\Services\Results\ResultCell::UNAPPROVED)
-    <span data-testid="marks-cell-dash">—</span>
+    <span data-testid="marks-cell-pending" title="Not approved yet">{{ \App\Services\Results\ResultCell::PENDING }}</span>
 @elseif($cell && $cell->status === \App\Services\Results\ResultCell::MARKED && $cell->mark !== null)
     {{ $cell->sheetLabel() }}
     @if($cell->grade)
