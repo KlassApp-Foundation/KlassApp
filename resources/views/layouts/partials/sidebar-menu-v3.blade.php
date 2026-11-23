@@ -50,6 +50,7 @@
                 @endif>
                 <div class="sidebar-v3-row">
                     <a href="{{ $navHref($hrefItem) }}"
+                       {{ $navNavigate($navHref($hrefItem)) }}
                        class="sidebar-v3-link {{ $itemClass }} {{ $ancestor ? 'is-ancestor' : '' }} {{ $selfActive ? $activeClass : '' }}"
                        aria-label="{{ $row['label'] }}"
                        tabindex="0"
@@ -86,6 +87,7 @@
                             @endphp
                             <li>
                                 <a href="{{ $navHref($child) }}"
+                                   {{ $navNavigate($navHref($child)) }}
                                    class="sidebar-v3-child {{ $isChild ? $activeClass : '' }}"
                                    aria-label="{{ $child['label'] }}"
                                    tabindex="0"

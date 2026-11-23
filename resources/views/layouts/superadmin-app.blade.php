@@ -49,7 +49,9 @@
             @yield('base-footer')
         </div>
 
-        @include('layouts.partials.toshi-embed')
+        @persist('toshi-panel')
+            @include('layouts.partials.toshi-embed')
+        @endpersist
 
         @yield('outside-app')
 

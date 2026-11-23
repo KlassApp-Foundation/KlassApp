@@ -73,9 +73,17 @@
             @yield('base-footer')
         </div>
 
-        @include('layouts.partials.toshi-embed')
+        {{-- Persisted across wire:navigate swaps so the Toshi panel keeps its open
+             state, scroll position and draft, and the palette keeps its listener.
+             The sidebar is deliberately NOT persisted: a persisted sidebar would
+             keep a stale active item after the page changes. --}}
+        @persist('toshi-panel')
+            @include('layouts.partials.toshi-embed')
+        @endpersist
 
-        @include('layouts.partials.command-palette')
+        @persist('command-palette')
+            @include('layouts.partials.command-palette')
+        @endpersist
 
         @yield('outside-app')
 
