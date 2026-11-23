@@ -1,371 +1,555 @@
-# Agentic school onboarding — audit and build plan
+# Agentic onboarding audit: what exists, what conflicts, and what to build
 
-**Status:** audit only. No product code changed. Two docs-only PRs: this audit, and the AGENTS.md verification rule.
-**Scope:** everything in this repository that touches onboarding a school, and what is missing before an agent can onboard a school from a filled checklist workbook.
-**Audited at:** `main` @ `01d87832` (9 Nov 2026), plus the heads of named PR branches.
+Scope: everything in the KlassApp repository related to onboarding a school, so the work of turning
+a filled onboarding checklist workbook into a school can be planned as an agent.
 
----
+This audit is against `main` at `c9e7b369` (24 November 2026) and against the open pull requests and
+branches that exist at that date. It is not a snapshot of 9 November: `#1285` merged on 9 November
+(`2aaf327b`), so a large part of what the brief lists as "in review" is now `main`.
 
-## 0. Method, and what this document does not claim
+## How to read the evidence
 
-**What I did:** read the code, the docs, the PR diffs and the git history in my own checkout. Compared branches by diff, ancestor tests and file lists. Queried GitHub for PR state.
+Every claim below carries one of these marks:
 
-**What I did not do:** I did not start the app, click through any screen, query a database, or run the test suite. This machine has PHP at `/opt/homebrew/bin/php` but this checkout has no `vendor/`, so nothing ran. The preview at `http://127.0.0.1:8126` and its database belong to another agent and were not touched.
+| Mark | Meaning |
+| --- | --- |
+| **[code]** | I read the file at the stated ref (`origin/main`, or the stated branch). Line numbers are from that ref. |
+| **[git]** | From `git log`, `git diff`, or GitHub metadata (`gh pr view`). |
+| **[claim]** | A pull request body or commit message says so. I did not re-run it. |
 
-**Therefore:**
+**No claim in this document is "works", and none is "tests pass".** I did not click through the
+product, did not query a database, and did not run the test suite. Where a PR body reports tests or
+a click-through, it is marked **[claim]** and attributed. The three words the brief reserves —
+"exists in code", "tests pass", "works" — are used with exactly that meaning.
 
-- Every finding below is **"exists in code"** — I read it. None is "tests pass". None is "works".
-- The `State` column uses the requested vocabulary with this meaning: **working\*** = the code path is complete and reachable on main through its normal route; **partial** = it does a job incompletely, or the read path and write path disagree; **duplicated** = a second implementation of a job another piece already does; **abandoned** = superseded, unreachable, or a closed draft. The asterisk means: code-complete as read, not exercised.
+Two consequences worth stating up front:
 
-**Author names** are git authors. `Mucunguzi Moses` is the project account (GitHub `Mucunguzi256`; commits appear under both `moemucu@gmail.com` and the `85576870+Mucunguzi256@users.noreply.github.com` noreply). `Bariyo123` is a **different** GitHub account (`131570512`), with 10 commits on main and 19 open PRs. `Devteam` is the inherited upstream (GegoK12) code.
+1. A file existing and being wired are different claims. I checked the wiring (route → component →
+   service → model) where I make a wiring claim.
+2. Where two pieces of code disagree about the same job, I report the disagreement rather than
+   picking a winner by reading order.
 
 ---
 
 ## 1. What exists, wherever it lives
 
-### 1.1 The step model — one contract, three lists
+### 1.1 The setup wizard and "Finish setup"
 
-| Piece | Location | What it does | State | Author |
+| Piece | Location | What it does | State | Who |
 | --- | --- | --- | --- | --- |
-| `OnboardingStepsService` | `app/Services/OnboardingStepsService.php:47` (`ALL_STEPS`, 16 steps), `:121` (`OPTIONAL_STEPS` = teachers, students), `:131` (`FINISH_WITHOUT` = whatsapp_verify), `:301` (`isStepComplete`), `:210` (`applicableSteps`), `:398` (`progress`) | The canonical step list, per-step completion checks and the single progress number used by the dashboard banner, sidebar chip and setup checklist. | working\* | Mucunguzi Moses; last touched by Bariyo123 2026-10-27 (#1245) |
-| `StepRegistry` + 16 `Step` classes | `app/Onboarding/Steps/StepRegistry.php:28`; `app/Onboarding/Steps/Steps/*.php` (16 files) | Per-step contract: `key`, `applies`, `isComplete`, `prompt`, `handle`, `save`. Used by the Toshi v2 driver, and by the wizard for step **order**. | working\* | Mucunguzi Moses, 2026-10-03 |
-| `StepSchema`, `StepSchemaCatalog`, `StepIssueCatalog` | `app/Onboarding/Steps/StepSchema.php` (326 lines), `StepSchemaCatalog.php` (586), `StepIssueCatalog.php` (707) | Declares input types/options per step and the issue codes with causes and fixes. This is what would let an agent ask a question with buttons instead of prose. | working\*, but only the v2 driver reads it | Mucunguzi Moses |
-| `docs/onboarding/playbook.md` | 553 lines | The written spec: every step, choices, starting values, confirmation text, and every error code. **States at line 5 and line 553: "Exams and SchoolPay are not part of onboarding."** | working (doc) | Mucunguzi Moses, 2026-11-04 |
-| `docs/onboarding-engine-plan.md` | 440 lines | Design for the shared write engine; records nine "flagged disharmonies" and marks the doc design-only. | working (doc) | Mucunguzi Moses, 2026-10-26 |
-| `docs/proposals/2026-10-03-onboarding-steps.md` | 74 lines | Proposal for the shared registry; says Toshi-only steps need a disposition. | working (doc) | Mucunguzi Moses, 2026-10-03 |
+| Wizard route | `routes/admin.php:12-14` | `/admin/onboarding/wizard` renders the Blade shell | built | Mucunguzi Moses |
+| Wizard shell | `resources/views/admin/onboarding/wizard.blade.php:8` | Hides Toshi entirely (`data-toshi-manual-wizard`) and mounts the Livewire component | built | Mucunguzi Moses |
+| Wizard component | `app/Livewire/ManualOnboardingWizard.php` (2.3k lines) | 16 steps, inline add/paste/upload for teachers, students, class teachers; review step; edit-section; structure preview/confirm; class-teacher invites | built, unverified | Mucunguzi Moses (65 commits), Claude, Cursor Agent **[git]** |
+| Canonical step list | `app/Services/OnboardingStepsService.php:51-118` | `ALL_STEPS`: school_name, student_size, country, curriculum, school_category, emis, uneb_center, academic_year, standards, subjects, teachers, students, terms, fees, whatsapp_verify, plan_selection | built | Mucunguzi Moses |
+| Step applicability | `OnboardingStepsService.php:229-243` | Drops `emis` when the country has no ministry-code requirement; drops `uneb_center` and `school_category` when the curriculum is not UNEB | built | Mucunguzi Moses |
+| Write engine | `app/Services/OnboardingEngine.php` (2,766 lines) | One school-scoped method per step (`saveTerms`, `saveStandards`, `saveSubjects`, `saveFees` at `:1504`, `saveTeachers`, `saveStudents`, …) | built | Mucunguzi Moses (40 commits) **[git]** |
+| Upload pipeline | `app/Services/Onboarding/OnboardingUploadService.php` | Three kinds (`:32-36`): teachers, class_teachers, students. Chunked (100 students / 200 others), hash-deduped, per-row skips with row numbers, "missing streams" retry, resumable | built | Mucunguzi Moses |
+| Completion stamp | `app/Services/FinishSchoolOnboarding.php:30-45` | Sets `schools.onboarding_finished_at` once, dispatches `SchoolOnboardingFinished`; called by the wizard's `confirmReview()` (`ManualOnboardingWizard.php:1406`) and by Toshi's finish | built | Mucunguzi Moses |
+| "Finish setup" chip | `resources/views/layouts/partials/dashboard-v2-chip.blade.php:44-58` | Sidebar chip: done/total, next step, progress bar, links to `OnboardingEngine::setupDestination()` | built | Mucunguzi Moses |
+| Resume logic | `OnboardingStepsService::nextIncompleteStep()` (`:392`), `setupDestination()` | Returns the earliest incomplete step; `main` commit `6bb0a3f3` sends unfinished admins to it after login | built | Mucunguzi Moses / #1245 |
 
-**The three lists that must agree, and do not:**
+The wizard is the only onboarding path that a real school can use today without a flag: the route is
+plain `web` + auth, and every write goes through `OnboardingEngine`.
 
-| List | Where | Count | Contents that differ |
+Known open issue: **#793** (open, 21 Sep) — "On the onboarding flow, we're trying to invite teachers
+before they're uploaded, I think this can come after uploading teachers and students". It matches
+the order in `ManualOnboardingWizard` (structure step offers class-teacher invites before the teacher
+and student uploads). **[git]**
+
+### 1.2 Toshi's legacy scripted onboarding (v1)
+
+| Piece | Location | What it does | State | Who |
+| --- | --- | --- | --- | --- |
+| Panel component | `app/Livewire/AgentToshi.php` (7,379 lines) | The whole scripted setup conversation plus assistant mode | built, unverified | Mucunguzi Moses (153 commits) **[git]** |
+| Scripted step list | `AgentToshi.php:218-238` | **19** steps: school_info, student_size, country, emis, uneb_center, admin_account, co_admin_invite, academic_year, standards, subjects, teachers, students, terms, fees, **exams**, whatsapp_verify, **school_pay**, plan_selection, review | built | Mucunguzi Moses |
+| Mandatory subset | `AgentToshi.php:244-254` | 9 steps; exams, fees, school_pay, whatsapp_verify are optional | built | Mucunguzi Moses |
+| In-chat forms | `AgentToshi.php:171-204` (`$showTeacherForm`, `$showStudentForm`, `$showSubjectForm`, `$showFeeForm`, `$showExamForm`) rendered at `resources/views/livewire/agent-toshi.blade.php:170, 210, 288, 405, 482` | Real in-panel forms for subjects, teachers, students, fees, exams | built | Mucunguzi Moses |
+| Writes | 22 call sites of `ToshiActionService::` in `AgentToshi.php` | Each write is a static service call, not a tool | built | Mucunguzi Moses |
+| Mode gate | `app/Services/Toshi/ToshiUiSwitch.php` | Three modes per school: **preview** (default), **onboarding** (scripted), **assistant** (model). New schools default to preview (`config/toshi.php:60`) | built | Mucunguzi Moses |
+| Real-school gate | `app/Services/Toshi/ToshiOnboardingPath.php:22-58` + `app/Http/Middleware/SendRealSchoolToshiOnboardingToWizard.php:29-41`, applied in `app/Providers/RouteServiceProvider.php:122` and `MustBePrivilege.php:23` | A real school (`is_test` not 1) in onboarding mode that still has unfinished steps is redirected to the wizard, and its `toshi_mode` is rewritten to **preview**. Only `is_test = 1` keeps the chat path | built, **deliberate block** | Mucunguzi Moses |
+
+Two facts matter for the target design:
+
+- The legacy flow still contains **exams** and **school_pay**, which `docs/onboarding/playbook.md`
+  says are *not* part of onboarding (`playbook.md:7`). A school in `onboarding` mode can therefore
+  be walked into both, while the wizard cannot. **[code]**
+- For a real new school the panel is in **preview** mode, so the scripted flow does not run at all
+  until `schools.toshi_mode` is changed. **[code]**
+- Even if someone sets `toshi_mode = onboarding`, `ToshiOnboardingPath` sends a real school to the
+  wizard and flips the mode back to preview. The class docblock states the reason: "Real schools use
+  the Wizard until Toshi onboarding matches it" (`ToshiOnboardingPath.php:9-18`). **Toshi chat
+  onboarding is switched off for real schools by design, not by accident.** **[code]**
+
+### 1.3 Toshi v2: the StepRegistry chat loop
+
+| Piece | Location | What it does | State | Who |
+| --- | --- | --- | --- | --- |
+| Driver | `app/Onboarding/Steps/ToshiOnboardingV2Driver.php` (373 lines) | Chat loop over `StepRegistry`: `promptNext()` / `handleReply()`; returns question, options, input type | built, **off by default** | Mucunguzi Moses |
+| Flag | `config/toshi.php:46` | `toshi.onboarding_v2` = `TOSHI_ONBOARDING_V2`, default **false** | — | — |
+| Step schemas | `app/Onboarding/Steps/StepSchemaCatalog.php`, `StepSchema.php`, `StepField.php` | Declarative fields, options, validation rules and a `confirm` flag per step | built, **not used by any UI** (only by the step classes and tests) | Mucunguzi Moses |
+| Playbook lock | `tests/Feature/Onboarding/Steps/PlaybookSyncTest.php` | Keeps `docs/onboarding/playbook.md` codes in sync with the step classes | built, not run by me | Mucunguzi Moses |
+| Parity harness | `tests/Support/Onboarding/OnboardingParityHarness.php` | Compares wizard and v2 driver outcomes | built, not run by me | Mucunguzi Moses |
+
+Limits of v2 as written:
+
+- Buttons are **option lists**, not forms. `input_type` is text; there is no multi-field form.
+- The only confirm card is the classes "apply suggested structure → Confirm" path
+  (`ToshiOnboardingV2Driver.php:33-150`). `docs/onboarding/playbook.md:11` says so explicitly:
+  "The confirmation text is the wording for a confirm card. That card is not in the setup driver
+  yet." **[code]**
+- `StepSchemaCatalog` already carries a `confirm` boolean per step, but no renderer consumes it.
+
+### 1.4 The checklist-driven prototype: PR #1307
+
+This is the piece closest to the target, and it is not on `main`.
+
+| Piece | Location | What it does | State | Who |
+| --- | --- | --- | --- | --- |
+| PR | **#1307** `poc/toshi-checklist-onboarding` → `main`, draft | "T-131: checklist onboarding in the Toshi panel (demo only)". **+12,207 / −99 in 123 files** **[git]** | prototype, demo-gated, unmerged | Mucunguzi Moses (commits 9–11 Nov) **[git]** |
+| Panel flow | `app/Livewire/ChecklistOnboarding.php` (1,432 lines) | Upload card, summary/flags card, per-step preview and result cards, completion card | prototype | Mucunguzi Moses |
+| Orchestration | `app/Services/Onboarding/ChecklistOnboardingService.php` (2,573 lines) | `ingest`, `previewCard`, `apply`, `skipStep`, `skipFlags`, `abandon`, `teacherInvitesCard`, `sendTeacherInvites`, `whatsappCard`, `completionCard` | prototype | Mucunguzi Moses |
+| Conversation | `ChecklistConversation.php` (479 lines), `ChecklistNarrator.php` (115), `ChecklistAssistantPrompts.php` (208) | Turns service cards into chat messages/buttons | prototype | Mucunguzi Moses |
+| Gate | `ChecklistOnboardingGate.php` (25 lines) | Enabled only when `toshi.checklist_onboarding_poc` is on **and** the school is `is_demo` or `is_test` | prototype | Mucunguzi Moses |
+| Invite hold | `ChecklistInviteHold.php` (27 lines) | Issues invite rows but suppresses email/WhatsApp during apply | prototype | Mucunguzi Moses |
+| Plan store | `app/Models/OnboardingPlan.php` (42 lines) | Draft school-scoped plan (encrypted payload) | prototype | Mucunguzi Moses |
+| Converter | `ChecklistWorkbookConverter.php` (**1,019 lines**) | Workbook → importer CSVs + `no-importer/` + `pending/` + `report.md`, flags with tab and row | prototype | Mucunguzi Moses |
+| Tests | `tests/Feature/Onboarding/ChecklistOnboardingPocTest.php` (1,629 lines), `ChecklistConvertTest.php` (263) | PR body: 16 tests, 192 assertions, passed **[claim]** | unverified by me | Mucunguzi Moses |
+
+What the flow does, read from the code:
+
+1. **Upload** lives in the Toshi panel ("Onboard from checklist" button).
+2. **Ingest** converts the workbook, stores an encrypted, school-scoped `OnboardingPlan`, and
+   returns a summary card. **[code]**
+3. **DPA gate**: the converter returns `blocked` when the Confirmations tab's data-processing row is
+   not `Yes`, with the tab and row in the message (`ChecklistWorkbookConverter.php:200-222` on the
+   #1291 branch; the same method is in #1307). The card is a refusal, and nothing is stored.
+4. **Flags**: rows that do not fit are listed with tab and row; two buttons, "Skip these rows" and
+   "Stop, I'll fix the workbook". **[claim, PR body]** — the button handlers exist
+   (`ChecklistOnboarding.php`, `skipFlags`/`abandon` in the service).
+5. **Five walk steps** (`ChecklistOnboardingService.php:42`):
+   `terms → standards → subjects → teachers → students`.
+   Each preview card shows create / already exists / conflict, then **Confirm step** or **Skip step**.
+   Confirm writes through `OnboardingEngine::saveTerms/saveStandards/saveSubjects/…` in one
+   transaction (`writeStep()`, `:962`).
+6. **Teacher invites** can be sent from a card (`sendTeacherInvites()`, `:1201`): it issues or
+   reissues a `TeacherInvite` and sends `TeacherInviteLinkMail` with a real `Mail::to`.
+7. **Completion card** (`completionCard()`, `:1458`) checks learners per class/stream against the
+   workbook, KLS numbers present, and phones in E.164; it reports "Invites ready: N".
+
+Stated cuts, from the PR body and the code:
+
+- **Class teachers are listed, not written.** `OnboardingEngine` has no class-teacher write, so the
+  homeroom step is the first scope cut. **[claim]** — confirmed: no such method in
+  `OnboardingEngine.php` **[code]**.
+- **No fees step.** `WALK` has five keys and `fees` is not one of them. **[code]**
+- **No WhatsApp sends** in the completion path; teacher invites are email only. **[claim]**
+- **Demo/test schools only** (`ChecklistOnboardingGate`), flag off by default elsewhere.
+
+### 1.5 The importers
+
+| Import | Location | Trigger | What it takes / does | State | Who |
+| --- | --- | --- | --- | --- | --- |
+| Students (+ parents) | `app/Imports/UsersImport.php` | `/admin/import` → `ImportMemberController@import` (`routes/admin.php:513-514`) | `WithHeadingRow`; requires `firstname` + `class`; creates student and parent, links them; per-row failures collected; plan limit; phone normalised by country | legacy, built | Elijah-ug (8 commits in `app/Imports`) **[git]** |
+| Teachers | `app/Imports/TeachersImport.php` | `/import/teacher`, `/importTeachers` (`routes/admin.php:405-406`) | Requires `firstname`; country, qualification, plan limit | legacy, built | Elijah-ug / Mucunguzi Moses |
+| Parents (standalone) | `app/Imports/ParentsImport.php` | `/import/parents`, `/importParents` (`routes/school-imports.php:8-9`) | Requires `firstname` + `mobile_no`; creates parent only, **no child link**; duplicate check on phone/email | built, added by **#1250** (merged 9 Nov) | Mucunguzi Moses **[git]** |
+| Teacher links (subject/class assignment) | `app/Http/Controllers/Admin/TeacherLinkImportController.php:41-210` | `/teacher-links/import` (`routes/admin.php:43`) | CSV/XLSX parse (`:226`), matches teacher by name/phone, `Teacherlink::firstOrCreate` (`:171`) | legacy, built | Elijah-ug |
+| Class teachers | **No admin importer.** Only `ManualOnboardingWizard::importClassTeacherUpload()` (`:3033`) → `resolveClassTeacherLink()` | Wizard upload only | Per-row skips (missing name, bad email, invalid phone, unknown class); writes the class-teacher link | built, wizard-only | Mucunguzi Moses |
+| Exams | **No exam importer.** Marks import only: `MarksImportController` (`routes/admin.php:913-918`), `MarksSheetReader` | Per exam | Imports marks for an existing exam — not exam creation | built | Mucunguzi Moses |
+| Fees as payments | **No importer on `main`.** Fee *structure* is entered in the wizard (`FeesStep`, `OnboardingEngine::saveFees()` at `:1504`) | Wizard | Categories/amounts per class; no payment rows | built | Mucunguzi Moses |
+| Term workbook (marks) | `app/Services/Marks/TermWorkbookImporter.php` (916 lines) on unmerged `feat/term-workbook-importer` (12 Nov) | Not wired on `main` | Imports a term workbook as drafts, does not submit marks | unmerged | Mucunguzi Moses |
+
+Two duplications inside this table:
+
+- `UsersImport` creates a parent per student row, while `ParentsImport` creates parents separately.
+  Two different notions of "import a parent", with different required fields and different duplicate
+  rules. **[code]**
+- Student import exists twice: the legacy `UsersImport` (admin screen) and the wizard's
+  `OnboardingUploadService` + `runRosterImport()` (`ManualOnboardingWizard.php:732`), which is
+  chunked, idempotent by file hash, and reports per-row skips. They do not share code. **[code]**
+
+### 1.6 The four commands and the runbook
+
+| PR | Branch | Files | What it does | State | Author |
+| --- | --- | --- | --- | --- | --- |
+| **#1286** | `t077-phones-to-e164` | `PhonesToE164Command.php` (206), `PhoneE164Converter.php` (89), 236 lines of tests | `phones:to-e164`, **dry run by default**, reports what it would change | draft, 1 commit, **345 behind main** | Claude **[git]** |
+| **#1287** | `t105-names-normalize` | `NamesNormalizeCommand.php` (116), `PersonNameNormalizer.php` (125), 210 lines of tests | `names:normalize`, dry run by default | draft, 1 commit, 345 behind | Claude |
+| **#1291** | `t079-checklist-convert` (base `t077`) | `ChecklistConvertCommand.php` (91), `ChecklistWorkbookConverter.php` (817), 216 lines of tests | `checklist:convert`: workbook → students/teachers/teacher-links/class-teachers CSVs, `no-importer/`, `pending/`, `report.md`; exits 1 and writes nothing when the DPA row is not Yes or "All Learners" is empty | draft, stacked on #1286, 3 commits, 345 behind | Claude |
+| **#1296** | `t089-onboarding-runbook` | `docs/onboarding/school-onboarding-runbook.md` (120) | The human procedure for the same job: gates, export, convert, fix flagged rows, backup, import order, invites, checks | draft, 1 commit, 345 behind | Claude |
+| **#1293** | `t094-parent-student-access` | `docs/product/parent-student-access.md` (121) | Design for safe first sign-in of imported parents/students | draft, 1 commit, 345 behind, **superseded in part by code already on main** | Claude |
+
+The converter's contract is worth quoting because it is the de facto input spec:
+
+- Every data tab: row 1 header, row 2 a grey example row (skipped), data from row 3; a header ending
+  ` *` is required; rows with an empty first column are skipped
+  (`ChecklistWorkbookConverter.php:16-21`).
+- Output files and headers are fixed at `:33-38` (`students.csv`, `teachers.csv`,
+  `teacher-links.csv`, `class-teachers.csv`).
+- Canonical class names are hardcoded at `:23-27`: Baby/Middle/Top Class, Primary One–Seven,
+  Senior One–Six.
+
+**#1291 is contained in #1307** (`git merge-base --is-ancestor origin/t079-checklist-convert
+origin/poc/toshi-checklist-onboarding` is true), and #1307's converter is the larger superset
+(1,019 vs 817 lines). #1286 is also contained in #1307. #1287 is not. **[git]**
+
+### 1.7 Invite links and the invite services
+
+| Service | Token / lifetime | Channel | Used by | State |
+| --- | --- | --- | --- | --- |
+| `TeacherInviteLinkService` | 64 random chars, stored as SHA-256 (`:22`, `:58-64`), single use, expiry `config/invites.php:19` (72 h) | Email; WhatsApp only when `staff_whatsapp_enabled` (`config/invites.php:24-29`, default **false** because Meta has not approved the template) | Toshi forms, teacher admin screens, #1307 | built |
+| `ClassTeacherInviteService` | same pattern | Email | Class setup page (`routes/admin.php:27-31`) | built |
+| `CoAdminInviteLinkService` | same pattern | Email | Co-admin step | built |
+| `SchoolInviteService` | 7 days (`school_expiry_hours`, 168) | Email | Early-adopter school invites | built |
+| `StudentParentAccountInviteService` | Reuses `TeacherInvite` rows; `/invite/account/{token}` (`routes/web.php:261-264`) | Email (only when the address is not a generated `.local` one: `emailIsUsable()`, `:44`) | Profile screens "resend setup" | built; **already in `main`** (commit `ccd56ead`, 5 Nov, via #1285) |
+
+First sign-in today, read from code:
+
+- Imported people get `Str::random(16)` and `is_reset = 1` (`app/Support/UserProvisioning.php`), and
+  a generated `@<school-slug>.local` email when the row has none
+  (`OnboardingEngine.php:2638`). **[code]**
+- The only self-service recovery is an email code (`ForgotPasswordController`,
+  `PasswordResetCodeController`). No phone/WhatsApp reset. **[code]**
+- `StudentParentAccountInviteService` is the safe path that shipped, but nothing in the onboarding
+  flows calls it automatically; an admin must press "resend setup" on a profile. **[code]**
+
+### 1.8 Toshi's authorization gate and confirm-before-write
+
+**Authorization**
+
+- `ToshiUiSwitch` decides *whether the panel exists at all* for a user: preview / onboarding /
+  assistant, per school, with public-demo users forced to preview
+  (`app/Services/Toshi/ToshiUiSwitch.php:20-59`). **[code]**
+- `ToshiActionService::getRoleCapabilities($usergroup_id)` returns `actions` and `scope`; the panel
+  returns early when there are no actions or `scope === 'none'`
+  (`AgentToshi.php:402-406`). **[code]**
+- Per-tool tenant scoping is inside each tool/service call, not in the gate; the comment at
+  `AgentToshi.php:3398` says the capability scope is advisory UI context, not the real check.
+  **[code]**
+- The real-school redirect is enforced in middleware on the authenticated admin group
+  (`RouteServiceProvider.php:122`) and again inside `MustBePrivilege` (`:23`), so a deep link to a
+  Toshi screen does not bypass it. **[code]**
+- Tool-level authorization: `AuthorizesToshiAction` (`app/AiAgents/Concerns/AuthorizesToshiAction.php`)
+  checks `Gate::inspect('toshi-school-action')` plus an explicit effective-school scope
+  (`assertEffectiveSchoolScope`), with a deputy-admin variant. **[code]**
+
+**Confirm-before-write**
+
+- `ConfirmsBeforeWrite` trait → `ToshiActionService::confirmationPayload()`
+  (`app/AiAgents/Concerns/ConfirmsBeforeWrite.php`, `ToshiActionService.php:52-70`).
+- The gate is a **process-wide static**: `ToshiActionService::$bypassConfirm` (`:40`). `confirmYes()`
+  sets it `true`, calls the tool, and resets it in a `finally` (`AgentToshi.php:1803`, `:1837`).
+  **[code]**
+- The pending confirmation is Livewire state plus a session key (`AgentToshi.php:1623`
+  `toshi_pending_confirm_<messageId>`); WhatsApp has a table instead
+  (`whatsapp_pending_confirmations`, migration `2026_08_01_194203`). **[code]**
+- There is **no immutable audit row** for a panel confirmation: who confirmed what, and when, lives
+  in the session and disappears with it. The MCP path does have an auditor
+  (`ToshiMcpCallAuditor`), the panel path does not. **[code]**
+
+### 1.9 MCP servers and tools
+
+- **Remote connectors are real**: `config/toshi.php:274-330` defines Slack, Notion and Google Drive
+  MCP endpoints with OAuth client ids/secrets. Write gates at `:354-364` are per-connector
+  (`deny` default, `classify`, `allowlist`) with `master_switch` default **false**. **[code]**
+- Implementation: `app/Services/Toshi/ToshiMcpClient.php`, `McpWriteGate.php`,
+  `ToshiMcpCallAuditor.php`, `AuditingMcpClient.php`, `ApprovableMcpTool` (pending approval →
+  `PendingMcpApprovalException` → panel confirm card). **[code]**
+- `app/Mcp/` contains **only a spike**: `SpikeSlackMockServer` plus three Slack spike tools. It is
+  not a product MCP server and nothing in onboarding uses it. **[code]**
+- `upgrade-prep/ai-mcp` (16 Nov) is a framework migration (Laravel AI 1.4 / MCP 1.2), not an
+  onboarding feature. **[git]**
+
+None of this is wired into onboarding. For an onboarding agent, MCP is infrastructure that exists
+but has no onboarding tools behind it.
+
+### 1.10 Onboarding specs in `docs/`
+
+| Doc | Size / last touch | What it says | Is it true of the code? |
 | --- | --- | --- | --- |
-| `OnboardingStepsService::ALL_STEPS` | `OnboardingStepsService.php:47` | 16 | Has `curriculum`, `school_category`; no `admin_account` |
-| `StepRegistry::STEP_CLASSES` | `StepRegistry.php:28` | 16 | Same keys as above |
-| `AgentToshi::$steps` | `app/Livewire/AgentToshi.php:218` | 19 | Has `admin_account`, `co_admin_invite`, `exams`, `school_pay`, `review`; no `curriculum`/`school_category` |
+| `docs/onboarding/playbook.md` | 553 lines, 4 Nov | The setup script for admin and supporter: every step, question, defaults, confirmation text, summary line, every error code with cause and fix. Exams and SchoolPay are out. | **Yes** — it is the best spec in the repo, and `PlaybookSyncTest` locks codes to step classes. One exception: it says the confirm card "is not in the setup driver yet" (`:11`), which is still true. |
+| `docs/onboarding-engine-plan.md` | 440 lines, 26 Oct | Design for `OnboardingEngine` as the single write layer. Header says "design-only… No implementation code has been written." | **Stale header** — the engine exists (2,766 lines) and both the wizard and #1307 write through it. |
+| `docs/onboarding-defaults-skill.md` | 91 lines, 25 Aug | Prefill real defaults instead of blank forms. Header says "not yet implemented in any UI." | **Partly stale** — `SchoolTypePreset` and `CountryProfiles` prefill structure/subjects/terms, in both wizard and Toshi. |
+| `docs/wizard-bulk-upload/`, `docs/wizard-review-preview/` | screenshots + notes | Wizard upload and review evidence | Historical. |
+| `docs/onboarding/school-checklist-guide.md` (**only on `docs/onboarding-school-checklist`**, 10 Nov) | 1 file, ~210 lines | How a school fills the workbook: tab order, yellow cells, required `*` headers, per-tab columns, formats, common mistakes | **This is the input contract**, and it is not on `main`. It also says School Details and Confirmations start on **row 2**, while the converter's docblock assumes a grey example row 2 for every data tab (`ChecklistWorkbookConverter.php:16-21`). The converter's form/`checkConfirmations()` readers tolerate it, but the two documents disagree and should be reconciled before either ships. |
+| `docs/onboarding/marks-workbook-guide.md` (**only on `docs/onboarding-marks-workbook`**, 10 Nov) | 1 file | The marks workbook layout (KLS, name, three blocks) | Adjacent to onboarding; not the setup input. |
+| `docs-site/help/setup-and-people/*` (**only on `docs/onboarding-attendance-guides`**, 16 Nov) | 9 files | User-facing help: onboarding steps, invite a class teacher, parent and student setup links, plan limits | Useful wording to reuse; unmerged. |
+| `docs/onboarding/school-onboarding-runbook.md` (only on #1296) | 120 lines, 8 Nov | The human runbook for a filled workbook | Accurate about `main` at 8 Nov; **wrong now** on one point: it says T-094 first sign-in is "not built", but `StudentParentAccountInviteService` is in `main` via #1285. |
 
-The wizard guards itself against drift (`ManualOnboardingWizard.php:1659` throws if a registry key is missing from the service), but **nothing guards the Toshi list**, which is the list that still asks for exams and SchoolPay.
+### 1.11 TODOs and issues that mention onboarding
 
-### 1.2 The setup wizard and "Finish setup"
+- **No `TODO`/`FIXME`/`HACK`** in `app/Onboarding/**`, `OnboardingEngine.php`,
+  `ManualOnboardingWizard.php` or `AgentToshi.php` (grep, 0 hits). The debt is structural, not
+  annotated. **[code]**
+- Open issues: **#793** (wizard invites teachers before upload — see 1.1), #1090 (builder status log,
+  not onboarding), #629 (nav, unrelated). **[git]**
+- PR **#1183** "Record the wizard and Toshi v2 onboarding pass" is a `knowledge.md`-only draft, 413
+  commits behind, open since 5 Nov. It records a pass that has since been overtaken. **[git]**
 
-| Piece | Location | What it does | State | Author |
-| --- | --- | --- | --- | --- |
-| `ManualOnboardingWizard` (Livewire) | `app/Livewire/ManualOnboardingWizard.php` (4,293 lines); `mount()` `:375`; `refreshSteps()` `:1659`; `confirmReview()` `:1361` | The live setup path: 16 steps + a synthetic Review. Each step validates, saves through `OnboardingEngine`, and moves on. Bulk uploads for teachers, class teachers and students are queued. | working\* | Mucunguzi Moses (66 commits, 2026-08-09 → 2026-11-04) |
-| Route and shell | `routes/admin.php:12` → `resources/views/admin/onboarding/wizard.blade.php:11` | `/admin/onboarding/wizard`; Toshi is hidden on this page so its checklist cannot compete. | working\* | Mucunguzi Moses |
-| Path choice | `app/Http/Controllers/OnboardingChoiceController.php`; `resources/views/auth/onboarding-choice.blade.php` | First-login choice: wizard or Toshi. Sets `schools.toshi_mode` (`preview` for wizard, `onboarding` for Toshi). | working\* | Mucunguzi Moses |
-| Real schools forced to the wizard | `app/Services/Toshi/ToshiOnboardingPath.php:22` (`openFor` requires `is_test = 1`); `app/Http/Middleware/SendRealSchoolToshiOnboardingToWizard.php` | A non-test school in `toshi_mode = onboarding` is redirected to the wizard on the next full page load, with the flash "Guided chat setup with Toshi is coming soon." | working\* | Mucunguzi Moses; last Bariyo123 2026-10-27 |
-| Finish | `app/Services/FinishSchoolOnboarding.php`; `OnboardingStepsService::markOnboardingFinished` `:173` | Stamps `schools.onboarding_finished_at`, runs one-time follow-ups, notifies Toshi. Idempotent. | working\* | Mucunguzi Moses |
-| "Finish setup" surfaces | `resources/views/partials/setup-banner.blade.php`; `resources/views/livewire/partials/toshi-setup-checklist.blade.php` | Dashboard banner, sidebar chip and checklist, all reading `OnboardingStepsService::progress()`. | working\* | Mucunguzi Moses |
+### 1.12 What the merge state actually is
 
-Note on the word "Finish": there is no separate "Finish setup" step type. Finishing is `confirmReview()` → `FinishSchoolOnboarding::finish()`, and it is blocked only by `blockingIncompleteSteps()` — teachers, students and WhatsApp are explicitly not blocking (`OPTIONAL_STEPS`, `FINISH_WITHOUT`).
-
-### 1.3 Toshi's onboarding
-
-| Piece | Location | What it does | State | Author |
-| --- | --- | --- | --- | --- |
-| **v1 scripted flow** | `AgentToshi.php:218` (19 steps), `:244` (9 mandatory), handlers `:4536`–`:6367`, `commitAll()` `:6873` | Chat that collects the school, admin, year, classes, subjects, teachers, students, terms, fees, exams and SchoolPay, then writes on Confirm. | working\*, **gated**: only `is_test` schools can use it (`ToshiOnboardingPath.php:22`); real schools are redirected to the wizard | Mucunguzi Moses (156 commits, 2026-06-20 → 2026-10-26) |
-| **`commitAll()` create vs complete** | `AgentToshi.php:6873` | Two hand-written branches. Both now delegate content writes to `OnboardingEngine`, but school creation, admin creation, academic year, co-admin invite, exams and WhatsApp still differ branch by branch. | **duplicated** (two branches, one job) | Mucunguzi Moses |
-| **v2 registry flow** | `app/Onboarding/Steps/ToshiOnboardingV2Driver.php` (373 lines); `config/toshi.php:46` `onboarding_v2` (default **false**); `AgentToshi::enterOnboardingV2` `:1120`, `actionOnboardingV2` `:1159`, `selectOnboardingV2Option` `:1220` | A chat loop over `StepRegistry` with option buttons (`onboardingV2Options`) and typed input. This is the "rebuild with in-chat buttons and forms". | working\*, **gated off by default**; the config comment says it is for test schools until Rasta enables it | Mucunguzi Moses |
-| **Checklist-driven onboarding** | `AgentToshi::getOnboardingChecklistProperty` `:741`, `detectMissingSteps` `:755`, `jumpToChecklistStep` `:809`; `resources/views/livewire/partials/toshi-setup-checklist.blade.php` | Reads `OnboardingStepsService::steps()`, lists what is missing as clickable rows, jumps the chat to that step. | working\*, same gating as the flow it drives | Mucunguzi Moses |
-| **Exams and SchoolPay steps** | `handleExams` `:6112`, `handleSchoolPay` `:6322` | Still asked in the v1 flow. `handleSchoolPay` asks for an API password and prints a `klassapp.xyz/api/schoolpay/webhook` URL. | working\*, but contradicts the playbook (`playbook.md:5`, `:553`) and is Uganda-only | Mucunguzi Moses |
-| **Tools Toshi calls** | `TOOL_CLASS_MAP` `AgentToshi.php:48` (60+ tools); the 9 onboarding-relevant ones are `AddStudentTool`, `AddTeacherTool`, `AddParentTool`, `CreateSubjectTool`, `CreateTermTool`, `CreateFeeTool`, `CreateStreamTool`, `AssignTeacherTool`, `SetCurriculumTool` | Each write tool returns a `__tier2_confirm` preview, executes only after Confirm, then re-queries to verify. | working\* | Mucunguzi Moses |
-
-The single most useful thing in this section: **the scripted Toshi onboarding is not the path a real school takes today.** It survives for demo/test schools, and its v2 replacement is behind a flag that is off. The wizard is the product.
-
-### 1.4 Importers, and how they are triggered
-
-| Entity | Path and trigger | What it writes | Reporting | State | Author |
-| --- | --- | --- | --- | --- | --- |
-| **Students (admin page)** | `GET /admin/import` → `ImportMemberController@index` (`ImportMemberController.php:32`); `POST /importUsers` → `@importUsers` `:41` → `app/Imports/UsersImport.php` (Maatwebsite) | `users`, `userprofiles`, `student_academics`, parent user via `CreateParent` | **Count only.** Rows with no `firstname` or `class` are skipped with a `Log::warning` (`UsersImport.php:45-48`); a mid-file exception calls **`dd($e->getMessage())`** (`:210`), killing the request after a partial write. | partial | Devteam 2025; last Mucunguzi Moses 2026-10-07 |
-| **Students (wizard)** | `studentUpload` → `queueUpload()` `:746` → `onboarding_uploads` row → `ProcessOnboardingUpload` job → `OnboardingUploadService::import()` `:112` → `OnboardingEngine::saveStudents` | Same tables, in chunks, with a missing-stream retry and per-row `skips`/`notes` arrays | Per-row skip reasons, missing-stream list with "create streams and retry" | working\* | Mucunguzi Moses |
-| **Teachers** | `GET /import/teacher` → `TeacherImportExportController@importCreate` `:87`; `POST /importTeachers` → `@import` `:96` → `app/Imports/TeachersImport.php` | `users`, `userprofiles`, qualifications, `teacherlinks` | Count only; blank rows skipped silently (`TeachersImport.php:36`) | partial | Devteam 2025; last Mucunguzi Moses 2026-10-21 |
-| **Teacher links** (subject × class) | `POST /teacher-links/import` → `TeacherLinkImportController@import` `:42` | `teacherlinks` | Per-row errors, but only the first 3 are shown (`:172`) | partial | Mucunguzi Moses |
-| **Class teachers** | `POST /admin/class-teachers/import`-style wizard upload → `importClassTeacherUpload()` `:2974` → `writeClassTeacherAssignment()` `:3239`; or `ClassTeacherInviteController@store` `:59` → `ClassTeacherInviteService::invite` `:41` | `standard_links.class_teacher_id`, `teacher_invites` | Per-row skip reasons; invite path reports success/failure per person | working\* | Mucunguzi Moses |
-| **Exams** | **No importer exists.** Only Toshi's form (`showExamFormFn` `:2570` → `OnboardingEngine::saveExams` `:2331`) and the separate marks import (`MarksImportController`) | `exams` | — | missing (as an import) | — |
-| **Fees as payments** | **No fee-structure importer exists.** The wizard and Toshi fee forms write fee categories via `OnboardingEngine::saveFees` `:1503`; the runbook (step 9) says the app's fee upload template is a **payments** file, not a fee structure | `fees_categories`, fee rows | — | missing (as an import) | — |
-
-Two consequences worth stating plainly:
-
-1. `checklist:convert` (PR #1291) writes `students.csv`, `teachers.csv`, `teacher-links.csv`, `class-teachers.csv` with headers that **do** match what `OnboardingNameListExtractor` reads (`class`, `stream`, `parent name`, `parent phone`, `gender`, `date of birth`, `school student id` — aliases at `app/Services/OnboardingNameListExtractor.php:141-200`, teacher-link columns at `:406-470`). So those files feed the **wizard's** upload path on main. They do not feed `/importUsers`, which wants `firstname`/`lastname`.
-2. The converter's report text refers to "the exam importer" (`ChecklistWorkbookConverter::report()`), but no exam importer exists in the codebase. That sentence is wrong today.
-
-### 1.5 The five T-0xx artefacts
-
-| PR | Branch / base | Files | What it does | State | Author |
-| --- | --- | --- | --- | --- | --- |
-| **#1286** `phones:to-e164` | `t077-phones-to-e164` → `main` | 4 (all new): command, `app/Services/Phones/PhoneE164Converter.php`, 2 tests | Converts stored phones to E.164 using each school's country; 6 tables; **dry run by default**; anything unparseable is counted, sampled, logged and left alone | **draft PR**, additive | Mucunguzi256 |
-| **#1287** `names:normalize` | `t105-names-normalize` → `main` | 4 (all new): command, `app/Services/People/PersonNameNormalizer.php`, 2 tests | Splits "AGNES KALIISA" into first/last and proper-cases; staff and parents only; students untouched; `userprofiles` only, never `users.name`; dry run by default | **draft PR**, additive | Mucunguzi256 |
-| **#1291** `checklist:convert` | `t079-checklist-convert` → **`t077-phones-to-e164`** (stacked on #1286) | 3 (all new): `ChecklistConvertCommand.php`, `app/Services/Onboarding/ChecklistWorkbookConverter.php`, test | Reads the filled workbook; **refuses to write anything unless the DPA row on Confirmations is "Yes"** (`checkConfirmations` `:200`); validates every tab and flags `{tab, row, field, message}`; writes the four importer CSVs, `no-importer/`, `pending/` and `report.md`; **never touches the database** | **draft PR**, stacked | Mucunguzi256 |
-| **#1293** parent/student first sign-in | `t094-parent-student-access` → `main` | 1 doc | Diagnoses why imported parents/students cannot sign in (random password, `is_reset = 1`, generated `.local` email, reset-by-email only) and proposes `AccountInviteLinkService` for **existing** users, with email / WhatsApp / hand-over channels | **draft PR**, design only | Mucunguzi256 |
-| **#1296** onboarding runbook | `t089-onboarding-runbook` → `main` | 1 doc (120 lines) | The human procedure around the workbook: gates (DPA, privacy approval, AI off, staging rehearsal), export, convert, fix flagged rows, backup, import order, invites, post-import checks, record | **draft PR**, docs only | Mucunguzi256 |
-
-### 1.6 Invite links and the invite service
-
-| Invite | Issuer / claimer | Token | Lifetime | What claim sets | State | Author |
-| --- | --- | --- | --- | --- | --- | --- |
-| **Early-access school invite** | `SchoolInviteService::issue` `:31`, `::claim` `:130`; `SchoolInviteClaimController`; route `/invite/school/{token}` | 64 random chars, stored as SHA-256, email-bound, single-use | 168 h (`config/invites.school_expiry_hours`) | Creates the School + admin user, marks claimed with a `whereNull('claimed_at')` guard | working\* | Mucunguzi Moses |
-| **Teacher invite** | `TeacherInviteLinkService::issue` `:35`, `::claim` `:185`; `TeacherInviteController`; `/invite/teacher/{token}` | 64 chars, SHA-256, single-use, reissue invalidates the old one | 72 h (`invites.expiry_hours`) | Creates a **new** User with the teacher's chosen password, `is_reset = 0`, assigns `class_teacher_id` when given | working\* | Mucunguzi Moses |
-| **Class-teacher invite** | `ClassTeacherInviteService::invite` `:41`; `ClassTeacherInviteController` `:20`, `:59`, `:82` | Delegates to teacher invite | 72 h | Either reassigns an existing teacher (`existing_teacher_id`) or issues a teacher invite and assigns on claim | working\* | Mucunguzi Moses |
-| **Co-admin invite** | `CoAdminInviteLinkService`; `CoAdminInviteController`; `/invite/co-admin/{token}` | Same pattern | same | Creates/activates a co-admin | working\* | Mucunguzi Moses |
-| **Set-password link** | `app/Support/SetPasswordLink.php`; used by Toshi create mode when no password is chosen (`AgentToshi.php:6934`) | Signed link | short | Sets a password on an existing account | working\* | Mucunguzi Moses |
-| **Imported parent / student** | **none** | — | — | — | **missing** (design: #1293) | — |
-
-The pattern is sound and repeated four times; the gap is that it only ever activates a **new** user. Imported parents and students already exist with a random password nobody knows, so none of these links can help them.
-
-### 1.7 Toshi's authorization gate and confirm-before-write
-
-| Layer | Location | What it enforces |
-| --- | --- | --- |
-| **School action gate** | `app/AiAgents/Concerns/AuthorizesToshiAction.php` — `authorizeSchoolAction()` uses `Gate::inspect('toshi-school-action')`, plus `assertEffectiveSchoolScope()` (target must belong to the actor's school) | Actor may act for this school, on this record |
-| **Deputy allowance** | `authorizeSchoolOrDeputyAction()` — allows `toshi-deputy-action` for ug4, owner-only tools must use the admin path | ug4 cannot use owner-only tools (`AddCoAdminTool`, `SetCurriculumTool`) |
-| **Capability list** | `ToshiActionService::can()` `:341` → `getRoleCapabilities()`; ug3/ug4 action arrays at `:240-266` | Coarse per-role action list (`add_student`, `create_subject`, …) |
-| **Plan limits** | `ToshiActionService::enforcePlanLimit()` | Never blocks a write; returns a notice after the fact |
-| **Confirm before write** | `app/AiAgents/Concerns/ConfirmsBeforeWrite.php:26` → `ToshiActionService::confirmationPayload()` `:55` → `__tier2_confirm` JSON → `AgentToshi` shows a card → `confirmYes()` `:1426` → `executeConfirmedTool()` `:1790` with `bypassConfirm` | No tool write without an explicit Confirm |
-| **Post-write verification** | `VerifiableTool::verify()`; all 9 onboarding-relevant tools implement it | Re-queries after write; a mismatch is reported as "appeared to succeed but verification could not confirm" (`AgentToshi.php:1814`) |
-| **Superadmin MCP writes** | `app/Livewire/Superadmin/Toshi/PlatformApprovalGate.php`, `app/Ai/Tools/Toshi/ApprovableMcpTool.php` + `app/Services/Toshi/McpWriteGate.php` | MCP write tools pause for approval; write classification is config-driven, and **defaults to write** when a connector is not classified |
-
-Two limits worth recording: the confirm gate is **per tool call**, not per plan (a 30-student import is 30 confirmations or one bulk preview); and the wizard, the imports and the CLI commands have **no** equivalent gate.
-
-### 1.8 MCP server and tools
-
-| Piece | Location | What it is |
-| --- | --- | --- |
-| MCP **client** layer | `app/Services/Toshi/ToshiMcpClient.php`, `AuditingMcpClient.php`, `AuditingMcpClientManager.php`, `ToshiMcpCallAuditor.php`, `McpWriteGate.php`; `app/Models/SchoolMcpConnector.php` | Outbound MCP to external connectors (Slack, Google), audited, write-gated |
-| MCP **server** | `app/Mcp/Servers/SpikeSlackMockServer.php` + `app/Mcp/Tools/SpikeSlack*.php` | A **fixture mock of Slack**, registered when `SLACK_MCP_MODE=mock`. Not a product server |
-| Onboarding over MCP | — | **Nothing.** No MCP server exposes onboarding, and no onboarding tool is available over MCP |
-
-So "any MCP server or tools" has a precise answer: one throwaway Slack mock server, one outbound client stack, and zero onboarding surface.
-
-### 1.9 Onboarding specs in `docs/`
-
-| Doc | What it is | Still true? |
-| --- | --- | --- |
-| `docs/onboarding/playbook.md` (553) | Step-by-step spec with error codes and starting values | Mostly. Contradicted by Toshi v1's exams/SchoolPay steps |
-| `docs/onboarding-engine-plan.md` (440) | Engine design; lists nine flagged disharmonies | Superseded in part: the engine shipped |
-| `docs/onboarding-defaults-skill.md` (91) | "Configurable, but never blank" defaults per step | Principle documented; terms/classes prefill not fully implemented |
-| `docs/proposals/2026-10-03-onboarding-steps.md` (74) | Step registry proposal | Shipped as `StepRegistry` |
-| `docs/product/student-import.md` (97) | Student import behaviour and scale | Current, Bariyo123 |
-| `docs/onboarding/school-onboarding-runbook.md` | Workbook runbook (#1296) | Draft PR |
-| `docs/product/parent-student-access.md` | First sign-in design (#1293) | Draft PR |
-| `docs/dev/emis-lin-onboarding.md` | EMIS/LIN onboarding notes | Country-specific |
-| `docs/architecture/toshi-shape-2026-09.md` | Toshi architecture | Background |
-
-### 1.10 TODOs, flagged decisions and issues
-
-- **Code TODOs:** 2 in `app/`, neither about onboarding. This codebase does not use TODO comments.
-- **`FLAGGED(product-decision)`:** **56** markers in `app/`, most in `AgentToshi.php` and `ManualOnboardingWizard.php`, each pointing at `docs/onboarding-engine-plan.md`. They are the real open-decisions list: uneb as default curriculum, Uganda as default country, `P1` as default class, UGX formatting, `.sch.ug` fallback emails, `0700000000` fallback phone, random passwords instead of invites. Six examples: `AgentToshi.php:146`, `:642`, `:2459`; `ManualOnboardingWizard.php:89`, `:94`, `:107`.
-- **Issue #793** (open, Elicom256, 2026-09-21): "Structure & Class Teachers: on `admin/onboarding/wizard` — we're trying to invite teachers before they're uploaded, I think this can come after uploading teachers and students." Still open, and still true of the wizard's structure step.
-- **No task register in the repo.** The `T-0xx` IDs in PR titles live in an external tracker; nothing in `docs/` maps them.
+- **#1285 merged on 2026-11-09** (`2aaf327b`), combining **39 PRs**. It carried, among others,
+  #1248, #1250, #1251, #1252, #1256, #1246, #1260 and #1275. **[git]**
+- Of **125** open PRs, **47** have a head commit that is already an ancestor of `main`. They are
+  mergeable only as no-ops and should be closed, not rebased. **[git]**
+- The six onboarding PRs (#1286, #1287, #1291, #1293, #1296, #1183) are **345 commits behind**
+  `main` (413 for #1183). **[git]**
+- Bariyo123's 19 open PRs: #1250, #1252, #1248, #1256, #1251, #1246 are already in `main` via
+  #1285; #1258, #1259, #1249, #1141, #1147, #1155, #1161, #1133, #1137–#1140, #1149 are not, and
+  none of them touch the onboarding write path (they touch seeds, signup throttling, country codes,
+  test speed, WhatsApp verify token, design brief, Google connectors, docs-site governance).
+  **[git]**
 
 ---
 
 ## 2. Overlaps and conflicts
 
-### 2.1 Same job, more than one owner
+### 2.1 Two pieces doing the same job
 
-| Job | Implementations | Which one is real |
-| --- | --- | --- |
-| Onboarding a school | wizard (`ManualOnboardingWizard`), Toshi v1 (`AgentToshi`), Toshi v2 (`ToshiOnboardingV2Driver`) | **Wizard.** The other two are gated to `is_test` / a flag that is off |
-| Deciding "is this step done?" | `OnboardingStepsService::isStepComplete` (16 keys) vs `AgentToshi::$steps` (19) vs `StepRegistry` | `OnboardingStepsService` — the other two should read it |
-| Writing classes | `ManualOnboardingWizard::saveClass` `:2298` → `OnboardingEngine::saveStandards`/`addClassStream`; `AgentToshi` structure checkpoint `:5427`; `OnboardingEngine::createMissingStreams` `:1036` | `OnboardingEngine` — both UIs already delegate, so this one is converged |
-| Student import | `/importUsers` → `UsersImport`; wizard upload → `OnboardingUploadService` → `OnboardingEngine::saveStudents`; #1285's `ImportStudents` page → the same service | **Two** implementations: the legacy `UsersImport` (no per-row report, `dd()` on error) and the onboarding upload service (chunked, per-row skips) |
-| Teacher import | `/importTeachers` → `TeachersImport`; wizard upload → `saveTeachers` → engine | Same split as students |
-| Fee structures | wizard fee drafts; Toshi fee form; both via `saveFees` | Converged on the engine |
-| Invites | `TeacherInviteLinkService`, `ClassTeacherInviteService`, `CoAdminInviteLinkService`, `SchoolInviteService`, `SetPasswordLink` | Five entry points, three token tables (`school_invites`, `teacher_invites`, `co_admin_invites`), one pattern. Consolidation is possible but not urgent |
-| Confirmation before write | `ConfirmsBeforeWrite` (tools), `PlatformApprovalGate` (superadmin MCP), `McpWriteGate` (connector writes), wizard per-step save (none) | No single policy; the wizard and imports have no gate at all |
-| Progress display | `OnboardingStepsService::progress()`; dashboard banner; sidebar chip; the Toshi checklist | Converged — the old private 19-step counter was replaced by the service (`AgentToshi.php:736` records the drift) |
+| Job | Piece A | Piece B | What to do |
+| --- | --- | --- | --- |
+| Read the checklist workbook | #1291 `ChecklistWorkbookConverter` (817 lines) | #1307 `ChecklistWorkbookConverter` (1,019 lines) | **#1307 is a superset and contains #1291's commits.** Close #1291 as superseded; keep one converter. |
+| Define the onboarding steps | `OnboardingStepsService::ALL_STEPS` (16) | `AgentToshi::$steps` (19) | Merge into one list. The 19-step list is the only place exams and SchoolPay appear; the playbook says they must not. |
+| Same, again | `StepRegistry::STEP_CLASSES` (16) | #1307 `WALK` (5) | The 5 are the subset the workbook can fill; that is legitimate, but it must be declared as a projection of the 16, not a fourth list. |
+| Write class teachers | Wizard `importClassTeacherUpload()` (the only writer) | #1307 lists them and does not write; `OnboardingEngine` has no method | Add `saveClassTeachers()` to the engine and delete the wizard's inline path. |
+| Create parents | `UsersImport` (one per student row) | `ParentsImport` (standalone, no child link) | Decide: parents exist only through a child (then delete `ParentsImport`) or as people (then link them separately). |
+| Student import | `UsersImport` (legacy screen) | `OnboardingUploadService` + `runRosterImport()` (wizard) | Keep the chunked wizard pipeline; re-point the admin screen at it or mark it legacy. |
+| First sign-in for imported people | #1293 design doc | `StudentParentAccountInviteService` (already in `main`) | Close #1293 as implemented-in-part, or rewrite it as the design of record for the remaining WhatsApp/hand-over channels. |
+| Register the "finish" event | `FinishSchoolOnboarding` | Wizard's own `finished` flag + Livewire event | Already rationalised in `FinishSchoolOnboarding`'s docblock; no action. |
 
-### 2.2 PR and branch conflicts
+### 2.2 Conflicts with each other and with `#1285`
 
-**#1285 is the gravity well.** `integration/monday-2026-11-09` is 215 commits and **663 files** ahead of main, and it already contains the branch tips of **39 of the 69 open PRs**. That includes eight of Bariyo123's nineteen:
-
-`#1258` (seed health), `#1256` (unfinished admins → setup), `#1252` (T-060 wide IDs + failed rows), `#1251` (T-065 phones), `#1250` (T-061 import entry points), `#1249` (T-064 country codes), `#1248` (T-070 branding), `#1246` (default country Uganda).
-
-If #1285 merges, those eight are already in it and their PRs become no-ops or conflicts. If it does not merge, that work is stranded on a branch nobody can merge safely.
-
-Onboarding files #1285 changes: `AgentToshi.php`, `ManualOnboardingWizard.php`, `OnboardingEngine.php`, `OnboardingStepsService.php`, `TeacherInviteLinkService.php`, `ClassTeacherInviteService.php`, `ImportMemberController.php`, `TeacherImportExportController.php`, `TeacherLinkImportController.php`, `SchoolInviteClaimController.php`, `TeacherInviteController.php`, plus new `ParentImportController`, `ParentsImport`, `StudentParentAccountInviteService`, `TeacherAccountInviteService`, `routes/school-imports.php`, `config/invites.php`, `InviteNoReferrer`, `ScrubInviteTokens`.
-
-**#1295 is a copy of #1285 plus ten files.** `t107-name-route-guards` is 215 commits ahead of main, 667 files, +49,193/−6,226 — and differs from #1285 by only 10 files (the name-route guards). It is labelled "merge after #1285", which is correct and understates it: as based on main it would drag the whole integration rehearsal in. It must be rebased onto main after #1285 merges, not merged on its own.
-
-**#1291 is stacked on #1286** (`t079-checklist-convert` → `t077-phones-to-e164`). That is declared in the PR and is fine, provided #1286 merges first. It adds only new files, so it will not conflict textually with #1285 — but it will sit next to #1285's import entry points, and the runbook tells a human to upload the CSVs at the wizard steps, not at #1285's new pages.
-
-**#1286, #1287, #1291 are additive:** 4, 4 and 3 new files; no edits to existing files, so no merge conflicts with main or #1285. The cost is a second implementation of phone normalisation (`PhoneE164Converter`) alongside the inline normalisers already in `OnboardingEngine::normaliseOnboardingPhone` `:2579` and `ManualOnboardingWizard::normaliseOptionalPhone` `:1630`.
-
-**Product conflicts, not textual ones:**
-
-- `#1246` (and therefore #1285) defaults the onboarding country to **Uganda**. The brief for this audit is explicit that KlassApp is global. The default is defensible as a soft-launch choice but must not harden into schema or validation.
-- Toshi v1 asks for **SchoolPay** (`AgentToshi.php:6322`), a Uganda-only provider, inside onboarding. The playbook says it must not be there at all.
-- Toshi v1 asks for **exams** during onboarding (step `exams`, `:6112`), which the playbook also excludes.
-
-**Pairs that touch the same files and must be sequenced:** #1252 and #1250 both change import entry points; #1251 and #1246 both change country/phone handling; #1291 writes files for importers that #1250 and #1252 change. Merge order: #1285 (which already contains all four) → rebase the rest.
+- There is no live conflict *with* #1285: it is merged. The conflict is with **`main`**, and it is
+  large. All six onboarding PRs touch files that #1285 rewrote (`ManualOnboardingWizard.php`,
+  `AgentToshi.php`, `routes/admin.php`, the dashboard Blade, `knowledge.md`) and are 345 commits
+  behind. A plain `git merge` will conflict; they need rebasing onto `main` one at a time.
+- #1291 is stacked on #1286 (`baseRefName = t077-phones-to-e164`), so it cannot merge before #1286.
+  #1307 has already merged both, which is why it is the cheaper base.
+- #1296 (runbook) and #1293 (design) are docs-only and do not conflict textually, but #1296 now
+  contradicts `main` on first sign-in, and #1293 is out of date relative to #1275.
 
 ### 2.3 Safe to retire
 
-| Retire | Why | Evidence |
-| --- | --- | --- |
-| Toshi v1 scripted onboarding for real schools | Already unreachable for non-test schools | `ToshiOnboardingPath.php:22`; middleware redirect |
-| Toshi v1 `exams` and `school_pay` steps | Contradict the playbook; Uganda-only; not in `ALL_STEPS` | `playbook.md:5`, `:553`; `AgentToshi.php:218` |
-| `AgentToshi::$steps` as an independent list | Third taxonomy that nothing guards | `AgentToshi.php:218` vs `OnboardingStepsService.php:47` |
-| Legacy student/teacher import controllers once the upload service covers them | Duplicate path, worse reporting, `dd()` on error | `UsersImport.php:210`; `ImportMemberController.php:41` |
-| Stale branches whose content is already in main | `feature/onboarding-step-buttons`, `feat/wizard-structure-class-teacher` (0-file diff vs main), `co-admin-invite-links`, `fix/toshi-onboarding-default` (merged) | `git diff --name-only origin/main...origin/<branch>` |
-| Closed-unmerged PRs #1238, #1109, #1108 | Superseded: #1238 by #1239/#1262; #1109/#1108 were WIP handovers | `gh pr view` |
-| `dd()` in `UsersImport` | Debug statement on a production import path | `UsersImport.php:210` |
+| Item | Why |
+| --- | --- |
+| #1291 | Contained in #1307; its converter is the smaller copy of the same class. |
+| #1293 | Its "nothing exists" premise is false on `main`; the service it proposes exists. Rewrite or close. |
+| #1183 | A `knowledge.md` session log for a pass that has been overtaken by 413 commits of work. |
+| 47 open PRs whose heads are in `main` | No-op merges. Close with a note; do not rebase. |
+| `app/Mcp/Tools/SpikeSlack*`, `SpikeSlackMockServer` | Spike, superseded by the real `app/Services/Toshi` MCP client. |
+| `ParentsImport` (or `UsersImport`'s parent creation) | One of the two must go; keeping both keeps two definitions of a parent. |
 
-Not safe to retire without a decision: the wizard itself (it is the only real path), and `SetPasswordLink` (it is how a Toshi-created admin sets a password).
+Not safe to retire: #1286 (phones) and #1287 (names). Both are prerequisites for clean imports, and
+#1287 is not contained in #1307.
 
 ---
 
 ## 3. Gaps against the target
 
-Target: a school fills the onboarding checklist workbook; an agent reads it, validates it, asks for what is missing through buttons and forms, creates the structure and the people, sends invites, runs post-import checks, never writes without the admin confirming, keeps exams and SchoolPay out, and stops if the data processing agreement is not confirmed.
+The target is: a school fills the onboarding checklist workbook; an agent reads it, validates it,
+asks for what is missing through buttons and forms, creates the school, sends invites, runs
+post-import checks, never writes without confirmation, does no exams or SchoolPay, and stops if the
+DPA is not confirmed.
 
-| # | Capability | Mark | What exists | What is missing |
-| --- | --- | --- | --- | --- |
-| 1 | **Reads the workbook** | **partial** | `ChecklistWorkbookConverter::convert()` reads all tabs, skips the grey example row, handles `P.3`→`Primary Three`, and refuses when the "All Learners" formulas did not export (`:81-88`). In PR #1291, unmerged | Not on main; CLI only (`php artisan checklist:convert`); no upload surface; not callable as a tool by an agent |
-| 2 | **Validates and reports problems with tab and row** | **partial** | `flags[] = {tab, row, field, message, severity}`; `report()` renders counts, learners per class/stream, flagged rows, pending items. Refuses on DPA ≠ Yes | Unmerged; report is a file a human reads, not structured data an agent can act on; no way to re-check just one corrected row |
-| 3 | **Asks for missing answers through buttons and forms** | **partial** | `StepSchema`/`StepSchemaCatalog` declare input types and options; `ToshiOnboardingV2Driver` renders option buttons (`promptPayload`, `selectOnboardingV2Option`); the wizard has real forms | No loop that takes *the workbook's* gaps and asks only those; v2 driver is behind `toshi.onboarding_v2 = false`; no mapping from a converter flag to a question |
-| 4 | **Creates structure: terms, classes, streams, subjects, fee structure** | **exists in code** | `OnboardingEngine::saveAcademicYear` `:256`, `saveStandards` `:1280`, `addClassStream` `:762`, `createMissingStreams` `:1036`, `saveSubjects` `:1302`, `saveTerms` `:1374`, `saveFees` `:1503` | Nothing drives these from the workbook. `no-importer/classes-and-streams.csv`, `subjects.csv`, `fees.csv`, `terms.csv` are explicitly "enter by hand" (runbook step 5) |
-| 5 | **Creates staff, learners and parents** | **exists in code** | `saveTeachers` `:1839`, `saveStudents` `:1999` (creates parents and links by phone, `linkImportedParent` `:2252`) | Same: driven by forms/uploads, not by a plan. Legacy importers bypass the engine and report less |
-| 6 | **Class teachers and teaching assignments** | **exists in code** | `TeacherLinkImportController`, `ManualOnboardingWizard::importClassTeacherUpload` `:2974`, `writeClassTeacherAssignment` `:3239`; `ClassTeacherInviteService` | Split across three entry points; the wizard invites class teachers before teachers exist (issue #793); no single "apply assignments from plan" call |
-| 7 | **Sends invites** | **partial** | Teachers, class teachers, co-admins, early-adopter schools: single-use hashed tokens, expiry, resend, revoke | **Parents and students imported have no path in** — random password, `is_reset = 1`, generated `.local` email, reset-by-email only (`docs/product/parent-student-access.md`, #1293, not built) |
-| 8 | **Runs post-import checks** | **missing** | The runbook's step 8 is a careful human checklist (counts, learners per class and stream, KLS numbers, a class head's register, one parent link end to end, phone format) | No code performs any of it. `OnboardingStepsService::isStepComplete` answers "does any row exist", not "do the counts match the workbook" |
-| 9 | **Never writes without the admin confirming** | **partial** | Per-tool confirm + post-write verify (`ConfirmsBeforeWrite`, `VerifiableTool`); superadmin MCP approval gate | No plan-level confirmation; the wizard writes each step on Next with no preview/diff; imports and CLI write with no gate at all |
-| 10 | **No exams or SchoolPay during onboarding** | **conflict** | Playbook says they are out (`:5`, `:553`) | Toshi v1 still asks both (`:6112`, `:6322`); nothing enforces the rule; `school_pay_api_password` is written in `commitAll()` create mode (`:6890`) |
-| 11 | **Stops if the DPA is not confirmed** | **partial** | Only `ChecklistWorkbookConverter::checkConfirmations()` `:200` (PR #1291) reads a DPA answer and refuses | No DPA record anywhere else; signup has only a T&Cs checkbox (`resources/views/auth/register.blade.php:263`); no gate on any write path |
-
-**The shape of the gap.** Every individual write an agent needs already exists as a method on `OnboardingEngine`, and every question it needs to ask already exists as a `Step` + `StepSchema`. What does not exist is the **middle**: a validated *plan* (workbook → ordered rows + issues), a *review* of that plan against the school's current state, and a *confirmation* that covers the plan rather than one tool call. That middle is the build, not the writes.
+| # | Target capability | Status | Evidence, and what is missing |
+| --- | --- | --- | --- |
+| 0 | The agent can run for a real school at all | **Missing** | Two independent gates: `ToshiOnboardingPath` redirects real schools to the wizard and sets the mode to preview (`:22-58`); `ChecklistOnboardingGate` allows the checklist flow only for `is_demo`/`is_test` schools. Today an onboarding agent exists only for test and demo schools. |
+| 1 | Reads the workbook | **Partial** | Converter exists twice (#1291, #1307) and is not on `main`. Reads `.xlsx` via PhpSpreadsheet (`ChecklistWorkbookConverter.php:55-70`), expects a fixed tab layout and a grey example row 2. Nothing in `main` reads a workbook. |
+| 2 | Validates and reports problems with tab and row | **Partial** | Flags carry `tab`, `row`, `field`, `message`, `severity` (`:813`); `report.md` lists counts, learners per class, flagged rows, missing required fields (`:144-196`). Missing: no in-app fix-and-retry loop — the school must edit the source sheet and re-export (`#1296` step 3 says exactly this). |
+| 3 | Asks for missing answers through buttons and forms, not typed commands | **Partial** | #1307 has cards and buttons for skip/confirm/abandon; `saveTeacherEmail()` lets a teacher's email be filled in a form; the wizard has real forms. Missing: no form for parent email, relationship, second guardian, teacher gender/role — those go to `pending/*.csv` for manual entry. The v2 driver is buttons + free text only. |
+| 4a | Creates terms | **Partial** | #1307 step `terms` → `OnboardingEngine::saveTerms()`; wizard terms step. Not on `main` for real schools. |
+| 4b | Creates classes and streams | **Partial** | #1307 step `standards` → `saveStandards()`; wizard has preview/confirm and "create missing streams and retry". Works from canonical class names only (`:23-27`), so a school using other names is flagged, not mapped. |
+| 4c | Creates subjects | **Partial** | #1307 step `subjects` → `saveSubjects()`; wizard subjects step. |
+| 4d | Creates fee structure | **Missing** | No workbook step (`WALK` excludes `fees`), no importer; `saveFees()` exists (`OnboardingEngine.php:1504`) but only the wizard calls it. #1296 sends fees to `no-importer/fees.csv` for manual entry. |
+| 4e | Creates staff | **Partial** | #1307 `teachers` step writes teachers + teaching assignments through the engine; legacy `TeachersImport` exists. Missing: teacher gender/role have no column (`pending/teacher-details.csv`). |
+| 4f | Creates learners and parents | **Partial** | #1307 `students` step; wizard chunked import. Missing: parent email/relationship/second guardian (no column in `UsersImport` either). |
+| 4g | Creates class teachers | **Missing (in the agent path)** | Listed in the #1307 completion card, not written; `OnboardingEngine` has no method; only the wizard's inline `importClassTeacherUpload()` writes them. |
+| 4h | Creates teaching assignments | **Partial** | Teacher-links importer (`TeacherLinkImportController`) and #1307's teachers step. The importer ignores the stream column (documented in #1291's `pendingNotes`). |
+| 5 | Sends invites | **Partial** | Teacher invites: `TeacherInviteLinkService` + #1307 `sendTeacherInvites()` (real `Mail::to`). Parent/student: `StudentParentAccountInviteService` exists on `main`, not called by any onboarding flow. WhatsApp staff invites are disabled by config (`staff_whatsapp_enabled=false`). |
+| 6 | Runs post-import checks | **Partial** | #1307 completion card: learners per class/stream vs workbook, KLS present, phones E.164, invites ready. #1296 lists 7 manual checks, including a class-head register check and one parent link end to end — neither is automated. |
+| 7 | Never writes without the admin confirming | **Partial** | Per-step "Confirm step" in #1307; per-structure confirm in v2; tier-2 tool confirm in the panel. Missing: confirmation is per **step**, not per record; it lives in session state, not an audit table; `$bypassConfirm` is a static flag. |
+| 8 | No exams or SchoolPay during onboarding | **Partial / conflicting** | Playbook excludes them (`:7`), wizard has no such steps, #1307 has no such steps — but the legacy Toshi flow still lists `exams` and `school_pay` (`AgentToshi.php:218-238`) and is the flow a school in `onboarding` mode sees. |
+| 9 | Stops if the DPA is not confirmed | **Partial** | Enforced in the converter (`checkConfirmations()`, `:200-222`) and in #1291's exit code; #1296 makes it gate 1. Not enforced in `OnboardingEngine` or the wizard — any other path can write without it. |
+| 10 | Global product, not Uganda-only | **Partial** | Country profiles (`app/Onboarding/Country/*`), conditional EMIS/UNEB (`OnboardingStepsService.php:229-243`), per-country phone normalisation (`PhoneCountry`). But: default country Uganda (#1246, in `main`), canonical class names are Uganda's (`:23-27`), UNEB/EMIS vocabulary is baked into step names, and `SchoolTypePreset` assumes a Uganda-shaped ladder. A nursery or A-level school outside Uganda will be flagged or mis-mapped. |
 
 ---
 
-## 4. A proposed build plan
+## 4. Proposed build plan
 
-**Guiding decision:** one write path (`OnboardingEngine`), one step contract (`StepRegistry` + `OnboardingStepsService`), one review surface. The agent is a client of that, not a fourth implementation.
+Order matters: consolidate first, then write, then ask, then invite, then verify.
 
-### Phase 0 — Fix the truth (0.5 day, no code)
+### Phase 0 — Decide the shape (2–3 days, 1 person)
 
-Decide and write down: the wizard is the setup surface; Toshi v1 onboarding is demo-only; exams and SchoolPay are out of onboarding; Uganda defaults are soft-launch, not schema. Update `playbook.md` and `knowledge.md`.
+- Pick **one** step list: `OnboardingStepsService` (16). Make `AgentToshi::$steps` and
+  `StepRegistry` derive from it; delete `exams` and `school_pay` from any onboarding path.
+- Pick **one** converter: #1307's. Close #1291 as superseded.
+- Decide the workbook tab layout and freeze it in one fixture (the POC already ships
+  `docs/demo/poc-checklist-workbook.xlsx` and a correct twin).
+- Rewrite the three stale headers (`onboarding-engine-plan.md`, `onboarding-defaults-skill.md`,
+  `#1296`'s first-sign-in paragraph) so the docs stop contradicting `main`.
 
-**Exit:** one short decision note, agreed by Rasta.
+**Reuse:** `OnboardingStepsService`, `OnboardingEngine`, the playbook.
+**Retire:** the 19-step list, #1291, #1293 as written.
 
-### Phase 1 — Land the groundwork (1–2 days)
+### Phase 1 — Land the read-and-validate half without UI (1 week, 1–2 people)
 
-Merge, in this order: **#1285** (or consciously defer it and rebase everything on main), then **#1286**, **#1287**, **#1291** (after #1286), **#1296**, **#1293** as docs. If #1285 merges, close the eight Bariyo123 PRs it already contains. Rebase **#1295** after #1285.
+- Land #1286 (`phones:to-e164`) and the converter from #1307, with tests, behind a flag. No panel
+  changes, no writes. This is the lowest-risk slice and it makes `checklist:convert` real on `main`.
+- Keep #1287 separate; it is not in #1307 and is needed before any import of real names.
+- Output: `checklist:convert` on `main`, dry by default, writing only to an output folder.
 
-**Reuse:** everything already written. **Retire:** the duplicate PRs, stale branches. **Size:** review and merge only. **Risk:** #1285 is 663 files; if it lands mid-build, every onboarding file moves. Decide before Phase 2.
+**Size:** ~1,200 lines of production code + tests, mostly already written.
+**Risk:** low; no database writes.
 
-### Phase 2 — Workbook intake in the product (3–4 days, ~600–900 lines)
+### Phase 2 — Promote the POC to a real-school flow (1–2 weeks, 2 people)
 
-Put the converter behind an application surface: `POST /admin/onboarding/checklist` accepts `.xlsx`, runs `ChecklistWorkbookConverter`, stores the result as a structured `OnboardingPlan` (JSON: steps, rows, flags, counts), and renders `report.md`'s content as a table with tab and row. No database writes. Download the importer CSVs from the same page.
+- Remove the `is_demo || is_test` restriction in `ChecklistOnboardingGate`; replace it with a
+  per-school feature flag plus an explicit "this school may onboard from a workbook" switch.
+- Change `ToshiOnboardingPath` in the same PR: it currently sends every real school to the wizard and
+  rewrites `toshi_mode` to preview. Until that class changes, no amount of flag-flipping makes the
+  agent reachable for a real school. Decide the parity bar with Rasta before touching it, because
+  the redirect is the current safety net.
+- Land the five write steps (`terms`, `standards`, `subjects`, `teachers`, `students`) with the
+  engine, in one transaction per step, idempotent on re-run.
+- Add the two missing engine methods: `saveClassTeachers()` and `saveFeeStructure()` (the latter can
+  wrap `saveFees()`), and make the wizard call them instead of its inline code.
+- Add an immutable confirmation record: `onboarding_plan_steps` (plan, step, actor, preview hash,
+  confirmed_at, applied counts). Session state must not be the only record.
 
-**Reuse:** converter, report, runbook steps 1–3. **New:** one controller, one Livewire page, one migration for the plan record (or a JSON column on `onboarding_sessions`). **Exit test:** a deliberately broken workbook produces the same flags as the CLI, with the same tab/row.
+**Reuse:** #1307's service, cards, `OnboardingPlan`, `ChecklistInviteHold`.
+**Size:** ~1,500–2,000 lines changed; the largest phase.
+**Risk:** medium — first real writes; class-teacher semantics (issue #793) and fee-structure shape
+are unresolved.
 
-### Phase 3 — Plan, preview, apply with confirmation (6–8 days, ~1,200 lines)
+### Phase 3 — Ask, don't flag (1–2 weeks, 1–2 people)
 
-An `OnboardingPlanApplier` that, per step, in runbook order: dry-runs against current DB state (what exists, what would be created, what conflicts), shows a diff card ("14 classes, 3 streams, 42 subjects, 18 teachers, 240 learners, 61 parents"), and writes only on Confirm. One transaction per step, and a work log of what was written. Reuse `OnboardingEngine` for every write and `StepRegistry` for step order and validation.
+- For every field the importers cannot take (parent email, relationship, second guardian, teacher
+  gender/role, stream on a teaching assignment), add a **form** in the flow with the workbook value
+  prefilled and the tab/row shown. Only fall back to `pending/*.csv` when the admin skips.
+- Add the "fix in place" path: accept a corrected value in the form, record the override, and keep
+  the original flag in the report.
 
-**Reuse:** `OnboardingEngine`, `StepRegistry`, `StepIssueCatalog` codes, `ConfirmsBeforeWrite` payload shape. **Exit test:** applying the same plan twice creates nothing the second time (idempotency), and a rejected confirm writes nothing.
+**Reuse:** `StepField`/`StepSchema` (they already describe fields, types, rules) — this is the phase
+that finally gives `StepSchemaCatalog` a consumer.
+**Size:** ~1,000 lines.
+**Risk:** medium — scope creep into "edit the workbook in the app".
 
-### Phase 4 — People: invites and first sign-in (4–6 days)
+### Phase 4 — Invites and first sign-in (1 week, 1–2 people)
 
-Implement #1293's `AccountInviteLinkService` for **existing** users: single-use hashed token, `/invite/account/{token}`, claim sets the password and `is_reset = 0`; email, WhatsApp or admin hand-over. Then send invites after the people import: teachers and class teachers (exists), parents and students (new).
+- Teacher invites: keep #1307's `sendTeacherInvites()`, add a per-invite preview and a send summary.
+- Parent/student: call `StudentParentAccountInviteService` from the flow for every imported person
+  with a usable channel; queue the rest as "hand-over link" for the admin.
+- WhatsApp: keep `staff_whatsapp_enabled=false` until Meta approves the template; do not build a
+  parallel sender.
 
-**Reuse:** `TeacherInviteLinkService` pattern, `SchoolInviteService` token handling. **Risk:** WhatsApp template approval; a hand-over link is the fallback. **Exit test:** an imported parent with no real email can set a password from a link an admin generated, and the link dies after one use.
+**Reuse:** four invite services already on `main`.
+**Size:** ~600–900 lines.
+**Risk:** low–medium; delivery is externally gated.
 
-### Phase 5 — Post-import checks as code (2–3 days)
+### Phase 5 — Post-import checks as code (1 week, 1 person)
 
-`OnboardingChecker`: expected counts from the plan vs actual in DB; learners per class and stream; every learner has a KLS number; stored phones parse; class head sees every stream on the register. Returns a pass/fail report with expected vs actual. **Reuse:** runbook step 8 as the spec; `OnboardingStepsService::countActiveStudents`. **Exit test:** a deliberately short import fails the counts check with the exact class and stream.
+- Turn #1296's seven checks into a `OnboardingVerificationService`: counts per class/stream, KLS
+  presence, E.164 phones, class-head register covers every stream, one parent link end to end,
+  no stray demo data.
+- Show the result as a card with pass/fail per check and a link to the failing screen.
 
-### Phase 6 — The agent surface (5–7 days)
+**Reuse:** #1307's `completionCard()` (three of the checks already exist).
+**Size:** ~500 lines + tests.
+**Risk:** low.
 
-Expose the above as a small, fixed tool set — `onboarding.readWorkbook`, `onboarding.validate`, `onboarding.previewPlan`, `onboarding.applyStep`, `onboarding.check`, `onboarding.invite` — each with the existing confirm gate and post-write verify. The agent asks for missing answers using `StepSchema` options/input types as buttons and forms. The DPA check runs before `previewPlan`, not just before `readWorkbook`.
+### Phase 6 — Retire the old paths (2–3 days, 1 person)
 
-**Reuse:** `ConfirmsBeforeWrite`, `VerifiableTool`, `TOOL_CLASS_MAP`, `StepSchemaCatalog`. **Retire:** Toshi v1 handlers for exams and school_pay; `AgentToshi::$steps` as a list. **Exit test:** the whole flow on a synthetic workbook on staging, with the agent blocked at the DPA and at every unconfirmed write.
+- Delete the 19-step Toshi list and its `exams`/`school_pay` handlers; keep assistant mode.
+- Point the admin student import at the chunked pipeline or mark `UsersImport` legacy.
+- Delete `ParentsImport` or `UsersImport`'s parent creation — one definition of a parent.
+- Close the 47 already-merged PRs; close #1291, #1293, #1183.
 
-### Phase 7 — Cleanup (1–2 days)
+### Sequencing risk, stated plainly
 
-Delete the dead branches, close superseded PRs, remove `dd()`, fold the legacy importers behind the upload service or delete them, update `playbook.md`/`runbook.md` to match what shipped.
-
-**Total:** roughly **22–32 dev-days**, with Phase 3 the only large one. The order is forced: you cannot preview a plan before you can build one (2→3), cannot invite people who do not exist (3→4), cannot check counts you have not defined (3→5), and cannot give an agent tools that do not exist (5→6).
+The whole plan assumes #1307 is salvageable. It is a 12k-line branches-from-9-November prototype
+with a demo gate and no full test-guard run. If a rebase onto `main` takes more than a few days,
+the fallback is Phase 1 (converter only) plus the wizard, and #1307 is closed as a reference
+implementation. That decision should be made at the end of Phase 0, not at the end of Phase 2.
 
 ### Risks
 
-1. **#1285.** 663 files, 215 commits, contains 39 open PRs. Merging it is the biggest single schedule risk and it touches 60+ onboarding paths (code, views, tests). Decide first.
-2. **Uganda hard-coding.** 56 `FLAGGED(product-decision)` markers, plus #1246's Uganda default, plus SchoolPay. A global product cannot ship an agent whose defaults are one country's.
-3. **Two truths about steps.** Three step lists; only one is guarded. An agent built on the wrong list will ask for exams.
-4. **Import reporting.** `dd()`, silent skips and count-only reports mean "validated" can still mean "half imported". Phase 2 must not trust the legacy importers.
-5. **Data protection.** The workbook is real children's data. Storage, retention and who may read it are unresolved; the DPA gate exists in one command only.
-6. **First sign-in.** Without Phase 4, "we sent invites" is a promise the product cannot keep for parents and students.
-7. **Verification debt.** No browser or DB verification was possible in this audit; every "working\*" needs a real click-through before it is trusted in a plan.
-8. **Plan-level confirmation is new.** Per-tool confirm does not scale to 240 learners; the bulk-confirm design needs a product decision, not just code.
+| Risk | Why it matters | Mitigation |
+| --- | --- | --- |
+| 345-commit drift | Every onboarding PR predates #1285 and touches files it rewrote | Rebase one PR at a time onto `main`; land the converter first |
+| Static `$bypassConfirm` | Process-wide flag; a tool that throws before the `finally` would leave it set for the request | Replace with an explicit argument/context object; add a test |
+| Two converters, four step lists | Divergence is already visible (exams/SchoolPay) | Phase 0 consolidation, with a test that asserts one list |
+| DPA gate only in the converter | Any other path (wizard, direct engine call) can write without it | Move the gate into `OnboardingEngine` (or a policy) as a precondition for real schools |
+| No confirmation audit | "Who confirmed what" is session state | Add the confirmation table in Phase 2 |
+| Uganda-shaped defaults | Class names, EMIS/UNEB, default country | Make the canonical class list a country profile, not a constant |
+| Invite deliverability | WhatsApp staff template not approved; many parents have `.local` emails | Treat invites as "ready" vs "sent"; hand-over links for the rest |
+| The agent is off by design | `ToshiOnboardingPath` and the POC gate both block real schools; turning either on is a product decision, not a flag flip | Make the parity bar explicit in Phase 0; keep the redirect until the checklist flow passes the same checks the wizard does |
 
 ### Open questions for Rasta
 
-1. Is **#1285** merging on 9 Nov, or is it a rehearsal to be abandoned? Everything else sequences off this answer.
-2. Is the agent the **primary** surface, or a back-office operator whose work the admin reviews in the wizard? (This decides whether Phase 6 is a chat or a job runner.)
-3. Do we **retire Toshi v1 onboarding** for real schools now, or keep it for demos only?
-4. Which **curricula and countries** must the workbook support at launch — UNEB only, or the global list?
-5. Where does the workbook **live**: upload per run, or read directly from the school's Google Sheet?
-6. What is the **confirmation unit** — per phase, per step, per 50 rows? And who may confirm: school admin only, or also a KlassApp operator?
-7. Where is the **DPA confirmation recorded** (workbook tab only, or a signed record in the product), and who audits it?
-8. Are **exams and SchoolPay** permanently out of onboarding, or out only until a later phase? If out, we delete the steps.
-9. What is the **target size** per school (learners, teachers) and the acceptable time for one onboarding, so Phase 2's chunking and Phase 3's transactions are sized correctly?
-10. For imported parents with **no email and no WhatsApp**, is admin hand-over of a link acceptable as the default?
+1. **Is the workbook the canonical input, or a convenience?** If a school uses the wizard instead,
+   must the agent support both, or is the workbook the only supported start for the agent?
+2. **Fee structure**: what exactly should the agent create — fee categories with amounts per class,
+   or a termly bill? `saveFees()` allows both shapes and #1296 sends fees to manual entry.
+3. **Class teachers**: write them from the workbook (and add the engine method), or keep them a
+   human step as #1307 does? Issue #793 suggests the order, not the ownership.
+4. **DPA**: is the workbook's Confirmations tab the legal record, or does the product need its own
+   acceptance (user, timestamp, version)? The converter currently treats a spreadsheet cell as the
+   gate.
+5. **Who may run this**: school admin only, or also KlassApp ops on the school's behalf? The answer
+   decides the authorization gate and the audit fields.
+6. **Parents' first sign-in**: is `StudentParentAccountInviteService` (email link) the intended
+   path, with WhatsApp hand-over later, or should parents only ever link by messaging the school
+   number?
+7. **Non-Uganda schools**: which class ladder should the converter accept for a nursery or an
+   A-level school — free text mapped to profiles, or a per-country canonical list?
 
 ---
 
-## Appendix A — Onboarding-relevant PRs
+## 5. What I did not do
 
-| PR | Author | Base | State | Onboarding relevance |
+- I did not run the test suite, the test guard, or any single test.
+- I did not start the app, click through the wizard, Toshi, or the POC, at any viewport.
+- I did not query a database, including the preview database on `127.0.0.1:8126`, which belongs to
+  another agent.
+- I did not merge, deploy, or push to any integration or preview branch.
+
+Everything above is read from the repository at the refs named, with GitHub metadata for PR state.
+Where a PR body reports a result, it is marked **[claim]**.
+
+---
+
+## Appendix A — Onboarding-relevant PRs, as at 24 November 2026
+
+| PR | Author | Head → base | State | What it is |
 | --- | --- | --- | --- | --- |
-| #1285 | Mucunguzi256 | main | draft, DO NOT MERGE | Integration rehearsal; contains 39 open PR tips, 60+ onboarding paths |
-| #1296 | Mucunguzi256 | main | draft | Workbook runbook |
-| #1295 | Mucunguzi256 | main | draft | Name-route guards; **is #1285 + 10 files** |
-| #1294 | Mucunguzi256 | main | draft | Student ID format design |
-| #1293 | Mucunguzi256 | main | draft | Parent/student first sign-in design |
-| #1292 | Mucunguzi256 | main | draft | Name-addressed route audit |
-| #1291 | Mucunguzi256 | **t077** | draft | `checklist:convert` |
-| #1290 | Mucunguzi256 | main | draft | Parent/child linking design |
-| #1289 | Mucunguzi256 | main | draft | Assign classes design |
-| #1288 | Mucunguzi256 | main | draft | Subjects and teachers design |
-| #1287 | Mucunguzi256 | main | draft | `names:normalize` |
-| #1286 | Mucunguzi256 | main | draft | `phones:to-e164` |
-| #1256 | Bariyo123 | main | draft, NEEDS REVIEW | Unfinished admins → setup after signup/login; **inside #1285** |
-| #1252 | Bariyo123 | main | draft | T-060 wide IDs + failed import rows; **inside #1285** |
-| #1251 | Bariyo123 | t064 | draft | T-065 international phones; **inside #1285** |
-| #1250 | Bariyo123 | main | draft | T-061 import entry points; **inside #1285** |
-| #1249 | Bariyo123 | main | draft | T-064 country codes; **inside #1285** |
-| #1248 | Bariyo123 | main | draft | T-070 remove global branding from school admins; **inside #1285** |
-| #1246 | Bariyo123 | t064 | draft | Default onboarding country to Uganda; **inside #1285** |
-| #1238 | Mucunguzi256 | — | closed unmerged | Marks Phase 1; superseded by #1239/#1262 |
-| #1109, #1108 | Mucunguzi256 | — | closed unmerged | WIP handovers, abandoned |
+| #1307 | Mucunguzi256 | `poc/toshi-checklist-onboarding` → `main` | draft, +12,207/−99, 123 files | Checklist onboarding in the Toshi panel, demo-gated. The only end-to-end prototype. |
+| #1296 | Mucunguzi256 | `t089-onboarding-runbook` → `main` | draft, 345 behind | Human runbook for the workbook. |
+| #1293 | Mucunguzi256 | `t094-parent-student-access` → `main` | draft, 345 behind | First sign-in design; partly implemented on `main` by #1275. |
+| #1291 | Mucunguzi256 | `t079-checklist-convert` → `t077` | draft, 345 behind, stacked | `checklist:convert`; contained in #1307. |
+| #1287 | Mucunguzi256 | `t105-names-normalize` → `main` | draft, 345 behind | `names:normalize`, dry run. Not in #1307. |
+| #1286 | Mucunguzi256 | `t077-phones-to-e164` → `main` | draft, 345 behind | `phones:to-e164`, dry run; contained in #1307. |
+| #1275 | Mucunguzi256 | `cursor/t094-parent-student-setup-links` → `…t091` | open, **already in `main`** via #1285 | Setup links for imported parents/students (`ccd56ead`). |
+| #1260 | Mucunguzi256 | `cursor/onboarding-steps-and-size-plus` → `main` | **merged** (9 Nov) | Step counters, school name, year. |
+| #1256 | Bariyo123 | `cursor/school-admin-setup-login-30c4` → `main` | **merged** (9 Nov) | Unfinished admins → setup after signup/login. |
+| #1252 | Bariyo123 | `cursor/t060-widen-student-id-c495` → `main` | **merged** (9 Nov) | Student IDs past 9,999; failed import rows. |
+| #1250 | Bariyo123 | `cursor/t061-import-entry-points-c495` → `main` | **merged** (9 Nov) | Each import button → its own import; added `ParentsImport`. |
+| #1248, #1246, #1251, #1249 | Bariyo123 | various | **merged** (9 Nov) | Branding/SEO lock, Uganda default country, international phones, country codes. |
+| #1258, #1259, #1249, #1141, #1147, #1155, #1161, #1133, #1137–#1140, #1149 | Bariyo123 | various | open, not in `main` | Seeds, signup throttle, country codes, test speed, WhatsApp verify token, design brief, Google connectors, docs-site governance. **None touches the onboarding write path.** |
+| #1183 | Mucunguzi256 | `cursor/onboarding-session-log-a453` → `main` | draft, 413 behind | `knowledge.md` session log for a pass since overtaken. |
 
-## Appendix B — Branch inventory (onboarding)
+## Appendix B — Onboarding-adjacent branches verified on 24 November 2026
 
-| Branch | Ahead of main | Content in main? | Read |
+| Branch | Ahead of `main` | Files | Read |
 | --- | --- | --- | --- |
-| `feature/onboarding-step-buttons` | 7 | **yes** (0-file diff) | retire |
-| `feat/wizard-structure-class-teacher` | — | **yes** (0-file diff) | retire |
-| `co-admin-invite-links` | 0 | merged | retire |
-| `fix/toshi-onboarding-default` | 0 | merged | retire |
-| `feat/wizard-from-step-registry` | 1 | no (20 files) | likely superseded by `StepRegistry` on main; verify before deleting |
-| `fix/toshi-complete-mode-four-findings` | 2 | no (7 files) | stale; the engine delegation superseded it |
-| `fix/toshi-skip-continue-and-plan-parity` | 1 | no (4 files) | stale |
-| `fix/toshi-checklist-shared-source` | 2 | no (6 files) | stale; checklist now reads `OnboardingStepsService` |
-| `cursor/hide-toshi-path-real-schools-472f` | 5 | no (36 files) | superseded by `ToshiOnboardingPath` |
-| `spike/toshi-mcp-slack` | 1 | no | spike; only useful for the MCP client |
+| `poc/toshi-checklist-onboarding` | 7 | 123 | The prototype (PR #1307). |
+| `t077-phones-to-e164`, `t079-checklist-convert`, `t089-onboarding-runbook`, `t094-parent-student-access`, `t105-names-normalize` | 1–3 | 2–5 each | The five T-0xx artefacts. |
+| `feat/term-workbook-importer` | 1 | 2 | Term marks workbook → drafts; not onboarding. |
+| `feat/wizard-from-step-registry` | 1 | 20 | 5 Oct: drive the wizard from `StepRegistry`; superseded in practice by the engine work, but it is the only attempt to unify the two lists. |
+| `fix/toshi-complete-mode-four-findings` | 2 | 7 | 7 Sep: complete-mode fixes; overtaken. |
+| `fix/toshi-skip-continue-and-plan-parity` | 1 | 4 | 11 Sep: skip on Continue forms, plan/sidebar parity; overtaken by v2. |
+| `fix/toshi-checklist-shared-source` | 2 | 6 | 10 Oct: one checklist source; the service now owns this. |
+| `docs/onboarding-school-checklist` | 5 | 1 | The workbook-filling guide (see 1.10). |
+| `docs/onboarding-marks-workbook` | 3 | 1 | Marks workbook guide. |
+| `docs/onboarding-attendance-guides` | 3 | 9 | Docs-site help pages incl. setup and people. |
+| `upgrade-prep/ai-mcp` | 2 | 12 | Laravel AI 1.4 / MCP 1.2 migration; infrastructure only. |
 
-## Appendix C — Commands used (all read-only)
-
-```bash
-git log --diff-filter=A --format='%an|%ad' --date=short -1 -- <path>
-git log -1 --format='%an|%ad' --date=short -- <path>
-git merge-base --is-ancestor origin/<branch> origin/integration/monday-2026-11-09
-git diff --name-only origin/main...origin/<branch>
-git diff --stat origin/main...origin/<branch>
-gh pr list --state open --json number,title,author,headRefName,baseRefName,mergeable
-gh pr diff <n> --name-only
-gh issue view 793
-grep -rn "FLAGGED(product-decision)" app | wc -l
-```
-
-## Appendix D — Files read for this audit
-
-`app/Services/OnboardingStepsService.php`, `app/Services/OnboardingEngine.php`, `app/Services/FinishSchoolOnboarding.php`, `app/Services/Onboarding/OnboardingUploadService.php`, `app/Services/OnboardingNameListExtractor.php`, `app/Services/TeacherInviteLinkService.php`, `app/Services/ClassTeacherInviteService.php`, `app/Services/SchoolInviteService.php`, `app/Services/Toshi/ToshiOnboardingPath.php`, `app/Services/Toshi/ToshiUiSwitch.php`, `app/Services/Toshi/McpWriteGate.php`, `app/Services/ToshiActionService.php`, `app/Livewire/AgentToshi.php`, `app/Livewire/ManualOnboardingWizard.php`, `app/Onboarding/Steps/*` (registry, driver, schemas, 16 steps), `app/Imports/UsersImport.php`, `app/Imports/TeachersImport.php`, `app/Http/Controllers/Admin/ImportMemberController.php`, `app/Http/Controllers/Admin/TeacherImportExportController.php`, `app/Http/Controllers/Admin/TeacherLinkImportController.php`, `app/Http/Controllers/Admin/ClassTeacherInviteController.php`, `app/Http/Controllers/OnboardingChoiceController.php`, `app/Http/Middleware/SendRealSchoolToshiOnboardingToWizard.php`, `app/AiAgents/Concerns/{AuthorizesToshiAction,ConfirmsBeforeWrite}.php`, `app/Ai/Tools/Toshi/ApprovableMcpTool.php`, `app/Mcp/**`, `routes/web.php`, `routes/admin.php`, `config/toshi.php`, `config/invites.php`, `AGENTS.md`, `docs/onboarding/playbook.md`, `docs/onboarding-engine-plan.md`, `docs/onboarding-defaults-skill.md`, `docs/proposals/2026-10-03-onboarding-steps.md`, `docs/product/student-import.md`, and the heads of PRs #1285, #1286, #1287, #1291, #1293, #1295, #1296.
+Branches the previous audit listed (`feature/onboarding-step-buttons`,
+`feat/wizard-structure-class-teacher`, `spike/toshi-mcp-slack`) no longer exist on the remote. **[git]**
