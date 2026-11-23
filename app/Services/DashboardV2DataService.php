@@ -169,6 +169,17 @@ class DashboardV2DataService
             }
         }
         $sectionIds = array_values(array_unique(array_map('intval', $sectionIds)));
+
+        // A class whose term report is still blocked by an unreleased counting set
+        // does not hand out a term report yet: its cards print a withheld set. It
+        // is not a card the school can give a parent, so it does not count here.
+        if ($termId !== null && $sectionIds !== []) {
+            $sectionIds = array_values(array_filter(
+                $sectionIds,
+                fn (int $sectionId): bool => $composition->blockingSets($schoolId, $sectionId, (int) $termId) === [],
+            ));
+        }
+
         if ($sectionIds === []) {
             return 0;
         }
