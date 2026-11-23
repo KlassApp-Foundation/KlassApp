@@ -14743,3 +14743,13 @@ The Maintenance checkbox for `teachers_may_release_marks` now shows the effectiv
 **Tests:** PHPUnit 12.5.40, PHP 8.4.27: `LongStudentIdMatcherTest`, `StudentIdGeneratorServiceTest`, `StudentIdDocExamplesTest`, `KlsIdFormatGuardTest`, `DemoStudentCodeTest`, `StudentCreationAssignsKlsTest`, `StudentImportFailureReportTest`, `RepairOrphanStudentAcademicsTest`, `StudentRegistrationNumberPathsTest`. 45 tests, 380 assertions, 0 failures.
 
 **Status:** #1244 open. Not merged to main. No deploy. No production data.
+
+## Session: 2026-11-23 — Admin dashboard core design (draft PR)
+
+**Work:** Admin dashboard rebuilt to the core-only design: "This term's results" card, WhatsApp-first KPI row with honest fees empty state, Latest results card (ResultsService + the report card's own policy), Connectors card. Dashboard-only CSS added under `.dv2-shell` in `dashboard-refresh.css`.
+
+**Files touched:** `DashboardController`, `DashboardV2DataService`, `admin/dashboard/dashboard_v2.blade.php` and new partials, `dashboard-refresh.css`, dashboard tests, screenshots under `docs/pr-screenshots/admin-dashboard-core/` (synthetic demo data).
+
+**Tests:** guarded suite 3917 tests; 10 unlisted failures: 5 caused by this change (fixed, see PR), 4 pass alone (order/load flake), 1 (`MarkAllPresentBrowserTest`, missing puppeteer-core) fails identically on origin/main.
+
+**Status:** Draft PR. Not merged. No deploy. Synthetic demo data only.
