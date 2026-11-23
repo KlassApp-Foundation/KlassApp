@@ -4021,6 +4021,30 @@ body.sidebar-collapsed #admin-sidebar .sidebar-group-header > div { justify-cont
     background: linear-gradient(90deg, rgba(34, 197, 94, 0.35) 0%, rgba(34, 197, 94, 0.22) 100%);
     border-left: 3px solid #22c55e;
 }
+/* One highlight for the active sidebar item (22 Nov 2026 click-through).
+   The legacy app.css rules tint the whole row and add a left bar, and the rules
+   here add a pill behind the link, so teacher, parent and student sidebars showed
+   two greens at once. Keep only the pill, as the admin sidebar already does. */
+.teacher-sidebar ul li.dashboard-menu-item.active,
+.teacher-sidebar ul li.dashboard-menu-item.active:hover,
+.teacher-sidebar ul li.dashboard-menu-item.dashboard-active,
+.parent-sidebar ul li.dashboard-menu-item.active,
+.parent-sidebar ul li.dashboard-menu-item.active:hover,
+.parent-sidebar ul li.dashboard-menu-item.dashboard-active,
+.student-sidebar ul li.dashboard-menu-item.active,
+.student-sidebar ul li.dashboard-menu-item.active:hover,
+.student-sidebar ul li.dashboard-menu-item.dashboard-active {
+    background: transparent !important;
+    border-left: 0 !important;
+    border-radius: 0 !important;
+}
+.teacher-sidebar .dashboard-menu-item.active > a,
+.teacher-sidebar .dashboard-menu-item.dashboard-active > a {
+    background: rgba(34, 197, 94, 0.14);
+    color: #14532D;
+    font-weight: 600;
+    border-radius: 10px;
+}
 .parent-sidebar .dashboard-menu-item.active > a,
 .parent-sidebar .dashboard-menu-item.dashboard-active > a,
 .student-sidebar .dashboard-menu-item.active > a,

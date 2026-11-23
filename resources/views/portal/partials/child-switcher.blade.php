@@ -19,7 +19,7 @@
                 <span class="family-child-pill__avatar" style="background: {{ $color }};">{{ $child['initials'] }}</span>
                 <span class="family-child-pill__text">
                     <strong>{{ $child['name'] }}</strong>
-                    <span>{{ $child['class'] }}</span>
+                    <span>{{ $child['class'] }}@if(!empty($child['school_name'])) · <span data-testid="child-school-{{ $child['student_id'] }}">{{ $child['school_name'] }}</span>@endif</span>
                 </span>
             </a>
         @endforeach
@@ -29,7 +29,7 @@
         <select id="family-child" class="family-child-select" onchange="if (this.value) window.location = this.value">
             @foreach($children as $child)
                 <option value="{{ route('parent.dashboard', ['child' => $child['student_id']]) }}" @selected((int) $child['student_id'] === $selectedId)>
-                    {{ $child['name'] }} · {{ $child['class'] }}
+                    {{ $child['name'] }} · {{ $child['class'] }}@if(!empty($child['school_name'])) · {{ $child['school_name'] }}@endif
                 </option>
             @endforeach
         </select>
