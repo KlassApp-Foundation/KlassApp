@@ -19,10 +19,13 @@ final class ResultCell
     /** What a learner sees when there is no mark. Never ABS: ABS is attendance only. */
     public const DASH = '–';
 
+    /** What a learner sees when the subject is not approved yet. Never a mark. */
+    public const PENDING = 'Pending';
+
     /**
      * What a person sees. A missing mark and an absence are both a dash: the
-     * total still counts either as 0. A subject that is not approved is a
-     * dash too and is left out of the total.
+     * total still counts either as 0. A subject that is not approved yet is
+     * Pending and is left out of the total, the aggregate and the division.
      */
     public function sheetLabel(): string
     {
@@ -30,7 +33,7 @@ final class ResultCell
             return 'Withheld';
         }
         if ($this->status === self::UNAPPROVED) {
-            return '—';
+            return self::PENDING;
         }
         if ($this->status === self::ABSENT) {
             return self::DASH;
@@ -52,7 +55,7 @@ final class ResultCell
                 return 'Withheld';
             }
             if ($source->status === self::UNAPPROVED) {
-                return '—';
+                return self::PENDING;
             }
             if ($source->status === self::ABSENT) {
                 return self::DASH;

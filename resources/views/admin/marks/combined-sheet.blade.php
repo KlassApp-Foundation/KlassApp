@@ -109,7 +109,7 @@
         @endif
         @if($filtered && $missingSubjects->isNotEmpty())
             <div class="ds-reminder-banner" data-testid="exams-reminder-banner">
-                <div>{{ $missingSubjects->count() }} {{ \Illuminate\Support\Str::plural('subject', $missingSubjects->count()) }} {{ $missingSubjects->count() === 1 ? 'is' : 'are' }} not approved. {{ $missingSubjects->count() === 1 ? 'Its marks show' : 'Their marks show' }} as a dash and are left out of the total.</div>
+                <div>{{ $missingSubjects->count() }} {{ \Illuminate\Support\Str::plural('subject', $missingSubjects->count()) }} {{ $missingSubjects->count() === 1 ? 'is' : 'are' }} not approved. {{ $missingSubjects->count() === 1 ? 'Its marks show' : 'Their marks show' }} as Pending and are left out of the total.</div>
             </div>
         @endif
     </div>
@@ -139,7 +139,7 @@
     @if($filtered && $missingSubjects->isNotEmpty())
         <div class="ds-reminder-banner" data-testid="exams-reminder-banner" style="margin-bottom: 16px;">
             <p style="margin:0;font-size:14px;color:var(--d-dark);">
-                {{ $missingSubjects->count() }} {{ \Illuminate\Support\Str::plural('subject', $missingSubjects->count()) }} have no submitted marks. A mark that is not approved shows as a dash and is left out of the total.
+                {{ $missingSubjects->count() }} {{ \Illuminate\Support\Str::plural('subject', $missingSubjects->count()) }} have no submitted marks. A mark that is not approved shows as Pending and is left out of the total.
             </p>
         </div>
     @endif
@@ -199,7 +199,7 @@
 
     @if($filtered && ! $marksError)
         <p class="ka-sheet-foot ka-block-foot" data-testid="marks-sheet-note">
-            A dash counts as 0. When a subject is not approved it is left out of the total entirely; once it is approved, a blank mark shows a dash and counts as 0. ABS belongs to attendance, not to marks.
+            A dash counts as 0. When a subject is not approved it shows Pending and is left out of the total entirely; once it is approved, a blank mark shows a dash and counts as 0. ABS belongs to attendance, not to marks.
             @if($savedSubjects->isNotEmpty())
                 {{ $savedSubjects->join(', ', ' and ') }} {{ $savedSubjects->count() === 1 ? 'is' : 'are' }} saved but not submitted.
             @endif

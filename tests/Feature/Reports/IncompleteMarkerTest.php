@@ -65,7 +65,7 @@ class IncompleteMarkerTest extends TestCase
         $sheet->assertOk();
         $sheet->assertSee('Incomplete: Beginning of Term.', false);
         $sheet->assertSee('data-kind="incomplete"', false);
-        $sheet->assertSee('data-testid="marks-cell-dash"', false);
+        $sheet->assertSee('data-testid="marks-cell-pending"', false);
         $sheet->assertDontSee('data-testid="marks-cell-missing"', false);
 
         $studentPage = $this->actingAs($class->admin)->get(route('admin.marks.student.class', [

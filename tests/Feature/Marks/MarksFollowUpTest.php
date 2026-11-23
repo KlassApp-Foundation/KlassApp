@@ -176,7 +176,8 @@ class MarksFollowUpTest extends TestCase
             'term' => $this->term->id,
             'examType' => $this->exam->exam_type_id,
         ]))->assertOk()->getContent();
-        $this->assertStringContainsString('data-testid="marks-cell-dash">—</span>', $sheet);
+        $this->assertStringContainsString('data-testid="marks-cell-pending"', $sheet);
+        $this->assertStringContainsString('Pending', $sheet);
         $this->assertStringNotContainsString('data-testid="marks-cell-absent">–<', $sheet);
         $this->assertStringNotContainsString('data-testid="marks-cell-absent">AB<', $sheet);
 

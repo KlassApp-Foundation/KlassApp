@@ -214,21 +214,21 @@ class SchoolExamSetTabsTest extends TestCase
         $this->assertStringNotContainsString('workaround', strtolower($html));
     }
 
-    public function test_a_subject_that_is_not_approved_shows_a_dash(): void
+    public function test_a_subject_that_is_not_approved_shows_pending(): void
     {
         $released = $this->cells($this->page((int) $this->sets['North Paper']->id));
         $this->assertNotEmpty($released);
         foreach ($released as $cell) {
-            $this->assertStringContainsString('data-testid="marks-cell-dash"', $cell);
-            $this->assertStringContainsString('—', $cell);
+            $this->assertStringContainsString('data-testid="marks-cell-pending"', $cell);
+            $this->assertStringContainsString('Pending', $cell);
             $this->assertStringNotContainsString('Missing', $cell);
         }
 
         $open = $this->cells($this->page((int) $this->sets['South Paper']->id));
         $this->assertNotEmpty($open);
         foreach ($open as $cell) {
-            $this->assertStringContainsString('data-testid="marks-cell-dash"', $cell);
-            $this->assertStringContainsString('—', $cell);
+            $this->assertStringContainsString('data-testid="marks-cell-pending"', $cell);
+            $this->assertStringContainsString('Pending', $cell);
             $this->assertStringNotContainsString('Missing', $cell);
         }
 
