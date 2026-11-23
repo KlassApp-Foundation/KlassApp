@@ -70,7 +70,7 @@ class DashboardCoreTest extends TestCase
     }
 
     /** @return array{school: School, admin: User, term: AcademicTerm, section: Section, exam: Exam, students: list<User>} */
-    private function releasedClass(): array
+    private function releasedClass(int $countsTowardTerm = 1): array
     {
         $school = $this->school();
         $admin = $this->admin($school);
@@ -83,7 +83,7 @@ class DashboardCoreTest extends TestCase
             SchoolGradingSystem::create(['school_id' => $school->id, 'standard_id' => $standard->id, 'grade' => $grade, 'points' => $points, 'min_score' => $min, 'max_score' => $max, 'remark' => $grade]);
         }
         $teacher = User::factory()->create(['school_id' => $school->id, 'usergroup_id' => 5, 'status' => 'active']);
-        DB::table('exam_types')->insert(['id' => 1, 'name' => 'End Of Term', 'code' => 'EOT', 'contributes_to_report_total' => 1, 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('exam_types')->insert(['id' => 1, 'name' => 'End Of Term', 'code' => 'EOT', 'contributes_to_report_total' => $countsTowardTerm, 'created_at' => now(), 'updated_at' => now()]);
 
         $subjects = [];
         foreach (['Maths', 'English'] as $name) {
@@ -217,5 +217,25 @@ class DashboardCoreTest extends TestCase
         $connected = $this->html(User::findOrFail($admin->id));
         $this->assertMatchesRegularExpression('/dashboard-connector-google-drive"[^>]*data-status="Connected"/', $connected);
         $this->assertStringContainsString('dashboard-connected-drive', $connected);
+    }
+
+    public function test_report_cards_ready_counts_learners_in_classes_with_a_released_term_report(): void
+    {
+        $f = $this->releasedClass(1);
+
+        $this->assertSame(3, app(\App\Services\DashboardV2DataService::class)->marksDesk($f['school']->id)['cards_released']);
+        $html = $this->html($f['admin']);
+        $this->assertMatchesRegularExpression('/data-testid="admin-marks-cards-count">3 <small>of 3<\/small>/', $html);
+        $this->assertStringContainsString('dv2-rtile--on', $html);
+    }
+
+    public function test_report_cards_ready_does_not_count_a_released_set_that_stands_alone(): void
+    {
+        $f = $this->releasedClass(0);
+
+        $desk = app(\App\Services\DashboardV2DataService::class)->marksDesk($f['school']->id);
+        $this->assertSame(0, $desk['cards_released']);
+        $this->assertSame(3, $desk['cards_total']);
+        $this->assertStringNotContainsString('dv2-rtile--on', $this->html($f['admin']));
     }
 }

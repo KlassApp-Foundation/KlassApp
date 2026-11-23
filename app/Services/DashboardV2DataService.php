@@ -119,8 +119,10 @@ class DashboardV2DataService
     }
 
     /**
-     * Distinct active learners covered by a released sitting this term. A class release covers
-     * the class and its streams; a school release covers every class that has that sitting.
+     * Distinct active learners in classes with a released TERM REPORT this term. A release is a term
+     * report when its exam set counts toward the term total (EndOfTermCompositionLine::countsToward,
+     * the same rule the class report screen uses). A release of a set that stands alone does not count.
+     * A class release covers the class and its streams; a school release covers every class that has that sitting.
      */
     private function releasedLearnerCount(int $schoolId): int
     {
@@ -131,7 +133,7 @@ class DashboardV2DataService
         $termId = $this->currentTerm($schoolId, (int) $year->id)?->id;
 
         $releases = MarksRelease::query()
-            ->with(['exam', 'standardLink.section'])
+            ->with(['exam.examType', 'standardLink.section'])
             ->where('school_id', $schoolId)
             ->where('status', MarksRelease::STATUS_RELEASED)
             ->whereNotNull('released_at')
@@ -139,6 +141,14 @@ class DashboardV2DataService
             ->filter(fn (MarksRelease $r) => $r->exam !== null
                 && (int) $r->exam->academic_year_id === (int) $year->id
                 && ($termId === null || (int) $r->exam->academic_term_id === (int) $termId));
+
+        $composition = app(\App\Services\ReportCards\EndOfTermCompositionLine::class);
+        $releases = $releases->filter(function (MarksRelease $r) use ($composition, $schoolId) {
+            $type = $r->exam->examType;
+
+            return $type !== null
+                && $composition->countsToward($type, $composition->compositionFor($schoolId, (int) $r->exam_id));
+        });
 
         $structure = app(ClassStructureService::class);
         $sectionIds = [];
