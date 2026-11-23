@@ -9,7 +9,12 @@ use App\Models\Academics\Exam as ExamModel;
 use App\Models\Academics\ExamMarksSubmission;
 use App\Models\Academics\ExamType;
 use App\Models\Academics\Marks;
+use App\Models\MarksRelease;
+use App\Models\Section as SectionModel;
+use App\Models\StudentAcademic;
+use App\Services\ClassStructureService;
 use App\Services\Marks\MarksSubmissionService;
+use App\Services\ReportCards\EndOfTermCompositionLine;
 use App\Models\Attendance;
 use App\Models\FeePayment;
 use App\Models\FeesCategories;
@@ -85,7 +90,95 @@ class DashboardV2DataService
             'waiting_note' => null,
             'ready' => $this->classesReadyToRelease($schoolId),
             'ready_note' => null,
+            'cards_released' => $this->releasedLearnerCount($schoolId),
         ];
+    }
+
+    /**
+     * Distinct active learners in classes with a released TERM REPORT this term.
+     *
+     * A release is a term report when its exam set counts toward the term total
+     * (EndOfTermCompositionLine::countsToward, the same rule the class report screen
+     * uses). A class is excluded if blockingSets() returns any unreleased counting
+     * set — matching the "blocked" state shown on the class report screen.
+     */
+    public function releasedLearnerCount(int $schoolId): int
+    {
+        $year = SiteHelper::getAcademicYear($schoolId);
+        if ($year === null) {
+            return 0;
+        }
+        $termId = $this->currentTerm($schoolId, (int) $year->id)?->id;
+
+        $releases = MarksRelease::query()
+            ->with(['exam.examType', 'standardLink.section'])
+            ->where('school_id', $schoolId)
+            ->where('status', MarksRelease::STATUS_RELEASED)
+            ->whereNotNull('released_at')
+            ->get()
+            ->filter(fn (MarksRelease $r) => $r->exam !== null
+                && (int) $r->exam->academic_year_id === (int) $year->id
+                && ($termId === null || (int) $r->exam->academic_term_id === (int) $termId));
+
+        $composition = app(EndOfTermCompositionLine::class);
+        $releases = $releases->filter(function (MarksRelease $r) use ($composition, $schoolId): bool {
+            $type = $r->exam->examType;
+
+            return $type !== null
+                && $composition->countsToward($type, $composition->compositionFor($schoolId, (int) $r->exam_id));
+        });
+
+        $structure = app(ClassStructureService::class);
+        $sectionIds = [];
+        foreach ($releases as $release) {
+            if ($release->scope === 'class' && $release->standardLink?->section !== null) {
+                $sectionIds = array_merge($sectionIds, $structure->classSectionIds($release->standardLink->section));
+
+                continue;
+            }
+            $examSections = ExamModel::query()
+                ->where('school_id', $schoolId)
+                ->where('exam_type_id', $release->exam->exam_type_id)
+                ->where('academic_term_id', $release->exam->academic_term_id)
+                ->whereNull('deleted_at')
+                ->pluck('section_id');
+            foreach (SectionModel::query()->where('school_id', $schoolId)->whereIn('id', $examSections)->get() as $section) {
+                $sectionIds = array_merge($sectionIds, $structure->classSectionIds($section));
+            }
+        }
+        $sectionIds = array_values(array_unique(array_map('intval', $sectionIds)));
+        if ($sectionIds === []) {
+            return 0;
+        }
+
+        // Drop any section where blockingSets() returns non-empty: those classes
+        // show as "blocked" on the class report screen and have not fully released.
+        if ($termId !== null) {
+            $sectionIds = array_values(array_filter(
+                $sectionIds,
+                fn (int $sectionId): bool => $composition->blockingSets($schoolId, $sectionId, (int) $termId) === []
+            ));
+        }
+
+        if ($sectionIds === []) {
+            return 0;
+        }
+
+        $linkIds = StandardLink::query()
+            ->where('school_id', $schoolId)
+            ->where('academic_year_id', (int) $year->id)
+            ->whereIn('section_id', $sectionIds)
+            ->pluck('id');
+
+        return StudentAcademic::query()
+            ->where('school_id', $schoolId)
+            ->where('academic_year_id', (int) $year->id)
+            ->whereIn('standardLink_id', $linkIds)
+            ->whereIn('user_id', User::query()
+                ->where('school_id', $schoolId)->where('usergroup_id', 6)->where('status', 'active')->whereNull('deleted_at')
+                ->select('id'))
+            ->distinct()
+            ->count('user_id');
     }
 
     /**
@@ -145,9 +238,49 @@ class DashboardV2DataService
             }
         }
 
+        // A sitting already released for the class is not "ready to release" any more.
+        // A school-wide release clears every section that has that exam set and term,
+        // not just the section of the anchor exam.
+        $releasedKeys = [];
+        $structure = app(ClassStructureService::class);
+        $releases = MarksRelease::query()
+            ->with(['exam', 'standardLink.section'])
+            ->where('school_id', $schoolId)
+            ->where('status', MarksRelease::STATUS_RELEASED)
+            ->get();
+        foreach ($releases as $release) {
+            if ($release->exam === null) {
+                continue;
+            }
+            $typeId = (int) $release->exam->exam_type_id;
+            $termId = (int) $release->exam->academic_term_id;
+
+            if ($release->scope === 'school') {
+                // School-wide: clear every section that owns exams of this type + term.
+                ExamModel::query()
+                    ->where('school_id', $schoolId)
+                    ->where('exam_type_id', $typeId)
+                    ->where('academic_term_id', $termId)
+                    ->whereNull('deleted_at')
+                    ->pluck('section_id')
+                    ->unique()
+                    ->each(function ($id) use ($typeId, $termId, &$releasedKeys): void {
+                        $releasedKeys[(int) $id.'|'.$typeId.'|'.$termId] = true;
+                    });
+            } else {
+                $ids = [(int) $release->exam->section_id];
+                if ($release->standardLink?->section !== null) {
+                    $ids = array_merge($ids, array_map('intval', $structure->classSectionIds($release->standardLink->section)));
+                }
+                foreach ($ids as $id) {
+                    $releasedKeys[$id.'|'.$typeId.'|'.$termId] = true;
+                }
+            }
+        }
+
         $readySections = [];
-        foreach ($groups as $group) {
-            if ($group['ready']) {
+        foreach ($groups as $key => $group) {
+            if ($group['ready'] && ! isset($releasedKeys[$key])) {
                 $readySections[$group['section_id']] = true;
             }
         }

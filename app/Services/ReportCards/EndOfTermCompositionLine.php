@@ -318,12 +318,28 @@ final class EndOfTermCompositionLine
             return null;
         }
 
+        // Look up by exam SET (same type + term) rather than the exact exam_id anchor.
+        // A release may be anchored on any subject's exam within the set; callers that
+        // pass a different subject's exam_id would otherwise miss it entirely.
+        $exam = Exam::query()->where('school_id', $schoolId)->whereKey($examId)->first();
+        if ($exam === null || ! $exam->exam_type_id || ! $exam->academic_term_id) {
+            return null;
+        }
+        $sectionId = (int) $exam->section_id;
+
         $row = MarksRelease::query()
             ->where('school_id', $schoolId)
-            ->where('exam_id', $examId)
             ->where('status', MarksRelease::STATUS_RELEASED)
+            ->whereHas('exam', function ($q) use ($schoolId, $exam): void {
+                $q->where('school_id', $schoolId)
+                    ->where('exam_type_id', (int) $exam->exam_type_id)
+                    ->where('academic_term_id', (int) $exam->academic_term_id)
+                    ->whereNull('deleted_at');
+            })
             ->orderByDesc('id')
-            ->first();
+            ->get()
+            ->first(fn (MarksRelease $r): bool => $this->releaseCoversSection($r, $schoolId, $sectionId));
+
         if ($row === null) {
             return null;
         }
