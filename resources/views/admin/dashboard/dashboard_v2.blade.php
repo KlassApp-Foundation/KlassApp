@@ -156,6 +156,7 @@
                 <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ url('/admin/teachers') }}" aria-label="Staff, open teachers and staff"><span class="dv2-kpi-label"><x-ka-icon name="presentation" :size="16" tone="muted" />Staff</span><span class="dv2-kpi-value">{{ ($kpis['staff']['value'] ?? 1) }}</span><p class="dv2-kpi-sub">{{ $kpis['staff']['detail'] ?? 'Just you' }}</p></a></div>
                 <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ route('admin.attendance.index') }}" aria-label="Attendance, open the registers"><span class="dv2-kpi-label"><x-ka-icon name="calendar-check" :size="16" tone="muted" />Attendance this week</span><span class="dv2-kpi-value">–</span><p class="dv2-kpi-sub">Starts after students are added</p></a></div>
                 @include('admin.dashboard._fees_stat')
+                <div class="dv2-kpi"><a class="dv2-kpi-link" href="{{ url('/admin/reports/cards') }}" aria-label="Report cards ready, open report cards" data-testid="dashboard-v2-report-action-new"><span class="dv2-kpi-label"><x-ka-icon name="file-text" :size="16" tone="muted" />Report cards ready</span><span class="dv2-kpi-value" data-testid="dashboard-v2-kpi-reports-new">–</span><p class="dv2-kpi-sub">After the first exam</p></a></div>
             </div>
 
             <div class="dv2-new-empty" data-testid="dashboard-v2-empty-students">
