@@ -277,8 +277,18 @@ but has no onboarding tools behind it.
 ### 1.11 TODOs and issues that mention onboarding
 
 - **No `TODO`/`FIXME`/`HACK`** in `app/Onboarding/**`, `OnboardingEngine.php`,
-  `ManualOnboardingWizard.php` or `AgentToshi.php` (grep, 0 hits). The debt is structural, not
-  annotated. **[code]**
+  `ManualOnboardingWizard.php`, `AgentToshi.php` or `app/Imports/**` (grep, 0 hits). The debt is not
+  annotated that way. **[code]**
+- The repo uses a different marker: **`FLAGGED(product-decision)`**. There are **48** in `app/`, of
+  which **22 sit in the onboarding write path** (`OnboardingEngine.php`, `SchoolCategorySeeder.php`,
+  `app/Onboarding/Country/*`, the `Emis`, `UnebCenter`, `Curriculum` and `Terms` steps, and
+  `StepSchemaCatalog.php`), each pointing at `docs/onboarding-engine-plan.md`. They are the repo's own
+  record that the global claim is unmet: a fixed curriculum list headed by UNEB
+  (`OnboardingEngine.php:167`), the UNEB centre number (`:236`), Uganda P.7/S.4/S.6 candidate classes
+  (`:351`), ordinals covering Primary 1–7 and Senior 1–6 only (`:434`), A-level streams
+  PCM/BCM/HEG/MEG (`SchoolTypePreset.php:27`), "the only preset is Uganda's" (`:59`), Uganda grading
+  scales (`GradingHelper.php:51`), and +256-only phone grouping/prefixes
+  (`WhatsAppPhoneHelper.php:227`, `:278`). **[code]**
 - Open issues: **#793** (wizard invites teachers before upload — see 1.1), #1090 (builder status log,
   not onboarding), #629 (nav, unrelated). **[git]**
 - PR **#1183** "Record the wizard and Toshi v2 onboarding pass" is a `knowledge.md`-only draft, 413
@@ -368,7 +378,7 @@ DPA is not confirmed.
 | 7 | Never writes without the admin confirming | **Partial** | Per-step "Confirm step" in #1307; per-structure confirm in v2; tier-2 tool confirm in the panel. Missing: confirmation is per **step**, not per record; it lives in session state, not an audit table; `$bypassConfirm` is a static flag. |
 | 8 | No exams or SchoolPay during onboarding | **Partial / conflicting** | Playbook excludes them (`:7`), wizard has no such steps, #1307 has no such steps — but the legacy Toshi flow still lists `exams` and `school_pay` (`AgentToshi.php:218-238`) and is the flow a school in `onboarding` mode sees. |
 | 9 | Stops if the DPA is not confirmed | **Partial** | Enforced in the converter (`checkConfirmations()`, `:200-222`) and in #1291's exit code; #1296 makes it gate 1. Not enforced in `OnboardingEngine` or the wizard — any other path can write without it. |
-| 10 | Global product, not Uganda-only | **Partial** | Country profiles (`app/Onboarding/Country/*`), conditional EMIS/UNEB (`OnboardingStepsService.php:229-243`), per-country phone normalisation (`PhoneCountry`). But: default country Uganda (#1246, in `main`), canonical class names are Uganda's (`:23-27`), UNEB/EMIS vocabulary is baked into step names, and `SchoolTypePreset` assumes a Uganda-shaped ladder. A nursery or A-level school outside Uganda will be flagged or mis-mapped. |
+| 10 | Global product, not Uganda-only | **Partial** | Country profiles (`app/Onboarding/Country/*`), conditional EMIS/UNEB (`OnboardingStepsService.php:229-243`), per-country phone normalisation (`PhoneCountry`). But: default country Uganda (#1246, in `main`), canonical class names are Uganda's (`:23-27`), UNEB/EMIS vocabulary is baked into step names, `SchoolTypePreset` assumes a Uganda-shaped ladder, and **22 `FLAGGED(product-decision)` markers in the onboarding write path** say the same thing in the repo's own words (`OnboardingEngine.php:167,236,351,397,434`; `SchoolTypePreset.php:27,59`; `GradingHelper.php:51`). A nursery or A-level school outside Uganda will be flagged or mis-mapped. |
 
 ---
 
@@ -385,6 +395,10 @@ Order matters: consolidate first, then write, then ask, then invite, then verify
   `docs/demo/poc-checklist-workbook.xlsx` and a correct twin).
 - Rewrite the three stale headers (`onboarding-engine-plan.md`, `onboarding-defaults-skill.md`,
   `#1296`'s first-sign-in paragraph) so the docs stop contradicting `main`.
+- Triage the **22 `FLAGGED(product-decision)` markers** in the onboarding write path. Each is a
+  product answer Rasta owes before a non-Uganda school can be onboarded without being rewritten into
+  a Uganda shape. Decide per marker: keep (and document the constraint), or move behind a country
+  profile.
 
 **Reuse:** `OnboardingStepsService`, `OnboardingEngine`, the playbook.
 **Retire:** the 19-step list, #1291, #1293 as written.
