@@ -413,7 +413,8 @@
                     "url": "teacher/exam/marks",
                     "paths": [
                         "teacher/exam/marks",
-                        "teacher/exam/marks/*"
+                        "teacher/exam/marks/*",
+                        "teacher/exam/*/marks*"
                     ]
                 },
                 {
@@ -832,4 +833,3 @@
         }
     }
 }
-
