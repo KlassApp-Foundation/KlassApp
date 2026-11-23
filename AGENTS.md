@@ -96,11 +96,13 @@ These apply to every change, in every session, regardless of which tool is runni
 
 45. **Stacked pull requests.** Retarget a stacked pull request to main before merging it, and after the merge confirm that the merge commit is on main. A pull request merged into its base branch is not on main (this happened once).
 
-46. **Design source of truth.** Build admin pages from `design/system/concepts/admin-mvp`, the combined handoff and the newest merged handoff (`design/system/SOURCE-OF-TRUTH.md` names it, when it exists). Legacy files (`ui_kits/school-dashboard`, `templates/school-dashboard`, `concepts/profiles/dashboard-v2.html`, `account-dashboard.html`) are not targets. When mirroring a design pack, copy only new and changed files, never `uploads/` or `scraps/`; its CHECKSUMS file can be stale, so verify with the ZIP hash and the pack checksum.
+46. **Design source of truth.** The single source is the KlassApp Design System (https://claude.ai/artifact/HCtWey4rYX7fgr7VBDWLgZ); see standing rule #49. Building admin pages from `design/system/concepts/admin-mvp` is retired: that folder, and every canvas under `concepts/`, is history, not a spec. When mirroring a design pack, copy only new and changed files, never `uploads/` or `scraps/`; its CHECKSUMS file can be stale, so verify with the ZIP hash and the pack checksum.
 
 47. **Review builds.** Serve the pull request branch with production-like assets (`npm run build`) and data equal to staging's. Local numbers can differ from staging, and local ports stop when a terminal closes: staging is the proof, so review on staging after merge.
 
 48. **Every bug fix ships with a test that fails without the fix.** Name the test after the register ID (for example `test_K102_active_sidebar_row_has_single_highlight`) and prove it: with the fix reverted the test is red, with it restored the test is green. Behaviour bugs get a PHPUnit or Livewire test; visual and interaction bugs get a browser test with measurable assertions (`getBoundingClientRect`, `elementFromPoint`, real pointer paths), never a screenshot comparison alone. A bug that cannot be tested is recorded as such, with the reason, in the register.
+
+49. **Build only what the design system has approved.** The single source of KlassApp designs is the KlassApp Design System (https://claude.ai/artifact/HCtWey4rYX7fgr7VBDWLgZ). Nothing is built until it is approved there; approvals are agreed in chat and dated in its decisions log. This folder is a mirror. Build only from items marked approved. Concepts, drafts and older canvases are history, not specs.
 
 ## Known bug patterns (quick reference — full detail in `knowledge.md`)
 

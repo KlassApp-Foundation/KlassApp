@@ -1,7 +1,23 @@
 # KlassApp Design System
 
+## Single source of truth — 2026-11-22
 
-## Source of truth for admin pages
+The single source of KlassApp designs is the KlassApp Design System (https://claude.ai/artifact/HCtWey4rYX7fgr7VBDWLgZ). Nothing is built until it is approved there; approvals are agreed in chat and dated in its decisions log. This folder is a mirror. Build only from items marked approved. Concepts, drafts and older canvases are history, not specs.
+
+### Approved decisions
+
+- **2026-11-22 — Single source of designs.** The KlassApp Design System (https://claude.ai/artifact/HCtWey4rYX7fgr7VBDWLgZ) is the single source; this folder is a mirror.
+- **2026-11-22 — Marks: a missing mark.** A missing mark shows "–" and counts as 0; ABS is for attendance only.
+- **2026-11-22 — Marks: a subject not approved yet.** It shows "Pending" and does not count in Total, Aggregate or Division.
+- **2026-11-22 — Results.** Total, grade points, Aggregate and Division appear on every marks preview (release sheet, report cards list, dashboard results preview, parent and student pages, WhatsApp results message).
+- **2026-11-22 — Toshi.** Docked full-height IDE-style panel; KlassApp green throughout, amber only for essential warnings; the Ask Toshi button sits top right and shows only while the panel is closed; users are admins and teachers (parents on WhatsApp); autonomy is configurable per school per action ("Ask me first" or "Act on its own"), every action logged; the frozen Pulse block is unfrozen and its contrast fixed; voice hidden until it works.
+- **2026-11-22 — Navigation.** It keeps the Approvals inbox (merged with mark approvals), Fees and the Parents list.
+- **2026-11-22 — Account card.** The account (profile) card stays at the bottom of the left sidebar.
+
+
+## Superseded: admin pages guidance (2026-10-08)
+
+> Superseded by the single source of truth above (2026-11-22). History only — do not build from `concepts/`.
 
 - **Build admin pages from:** `concepts/admin-mvp` (the concept) plus `guidelines/handoff-2026-10-08-admin-mvp-combined.md` (the spec).
 - **Where files disagree, the combined handoff wins.**
