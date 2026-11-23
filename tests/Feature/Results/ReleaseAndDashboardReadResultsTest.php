@@ -101,7 +101,6 @@ class ReleaseAndDashboardReadResultsTest extends TestCase
 
         $this->assertSame('P.5', $data['charts']['per_class'][0]['label']);
         $this->assertSame(70.0, $data['charts']['per_class'][0]['value']);
-        $this->assertSame(1, $data['kpis']['report_cards']['ready']);
     }
 
     /**

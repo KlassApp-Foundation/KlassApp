@@ -582,25 +582,6 @@ class DashboardV2DataService
         $hasStructure = FeesCategories::query()->where('school_id', $sid)->exists();
         $currency = $this->currencyFor($sid);
 
-        // Report cards: students with marks for the latest exam that HAS marks
-        // (an empty just-created exam must not blank the tile).
-        $exam = ExamModel::query()
-            ->where('school_id', $sid)
-            ->whereHas('marks', fn ($q) => $q->where('school_id', $sid))
-            ->orderByDesc('scheduled_at')
-            ->orderByDesc('id')
-            ->first();
-        $ready = 0;
-        if ($exam !== null && $exam->section_id && $exam->academic_term_id && $exam->exam_type_id) {
-            $sitting = app(ResultsService::class)->sheet(new ResultsQuery(
-                schoolId: $sid,
-                sectionId: (int) $exam->section_id,
-                academicTermId: (int) $exam->academic_term_id,
-                examTypeId: (int) $exam->exam_type_id,
-            ));
-            $ready = count(array_filter($sitting->students, fn ($student) => $student->subjectsCounted > 0));
-        }
-
         return [
             'students' => [
                 'value' => $students,
@@ -619,28 +600,7 @@ class DashboardV2DataService
                 'direction' => $attendanceDirection,
             ],
             'fees' => $this->feeTile($feePosition, $feeMonths, $currency, $hasStructure),
-            'report_cards' => [
-                'ready' => $ready,
-                'students' => $students,
-                'exam' => $this->examLabel($exam),
-                'percent' => ($exam && $students > 0) ? (int) round($ready / $students * 100) : null,
-                'state' => $exam ? 'ok' : 'no_exam',
-                // Every student has a report card for the term: the tile's one action
-                // moves from Generate to Send on WhatsApp.
-                'complete' => $exam !== null && $students > 0 && $ready >= $students,
-            ],
         ];
-    }
-
-    private function examLabel(?ExamModel $exam): ?string
-    {
-        if (! $exam) {
-            return null;
-        }
-
-        return $exam->examType?->name
-            ?? $exam->subject?->name
-            ?? 'Latest exam';
     }
 
     private function deltaLabel(float $delta): string
