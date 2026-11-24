@@ -19,7 +19,27 @@ use Illuminate\Validation\ValidationException;
  */
 final class OnboardingDpaGate
 {
-    public const VERSION = '2026-11';
+    /**
+     * Placeholder until the approved acceptance text exists. The real version
+     * identifier is configuration (ONBOARDING_DPA_VERSION), not code, so the
+     * wording can be signed off without a deploy of this class.
+     */
+    public const PLACEHOLDER_VERSION = 'placeholder-pending-approval';
+
+    /**
+     * The gate is off unless the product is ready to ask for acceptance.
+     */
+    public function enabled(): bool
+    {
+        return (bool) config('onboarding.dpa_gate.enabled', false);
+    }
+
+    public function version(): string
+    {
+        $version = (string) config('onboarding.dpa_gate.version', '');
+
+        return $version !== '' ? $version : self::PLACEHOLDER_VERSION;
+    }
 
     /**
      * Demo and test schools are exempt. Everything else is a real school.
@@ -35,6 +55,10 @@ final class OnboardingDpaGate
 
     public function requiredFor(?School $school): bool
     {
+        if (! $this->enabled()) {
+            return false;
+        }
+
         if (! $this->appliesTo($school)) {
             return false;
         }
@@ -52,7 +76,7 @@ final class OnboardingDpaGate
      */
     public function markRequired(School $school): void
     {
-        if (! $this->appliesTo($school) || $school->onboarding_dpa_required_at !== null) {
+        if (! $this->enabled() || ! $this->appliesTo($school) || $school->onboarding_dpa_required_at !== null) {
             return;
         }
 
@@ -68,7 +92,7 @@ final class OnboardingDpaGate
         $school->forceFill([
             'onboarding_dpa_required_at' => $school->onboarding_dpa_required_at ?? now(),
             'onboarding_dpa_confirmed_at' => now(),
-            'onboarding_dpa_version' => self::VERSION,
+            'onboarding_dpa_version' => $this->version(),
         ])->save();
     }
 

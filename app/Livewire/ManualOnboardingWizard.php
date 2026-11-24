@@ -1422,6 +1422,14 @@ class ManualOnboardingWizard extends Component
     public function confirmDpa(): void
     {
         $this->errorMessage = '';
+
+        $gate = app(OnboardingDpaGate::class);
+        if (! $gate->enabled()) {
+            $this->addError('dpaAccepted', 'The data processing agreement step is not enabled.');
+
+            return;
+        }
+
         if (! $this->dpaAccepted) {
             $this->addError('dpaAccepted', 'Tick the box to confirm the data processing agreement.');
 
@@ -1429,14 +1437,14 @@ class ManualOnboardingWizard extends Component
         }
 
         $school = $this->school()->fresh();
-        app(OnboardingDpaGate::class)->record($school, Auth::user());
+        $gate->record($school, Auth::user());
 
         \App\Models\OnboardingPlanStep::record(
             schoolId: (int) $school->id,
             step: 'dpa',
             actorId: Auth::id(),
-            previewHash: hash('sha256', 'dpa|'.OnboardingDpaGate::VERSION),
-            appliedCounts: ['version' => OnboardingDpaGate::VERSION],
+            previewHash: hash('sha256', 'dpa|'.$gate->version()),
+            appliedCounts: ['version' => $gate->version()],
         );
 
         $this->dpaConfirmed = true;

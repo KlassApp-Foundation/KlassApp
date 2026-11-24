@@ -13,6 +13,13 @@ class OnboardingDpaGateTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['onboarding.dpa_gate.enabled' => true]);
+    }
+
     private function school(array $overrides = []): School
     {
         // These columns are gate-owned, not fillable: set them after create.
@@ -54,7 +61,7 @@ class OnboardingDpaGateTest extends TestCase
         app(OnboardingEngine::class)->saveSchoolName($school->fresh(), 'Renamed School');
 
         $this->assertSame('Renamed School', $school->fresh()->name);
-        $this->assertSame(OnboardingDpaGate::VERSION, $school->fresh()->onboarding_dpa_version);
+        $this->assertSame(app(OnboardingDpaGate::class)->version(), $school->fresh()->onboarding_dpa_version);
     }
 
     public function test_a_school_that_has_not_started_onboarding_is_not_blocked(): void
@@ -84,5 +91,24 @@ class OnboardingDpaGateTest extends TestCase
 
             $this->assertSame('Renamed '.$flag, $school->fresh()->name);
         }
+    }
+
+    public function test_the_gate_is_off_by_default_and_writes_are_not_blocked(): void
+    {
+        config(['onboarding.dpa_gate.enabled' => false]);
+
+        $school = $this->school(['onboarding_dpa_required_at' => now()]);
+
+        app(OnboardingEngine::class)->saveSchoolName($school, 'No Gate School');
+
+        $this->assertSame('No Gate School', $school->fresh()->name);
+        $this->assertFalse(app(OnboardingDpaGate::class)->requiredFor($school->fresh()));
+    }
+
+    public function test_the_version_is_a_placeholder_until_configuration_sets_one(): void
+    {
+        config(['onboarding.dpa_gate.version' => null]);
+
+        $this->assertSame('placeholder-pending-approval', app(OnboardingDpaGate::class)->version());
     }
 }
