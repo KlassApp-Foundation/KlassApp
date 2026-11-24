@@ -144,20 +144,34 @@ class ToshiOnboardingTest extends TestCase
             // fees (optional: skip)
             ->set('input', 'skip')
             ->call('send')
-            // exams (optional: skip)
-            ->set('input', 'skip')
-            ->call('send')
             // whatsapp_verify (optional): substep 0 triggers phone prompt → skip at substep 1
             ->set('input', 'go')
             ->call('send')
             ->set('input', 'skip')
-            ->call('send')
-        // school_pay (optional): skip
-            ->set('input', 'skip')
             ->call('send');
-        // Verify we've progressed past whatsapp_verify (step index >= 14 = review)
-        $currentStep = $component->get('step');
-        $this->assertGreaterThanOrEqual(14, $currentStep, 'Should be at or past review step');
+
+        // Skipping WhatsApp must actually advance the flow, not leave it on the
+        // step. Exams and SchoolPay are no longer onboarding steps, so the next
+        // step after WhatsApp is plan selection. Asserting the key (not an index)
+        // keeps this honest when the canonical list changes again.
+        // Skipping WhatsApp must actually move the flow forward. The old check
+        // was "index >= 14", which passed even when the flow was stuck on the
+        // WhatsApp step (index 14). Assert the position relative to the step, so
+        // a stall fails.
+        $steps = $component->instance()->steps;
+        $whatsapp = array_search('whatsapp_verify', $steps, true);
+        $this->assertIsInt($whatsapp);
+
+        $current = (int) $component->get('step');
+        $this->assertGreaterThan($whatsapp, $current, 'Skipping WhatsApp should move past it');
+
+        // Either the next real step, or the done sentinel when the plan was
+        // already selected earlier in this walk.
+        $key = $steps[$current] ?? null;
+        $this->assertTrue(
+            in_array($key, ['plan_selection', 'review'], true) || $current >= 99,
+            'Should land on plan selection, review, or done — got '.var_export($key, true)
+        );
 
         // Simulate clicking "← Edit" which calls editBeforeCommit
         $component->call('editBeforeCommit');
