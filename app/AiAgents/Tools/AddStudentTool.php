@@ -48,7 +48,15 @@ class AddStudentTool implements Tool, VerifiableTool
         if ($confirm !== null) return $confirm;
 
         $user = \App\Services\ToshiActionService::getEffectiveUser($user);
-        $result = \App\Services\ToshiActionService::addStudent($user, $args);
+
+        try {
+            $result = \App\Services\ToshiActionService::addStudent($user, $args);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // A refused onboarding write (for example the DPA gate) is a message
+            // for the person, not an exception for the panel to crash on.
+            return '❌ ' . $e->getMessage();
+        }
+
         return $result['success'] ? '✅ ' . $result['message'] : '❌ ' . $result['message'];
     }
 
