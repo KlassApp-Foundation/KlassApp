@@ -23,6 +23,11 @@ export const helpSidebar = [
     { text: 'Google tools', link: '/help/admins/google' },
     { text: 'Book a setup session', link: '/help/admins/book-onboarding' },
     { text: 'Classes and streams', link: '/help/concepts/classes-and-streams' } ] },
+  { text: 'Walkthroughs', collapsed: false, items: [
+    { text: 'Marks to a parent, end to end', link: '/help/walkthrough/' },
+    { text: 'School admin', link: '/help/walkthrough/school-admin' },
+    { text: 'Class teacher', link: '/help/walkthrough/class-teacher' },
+    { text: 'Parent', link: '/help/walkthrough/parent' } ] },
   { text: 'Teachers', collapsed: true, items: [
     { text: 'Class teacher', link: '/help/teachers/class' },
     { text: 'Subject teacher', link: '/help/teachers/subject' },
