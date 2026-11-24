@@ -14,6 +14,7 @@ use App\Models\School;
 use App\Models\TeacherInvite;
 use App\Models\User;
 use App\Models\Userprofile;
+use App\Services\OnboardingStepsService;
 use App\Models\WhatsAppUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -444,7 +445,7 @@ class OnboardingPhoneFormatTest extends TestCase
 
         $toshi->set('mode', 'create')
             ->set('actionStep', null)
-            ->set('step', 15)
+            ->set('step', array_search('whatsapp_verify', OnboardingStepsService::toshiScriptedSteps(), true))
             ->set('substep', 2)
             ->set('input', '0765274289')
             ->call('send')

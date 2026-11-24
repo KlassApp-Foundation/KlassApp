@@ -165,7 +165,7 @@ class StudentSizeOnboardingTest extends TestCase
     {
         $this->actingAs($this->admin);
 
-        $sizeIdx = array_search('student_size', (new AgentToshi)->steps, true);
+        $sizeIdx = array_search('student_size', OnboardingStepsService::toshiScriptedSteps(), true);
         $this->assertNotFalse($sizeIdx);
 
         $component = Livewire::test(AgentToshi::class)

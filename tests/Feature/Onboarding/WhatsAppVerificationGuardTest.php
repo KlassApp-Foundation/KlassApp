@@ -103,7 +103,7 @@ class WhatsAppVerificationGuardTest extends TestCase
         OnboardingSession::create([
             'user_id' => $this->admin->id,
             'school_id' => $this->school->id,
-            'step' => 14,
+            'step' => array_search('whatsapp_verify', OnboardingStepsService::toshiScriptedSteps(), true),
             'substep' => 0,
             'status' => 'draft',
             'data' => [
@@ -253,7 +253,7 @@ class WhatsAppVerificationGuardTest extends TestCase
 
         $component = Livewire::test(AgentToshi::class)
             ->set('mode', 'create')
-            ->set('step', 15)
+            ->set('step', array_search('whatsapp_verify', OnboardingStepsService::toshiScriptedSteps(), true))
             ->set('substep', 2)
             ->set('schoolCountry', 'Uganda')
             ->set('whatsappPhone', self::PHONE)

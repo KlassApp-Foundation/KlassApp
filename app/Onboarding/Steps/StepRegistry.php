@@ -26,25 +26,30 @@ use App\Services\OnboardingStepsService;
 class StepRegistry
 {
     /**
-     * @var list<class-string<OnboardingStep>>
+     * Step class per canonical key. The *order* and the *membership* come from
+     * OnboardingStepsService::ALL_STEPS; this map only says which class answers
+     * for a key, because two class names cannot be derived from their keys
+     * (uneb_center → UnebCenterStep, whatsapp_verify → WhatsAppVerifyStep).
+     *
+     * @var array<string, class-string<OnboardingStep>>
      */
-    private const STEP_CLASSES = [
-        SchoolNameStep::class,
-        StudentSizeStep::class,
-        CountryStep::class,
-        CurriculumStep::class,
-        SchoolCategoryStep::class,
-        EmisStep::class,
-        UnebCenterStep::class,
-        AcademicYearStep::class,
-        StandardsStep::class,
-        SubjectsStep::class,
-        TeachersStep::class,
-        StudentsStep::class,
-        TermsStep::class,
-        FeesStep::class,
-        WhatsAppVerifyStep::class,
-        PlanSelectionStep::class,
+    private const CLASSES = [
+        'school_name' => SchoolNameStep::class,
+        'student_size' => StudentSizeStep::class,
+        'country' => CountryStep::class,
+        'curriculum' => CurriculumStep::class,
+        'school_category' => SchoolCategoryStep::class,
+        'emis' => EmisStep::class,
+        'uneb_center' => UnebCenterStep::class,
+        'academic_year' => AcademicYearStep::class,
+        'standards' => StandardsStep::class,
+        'subjects' => SubjectsStep::class,
+        'teachers' => TeachersStep::class,
+        'students' => StudentsStep::class,
+        'terms' => TermsStep::class,
+        'fees' => FeesStep::class,
+        'whatsapp_verify' => WhatsAppVerifyStep::class,
+        'plan_selection' => PlanSelectionStep::class,
     ];
 
     public function __construct(private OnboardingEngine $engine)
@@ -56,10 +61,18 @@ class StepRegistry
      */
     public function all(): array
     {
-        return array_map(
-            fn (string $class) => app($class, ['engine' => $this->engine]),
-            self::STEP_CLASSES
-        );
+        $steps = [];
+
+        foreach (array_keys(OnboardingStepsService::ALL_STEPS) as $key) {
+            $class = self::CLASSES[$key] ?? null;
+            if ($class === null) {
+                throw new \RuntimeException("Onboarding step [{$key}] has no class in StepRegistry.");
+            }
+
+            $steps[] = app($class, ['engine' => $this->engine]);
+        }
+
+        return $steps;
     }
 
     /**
