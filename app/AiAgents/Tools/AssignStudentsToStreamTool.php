@@ -14,6 +14,7 @@ use App\Models\StudentAcademic;
 use App\Models\User;
 use App\Services\StudentIdGeneratorService;
 use App\Services\ToshiActionService;
+use App\Services\Toshi\WriteContext;
 
 /**
  * SKETCH — companion to CreateStreamTool, designed alongside it rather
@@ -71,7 +72,7 @@ class AssignStudentsToStreamTool implements Tool, VerifiableTool
         ];
     }
 
-    public function handle(Request $request): string
+    public function handle(Request $request, ?WriteContext $context = null): string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeOrMessage($user);
@@ -121,7 +122,7 @@ class AssignStudentsToStreamTool implements Tool, VerifiableTool
         if (!empty($ambiguous)) $previewNote .= ' Ambiguous (skipped, use registration number): ' . implode(', ', $ambiguous) . '.';
 
         $confirm = $this->confirmOrExecute('toolAssignStudentsToStream', $args,
-            fn() => "Move " . count($matched) . " student(s) into {$className} / {$streamName}: " . implode(', ', $matchedNames) . '.' . $previewNote);
+            fn() => "Move " . count($matched) . " student(s) into {$className} / {$streamName}: " . implode(', ', $matchedNames) . '.' . $previewNote, $context);
         if ($confirm !== null) return $confirm;
 
         $moved = [];

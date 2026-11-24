@@ -9,6 +9,7 @@ use App\AiAgents\Concerns\AuthorizesToshiAction;
 use App\AiAgents\Concerns\ConfirmsBeforeWrite;
 use App\AiAgents\Concerns\VerifiableTool;
 use App\Models\User;
+use App\Services\Toshi\WriteContext;
 
 class AddParentTool implements Tool, VerifiableTool
 {
@@ -29,7 +30,7 @@ class AddParentTool implements Tool, VerifiableTool
         ];
     }
 
-    public function handle(Request $request): string
+    public function handle(Request $request, ?WriteContext $context = null): string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeOrMessage($user);
@@ -43,7 +44,7 @@ class AddParentTool implements Tool, VerifiableTool
 
         $confirm = $this->confirmOrExecute('toolAddParent', $args,
             fn() => "Add parent: {$args['name']}, phone: {$args['phone']}"
-                . ($args['student_id'] ? ", student ID: {$args['student_id']}" : ''));
+                . ($args['student_id'] ? ", student ID: {$args['student_id']}" : ''), $context);
         if ($confirm !== null) return $confirm;
 
         $user = \App\Services\ToshiActionService::getEffectiveUser($user);

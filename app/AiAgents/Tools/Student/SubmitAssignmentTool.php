@@ -9,6 +9,7 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
+use App\Services\Toshi\WriteContext;
 
 class SubmitAssignmentTool implements Tool
 {
@@ -28,7 +29,7 @@ class SubmitAssignmentTool implements Tool
         ];
     }
 
-    public function handle(Request $request): Stringable|string
+    public function handle(Request $request, ?WriteContext $context = null): Stringable|string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeStudentOrMessage($user);
@@ -44,8 +45,7 @@ class SubmitAssignmentTool implements Tool
         $confirm = $this->confirmOrExecute(
             'toolStudentSubmitAssignment',
             $args,
-            fn () => "Submit assignment #{$args['assignment_id']}"
-        );
+            fn () => "Submit assignment #{$args['assignment_id']}", $context);
         if ($confirm !== null) {
             return $confirm;
         }

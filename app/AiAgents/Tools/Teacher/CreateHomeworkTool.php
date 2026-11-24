@@ -9,6 +9,7 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
+use App\Services\Toshi\WriteContext;
 
 class CreateHomeworkTool implements Tool
 {
@@ -31,7 +32,7 @@ class CreateHomeworkTool implements Tool
         ];
     }
 
-    public function handle(Request $request): Stringable|string
+    public function handle(Request $request, ?WriteContext $context = null): Stringable|string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeTeacherOrMessage($user);
@@ -41,7 +42,7 @@ class CreateHomeworkTool implements Tool
 
         $args = ['standardLink_id' => (int) $request->get('standardLink_id'), 'subject_id' => (int) $request->get('subject_id'), 'description' => $request->get('description'), 'date' => $request->get('date'), 'submission_date' => $request->get('submission_date')];
 
-        $confirm = $this->confirmOrExecute('toolTeacherCreateHomework', $args, fn () => "Create homework for class #{$args['standardLink_id']}");
+        $confirm = $this->confirmOrExecute('toolTeacherCreateHomework', $args, fn () => "Create homework for class #{$args['standardLink_id']}", $context);
         if ($confirm !== null) {
             return $confirm;
         }

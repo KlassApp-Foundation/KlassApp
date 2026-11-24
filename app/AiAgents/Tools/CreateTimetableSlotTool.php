@@ -9,6 +9,7 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
+use App\Services\Toshi\WriteContext;
 
 class CreateTimetableSlotTool implements Tool
 {
@@ -34,7 +35,7 @@ class CreateTimetableSlotTool implements Tool
         ];
     }
 
-    public function handle(Request $request): Stringable|string
+    public function handle(Request $request, ?WriteContext $context = null): Stringable|string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeOrMessage($user);
@@ -54,7 +55,7 @@ class CreateTimetableSlotTool implements Tool
         ];
 
         $confirm = $this->confirmOrExecute('toolCreateTimetableSlot', $args,
-            fn () => "Create timetable slot: day=".$args['day_of_week']." ".$args['start_time']."-".$args['end_time']);
+            fn () => "Create timetable slot: day=".$args['day_of_week']." ".$args['start_time']."-".$args['end_time'], $context);
         if ($confirm !== null) {
             return $confirm;
         }

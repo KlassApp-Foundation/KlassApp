@@ -9,6 +9,7 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
+use App\Services\Toshi\WriteContext;
 
 /**
  * Creates a NoticeBoard row — same notice_board table Receptionist ViewNoticeboardTool lists.
@@ -36,7 +37,7 @@ class CreateNoticeTool implements Tool
         ];
     }
 
-    public function handle(Request $request): Stringable|string
+    public function handle(Request $request, ?WriteContext $context = null): Stringable|string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeOrMessage($user);
@@ -54,7 +55,7 @@ class CreateNoticeTool implements Tool
         ];
 
         $confirm = $this->confirmOrExecute('toolCreateNotice', $args,
-            fn () => "Create notice: {$args['title']} (type={$args['type']})");
+            fn () => "Create notice: {$args['title']} (type={$args['type']})", $context);
         if ($confirm !== null) {
             return $confirm;
         }

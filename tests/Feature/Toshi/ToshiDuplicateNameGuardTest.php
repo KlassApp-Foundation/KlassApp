@@ -21,7 +21,6 @@ class ToshiDuplicateNameGuardTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        ToshiActionService::$bypassConfirm = false;
         ToshiActionService::$pendingConfirmPayload = null;
         DB::table('usergroups')->upsert([
             ['id' => 3, 'name' => 'schooladmin', 'created_at' => now(), 'updated_at' => now()],
@@ -134,7 +133,6 @@ class ToshiDuplicateNameGuardTest extends TestCase
             'exam_type_id' => 1, 'status' => 'undone',
         ]);
 
-        ToshiActionService::$bypassConfirm = true;
 
         // The write-time guard was removed from enterMark() because
         // disambiguation via ID now happens at the tool level (EntityResolver).

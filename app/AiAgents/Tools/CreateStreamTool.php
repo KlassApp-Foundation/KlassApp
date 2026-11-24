@@ -14,6 +14,7 @@ use App\Models\Section;
 use App\Models\Standard;
 use App\Models\StandardLink;
 use App\Services\ToshiActionService;
+use App\Services\Toshi\WriteContext;
 
 /**
  * Creates a class (Section) and wires it into the current academic year via
@@ -61,7 +62,7 @@ class CreateStreamTool implements Tool, VerifiableTool
         ];
     }
 
-    public function handle(Request $request): string
+    public function handle(Request $request, ?WriteContext $context = null): string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeOrMessage($user);
@@ -140,7 +141,7 @@ class CreateStreamTool implements Tool, VerifiableTool
             }
 
             $confirm = $this->confirmOrExecute('toolCreateStream', $batchArgs,
-                fn() => "Create class: {$className} (no streams).");
+                fn() => "Create class: {$className} (no streams).", $context);
             if ($confirm !== null) return $confirm;
 
             StandardLink::create([
@@ -158,7 +159,7 @@ class CreateStreamTool implements Tool, VerifiableTool
 
         // Stream-first creation — one StandardLink per stream name
         $confirm = $this->confirmOrExecute('toolCreateStream', $batchArgs,
-            fn() => "Create class: {$className} with streams: " . implode(', ', $streams) . ".");
+            fn() => "Create class: {$className} with streams: " . implode(', ', $streams) . ".", $context);
         if ($confirm !== null) return $confirm;
 
         foreach ($streams as $streamName) {

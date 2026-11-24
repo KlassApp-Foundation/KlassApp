@@ -9,6 +9,7 @@ use App\AiAgents\Concerns\AuthorizesToshiAction;
 use App\AiAgents\Concerns\ConfirmsBeforeWrite;
 use App\AiAgents\Concerns\VerifiableTool;
 use App\Models\Attendance;
+use App\Services\Toshi\WriteContext;
 
 class RecordAttendanceTool implements Tool, VerifiableTool
 {
@@ -29,7 +30,7 @@ class RecordAttendanceTool implements Tool, VerifiableTool
         ];
     }
 
-    public function handle(Request $request): string
+    public function handle(Request $request, ?WriteContext $context = null): string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeOrMessage($user);
@@ -43,7 +44,7 @@ class RecordAttendanceTool implements Tool, VerifiableTool
         ];
 
         $confirm = $this->confirmOrExecute('toolRecordAttendance', $args,
-            fn() => "Record attendance: {$args['student']} on {$args['date']} as {$args['status']}");
+            fn() => "Record attendance: {$args['student']} on {$args['date']} as {$args['status']}", $context);
         if ($confirm !== null) return $confirm;
 
         $user = \App\Services\ToshiActionService::getEffectiveUser($user);

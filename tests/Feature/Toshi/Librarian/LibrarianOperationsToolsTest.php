@@ -18,6 +18,7 @@ use App\Models\LibraryCard;
 use App\Models\Task;
 use App\Models\User;
 use App\Services\ToshiActionService;
+use App\Services\Toshi\WriteContext;
 use App\Services\ToshiAuditService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -125,7 +126,6 @@ class LibrarianOperationsToolsTest extends TestCase
     public function test_school_admin_tool_denies_librarian_via_authorize(): void
     {
         $this->actingAs($this->librarian);
-        ToshiActionService::$bypassConfirm = true;
 
         $result = (new AddCoAdminTool)->handle(new Request([
             'name' => 'Should Fail',
@@ -133,7 +133,6 @@ class LibrarianOperationsToolsTest extends TestCase
         ]));
 
         $this->assertStringStartsWith('❌', $result);
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_view_library_cards_lookup_by_student_and_card_no(): void
@@ -165,7 +164,6 @@ class LibrarianOperationsToolsTest extends TestCase
     public function test_manage_books_and_categories_require_confirmation_then_write(): void
     {
         $this->actingAs($this->librarian);
-        ToshiActionService::$bypassConfirm = false;
         ToshiActionService::$pendingConfirmPayload = null;
 
         $categoryId = BookCategory::create([
@@ -185,31 +183,27 @@ class LibrarianOperationsToolsTest extends TestCase
         $this->assertSame('toolLibrarianManageBooks', $decoded['tool']);
         $this->assertFalse(Book::where('book_code', 'BK-8801')->exists());
 
-        ToshiActionService::$bypassConfirm = true;
         $ok = (new ManageBooksTool)->handle(new Request([
             'title' => 'Things Fall Apart',
             'category_id' => $categoryId,
             'book_code' => 'BK-8801',
             'author' => 'Chinua Achebe',
             'quantity' => 2,
-        ]));
+        ]), $this->confirmed('toolLibrarianManageBooks'));
         $this->assertStringStartsWith('✅', $ok);
         $this->assertTrue(Book::where('school_id', $this->schoolId)->where('book_code', 'BK-8801')->exists());
 
         $catPending = (new ManageBookCategoriesTool)->handle(new Request([
             'category' => 'Science',
-        ]));
-        // bypass still true — writes immediately
+        ]), $this->confirmed('toolLibrarianManageBookCategories'));
         $this->assertStringStartsWith('✅', $catPending);
         $this->assertTrue(BookCategory::where('school_id', $this->schoolId)->where('category', 'Science')->exists());
 
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_manage_lending_happy_path(): void
     {
         $this->actingAs($this->librarian);
-        ToshiActionService::$bypassConfirm = true;
 
         $categoryId = BookCategory::create([
             'school_id' => $this->schoolId,
@@ -238,30 +232,27 @@ class LibrarianOperationsToolsTest extends TestCase
             'library_card_no' => '88002',
             'book_code_no' => 'BK-LEND-1',
             'issue_date' => '2026-08-01',
-        ]));
+        ]), $this->confirmed('toolLibrarianManageLending'));
 
         $this->assertStringStartsWith('✅', $result);
         $this->assertTrue(BookLending::where('library_card_no', 88002)->where('book_code_no', 'BK-LEND-1')->where('status', 'pending')->exists());
 
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_create_task_and_view_dashboard(): void
     {
         $this->actingAs($this->librarian);
-        ToshiActionService::$bypassConfirm = true;
 
         $task = (new CreateTaskTool)->handle(new Request([
             'title' => 'Shelf inventory',
             'task_date' => '2026-08-10',
-        ]));
+        ]), $this->confirmed('toolLibrarianCreateTask'));
         $this->assertStringStartsWith('✅', $task);
         $this->assertTrue(Task::where('user_id', $this->librarian->id)->where('title', 'Shelf inventory')->exists());
 
         $dash = (new ViewDashboardTool)->handle(new Request([]));
         $this->assertStringStartsWith('✅', $dash);
 
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_unconfirmed_or_read_only_audit_leaves_approver_id_null(): void
@@ -329,5 +320,9 @@ class LibrarianOperationsToolsTest extends TestCase
         $response->assertOk();
         $response->assertSee('88003');
         $response->assertSee('read-only');
+    }
+    private function confirmed(string $tool, array $args = []): WriteContext
+    {
+        return WriteContext::confirmed($tool, $args, auth()->user());
     }
 }

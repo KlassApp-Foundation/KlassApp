@@ -31,14 +31,10 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
+use App\Services\Toshi\WriteContext;
+
 class ToshiActionService
 {
-    /**
-     * When false, write tools return a confirmation payload instead of executing.
-     * Set to true by confirmYes() for the second pass that actually writes.
-     */
-    public static bool $bypassConfirm = false;
-
     /**
      * Side-channel for the SDK v2 path: when a write tool returns __tier2_confirm,
      * it stores the payload here so ToshiSdkV2Service can retrieve it after the
@@ -47,15 +43,29 @@ class ToshiActionService
     public static ?array $pendingConfirmPayload = null;
 
     /**
-     * If bypassConfirm is false, returns a __tier2_confirm JSON payload
-     * that the Livewire component converts to pendingToolConfirm.
-     * Returns null when bypassConfirm is true (tool should execute).
+     * Returns the confirmation payload when the write has not been confirmed.
+     *
+     * A write runs only when the caller passes a WriteContext that confirms this
+     * exact tool and argument set; there is no process-wide bypass flag left.
      */
-    public static function confirmationPayload(string $toolName, array $args, string $preview): ?string
+    public static function confirmationPayload(string $toolName, array $args, string $preview, ?WriteContext $context = null): ?string
     {
-        if (self::$bypassConfirm) {
+        if ($context !== null && $context->confirmed) {
+            // Production contexts name one tool. '*' is the explicit wildcard a
+            // test uses when it wants a write to run without a panel round trip.
+            if ($context->tool !== '*' && $context->tool !== $toolName) {
+                // A context for a different tool must never authorize this write.
+                return json_encode([
+                    '__tier2_confirm' => true,
+                    'tool' => $toolName,
+                    'args' => $args,
+                    'preview' => $preview,
+                ]);
+            }
+
             return null;
         }
+
         // Store in the side-channel so ToshiSdkV2Service can retrieve it
         // without relying on LLM-preserved JSON formatting
         self::$pendingConfirmPayload = [

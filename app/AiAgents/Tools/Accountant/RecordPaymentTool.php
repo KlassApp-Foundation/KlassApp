@@ -11,6 +11,7 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
+use App\Services\Toshi\WriteContext;
 
 class RecordPaymentTool implements Tool, VerifiableTool
 {
@@ -35,7 +36,7 @@ class RecordPaymentTool implements Tool, VerifiableTool
         ];
     }
 
-    public function handle(Request $request): Stringable|string
+    public function handle(Request $request, ?WriteContext $context = null): Stringable|string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeAccountantOrMessage($user);
@@ -56,8 +57,7 @@ class RecordPaymentTool implements Tool, VerifiableTool
         $confirm = $this->confirmOrExecute(
             'toolAccountantRecordPayment',
             $args,
-            fn () => "Record payment: UGX {$args['amount']} for student ID {$args['student_id']} via {$args['payment_method']}"
-        );
+            fn () => "Record payment: UGX {$args['amount']} for student ID {$args['student_id']} via {$args['payment_method']}", $context);
         if ($confirm !== null) {
             return $confirm;
         }

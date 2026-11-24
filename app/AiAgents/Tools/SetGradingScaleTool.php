@@ -13,6 +13,7 @@ use App\Models\Standard;
 use App\Models\User;
 use App\Services\ToshiActionService;
 use Illuminate\Support\Facades\DB;
+use App\Services\Toshi\WriteContext;
 
 class SetGradingScaleTool implements Tool, VerifiableTool
 {
@@ -38,7 +39,7 @@ class SetGradingScaleTool implements Tool, VerifiableTool
         ];
     }
 
-    public function handle(Request $request): string
+    public function handle(Request $request, ?WriteContext $context = null): string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeOrMessage($user);
@@ -64,7 +65,7 @@ class SetGradingScaleTool implements Tool, VerifiableTool
         ];
 
         $confirm = $this->confirmOrExecute('toolSetGradingScale', $args,
-            fn() => "Set grading scale for **{$args['standardName']}**: {$previewSummary}");
+            fn() => "Set grading scale for **{$args['standardName']}**: {$previewSummary}", $context);
         if ($confirm !== null) return $confirm;
 
         $schoolId = ToshiActionService::getEffectiveSchoolId($user);

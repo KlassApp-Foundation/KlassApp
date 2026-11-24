@@ -10,6 +10,7 @@ use App\AiAgents\Concerns\ConfirmsBeforeWrite;
 use App\AiAgents\Concerns\VerifiableTool;
 use App\Models\CoAdminInvite;
 use App\Models\User;
+use App\Services\Toshi\WriteContext;
 
 class AddCoAdminTool implements Tool, VerifiableTool
 {
@@ -29,7 +30,7 @@ class AddCoAdminTool implements Tool, VerifiableTool
         ];
     }
 
-    public function handle(Request $request): string
+    public function handle(Request $request, ?WriteContext $context = null): string
     {
         $user = auth()->user() ?? request()->user();
         // Owner-level governance (creating ug3 co-admins) — school admin only, not deputies.
@@ -42,7 +43,7 @@ class AddCoAdminTool implements Tool, VerifiableTool
         ];
 
         $confirm = $this->confirmOrExecute('toolAddCoAdmin', $args,
-            fn() => "Add co-admin: {$args['name']}, email: {$args['email']}");
+            fn() => "Add co-admin: {$args['name']}, email: {$args['email']}", $context);
         if ($confirm !== null) return $confirm;
 
         $user = \App\Services\ToshiActionService::getEffectiveUser($user);

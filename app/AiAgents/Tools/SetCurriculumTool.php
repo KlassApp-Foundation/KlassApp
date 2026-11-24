@@ -11,6 +11,7 @@ use App\AiAgents\Concerns\VerifiableTool;
 use App\Models\School;
 use App\Services\OnboardingEngine;
 use App\Services\ToshiActionService;
+use App\Services\Toshi\WriteContext;
 
 class SetCurriculumTool implements Tool, VerifiableTool
 {
@@ -29,7 +30,7 @@ class SetCurriculumTool implements Tool, VerifiableTool
         ];
     }
 
-    public function handle(Request $request): string
+    public function handle(Request $request, ?WriteContext $context = null): string
     {
         $user = auth()->user() ?? request()->user();
         // Settings / academic-year curriculum config — school admin only, not deputies.
@@ -54,7 +55,7 @@ class SetCurriculumTool implements Tool, VerifiableTool
         $args = ['curriculum' => $curriculum];
 
         $confirm = $this->confirmOrExecute('toolSetCurriculum', $args,
-            fn() => "Set curriculum to " . strtoupper($curriculum) . " and enable Toshi AI assistant");
+            fn() => "Set curriculum to " . strtoupper($curriculum) . " and enable Toshi AI assistant", $context);
         if ($confirm !== null) return $confirm;
 
         try {

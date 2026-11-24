@@ -9,6 +9,7 @@ use App\AiAgents\Concerns\AuthorizesToshiAction;
 use App\AiAgents\Concerns\ConfirmsBeforeWrite;
 use App\AiAgents\Concerns\VerifiableTool;
 use App\Models\Academics\Exam;
+use App\Services\Toshi\WriteContext;
 
 class CreateExamTool implements Tool, VerifiableTool
 {
@@ -32,7 +33,7 @@ class CreateExamTool implements Tool, VerifiableTool
         ];
     }
 
-    public function handle(Request $request): string
+    public function handle(Request $request, ?WriteContext $context = null): string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeOrMessage($user);
@@ -43,7 +44,7 @@ class CreateExamTool implements Tool, VerifiableTool
         $confirm = $this->confirmOrExecute('toolCreateExam', $args,
             fn() => "Create exam: {$args['name']}"
                 . (!empty($args['subject']) ? ", subject: {$args['subject']}" : '')
-                . (!empty($args['class']) ? ", class: {$args['class']}" : ''));
+                . (!empty($args['class']) ? ", class: {$args['class']}" : ''), $context);
         if ($confirm !== null) return $confirm;
 
         $user = \App\Services\ToshiActionService::getEffectiveUser($user);

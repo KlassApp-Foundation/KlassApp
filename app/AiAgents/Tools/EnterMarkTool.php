@@ -12,6 +12,7 @@ use App\Models\Academics\Marks;
 use App\Services\EntityResolver;
 use App\Services\ToshiActionService;
 use Illuminate\Support\Facades\DB;
+use App\Services\Toshi\WriteContext;
 
 class EnterMarkTool implements Tool, VerifiableTool
 {
@@ -38,7 +39,7 @@ class EnterMarkTool implements Tool, VerifiableTool
         ];
     }
 
-    public function handle(Request $request): string
+    public function handle(Request $request, ?WriteContext $context = null): string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeOrMessage($user);
@@ -46,7 +47,7 @@ class EnterMarkTool implements Tool, VerifiableTool
 
         $schoolId = ToshiActionService::getEffectiveSchoolId($user);
 
-        // Second pass (bypassConfirm): IDs already resolved, use them directly
+        // Second pass (confirmed context): IDs already resolved, use them directly
         $existingStudentId = $request->get('student_id');
         $existingExamId = $request->get('exam_id');
 
@@ -59,7 +60,7 @@ class EnterMarkTool implements Tool, VerifiableTool
                 'correction_reason' => $request->get('correction_reason'),
             ];
             $confirm = $this->confirmOrExecute('toolEnterMark', $args,
-                fn() => "Enter mark: student {$existingStudentId}, exam {$existingExamId}, score {$marks}");
+                fn() => "Enter mark: student {$existingStudentId}, exam {$existingExamId}, score {$marks}", $context);
             if ($confirm !== null) return $confirm;
 
             $user = ToshiActionService::getEffectiveUser($user);
@@ -123,7 +124,7 @@ class EnterMarkTool implements Tool, VerifiableTool
             ];
 
             $confirm = $this->confirmOrExecute('toolEnterMark', $args,
-                fn() => "Enter mark: {$resolvedUser->name} → {$examResult['model']->subject?->name} ({$examResult['model']->examType?->name}): {$marks}");
+                fn() => "Enter mark: {$resolvedUser->name} → {$examResult['model']->subject?->name} ({$examResult['model']->examType?->name}): {$marks}", $context);
             if ($confirm !== null) return $confirm;
 
             $user = ToshiActionService::getEffectiveUser($user);
@@ -190,7 +191,7 @@ class EnterMarkTool implements Tool, VerifiableTool
         ];
 
         $confirm = $this->confirmOrExecute('toolEnterMark', $args,
-            fn() => "Enter mark: {$studentName} → {$examDisplayName} ({$examTypeName}): {$marks}");
+            fn() => "Enter mark: {$studentName} → {$examDisplayName} ({$examTypeName}): {$marks}", $context);
         if ($confirm !== null) return $confirm;
 
         $user = ToshiActionService::getEffectiveUser($user);

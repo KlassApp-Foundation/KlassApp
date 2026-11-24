@@ -12,6 +12,7 @@ use App\Models\Academics\SchoolGradingSystem;
 use App\Models\Standard;
 use App\Models\User;
 use App\Services\ToshiActionService;
+use App\Services\Toshi\WriteContext;
 
 class SeedDefaultGradingTool implements Tool, VerifiableTool
 {
@@ -28,7 +29,7 @@ class SeedDefaultGradingTool implements Tool, VerifiableTool
         return [];
     }
 
-    public function handle(Request $request): string
+    public function handle(Request $request, ?WriteContext $context = null): string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeOrMessage($user);
@@ -37,7 +38,7 @@ class SeedDefaultGradingTool implements Tool, VerifiableTool
         $args = [];
 
         $confirm = $this->confirmOrExecute('toolSeedDefaultGrading', $args,
-            fn() => 'Seed default UNEB grading scale (A: 80-100, B: 70-79, C: 55-69, D: 40-54, E: 0-39) for all standards');
+            fn() => 'Seed default UNEB grading scale (A: 80-100, B: 70-79, C: 55-69, D: 40-54, E: 0-39) for all standards', $context);
         if ($confirm !== null) return $confirm;
 
         $schoolId = ToshiActionService::getEffectiveSchoolId($user);

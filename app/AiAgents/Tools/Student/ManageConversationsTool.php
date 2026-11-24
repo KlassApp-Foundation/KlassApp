@@ -9,6 +9,7 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
+use App\Services\Toshi\WriteContext;
 
 class ManageConversationsTool implements Tool
 {
@@ -30,7 +31,7 @@ class ManageConversationsTool implements Tool
         ];
     }
 
-    public function handle(Request $request): Stringable|string
+    public function handle(Request $request, ?WriteContext $context = null): Stringable|string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeStudentOrMessage($user);
@@ -49,8 +50,7 @@ class ManageConversationsTool implements Tool
             $confirm = $this->confirmOrExecute(
                 'toolStudentManageConversations',
                 $args,
-                fn () => "Conversation {$args['action']}"
-            );
+                fn () => "Conversation {$args['action']}", $context);
             if ($confirm !== null) {
                 return $confirm;
             }

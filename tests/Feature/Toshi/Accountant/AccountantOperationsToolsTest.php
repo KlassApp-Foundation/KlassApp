@@ -140,28 +140,25 @@ class AccountantOperationsToolsTest extends TestCase
     public function test_school_admin_tool_denies_accountant_via_authorize(): void
     {
         $this->actingAs($this->accountant);
-        ToshiActionService::$bypassConfirm = true;
 
         $result = (new AddCoAdminTool)->handle(new Request([
             'name' => 'Should Fail',
             'email' => 'coadmin.fail@test.sch.ug',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringStartsWith('❌', $result);
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_record_payment_happy_path_and_validation(): void
     {
         $this->actingAs($this->accountant);
-        ToshiActionService::$bypassConfirm = true;
 
         $ok = (new RecordPaymentTool)->handle(new Request([
             'student_id' => $this->student->id,
             'amount' => 50000,
             'fee_category_id' => $this->feeCategoryId,
             'payment_method' => 'cash',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $ok);
         $this->assertTrue(FeePayment::where('user_id', $this->student->id)->where('amount', 50000)->where('fee_category_id', $this->feeCategoryId)->where('recorded_by', $this->accountant->id)->exists());
 
@@ -169,23 +166,21 @@ class AccountantOperationsToolsTest extends TestCase
             'student_id' => $this->student->id,
             'amount' => -1,
             'fee_category_id' => $this->feeCategoryId,
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('❌', $bad);
 
         $missingCategory = (new RecordPaymentTool)->handle(new Request([
             'student_id' => $this->student->id,
             'amount' => 25000,
             'payment_method' => 'cash',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('❌', $missingCategory);
 
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_record_payment_requires_confirmation_without_bypass(): void
     {
         $this->actingAs($this->accountant);
-        ToshiActionService::$bypassConfirm = false;
         ToshiActionService::$pendingConfirmPayload = null;
 
         $result = (new RecordPaymentTool)->handle(new Request([
@@ -204,7 +199,6 @@ class AccountantOperationsToolsTest extends TestCase
     public function test_manage_payroll_happy_path(): void
     {
         $this->actingAs($this->accountant);
-        ToshiActionService::$bypassConfirm = true;
 
         $templateId = PayrollTemplate::create([
             'school_id' => $this->schoolId,
@@ -226,28 +220,25 @@ class AccountantOperationsToolsTest extends TestCase
             'template_id' => $templateId,
             'start_date' => '2026-06-01',
             'end_date' => '2026-06-30',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringStartsWith('✅', $result);
         $this->assertTrue(Payroll::where('staff_id', $this->staff->id)->where('status', 'unpaid')->exists());
 
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_create_task_happy_path(): void
     {
         $this->actingAs($this->accountant);
-        ToshiActionService::$bypassConfirm = true;
 
         $result = (new CreateTaskTool)->handle(new Request([
             'title' => 'Reconcile fees',
             'task_date' => '2026-08-10',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringStartsWith('✅', $result);
         $this->assertTrue(Task::where('user_id', $this->accountant->id)->where('title', 'Reconcile fees')->exists());
 
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_view_tools_authorized_for_accountant(): void

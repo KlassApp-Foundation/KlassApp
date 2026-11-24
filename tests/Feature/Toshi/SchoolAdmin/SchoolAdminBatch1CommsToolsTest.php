@@ -157,7 +157,6 @@ class SchoolAdminBatch1CommsToolsTest extends TestCase
     public function test_notices_share_notice_board_with_receptionist_view(): void
     {
         $this->actingAs($this->schoolAdmin);
-        ToshiActionService::$bypassConfirm = true;
 
         $create = (new CreateNoticeTool)->handle(new Request([
             'title' => 'Shared Notice Source',
@@ -165,9 +164,8 @@ class SchoolAdminBatch1CommsToolsTest extends TestCase
             'type' => 'school',
             'publish_date' => '2026-07-01',
             'expire_date' => '2026-12-31',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
-        ToshiActionService::$bypassConfirm = false;
 
         $this->assertStringStartsWith('✅', $create);
         $this->assertDatabaseHas('notice_board', [
@@ -192,12 +190,11 @@ class SchoolAdminBatch1CommsToolsTest extends TestCase
     public function test_create_list_update_notice_happy_and_validation(): void
     {
         $this->actingAs($this->schoolAdmin);
-        ToshiActionService::$bypassConfirm = true;
 
         $bad = (new CreateNoticeTool)->handle(new Request([
             'title' => '',
             'description' => 'x',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('❌', $bad);
 
         $ok = (new CreateNoticeTool)->handle(new Request([
@@ -206,33 +203,31 @@ class SchoolAdminBatch1CommsToolsTest extends TestCase
             'type' => 'school',
             'publish_date' => '2026-08-01',
             'expire_date' => '2026-08-31',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $ok);
 
-        $list = (new ListNoticesTool)->handle(new Request([]));
+        $list = (new ListNoticesTool)->handle(new Request([]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringContainsString('PTA Meeting', $list);
 
         $notice = NoticeBoard::where('title', 'PTA Meeting')->firstOrFail();
         $update = (new UpdateNoticeTool)->handle(new Request([
             'notice_id' => $notice->id,
             'title' => 'PTA Meeting Updated',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $update);
         $this->assertSame('PTA Meeting Updated', $notice->fresh()->title);
 
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_create_list_update_event_and_holiday_happy_paths(): void
     {
         $this->actingAs($this->schoolAdmin);
-        ToshiActionService::$bypassConfirm = true;
 
         $eventBad = (new CreateEventTool)->handle(new Request([
             'title' => 'Bad',
             'start_date' => '2026-09-01',
             'end_date' => '2026-08-01',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('❌', $eventBad);
 
         $eventOk = (new CreateEventTool)->handle(new Request([
@@ -242,10 +237,10 @@ class SchoolAdminBatch1CommsToolsTest extends TestCase
             'end_date' => '2026-09-10',
             'category' => 'meeting',
             'select_type' => 'school',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $eventOk);
 
-        $listEvents = (new ListEventsTool)->handle(new Request([]));
+        $listEvents = (new ListEventsTool)->handle(new Request([]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringContainsString('Sports Day', $listEvents);
 
         $event = Events::where('title', 'Sports Day')->where('category', '!=', 'holidays')->firstOrFail();
@@ -254,17 +249,17 @@ class SchoolAdminBatch1CommsToolsTest extends TestCase
         $updateEvent = (new UpdateEventTool)->handle(new Request([
             'event_id' => $event->id,
             'title' => 'Sports Day II',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $updateEvent);
         $this->assertSame('Sports Day II', $event->fresh()->title);
 
         $holidayOk = (new CreateHolidayTool)->handle(new Request([
             'title' => 'Independence Day',
             'date' => '2026-10-09',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $holidayOk);
 
-        $listHolidays = (new ListHolidaysTool)->handle(new Request([]));
+        $listHolidays = (new ListHolidaysTool)->handle(new Request([]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringContainsString('Independence Day', $listHolidays);
         $this->assertStringNotContainsString('Sports Day', $listHolidays);
 
@@ -272,10 +267,9 @@ class SchoolAdminBatch1CommsToolsTest extends TestCase
         $updateHoliday = (new UpdateHolidayTool)->handle(new Request([
             'holiday_id' => $holiday->id,
             'title' => 'Uganda Independence',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $updateHoliday);
 
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_ug3_cannot_update_another_schools_event_via_toshi_tool(): void
@@ -299,12 +293,10 @@ class SchoolAdminBatch1CommsToolsTest extends TestCase
         $this->actingAs($this->schoolAdmin);
         $this->assertTrue(Gate::denies('event', $foreign));
 
-        ToshiActionService::$bypassConfirm = true;
         $result = (new UpdateEventTool)->handle(new Request([
             'event_id' => $foreign->id,
             'title' => 'Hijacked Title',
-        ]));
-        ToshiActionService::$bypassConfirm = false;
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringStartsWith('❌', $result);
         $this->assertStringContainsString('not authorized', strtolower($result));
@@ -446,7 +438,6 @@ class SchoolAdminBatch1CommsToolsTest extends TestCase
     public function test_create_notice_leaf_sets_tier2_side_channel_not_generic_router(): void
     {
         $this->actingAs($this->schoolAdmin);
-        ToshiActionService::$bypassConfirm = false;
         ToshiActionService::$pendingConfirmPayload = null;
 
         // Skill path leaf (no LLM): same CreateNoticeTool SchoolCommsSkill exposes.
@@ -550,7 +541,6 @@ class SchoolAdminBatch1CommsToolsTest extends TestCase
     public function test_bypass_create_notice_then_explicit_audit_matches_deputy_bar(): void
     {
         $this->actingAs($this->schoolAdmin);
-        ToshiActionService::$bypassConfirm = true;
 
         $ok = (new CreateNoticeTool)->handle(new Request([
             'title' => 'Bypass then Audit',
@@ -558,11 +548,9 @@ class SchoolAdminBatch1CommsToolsTest extends TestCase
             'type' => 'school',
             'publish_date' => '2026-07-01',
             'expire_date' => '2026-12-31',
-        ]));
-        ToshiActionService::$bypassConfirm = false;
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $ok);
 
-        // Direct handle()+bypassConfirm does not auto-audit (same as other roles);
         // production write audit is executeConfirmedTool / LogToolInvoked / bridge.
         $this->assertFalse(
             ActivityLog::where('log_name', 'toshi')

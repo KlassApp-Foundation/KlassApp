@@ -23,7 +23,6 @@ class ToshiE2EVerificationTest extends TestCase
     {
         parent::setUp();
 
-        ToshiActionService::$bypassConfirm = false;
         ToshiActionService::$pendingConfirmPayload = null;
 
         \Illuminate\Support\Facades\DB::table('usergroups')->upsert([

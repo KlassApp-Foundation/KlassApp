@@ -9,6 +9,7 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
+use App\Services\Toshi\WriteContext;
 
 /**
  * Updates a holiday Events row via Gate::allows('event') school_id (post-#131).
@@ -33,7 +34,7 @@ class UpdateHolidayTool implements Tool
         ];
     }
 
-    public function handle(Request $request): Stringable|string
+    public function handle(Request $request, ?WriteContext $context = null): Stringable|string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeOrMessage($user);
@@ -48,7 +49,7 @@ class UpdateHolidayTool implements Tool
         ];
 
         $confirm = $this->confirmOrExecute('toolUpdateHoliday', $args,
-            fn () => "Update holiday #{$args['holiday_id']}");
+            fn () => "Update holiday #{$args['holiday_id']}", $context);
         if ($confirm !== null) {
             return $confirm;
         }

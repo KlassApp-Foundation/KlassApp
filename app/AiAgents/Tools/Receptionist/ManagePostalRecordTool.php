@@ -9,6 +9,7 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
+use App\Services\Toshi\WriteContext;
 
 class ManagePostalRecordTool implements Tool
 {
@@ -35,7 +36,7 @@ class ManagePostalRecordTool implements Tool
         ];
     }
 
-    public function handle(Request $request): Stringable|string
+    public function handle(Request $request, ?WriteContext $context = null): Stringable|string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeReceptionistOrMessage($user);
@@ -58,8 +59,7 @@ class ManagePostalRecordTool implements Tool
         $confirm = $this->confirmOrExecute(
             'toolReceptionistManagePostalRecord',
             $args,
-            fn () => "Log postal ({$args['type']}) on {$args['postal_date']}"
-        );
+            fn () => "Log postal ({$args['type']}) on {$args['postal_date']}", $context);
         if ($confirm !== null) {
             return $confirm;
         }

@@ -70,7 +70,6 @@ class CreateStreamToolTest extends TestCase
         ]);
         $this->academicYearId = $academicYear->id;
 
-        ToshiActionService::$bypassConfirm = true;
     }
 
     #[Test]
@@ -83,7 +82,7 @@ class CreateStreamToolTest extends TestCase
             'className' => 'Primary 1',
         ]);
 
-        $result = $tool->handle($request);
+        $result = $tool->handle($request, \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringStartsWith('✅', $result);
 
@@ -110,7 +109,7 @@ class CreateStreamToolTest extends TestCase
             'streams' => ['East', 'West'],
         ]);
 
-        $result = $tool->handle($request);
+        $result = $tool->handle($request, \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringStartsWith('✅', $result);
 
@@ -149,7 +148,7 @@ class CreateStreamToolTest extends TestCase
             'className' => 'Senior 1',
         ]);
 
-        $result = $tool->handle($request);
+        $result = $tool->handle($request, \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringContainsString('multiple phases', strtolower($result));
         $this->assertStringStartsWith('❌', $result, 'Tool must not guess which phase when ambiguous');
@@ -173,7 +172,7 @@ class CreateStreamToolTest extends TestCase
             'phase' => 'secondary',
         ]);
 
-        $result = $tool->handle($request);
+        $result = $tool->handle($request, \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringStartsWith('✅', $result);
 
@@ -197,12 +196,12 @@ class CreateStreamToolTest extends TestCase
         $tool->handle(new \Laravel\Ai\Tools\Request([
             'className' => 'Primary 1',
             'streams' => ['East', 'West'],
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         // Try to turn it into a direct class
         $result = $tool->handle(new \Laravel\Ai\Tools\Request([
             'className' => 'Primary 1',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringContainsString('already has streams', strtolower($result));
         $this->assertStringStartsWith('❌', $result);
@@ -217,13 +216,13 @@ class CreateStreamToolTest extends TestCase
         $tool = app(\App\AiAgents\Tools\CreateStreamTool::class);
         $tool->handle(new \Laravel\Ai\Tools\Request([
             'className' => 'Primary 1',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         // Now add streams to it — should succeed (AssignStudentsToStreamTool exists)
         $result = $tool->handle(new \Laravel\Ai\Tools\Request([
             'className' => 'Primary 1',
             'streams' => ['East', 'West'],
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringStartsWith('✅', $result, 'Adding streams to a direct class must be allowed');
 
@@ -261,7 +260,7 @@ class CreateStreamToolTest extends TestCase
             'streams' => ['East', 'West'],
         ]);
 
-        $tool->handle($request);
+        $tool->handle($request, \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $verifyResult = $tool->verify($request);
 

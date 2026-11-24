@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Services\EntityResolver;
 use App\Services\ToshiActionService;
 use Illuminate\Support\Facades\DB;
+use App\Services\Toshi\WriteContext;
 
 class RecordBulkAttendanceTool implements Tool, VerifiableTool
 {
@@ -103,7 +104,7 @@ class RecordBulkAttendanceTool implements Tool, VerifiableTool
 
     // ── Handle ──
 
-    public function handle(Request $request): string
+    public function handle(Request $request, ?WriteContext $context = null): string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeOrMessage($user);
@@ -207,7 +208,7 @@ class RecordBulkAttendanceTool implements Tool, VerifiableTool
 
         $args = ['students' => $this->resolvedStudents];
         $confirm = $this->confirmOrExecute('toolRecordBulkAttendance', $args,
-            fn() => "Record attendance for {$count} student(s): {$previewStr}");
+            fn() => "Record attendance for {$count} student(s): {$previewStr}", $context);
         if ($confirm !== null) return $confirm;
 
         // Second pass — write inside a transaction

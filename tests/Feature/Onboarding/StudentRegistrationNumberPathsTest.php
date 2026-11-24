@@ -210,14 +210,13 @@ class StudentRegistrationNumberPathsTest extends TestCase
     public function add_student_tool_sets_both_student_id_fields(): void
     {
         $this->actingAs($this->admin);
-        ToshiActionService::$bypassConfirm = true;
 
         try {
             $tool = app(AddStudentTool::class);
             $result = $tool->handle(new \Laravel\Ai\Tools\Request([
                 'name' => 'Carol Tool',
                 'class' => 'P1',
-            ]));
+            ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
             $this->assertStringStartsWith('✅', $result, "AddStudentTool failed: {$result}");
 
@@ -225,7 +224,6 @@ class StudentRegistrationNumberPathsTest extends TestCase
             $this->assertNotNull($student, 'AddStudentTool student must exist');
             $this->assertStudentIdsSynced($student);
         } finally {
-            ToshiActionService::$bypassConfirm = false;
         }
     }
 
@@ -255,16 +253,14 @@ class StudentRegistrationNumberPathsTest extends TestCase
         $idComplete = $this->assertStudentIdsSynced($fromComplete);
 
         // Path 2: AddStudentTool (same school)
-        ToshiActionService::$bypassConfirm = true;
         try {
             $tool = app(AddStudentTool::class);
             $result = $tool->handle(new \Laravel\Ai\Tools\Request([
                 'name' => 'Eve Tool',
                 'class' => 'P1',
-            ]));
+            ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
             $this->assertStringStartsWith('✅', $result, "AddStudentTool failed: {$result}");
         } finally {
-            ToshiActionService::$bypassConfirm = false;
         }
 
         $fromTool = $this->findStudentByDisplayName($this->school->id, 'Eve Tool');

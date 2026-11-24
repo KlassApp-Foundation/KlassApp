@@ -9,6 +9,7 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
+use App\Services\Toshi\WriteContext;
 
 /**
  * Creates an Events row (non-holiday). Post-create checks Gate::allows('event') school_id.
@@ -37,7 +38,7 @@ class CreateEventTool implements Tool
         ];
     }
 
-    public function handle(Request $request): Stringable|string
+    public function handle(Request $request, ?WriteContext $context = null): Stringable|string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeOrMessage($user);
@@ -56,7 +57,7 @@ class CreateEventTool implements Tool
         ];
 
         $confirm = $this->confirmOrExecute('toolCreateEvent', $args,
-            fn () => "Create event: {$args['title']} ({$args['start_date']}–{$args['end_date']})");
+            fn () => "Create event: {$args['title']} ({$args['start_date']}–{$args['end_date']})", $context);
         if ($confirm !== null) {
             return $confirm;
         }

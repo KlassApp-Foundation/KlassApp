@@ -1455,7 +1455,7 @@ class AgentToshi extends Component
                 return;
             }
 
-            // Single path: re-invoke the same Tool class via bypassConfirm
+            // Single path: re-invoke the same Tool class with a confirmed context
             // so the exact handle() logic that built the preview also writes
             $result = $this->executeConfirmedTool($tool, $args);
             $this->botSay($result);
@@ -1595,7 +1595,7 @@ class AgentToshi extends Component
 
         $step = $steps[$i];
 
-        // Call the tool WITHOUT bypassConfirm so write tools still show
+        // Call the tool WITHOUT a confirmed context so write tools still show
         // their confirmation card. The plan card is a visual preview, not
         // a shortcut past safety checks.
         $class = self::TOOL_CLASS_MAP[$step['tool']] ?? null;
@@ -1725,7 +1725,7 @@ class AgentToshi extends Component
 
     /**
      * Re-invoke the same Tool class that generated the confirmation preview,
-     * with the user-confirmed args, via bypassConfirm so it writes to the DB.
+     * with the user-confirmed args and a WriteContext, so it writes to the DB.
      *
      * Returns the tool's output string (same format the LLM would see).
      */
@@ -1797,12 +1797,13 @@ class AgentToshi extends Component
         $tool = app($class);
         $request = new \Laravel\Ai\Tools\Request($args);
 
-        // Bypass the confirmation gate so the tool executes instead of
-        // returning a __tier2_confirm payload. Reset immediately after
-        // so the flag can't leak into unrelated requests.
-        \App\Services\ToshiActionService::$bypassConfirm = true;
+        // The person who pressed Confirm is the approver. Pass that proof into
+        // the tool as an explicit context; there is no process-wide bypass flag.
+        $actor = auth()->user() ?? auth('web')->user();
+        $context = \App\Services\Toshi\WriteContext::confirmed($toolName, $args, $actor);
+
         try {
-            $result = $tool->handle($request);
+            $result = $tool->handle($request, $context);
 
             // Self-verification: tools that implement VerifiableTool re-read
             // their write from the DB immediately. If the record isn't found
@@ -1821,7 +1822,6 @@ class AgentToshi extends Component
             // Tier-2 ConfirmsBeforeWrite: confirming user is the approver (self-approve OK —
             // same person may fill both fields, but both must be populated on confirm).
             $school = $this->schoolId ? \App\Models\School::find($this->schoolId) : null;
-            $actor = auth()->user() ?? auth('web')->user();
             \App\Services\ToshiAuditService::logExecution(
                 user: $actor,
                 school: $school,
@@ -1832,9 +1832,21 @@ class AgentToshi extends Component
                 actingUser: $actor,
             );
 
+            // Durable record of the confirmation itself: session state is no
+            // longer the only evidence of who confirmed what.
+            if ($school !== null) {
+                \App\Models\OnboardingPlanStep::record(
+                    schoolId: (int) $school->id,
+                    step: 'tool:'.$toolName,
+                    actorId: $actor?->id,
+                    previewHash: $context->argsHash(),
+                    appliedCounts: ['tool' => $toolName],
+                );
+            }
+
             return $result;
         } finally {
-            \App\Services\ToshiActionService::$bypassConfirm = false;
+            // Nothing to reset: the context dies with this call.
         }
     }
 
@@ -3357,7 +3369,7 @@ class AgentToshi extends Component
                 $this->pendingToolConfirm = null;
                 $this->awaitingConfirm = false;
 
-                // Single path: re-invoke the same Tool class via bypassConfirm
+                // Single path: re-invoke the same Tool class with a confirmed context
                 $result = $this->executeConfirmedTool($tool, $args);
                 $this->botSay($result);
             } elseif (in_array($lower, ['no', 'n', 'cancel', 'stop'])) {

@@ -148,20 +148,18 @@ class DeputyAdminOperationsToolsTest extends TestCase
     public function test_owner_tools_deny_deputy_even_when_invoked_directly(): void
     {
         $this->actingAs($this->deputy);
-        ToshiActionService::$bypassConfirm = true;
 
         $coAdmin = (new AddCoAdminTool)->handle(new Request([
             'name' => 'Should Fail',
             'email' => 'coadmin.deputy.fail@test.sch.ug',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('❌', $coAdmin);
 
         $curriculum = (new SetCurriculumTool)->handle(new Request([
             'curriculum' => 'uneb',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('❌', $curriculum);
 
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_shared_school_tool_allows_deputy_via_dual_allow(): void

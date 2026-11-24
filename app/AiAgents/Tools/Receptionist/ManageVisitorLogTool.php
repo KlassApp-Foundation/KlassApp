@@ -9,6 +9,7 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
+use App\Services\Toshi\WriteContext;
 
 class ManageVisitorLogTool implements Tool
 {
@@ -38,7 +39,7 @@ class ManageVisitorLogTool implements Tool
         ];
     }
 
-    public function handle(Request $request): Stringable|string
+    public function handle(Request $request, ?WriteContext $context = null): Stringable|string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeReceptionistOrMessage($user);
@@ -64,8 +65,7 @@ class ManageVisitorLogTool implements Tool
         $confirm = $this->confirmOrExecute(
             'toolReceptionistManageVisitorLog',
             $args,
-            fn () => "Log visitor: {$args['name']} on {$args['date_of_visit']}"
-        );
+            fn () => "Log visitor: {$args['name']} on {$args['date_of_visit']}", $context);
         if ($confirm !== null) {
             return $confirm;
         }

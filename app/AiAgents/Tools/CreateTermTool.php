@@ -9,6 +9,7 @@ use App\AiAgents\Concerns\AuthorizesToshiAction;
 use App\AiAgents\Concerns\ConfirmsBeforeWrite;
 use App\AiAgents\Concerns\VerifiableTool;
 use App\Models\AcademicTerm;
+use App\Services\Toshi\WriteContext;
 
 class CreateTermTool implements Tool, VerifiableTool
 {
@@ -29,7 +30,7 @@ class CreateTermTool implements Tool, VerifiableTool
         ];
     }
 
-    public function handle(Request $request): string
+    public function handle(Request $request, ?WriteContext $context = null): string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeOrMessage($user);
@@ -42,7 +43,7 @@ class CreateTermTool implements Tool, VerifiableTool
         ];
 
         $confirm = $this->confirmOrExecute('toolCreateTerm', $args,
-            fn() => "Create term: {$args['name']} ({$args['start_date']} to {$args['end_date']})");
+            fn() => "Create term: {$args['name']} ({$args['start_date']} to {$args['end_date']})", $context);
         if ($confirm !== null) return $confirm;
 
         $user = \App\Services\ToshiActionService::getEffectiveUser($user);

@@ -9,6 +9,7 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
+use App\Services\Toshi\WriteContext;
 
 /**
  * Updates a NoticeBoard row (school_id scoped). Same table as Receptionist view_noticeboard.
@@ -35,7 +36,7 @@ class UpdateNoticeTool implements Tool
         ];
     }
 
-    public function handle(Request $request): Stringable|string
+    public function handle(Request $request, ?WriteContext $context = null): Stringable|string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeOrMessage($user);
@@ -52,7 +53,7 @@ class UpdateNoticeTool implements Tool
         ];
 
         $confirm = $this->confirmOrExecute('toolUpdateNotice', $args,
-            fn () => "Update notice #{$args['notice_id']}");
+            fn () => "Update notice #{$args['notice_id']}", $context);
         if ($confirm !== null) {
             return $confirm;
         }

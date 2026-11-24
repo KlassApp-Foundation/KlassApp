@@ -28,7 +28,6 @@ class ToshiIdentifierDisambiguationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        ToshiActionService::$bypassConfirm = false;
         ToshiActionService::$pendingConfirmPayload = null;
         DB::table('usergroups')->upsert([
             ['id' => 3, 'name' => 'schooladmin', 'created_at' => now(), 'updated_at' => now()],
@@ -203,7 +202,6 @@ class ToshiIdentifierDisambiguationTest extends TestCase
         ]);
         $this->actingAs($teacher);
 
-        ToshiActionService::$bypassConfirm = true;
 
         // Resolve by identifier should give us $s1
         $idResult = EntityResolver::resolveStudentByIdentifier(
