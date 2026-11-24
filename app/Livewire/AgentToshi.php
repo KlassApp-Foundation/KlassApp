@@ -215,27 +215,18 @@ class AgentToshi extends Component
     public $selectedPlanId = null;
     public $reviewData = []; // populated when entering review step
 
-    public $steps = [
-        'school_info',
-        'student_size',
-        'country',
-        'emis',
-        'uneb_center',
-        'admin_account',
-        'co_admin_invite',
-        'academic_year',
-        'standards',
-        'subjects',
-        'teachers',
-        'students',
-        'terms',
-        'fees',
-        'exams',
-        'whatsapp_verify',
-        'school_pay',
-        'plan_selection',
-        'review',
-    ];
+    /**
+     * The scripted setup order, derived from OnboardingStepsService::ALL_STEPS.
+     *
+     * Do not add a literal list here. The canonical list owns membership and
+     * order; toshiScriptedSteps() drops the steps this flow has no handler for and
+     * adds the platform-only ones (admin creation, review). Exams and SchoolPay
+     * are not onboarding and must never appear.
+     *
+     * Locked: the flow index is persisted and the browser must not reorder it.
+     */
+    #[Locked]
+    public array $steps = [];
 
     /**
      * Steps that must be completed before a school can function.
@@ -367,6 +358,8 @@ class AgentToshi extends Component
 
     public function mount()
     {
+        $this->steps = \App\Services\OnboardingStepsService::toshiScriptedSteps();
+
         $user = auth()->user();
         if (!$user) return;
 
@@ -1069,10 +1062,6 @@ class AgentToshi extends Component
             'fees' => 'fees',
             'whatsapp_verify' => 'whatsapp_verify',
             'plan_selection' => 'plan_selection',
-            // Toshi-only steps (not in OnboardingStepsService::ALL_STEPS) — keep mappable
-            // when detectMissingSteps / resume ever surfaces them.
-            'exams' => 'exams',
-            'school_pay' => 'school_pay',
         ];
 
         $stepName = $map[$key] ?? null;
@@ -1894,7 +1883,7 @@ class AgentToshi extends Component
             || $this->showTermCurrentPicker
             || (
                 $this->substep === 6
-                && in_array($this->steps[$this->step] ?? null, ['teachers', 'students', 'fees', 'exams'], true)
+                && in_array($this->steps[$this->step] ?? null, ['teachers', 'students', 'fees'], true)
             );
     }
 
@@ -3216,9 +3205,7 @@ class AgentToshi extends Component
             'students'        => 'handleStudents',
             'terms'           => 'handleTerms',
             'fees'            => 'handleFees',
-            'exams'           => 'handleExams',
             'whatsapp_verify' => 'handleWhatsAppVerify',
-            'school_pay'      => 'handleSchoolPay',
             'review'          => 'handleReview',
             default           => null,
         };
@@ -4419,9 +4406,7 @@ class AgentToshi extends Component
             'students'        => $this->handleStudents($text),
             'terms'           => $this->handleTerms($text),
             'fees'            => $this->handleFees($text),
-            'exams'           => $this->handleExams($text),
             'whatsapp_verify' => $this->handleWhatsAppVerify($text),
-            'school_pay'      => $this->handleSchoolPay($text),
             'review'          => $this->handleReview($text),
             default           => $this->callStepHandler($text),
         };
@@ -6385,40 +6370,45 @@ class AgentToshi extends Component
         // —— Edit-navigation mode: user clicked "← Edit" and reviewData was cleared ——
         // Parse the step name they typed and jump to that step
         if (empty($this->reviewData)) {
-            $stepMap = [
-                'school' => 0, 'school_info' => 0,
-                'country' => 1,
-                'emis' => 2, 'ministry' => 2,
-                'uneb' => 3, 'uneb_center' => 3,
-                'admin' => 4, 'admin_account' => 4,
-                'co-admin' => 5, 'coadmin' => 5, 'co_admin' => 5, 'co_admin_invite' => 5,
-                'academic' => 6, 'academic_year' => 6, 'year' => 6,
-                'classes' => 7, 'class' => 7, 'standards' => 7, 'standard' => 7,
-                'subjects' => 8, 'subject' => 8,
-                'teachers' => 9, 'teacher' => 9,
-                'students' => 10, 'student' => 10,
-                'terms' => 11, 'term' => 11,
-                'fees' => 12, 'fee' => 12,
-                'exams' => 13, 'exam' => 13,
-                'whatsapp' => 14, 'whatsapp_verify' => 14,
-                'school_pay' => 15, 'payment' => 15,
-                'plan' => 16, 'plans' => 16, 'plan_selection' => 16,
+            // Keyword → step key. Keys, not indices: the scripted list is derived
+            // from OnboardingStepsService::ALL_STEPS, so an index map here would
+            // silently point at the wrong step whenever the canonical list changes.
+            $stepKeys = [
+                'school' => 'school_info', 'school_info' => 'school_info',
+                'country' => 'country',
+                'emis' => 'emis', 'ministry' => 'emis',
+                'uneb' => 'uneb_center', 'uneb_center' => 'uneb_center',
+                'admin' => 'admin_account', 'admin_account' => 'admin_account',
+                'co-admin' => 'co_admin_invite', 'coadmin' => 'co_admin_invite', 'co_admin' => 'co_admin_invite', 'co_admin_invite' => 'co_admin_invite',
+                'academic' => 'academic_year', 'academic_year' => 'academic_year', 'year' => 'academic_year',
+                'classes' => 'standards', 'class' => 'standards', 'standards' => 'standards', 'standard' => 'standards',
+                'subjects' => 'subjects', 'subject' => 'subjects',
+                'teachers' => 'teachers', 'teacher' => 'teachers',
+                'students' => 'students', 'student' => 'students',
+                'terms' => 'terms', 'term' => 'terms',
+                'fees' => 'fees', 'fee' => 'fees',
+                'whatsapp' => 'whatsapp_verify', 'whatsapp_verify' => 'whatsapp_verify',
+                'plan' => 'plan_selection', 'plans' => 'plan_selection', 'plan_selection' => 'plan_selection',
             ];
             $textLower = strtolower(trim($text));
-            // Exact match first
-            if (isset($stepMap[$textLower])) {
-                $target = $stepMap[$textLower];
-                $this->step = $target;
+            $jumpToKey = function (string $key): bool {
+                $target = array_search($key, $this->steps, true);
+                if ($target === false) {
+                    return false;
+                }
+                $this->step = (int) $target;
                 $this->substep = 0;
                 $this->botSay("Going back to **" . str_replace('_', ' ', $this->steps[$target]) . "**. Let's review that section.");
+
+                return true;
+            };
+            // Exact match first
+            if (isset($stepKeys[$textLower]) && $jumpToKey($stepKeys[$textLower])) {
                 return;
             }
             // Fuzzy match — look for keywords in natural language ("I want to add students" → students)
-            foreach ($stepMap as $keyword => $stepIdx) {
-                if (str_contains($textLower, $keyword)) {
-                    $this->step = $stepIdx;
-                    $this->substep = 0;
-                    $this->botSay("Going back to **" . str_replace('_', ' ', $this->steps[$stepIdx]) . "**. Let's review that section.");
+            foreach ($stepKeys as $keyword => $key) {
+                if (str_contains($textLower, $keyword) && $jumpToKey($key)) {
                     return;
                 }
             }

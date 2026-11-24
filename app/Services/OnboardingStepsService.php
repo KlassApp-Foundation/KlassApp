@@ -120,6 +120,72 @@ class OnboardingStepsService
     ];
 
     /**
+     * Steps the scripted Toshi flow has that the canonical list does not model.
+     *
+     * The scripted flow creates the school and its first admin before the shared
+     * steps can run, and ends on a review screen. Those are platform-flow
+     * concerns, not school-setup steps, so they live here rather than in
+     * ALL_STEPS.
+     *
+     * @var list<string>
+     */
+    public const TOSHI_PLATFORM_STEPS = [
+        'admin_account',
+        'co_admin_invite',
+        'review',
+    ];
+
+    /**
+     * Canonical steps the scripted Toshi flow does not implement.
+     *
+     * The flow asks neither question yet; the engine still writes both from the
+     * country profile and the school-type preset. They must not be injected into
+     * the script or the conversation would stop on a question with no handler.
+     *
+     * @var list<string>
+     */
+    public const TOSHI_SCRIPTED_SKIPS = [
+        'curriculum',
+        'school_category',
+    ];
+
+    /**
+     * The scripted Toshi step list, derived from ALL_STEPS.
+     *
+     * Order and membership come from the canonical list; this method only
+     * renames the first step to the flow's historical key, drops the steps the
+     * flow has no handler for, inserts the two platform-only steps where the flow
+     * needs them, and appends review. Exams and SchoolPay are not onboarding and
+     * appear nowhere here (docs/onboarding/playbook.md:7).
+     *
+     * Adding a canonical step therefore adds it to the script unless it is listed
+     * in TOSHI_SCRIPTED_SKIPS; tests/Feature/Onboarding/ToshiScriptedStepsTest
+     * fails if the two drift apart.
+     *
+     * @return list<string>
+     */
+    public static function toshiScriptedSteps(): array
+    {
+        $keys = array_values(array_diff(array_keys(self::ALL_STEPS), self::TOSHI_SCRIPTED_SKIPS));
+
+        $out = [];
+        foreach ($keys as $key) {
+            // The scripted flow has always called the first step school_info.
+            $out[] = $key === 'school_name' ? 'school_info' : $key;
+
+            // The admin is created once the school's identity is known.
+            if ($key === 'uneb_center') {
+                $out[] = 'admin_account';
+                $out[] = 'co_admin_invite';
+            }
+        }
+
+        $out[] = 'review';
+
+        return $out;
+    }
+
+    /**
      * Optional in Toshi's $mandatorySteps — may be skipped without blocking finish.
      * Still shown on Completing Setup until data exists.
      */

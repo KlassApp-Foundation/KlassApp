@@ -12,6 +12,7 @@ use App\Models\Standard;
 use App\Models\User;
 use App\Models\Userprofile;
 use App\Services\OnboardingEngine;
+use App\Services\OnboardingStepsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
@@ -110,7 +111,7 @@ class ToshiCompleteModeFourFindingsTest extends TestCase
     {
         $this->actingAs($this->admin);
 
-        $feesIdx = array_search('fees', (new AgentToshi)->steps, true);
+        $feesIdx = array_search('fees', OnboardingStepsService::toshiScriptedSteps(), true);
         $this->assertNotFalse($feesIdx);
 
         // Simulate mid-flow: drafts not in DB, session at fees.
@@ -169,7 +170,7 @@ class ToshiCompleteModeFourFindingsTest extends TestCase
         Livewire::test(AgentToshi::class)
             ->set('mode', 'complete')
             ->set('schoolId', $this->school->id)
-            ->set('step', array_search('fees', (new AgentToshi)->steps, true))
+            ->set('step', array_search('fees', OnboardingStepsService::toshiScriptedSteps(), true))
             ->call('showFeeFormFn')
             ->assertSee("O'Level")
             ->assertSee("A'Level");
@@ -180,7 +181,7 @@ class ToshiCompleteModeFourFindingsTest extends TestCase
     {
         $this->actingAs($this->admin);
 
-        $teachersIdx = array_search('teachers', (new AgentToshi)->steps, true);
+        $teachersIdx = array_search('teachers', OnboardingStepsService::toshiScriptedSteps(), true);
 
         $component = Livewire::test(AgentToshi::class)
             ->set('mode', 'complete')
@@ -205,10 +206,10 @@ class ToshiCompleteModeFourFindingsTest extends TestCase
     {
         $this->actingAs($this->admin);
 
-        $waIdx = array_search('whatsapp_verify', (new AgentToshi)->steps, true);
-        $schoolPayIdx = array_search('school_pay', (new AgentToshi)->steps, true);
+        $waIdx = array_search('whatsapp_verify', OnboardingStepsService::toshiScriptedSteps(), true);
+        $planIdx = array_search('plan_selection', OnboardingStepsService::toshiScriptedSteps(), true);
 
-        // "skip" must advance WA → School Pay, not switch to assistant lookup.
+        // "skip" must advance WhatsApp → plan selection, not switch to assistant lookup.
         $component = Livewire::test(AgentToshi::class)
             ->set('mode', 'complete')
             ->set('schoolId', $this->school->id)
@@ -221,22 +222,20 @@ class ToshiCompleteModeFourFindingsTest extends TestCase
             ->call('send');
 
         $this->assertSame('complete', $component->get('mode'));
-        $this->assertSame($schoolPayIdx, $component->get('step'));
-        $this->assertSame('school_pay', $component->instance()->steps[$component->get('step')]);
+        $this->assertSame($planIdx, $component->get('step'));
+        $this->assertSame('plan_selection', $component->instance()->steps[$component->get('step')]);
 
         $messages = collect($component->get('messages'))->pluck('text')->implode("\n");
-        $this->assertStringContainsString('School Pay', $messages);
         $this->assertStringNotContainsString("couldn't find a student matching", $messages);
     }
 
     #[Test]
-    public function skipping_whatsapp_lands_on_school_pay_without_auto_skipping_it(): void
+    public function skipping_whatsapp_lands_on_plan_selection_without_auto_skipping_it(): void
     {
         $this->actingAs($this->admin);
 
-        $waIdx = array_search('whatsapp_verify', (new AgentToshi)->steps, true);
-        $schoolPayIdx = array_search('school_pay', (new AgentToshi)->steps, true);
-        $planIdx = array_search('plan_selection', (new AgentToshi)->steps, true);
+        $waIdx = array_search('whatsapp_verify', OnboardingStepsService::toshiScriptedSteps(), true);
+        $planIdx = array_search('plan_selection', OnboardingStepsService::toshiScriptedSteps(), true);
 
         $component = Livewire::test(AgentToshi::class)
             ->set('mode', 'complete')
@@ -246,14 +245,11 @@ class ToshiCompleteModeFourFindingsTest extends TestCase
             ->set('substep', 0)
             ->call('skipStep');
 
-        $this->assertSame($schoolPayIdx, $component->get('step'));
-        $this->assertSame('school_pay', $component->instance()->steps[$component->get('step')]);
-        $this->assertNotSame($planIdx, $component->get('step'));
+        $this->assertSame($planIdx, $component->get('step'));
+        $this->assertSame('plan_selection', $component->instance()->steps[$component->get('step')]);
+        $this->assertNotContains('school_pay', $component->instance()->steps);
 
         $messages = collect($component->get('messages'))->pluck('text')->implode("\n");
-        $this->assertStringContainsString('School Pay', $messages);
         $this->assertStringContainsString('skip', strtolower($messages));
-        // Must still be prompting — not already past School Pay into plan selection.
-        $this->assertStringNotContainsString('plan selected', strtolower($messages));
     }
 }
