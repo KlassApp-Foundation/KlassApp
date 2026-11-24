@@ -14,6 +14,7 @@ export const helpSidebar = [
     { text: 'Set up your school', link: '/help/setup-school' },
     { text: 'Add students', link: '/help/add-students' },
     { text: 'Enter marks', link: '/help/marks' },
+    { text: 'How marks are counted', link: '/help/concepts/how-marks-are-counted' },
     { text: 'Generate report cards', link: '/help/generate-report-cards' },
     { text: 'Report cards on WhatsApp', link: '/help/send-report-cards-whatsapp' } ] },
   { text: 'Set up your school', collapsed: false, items: [

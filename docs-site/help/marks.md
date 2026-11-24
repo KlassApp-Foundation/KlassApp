@@ -14,4 +14,6 @@ The screens are already in the menu:
 - Class teacher: **Exams**, **Marks**, and **Report Cards**.
 - Subject teacher: **Marks** for the exams they teach. **Exams** and **Report Cards** stay hidden.
 
+To see how a mark, a dash and Pending are counted into the Total, Aggregate and Division, read [How marks are counted](/help/concepts/how-marks-are-counted).
+
 Do not follow an older write-up of buttons on this page. Those steps are not the guide.
