@@ -29,7 +29,7 @@ class LegalPagesTest extends TestCase
     {
         $response = $this->get(route('privacy'));
 
-        foreach (range(1, 16) as $n) {
+        foreach (range(1, 17) as $n) {
             $response->assertSee(__("policy.s{$n}_heading"), false);
         }
     }

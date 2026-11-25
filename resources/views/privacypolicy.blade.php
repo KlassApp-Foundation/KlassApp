@@ -22,7 +22,7 @@
 <div class="bg-white py-5 px-3 lg:px-0 md:px-0">
 	<div class="container mx-auto">
 		<div class="w-full lg:w-2/3 lg:mx-auto leading-loose py-2">
-			@foreach(range(1, 16) as $n)
+			@foreach(range(1, 17) as $n)
 			<h2 class="text-2xl text-gray-800 py-3">{!! __("policy.s{$n}_heading") !!}</h2>
 			<div class="text-base text-gray-700 my-2">{!! __("policy.s{$n}_body") !!}</div>
 			@endforeach
