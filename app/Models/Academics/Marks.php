@@ -29,15 +29,16 @@ class Marks extends Model
     }
 
     /**
-     * What a report shows. The stored grade stays AB (or ABS). The screen says ABS.
+     * What a report shows. A missing mark and a legacy absent row both print a
+     * dash: ABS belongs to attendance, not to marks. The stored grade stays AB.
      */
     public function displayMark(): string
     {
         if ($this->isAbsent()) {
-            return 'ABS';
+            return \App\Services\Results\ResultCell::DASH;
         }
         if ($this->marks === null) {
-            return 'Missing';
+            return \App\Services\Results\ResultCell::DASH;
         }
 
         return \App\Services\Results\ResultsPolicy::printWhole(

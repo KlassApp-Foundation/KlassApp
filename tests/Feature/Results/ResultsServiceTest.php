@@ -257,7 +257,7 @@ class ResultsServiceTest extends TestCase
         $this->assertSame(54.0, $row->cell($ctx['english']->id)->mark);
         $this->assertSame('54', $row->cell($ctx['english']->id)->sheetLabel());
         $this->assertSame('missing', $row->cell($ctx['maths']->id)->status);
-        $this->assertSame('Missing', $row->cell($ctx['maths']->id)->sheetLabel());
+        $this->assertSame('–', $row->cell($ctx['maths']->id)->sheetLabel());
         $this->assertSame(54.0, $row->displayTotal);
         $this->assertSame(27.0, $row->displayAverage);
         $this->assertSame(2, $row->subjectsCounted);

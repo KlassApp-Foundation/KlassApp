@@ -236,6 +236,6 @@ class CoreAggregateOverviewTest extends TestCase
         $this->assertSame('LITERACY', $subjects['Literacy']->name);
         $this->assertStringContainsString($subjects['Literacy']->name, $html);
         $this->assertMatchesRegularExpression('/data-subject="'.$literacyId.'"[^>]*>\s*66\b/', $html);
-        $this->assertMatchesRegularExpression('/data-subject="'.$mathsId.'"[^>]*>\s*<span data-testid="marks-cell-missing">Missing<\/span>/', $html);
+        $this->assertMatchesRegularExpression('/data-subject="'.$mathsId.'"[^>]*>\s*<span data-testid="marks-cell-missing">–<\/span>/', $html);
     }
 }

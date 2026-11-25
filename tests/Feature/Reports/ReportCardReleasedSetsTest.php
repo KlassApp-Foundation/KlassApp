@@ -153,7 +153,7 @@ class ReportCardReleasedSetsTest extends TestCase
         $text = (new Parser)->parseContent($pdf)->getText();
 
         $this->assertStringContainsString('Opening Paper', $text);
-        $this->assertStringContainsString('Missing', $text);
+        $this->assertStringContainsString('–', $text);
         $this->assertStringContainsString('80', $text);
         $this->assertStringNotContainsString('Excluded Paper', $text);
         $this->assertStringNotContainsString('Unreleased Paper', $text);

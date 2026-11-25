@@ -88,7 +88,7 @@ class ParentMarksPhoneTest extends TestCase
         $after->assertSee('ENGLISH');
         $after->assertSee('>74<', false);
         $after->assertSee('MATHEMATICS');
-        $after->assertSee('>ABS<', false);
+        $after->assertSee('>–<', false);
         $after->assertDontSee('No report card has been released yet');
 
         $this->assertSame('AB', Marks::query()->where('exam_id', $this->exams['Mathematics']->id)->value('grade'));
@@ -99,6 +99,6 @@ class ParentMarksPhoneTest extends TestCase
             ->assertSee('data-testid="parent-marks-phone-kls"', false)
             ->assertSee('KLS0000431')
             ->assertSee('>74<', false)
-            ->assertSee('>ABS<', false);
+            ->assertSee('>–<', false);
     }
 }

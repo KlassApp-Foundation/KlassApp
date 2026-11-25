@@ -6,7 +6,7 @@ use App\Services\Results\ResultCell;
 
 /**
  * The words a progressive card prints in a mark cell.
- * A counted blank stays a word, so the cell does not show 0.
+ * A counted blank prints a dash; it never shows 0 and never says ABS.
  */
 final class MarkCellText
 {
@@ -20,11 +20,7 @@ final class MarkCellText
 
     public static function word(?ResultCell $cell): string
     {
-        if ($cell !== null && $cell->status === ResultCell::ABSENT) {
-            return 'ABS';
-        }
-
-        return 'Missing';
+        return ResultCell::DASH;
     }
 
     /**

@@ -127,7 +127,7 @@ class ReportParityFixtureTest extends TestCase
                 $where = "{$kls} set ".($setIndex + 1);
                 foreach ($this->class->fixture['subjects'] as $subjectIndex => $subjectName) {
                     $raw = $row[$setIndex][$subjectIndex];
-                    $shown = $raw === null ? 'Missing' : (string) $raw;
+                    $shown = ($raw === null || $raw === 'ABS') ? '–' : (string) $raw;
                     $this->assertSame(
                         [$shown, $expected['grades'][$subjectIndex]],
                         $card['subjects'][strtoupper($subjectName)][$setIndex],
@@ -147,7 +147,7 @@ class ReportParityFixtureTest extends TestCase
         $needs = $this->class->pdfText('KLS9000076');
         $clean = $this->class->pdfText('KLS9000001');
 
-        $this->assertStringContainsString('Missing marks and ABS count as 0', preg_replace('/\s+/', ' ', $needs));
+        $this->assertStringContainsString('A dash counts as 0', preg_replace('/\s+/', ' ', $needs));
         $this->assertStringNotContainsString('Missing marks and ABS count as 0', preg_replace('/\s+/', ' ', $clean));
         $this->assertStringNotContainsString('Missing', $clean);
         $this->assertStringNotContainsString('ABS', $clean);

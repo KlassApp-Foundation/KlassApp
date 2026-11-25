@@ -48,7 +48,7 @@
 
                         {{-- Subject --}}
                         <td class="p-1 text-xs  border border-gray-400">
-                            {{ ($firstMark = $student->marks->first()) && $firstMark->isAbsent() ? 'ABS' : ($firstMark->marks ?? '-') }}
+                            {{ ($firstMark = $student->marks->first()) && $firstMark->isAbsent() ? '–' : ($firstMark->marks ?? '–') }}
                         </td>
 
                         {{-- Marks --}}
@@ -63,7 +63,7 @@
                          {{-- grade --}}
                          {{-- {{ dd($student->marks->first()->grade) }} --}}
                         <td class="p-1  border border-gray-400">
-                            {{ ($gradeMark = $student->marks->first()) && $gradeMark->isAbsent() ? 'ABS' : ($gradeMark->grade ?? '-') }}
+                            {{ ($gradeMark = $student->marks->first()) && $gradeMark->isAbsent() ? '–' : ($gradeMark->grade ?? '–') }}
                         </td>
 
                         {{-- Actions --}}

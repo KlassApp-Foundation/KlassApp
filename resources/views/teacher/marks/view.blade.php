@@ -32,7 +32,7 @@
     </div>
     @endif
 
-    <p data-testid="marks-abs-hint">Type ABS when a student was absent. Marks are out of 100.</p>
+    <p data-testid="marks-abs-hint">Type a whole number, or – when there is no mark. Marks are out of 100.</p>
 
     {{-- Table --}}
     <div class="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm p-1">
@@ -76,7 +76,7 @@
                         {{-- Marks --}}
                         <td class="p-1 border border-gray-400">
                             @if($mark->isAbsent())
-                                <span data-testid="submitted-mark-absent">ABS</span>
+                                <span data-testid="submitted-mark-absent">–</span>
                             @else
                             @php
                                 $shownMark = $mark->marks;
@@ -108,7 +108,7 @@
 
                          {{-- grade --}}
                         <td class="p-1  border border-gray-400">
-                            {{ $mark->isAbsent() ? 'ABS' : ($mark->grade ?? 'N/A') }}
+                            {{ $mark->isAbsent() ? '–' : ($mark->grade ?? '–') }}
                         </td>
 
                         {{-- Actions --}}

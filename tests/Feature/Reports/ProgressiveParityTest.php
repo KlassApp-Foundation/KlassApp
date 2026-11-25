@@ -486,8 +486,9 @@ class ProgressiveParityTest extends TestCase
         $captured = null;
         $service->pdfForStudent((int) $class['school']->id, $class['link'], $class['learners'][15]);
         $html = view('admin.marks.report-templates.formal', $captured)->render();
-        $this->assertStringContainsString('Missing', $html);
-        $this->assertStringContainsString('ABS', $html);
+        $this->assertStringContainsString('–', $html);
+        $this->assertStringNotContainsString('>ABS<', $html);
+        $this->assertStringNotContainsString('>Missing<', $html);
         $this->assertStringContainsString('F9', $html);
         $this->assertStringContainsString('Closing paper', $html);
         $this->assertStringNotContainsString('Spare paper', $html);

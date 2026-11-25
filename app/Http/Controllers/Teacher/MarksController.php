@@ -159,7 +159,7 @@ public function submitMarks(Exam $exam, MarksSubmissionService $submissions)
         if (str_contains($message, 'mark or AB')) {
             return redirect()
                 ->route('teacher.exam.marks.enter', $exam)
-                ->with('failmessage', 'A mark or ABS is missing.');
+                ->with('failmessage', 'A mark is missing.');
         }
 
         throw $e;
@@ -201,7 +201,7 @@ public function enterExamMarks(Exam $exam)
          })
          ->get($markColumns);
      $savedMarks = $savedRows
-         ->mapWithKeys(fn ($row) => [(int) $row->student_id => ($row->isAbsent() ? 'ABS' : $this->markForInput($row->marks))])
+         ->mapWithKeys(fn ($row) => [(int) $row->student_id => ($row->isAbsent() ? '–' : $this->markForInput($row->marks))])
          ->all();
      $savedMarkCount = count($savedMarks);
      $draftSavedAt = null;

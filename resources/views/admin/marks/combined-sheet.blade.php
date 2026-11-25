@@ -122,7 +122,7 @@
                 @if(collect($subjects)->count() > 0)
                     · {{ $approvedSubjects }} of {{ collect($subjects)->count() }} subjects approved
                 @endif
-                <span class="ka-summary-phone"> · by position · ABS and Missing count as 0</span>
+                <span class="ka-summary-phone"> · by position · a dash counts as 0</span>
             </div>
             <div class="ka-sheet-actions ka-block-actions">
                 <a href="{{ $historyUrl }}" class="ds-btn ds-btn-outline" data-testid="marks-history">History</a>
@@ -199,7 +199,7 @@
 
     @if($filtered && ! $marksError)
         <p class="ka-sheet-foot ka-block-foot" data-testid="marks-sheet-note">
-            ABS and Missing count as 0. A dash means the subject is not approved and is left out of the total. Once the subject is approved, a blank mark says Missing. ABS means the learner was absent.
+            A dash counts as 0. When a subject is not approved it is left out of the total entirely; once it is approved, a blank mark shows a dash and counts as 0. ABS belongs to attendance, not to marks.
             @if($savedSubjects->isNotEmpty())
                 {{ $savedSubjects->join(', ', ' and ') }} {{ $savedSubjects->count() === 1 ? 'is' : 'are' }} saved but not submitted.
             @endif

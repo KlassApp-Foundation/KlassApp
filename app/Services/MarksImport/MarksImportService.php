@@ -119,7 +119,7 @@ class MarksImportService
      */
     public function templateHeadings(): array
     {
-        return ['KLS number', 'student_name', 'Mark (out of '.(int) self::MAX_MARK.', or ABS)'];
+        return ['KLS number', 'student_name', 'Mark (out of '.(int) self::MAX_MARK.', or –)'];
     }
 
     /**
@@ -609,13 +609,15 @@ class MarksImportService
         $row['student_id'] = $student->id;
         $row['student_name'] = $student->name;
 
-        // 2. What is the mark? A number, or ABS for a learner who did not sit it.
+        // 2. What is the mark? A number, or no mark: a dash or a legacy ABS.
+        // A blank cell stays "nothing to import" so a half-filled sheet does not
+        // turn an unstarted learner into a counted one (that would move positions).
         if ($in['mark'] === null) {
             return $this->skip($row, 'blank_mark');
         }
 
         if ($this->isAbsentMark($in['mark'])) {
-            $row['mark'] = 'ABS';
+            $row['mark'] = '–';
 
             $saved = $existing->get($student->id);
             if ($saved && $saved->count() > 1) {
@@ -623,7 +625,7 @@ class MarksImportService
             }
             if ($saved) {
                 $wasAbsent = (bool) $saved->first()->absent || strcasecmp((string) $saved->first()->grade, 'AB') === 0;
-                $row['existing'] = $wasAbsent ? 'ABS' : $this->formatMark((float) $saved->first()->marks);
+                $row['existing'] = $wasAbsent ? '–' : $this->formatMark((float) $saved->first()->marks);
                 $row['outcome'] = $wasAbsent ? 'unchanged' : 'update';
             } else {
                 $row['outcome'] = 'new';
@@ -662,10 +664,16 @@ class MarksImportService
         return $row;
     }
 
-    /** ABS in a marks sheet means the learner did not sit the exam. */
+    /** A dash or a legacy ABS in a marks sheet means there is no mark. */
     private function isAbsentMark(?string $mark): bool
     {
-        return in_array(strtoupper(trim((string) $mark)), ['ABS', 'AB'], true);
+        $text = trim((string) $mark);
+
+        if (in_array($text, ['-', '–', '—'], true)) {
+            return true;
+        }
+
+        return in_array(strtoupper($text), ['ABS', 'AB'], true);
     }
 
     /** @param  array<string,mixed>  $row */

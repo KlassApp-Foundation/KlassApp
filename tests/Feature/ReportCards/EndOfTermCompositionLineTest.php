@@ -159,7 +159,8 @@ class EndOfTermCompositionLineTest extends TestCase
 
         $html = $this->actingAs($this->admin)->get('/admin/reports/cards')->assertOk()->getContent();
 
-        $this->assertStringContainsString('ABS', $html);
+        $this->assertStringContainsString('>–<', $html);
+        $this->assertStringNotContainsString('>ABS<', $html);
         $this->assertStringContainsString('62', $html);
         $this->assertSame('AB', Marks::query()->where('exam_id', $this->exams['English']->id)->value('grade'));
     }
@@ -248,7 +249,8 @@ class EndOfTermCompositionLineTest extends TestCase
             $html = view($view, $data)->render();
             $this->assertStringContainsString('Made up of: Mid Term 30% · End of Term 70%', $html);
             $this->assertStringContainsString('data-testid="eot-composition"', $html);
-            $this->assertStringContainsString('ABS', $html);
+            $this->assertStringContainsString('–', $html);
+            $this->assertStringNotContainsString('>ABS<', $html);
             $this->assertStringNotContainsString('>0<', $html);
         }
 

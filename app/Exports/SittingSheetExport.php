@@ -48,10 +48,10 @@ class SittingSheetExport implements FromArray, WithHeadings, WithTitle
             foreach ($this->sheet->subjects as $subject) {
                 $cell = $student->cell((int) $subject['id']);
                 $row[] = ($cell !== null && $cell->status === ResultCell::ABSENT)
-                    ? 'ABS'
+                    ? ResultCell::DASH
                     : (($cell !== null && $cell->status === ResultCell::MARKED && $cell->mark !== null)
                         ? ResultsPolicy::printWhole((float) $cell->mark)
-                        : '');
+                        : ResultCell::DASH);
             }
             $row[] = $student->displayTotal === null ? '' : ResultsPolicy::printWhole((float) $student->displayTotal);
             $row[] = $student->displayAverage === null ? '' : ResultsPolicy::printWhole((float) $student->displayAverage);

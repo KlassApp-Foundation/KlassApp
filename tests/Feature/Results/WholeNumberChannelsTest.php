@@ -72,7 +72,7 @@ class WholeNumberChannelsTest extends TestCase
         $text = (new Parser)->parseContent($pdf)->getText();
 
         $this->assertStringContainsString('54', $text);
-        $this->assertStringContainsString('Missing', $text);
+        $this->assertStringContainsString('–', $text);
         $this->assertDoesNotMatchRegularExpression('/\d+\.\d+/', $text);
         $this->assertEquals(53.5, Marks::query()->where('student_id', $learner->id)->value('marks'));
     }
@@ -107,7 +107,7 @@ class WholeNumberChannelsTest extends TestCase
         $printed = $cellText.' '.$totalText.' '.$averageText;
 
         $this->assertStringContainsString('54', $cellText);
-        $this->assertStringContainsString('Missing', $cellText);
+        $this->assertStringContainsString('–', $cellText);
         $this->assertSame((string) $this->sumOfPrintedNumbers($cellText), $totalText);
         $this->assertSame('27', $averageText);
         $this->assertDoesNotMatchRegularExpression('/\d+\.\d+/', $printed);

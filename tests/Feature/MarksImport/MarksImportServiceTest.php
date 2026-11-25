@@ -85,7 +85,7 @@ class MarksImportServiceTest extends TestCase
         ]));
 
         $this->assertSame(['new', 'new'], $this->outcomes($plan));
-        $this->assertSame(['ABS', 'ABS'], array_column($plan->rows, 'mark'));
+        $this->assertSame(['–', '–'], array_column($plan->rows, 'mark'));
 
         $result = $this->service->commit($plan, $this->owner);
         $this->assertSame([2, 0, 0, 0], [$result->saved, $result->updated, $result->unchanged, $result->skipped]);
@@ -128,7 +128,7 @@ class MarksImportServiceTest extends TestCase
         $plan = $this->service->preview($this->exam, $this->owner, $this->sheet([['KLS0000001', '', 'ABS']]));
 
         $this->assertSame(['unchanged'], $this->outcomes($plan));
-        $this->assertSame('ABS', $plan->rows[0]['existing']);
+        $this->assertSame('–', $plan->rows[0]['existing']);
     }
 
     public function test_marks_accept_decimals_and_boundary_values(): void
@@ -352,7 +352,7 @@ class MarksImportServiceTest extends TestCase
     {
         $rows = $this->service->templateRows($this->exam, $this->owner);
 
-        $this->assertSame(['KLS number', 'student_name', 'Mark (out of 100, or ABS)'], $this->service->templateHeadings());
+        $this->assertSame(['KLS number', 'student_name', 'Mark (out of 100, or –)'], $this->service->templateHeadings());
         $this->assertSame(
             [['KLS0000001', 'AMINA NAKATO', null], ['KLS0000002', 'BRIAN OKELLO', null], ['KLS0000003', 'CHLOE MWESIGWA', null]],
             $rows,
@@ -409,7 +409,7 @@ class MarksImportServiceTest extends TestCase
     {
         foreach (['KLS number', 'KLS No', 'Reg No', 'registration number'] as $header) {
             $plan = $this->service->preview($this->exam, $this->owner, [
-                [$header, 'student_name', 'Mark (out of 100, or ABS)'],
+                [$header, 'student_name', 'Mark (out of 100, or –)'],
                 ['KLS0000001', 'Amina Nakato', '80'],
             ]);
             $this->assertSame(['new'], $this->outcomes($plan), $header.' must be accepted');

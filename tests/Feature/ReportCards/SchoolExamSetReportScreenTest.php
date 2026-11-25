@@ -216,14 +216,14 @@ class SchoolExamSetReportScreenTest extends TestCase
         $ready->assertSee('data-testid="eot-composition"', false);
         $ready->assertSee('Each exam set has its own report');
         $ready->assertSee('Missing');
-        $ready->assertSee('ABS');
+        $ready->assertSee('–');
         $ready->assertSee('class="rc-r">23<', false);
         $ready->assertDontSee('23.3');
         $this->assertMatchesRegularExpression('/<strong>1<\/strong>.*?Ada North/s', $html);
         $this->assertMatchesRegularExpression('/<strong>2<\/strong>.*?Ben Gap/s', $html);
         $this->assertMatchesRegularExpression('/<strong>3<\/strong>.*?Cho Away/s', $html);
         $this->assertMatchesRegularExpression('/Ben Gap.*?Missing/s', $html);
-        $this->assertMatchesRegularExpression('/Cho Away.*?ABS/s', $html);
+        $this->assertMatchesRegularExpression('/Cho Away.*?–/s', $html);
         $this->assertMatchesRegularExpression('/>150</', $html);
         $this->assertMatchesRegularExpression('/>90</', $html);
         $this->assertMatchesRegularExpression('/>40</', $html);
@@ -273,7 +273,7 @@ class SchoolExamSetReportScreenTest extends TestCase
             collect([$exams['North Paper']['English'], $exams['North Paper']['Mathematics']]),
         );
         $this->assertSame('90', $printed[$subjects['English']->id]->displayMark());
-        $this->assertSame('Missing', $printed[$subjects['Mathematics']->id]->displayMark());
+        $this->assertSame('–', $printed[$subjects['Mathematics']->id]->displayMark());
 
         $absentPrinted = $display->invoke(
             $service,
@@ -281,20 +281,21 @@ class SchoolExamSetReportScreenTest extends TestCase
             Marks::query()->where('student_id', $cho->id)->where('exam_id', $exams['North Paper']['Mathematics']->id)->get(),
             collect([$exams['North Paper']['Mathematics']]),
         );
-        $this->assertSame('ABS', $absentPrinted[$subjects['Mathematics']->id]->displayMark());
+        $this->assertSame('–', $absentPrinted[$subjects['Mathematics']->id]->displayMark());
 
         $missingCell = new ResultCell((int) $subjects['Mathematics']->id, null, null, null, ResultCell::MISSING);
         $absentCell = new ResultCell((int) $subjects['Mathematics']->id, null, 'AB', null, ResultCell::ABSENT);
-        $this->assertStringContainsString('Missing', view('admin.marks.report-templates.mark-text', ['mark' => $printed[$subjects['Mathematics']->id]])->render());
-        $this->assertStringContainsString('Missing', view('admin.marks.report-templates.mark-text', ['mark' => $missingCell])->render());
-        $this->assertStringContainsString('ABS', view('admin.marks.report-templates.mark-text', ['mark' => $absentPrinted[$subjects['Mathematics']->id]])->render());
-        $this->assertStringContainsString('ABS', view('admin.marks.report-templates.mark-text', ['mark' => $absentCell])->render());
+        $this->assertStringContainsString('–', view('admin.marks.report-templates.mark-text', ['mark' => $printed[$subjects['Mathematics']->id]])->render());
+        $this->assertStringContainsString('–', view('admin.marks.report-templates.mark-text', ['mark' => $missingCell])->render());
+        $this->assertStringContainsString('–', view('admin.marks.report-templates.mark-text', ['mark' => $absentPrinted[$subjects['Mathematics']->id]])->render());
+        $this->assertStringContainsString('–', view('admin.marks.report-templates.mark-text', ['mark' => $absentCell])->render());
 
         $card = $this->cardData($ben, $subjects['Mathematics'], $printed[$subjects['Mathematics']->id], $line, $link);
         foreach (['admin.marks.report-templates.formal', 'admin.marks.report-templates.warm'] as $view) {
             $pdf = view($view, $card)->render();
             $this->assertStringContainsString('Made up of: North Paper 40% · South Paper 60%', $pdf);
-            $this->assertStringContainsString('Missing', $pdf);
+            $this->assertStringContainsString('–', $pdf);
+            $this->assertStringNotContainsString('>Missing<', $pdf);
             $this->assertStringContainsString('>90<', $pdf);
             $this->assertNoWorkaround($pdf);
         }

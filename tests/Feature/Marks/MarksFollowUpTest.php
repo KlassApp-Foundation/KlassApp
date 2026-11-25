@@ -153,8 +153,8 @@ class MarksFollowUpTest extends TestCase
             ->get(route('teacher.exam.marks.enter', $this->exam))
             ->assertOk()
             ->getContent();
-        $this->assertStringContainsString('value="ABS"', $html);
-        $this->assertStringContainsString('Type ABS when a student was absent.', $html);
+        $this->assertStringContainsString('value="–"', $html);
+        $this->assertStringContainsString('Type a whole number, or – when there is no mark.', $html);
         $this->assertStringNotContainsString('value="AB"', $html);
         $this->assertStringContainsString('value="80"', $html);
 
@@ -177,7 +177,7 @@ class MarksFollowUpTest extends TestCase
             'examType' => $this->exam->exam_type_id,
         ]))->assertOk()->getContent();
         $this->assertStringContainsString('data-testid="marks-cell-dash">—</span>', $sheet);
-        $this->assertStringNotContainsString('data-testid="marks-cell-absent">ABS<', $sheet);
+        $this->assertStringNotContainsString('data-testid="marks-cell-absent">–<', $sheet);
         $this->assertStringNotContainsString('data-testid="marks-cell-absent">AB<', $sheet);
 
         $release = $this->actingAs($this->admin)
@@ -196,12 +196,12 @@ class MarksFollowUpTest extends TestCase
                         'score' => 0,
                         'total' => 100,
                         'grade' => '—',
-                        'shown' => 'ABS',
+                        'shown' => '–',
                     ]],
                 ]],
             ],
         ])->render();
-        $this->assertStringContainsString('>ABS<', $parent);
+        $this->assertStringContainsString('>–<', $parent);
         $this->assertStringNotContainsString('>AB<', $parent);
     }
 
