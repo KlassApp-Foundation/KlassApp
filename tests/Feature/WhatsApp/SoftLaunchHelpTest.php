@@ -70,6 +70,7 @@ class SoftLaunchHelpTest extends TestCase
         $this->assertStringContainsString('https://klassapp.xyz', $captured['message']);
         $this->assertStringContainsString('https://klassapp.xyz/help', $captured['message']);
         $this->assertStringContainsString('https://klassapp.xyz/privacy', $captured['message']);
+        $this->assertStringNotContainsString('Slack', $captured['message'], 'Welcome must not claim Slack is live; Slack connector defaults to mock mode.');
         $this->assertSame('demo', $captured['buttons'][0]['id']);
         $this->assertStringContainsString('Try Demo', $captured['buttons'][0]['title']);
         $this->assertStringContainsString('Request Link', $captured['buttons'][2]['title']);
