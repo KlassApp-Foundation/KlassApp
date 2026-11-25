@@ -140,3 +140,8 @@ e2e/onboarding/report/
 /public/docs/
 /public/docs-preview/
 /docs-site/dist/
+
+# Rehearsal scratch
+rehearsal/state.json
+rehearsal/scale-state.json
+rehearsal/*.csv
