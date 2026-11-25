@@ -5353,3 +5353,72 @@ td a.btn-danger:hover {
         max-width: calc(100vw - 16px);
     }
 }
+
+/* ── Admin dashboard (core): results, WhatsApp first, latest results, connectors.
+   Scoped under .dv2-shell. Tokens only; card surface follows design/system/tokens/surfaces.css. ── */
+.dv2-shell .dv2-surface {
+    background: var(--d-card-surface-bg, #FFFFFF);
+    border: 1px solid var(--d-card-surface-border, var(--d-border));
+    border-radius: var(--d-card-surface-radius, 14px);
+    transition: border-color 150ms ease-out;
+    min-width: 0;
+}
+.dv2-shell .dv2-surface:is(:hover, :focus-within) { border-color: var(--d-card-surface-border-hover, #B6D9C2); }
+@media (prefers-reduced-motion: reduce) { .dv2-shell .dv2-surface { transition: none; } }
+
+.dv2-shell .dv2-results { margin-top: 14px; }
+.dv2-shell .dv2-results-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 10px; }
+.dv2-shell .dv2-rtile {
+    display: flex; flex-direction: column; justify-content: center; gap: 4px;
+    min-height: var(--d-touch-target-min); padding: 12px 14px; min-width: 0;
+    border: 1px solid var(--d-border); border-radius: 12px; background: #FFFFFF;
+    color: var(--d-text); text-decoration: none;
+}
+.dv2-shell .dv2-rtile:hover { border-color: var(--d-card-surface-border-hover, #B6D9C2); }
+.dv2-shell .dv2-rtile-label { font-size: 12.5px; font-weight: 600; color: var(--d-text-secondary); overflow-wrap: anywhere; }
+.dv2-shell .dv2-rtile-value { font-family: Sora, sans-serif; font-weight: 600; font-size: 24px; line-height: 1.15; color: var(--d-text); }
+.dv2-shell .dv2-rtile-value small { font: 500 13px 'DM Sans', sans-serif; color: var(--d-text-secondary); }
+.dv2-shell .dv2-rtile-note { font-size: 12px; color: var(--d-text-secondary); }
+.dv2-shell .dv2-rtile--on { background: #F0FDF4; border-color: var(--d-accent); }
+.dv2-shell .dv2-rtile--on .dv2-rtile-value { color: var(--d-accent-dk); }
+.dv2-shell .dv2-results-next { margin: 12px 0 0; font-size: 13.5px; color: var(--d-text-secondary); }
+
+.dv2-shell .dv2-kpis { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.dv2-shell .dv2-kpi--whatsapp { border-color: var(--d-accent); }
+.dv2-shell .dv2-kpi-extra {
+    display: inline-flex; align-items: center; min-height: var(--d-touch-target-min);
+    font-size: 13px; font-weight: 600; color: var(--d-accent); text-decoration: underline;
+}
+.dv2-shell .dv2-kpi-value--text { font-size: 18px; }
+
+.dv2-shell .dv2-latest { margin-top: 16px; }
+.dv2-shell .dv2-latest .act-head { align-items: flex-start; gap: 12px; }
+.dv2-shell .dv2-link-action {
+    display: inline-flex; align-items: center; min-height: var(--d-touch-target-min);
+    font-size: 13.5px; font-weight: 600; color: var(--d-accent); text-decoration: none; white-space: nowrap;
+}
+.dv2-shell .dv2-table-scroll { overflow-x: auto; max-width: 100%; margin-top: 8px; }
+.dv2-shell .dv2-latest-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.dv2-shell .dv2-latest-table th, .dv2-shell .dv2-latest-table td { padding: 10px 8px; text-align: left; border-top: 1px solid var(--d-border); }
+.dv2-shell .dv2-latest-table thead th { border-top: 0; font-size: 12.5px; color: var(--d-text-secondary); font-weight: 600; }
+.dv2-shell .dv2-latest-table tbody th { font-weight: 600; color: var(--d-text); }
+
+.dv2-shell .dv2-connector-list { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.dv2-shell .dv2-connector { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: var(--d-touch-target-min); padding: 8px 10px; border-radius: 10px; }
+.dv2-shell .dv2-connector--core { background: #F0FDF4; }
+.dv2-shell .dv2-connector-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dv2-shell .dv2-connector-main b { font-size: 14px; color: var(--d-text); }
+.dv2-shell .dv2-connector-main small { font-size: 12px; color: var(--d-text-secondary); }
+.dv2-shell .dv2-connector-core { font-size: 10.5px; font-weight: 700; letter-spacing: .04em; color: var(--d-accent-dk); margin-left: 4px; }
+.dv2-shell .dv2-pill { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+.dv2-shell .dv2-pill--green { background: #DCFCE7; color: var(--d-accent-dk); }
+.dv2-shell .dv2-pill--amber { background: #FEF3C7; color: var(--d-warning-dk); }
+.dv2-shell .dv2-pill--grey { background: #F1F5F9; color: var(--d-text-secondary); }
+
+@media (max-width: 760px) {
+    .dv2-shell .dv2-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .dv2-shell .dv2-results-tiles { gap: 8px; }
+    .dv2-shell .dv2-rtile { padding: 10px 8px; }
+    .dv2-shell .dv2-rtile-value { font-size: 20px; }
+    .dv2-shell .dv2-grid2 { grid-template-columns: minmax(0, 1fr); }
+}

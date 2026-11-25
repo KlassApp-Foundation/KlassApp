@@ -234,10 +234,9 @@ class WhatsappLinkRequestCardsTest extends TestCase
 
         $this->assertDashboardDropsThePanel($html);
         $this->assertStringContainsString('data-testid="dashboard-whatsapp-waiting-count">1<', $html);
-        $this->assertStringContainsString('>request waiting</p>', $html);
-        $this->assertStringNotContainsString('>requests waiting</p>', $html);
-        $this->assertStringContainsString('dv2-kpi--waiting', $html);
-        $this->assertStringNotContainsString('parents reachable', $html);
+        $this->assertStringContainsString('</span> waiting', $html);
+        $this->assertStringContainsString('data-testid="dashboard-connected-whatsapp-count">0<', $html);
+        $this->assertStringContainsString('parents reachable', $html);
         $this->assertMatchesRegularExpression('/data-sidebar-count="whatsapp"[^>]*>1</', $html);
         $this->assertStringContainsString('function klassShowToast', $html);
     }
@@ -253,16 +252,15 @@ class WhatsappLinkRequestCardsTest extends TestCase
 
         $this->assertDashboardDropsThePanel($html);
         $this->assertStringContainsString('data-testid="dashboard-whatsapp-waiting-count">3<', $html);
-        $this->assertStringContainsString('>requests waiting</p>', $html);
-        $this->assertStringContainsString('dv2-kpi--waiting', $html);
+        $this->assertStringContainsString('</span> waiting', $html);
         $this->assertStringContainsString('data-testid="dashboard-whatsapp-waiting"', $html);
-        $this->assertStringNotContainsString('parents reachable', $html);
+        $this->assertStringContainsString('parents reachable', $html);
         $this->assertMatchesRegularExpression(
             '/href="[^"]*\/admin\/whatsapp\/dashboard"[^>]*data-testid="dashboard-v2-kpi-whatsapp"/',
             $html
         );
         $this->assertMatchesRegularExpression(
-            '/aria-label="WhatsApp, 3 requests waiting, open WhatsApp"/',
+            '/aria-label="WhatsApp, 0 parents reachable, open WhatsApp"/',
             $html
         );
         $this->assertMatchesRegularExpression('/data-sidebar-count="whatsapp"[^>]*>3</', $html);
@@ -347,13 +345,10 @@ class WhatsappLinkRequestCardsTest extends TestCase
 
     public function test_drive_row_is_hidden_unless_the_school_connected_it(): void
     {
-        $blade = file_get_contents(resource_path('views/admin/dashboard/dashboard_v2.blade.php'));
-        $this->assertStringContainsString("!empty(\$connectedTools['driveConnected'])", $blade);
+        $blade = file_get_contents(resource_path('views/admin/dashboard/_connectors.blade.php'));
+        $this->assertStringContainsString("dashboard-connected-drive", $blade);
+        $this->assertStringContainsString("\$c['status'] === 'Connected'", $blade);
         $this->assertStringContainsString('dashboard-connected-whatsapp-count', file_get_contents(resource_path('views/admin/dashboard/_whatsapp_stat.blade.php')));
-        $this->assertMatchesRegularExpression(
-            '/@if\(!empty\(\$connectedTools\[\'driveConnected\'\]\)\).*dashboard-connected-drive/s',
-            $blade
-        );
         $this->assertFileDoesNotExist(resource_path('views/admin/dashboard/dashboard.blade.php'));
     }
 

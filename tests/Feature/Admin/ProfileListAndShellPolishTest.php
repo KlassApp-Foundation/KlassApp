@@ -401,11 +401,11 @@ class ProfileListAndShellPolishTest extends TestCase
 
     private function reportTile(string $html): string
     {
-        $start = strpos($html, 'data-testid="dashboard-v2-kpi-reports"');
+        $start = strpos($html, 'data-testid="admin-marks-cards"');
         $this->assertNotFalse($start, 'Report cards tile not rendered.');
         $tile = substr($html, $start);
 
-        return substr($tile, 0, strpos($tile, '</div>'));
+        return substr($tile, 0, strpos($tile, '</a>'));
     }
 
     private function between(string $html, string $start, string $end): string
