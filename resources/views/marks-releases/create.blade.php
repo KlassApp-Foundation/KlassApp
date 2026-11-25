@@ -163,6 +163,16 @@
                     <div>No students in this selection yet.</div>
                 @endforelse
                 <div><strong>{{ $audience['parents'] ?? 0 }}</strong> parents · <strong>{{ $audience['whatsapp'] ?? 0 }}</strong> on WhatsApp</div>
+                @php $waCount = (int) ($audience['whatsapp'] ?? 0); $parentCount = (int) ($audience['parents'] ?? 0); $withPhone = (int) ($audience['with_phone'] ?? 0); @endphp
+                @if ($waCount === 0 && $parentCount > 0)
+                    <p class="mr-sub" style="margin:2px 0 0;" data-testid="release-whatsapp-zero-hint">
+                        @if ($withPhone > 0)
+                            {{ $withPhone === 1 ? '1 parent has' : $withPhone.' parents have' }} a phone number on file but {{ $withPhone === 1 ? 'has' : 'have' }} not started a WhatsApp conversation with this school's number yet. Parents need to message the school's WhatsApp number first.
+                        @else
+                            No parents have started a WhatsApp conversation with this school's number yet. Parents need to message the school's WhatsApp number first.
+                        @endif
+                    </p>
+                @endif
                 @endif
                 <details class="mr-wa" data-testid="what-parents-receive">
                     <summary>What parents receive</summary>

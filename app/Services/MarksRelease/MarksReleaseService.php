@@ -295,15 +295,26 @@ final class MarksReleaseService
                 ->whereIn('student_id', array_values($studentIds))
                 ->get(['student_id', 'parent_id']);
 
-        $whatsappParents = $parentLinks->isEmpty()
+        $allParentIds = $parentLinks->pluck('parent_id')->map(fn ($id) => (int) $id)->unique()->all();
+
+        $whatsappParents = empty($allParentIds)
             ? []
             : WhatsAppUser::query()
                 ->where('school_id', $schoolId)
                 ->where('opted_in', true)
-                ->whereIn('user_id', $parentLinks->pluck('parent_id')->map(fn ($id) => (int) $id)->unique()->all())
+                ->whereIn('user_id', $allParentIds)
                 ->pluck('user_id')
                 ->map(fn ($id) => (int) $id)
                 ->all();
+
+        // Parents with a phone number on file but no active WhatsApp link.
+        $parentsWithPhone = empty($allParentIds)
+            ? 0
+            : User::query()
+                ->whereIn('id', $allParentIds)
+                ->whereNotNull('mobile_no')
+                ->where('mobile_no', '!=', '')
+                ->count();
 
         $classes = [];
         $parentTotal = 0;
@@ -316,7 +327,7 @@ final class MarksReleaseService
             $whatsappTotal += $onWhatsapp;
         }
 
-        return ['classes' => $classes, 'parents' => $parentTotal, 'whatsapp' => $whatsappTotal];
+        return ['classes' => $classes, 'parents' => $parentTotal, 'whatsapp' => $whatsappTotal, 'with_phone' => $parentsWithPhone];
     }
 
     /**

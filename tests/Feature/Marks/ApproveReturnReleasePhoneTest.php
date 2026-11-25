@@ -16,6 +16,7 @@ use App\Models\StandardLink;
 use App\Models\StudentAcademic;
 use App\Models\StudentParentLink;
 use App\Models\Subject;
+use App\Models\WhatsAppUser;
 use App\Models\User;
 use App\Models\Userprofile;
 use App\Services\Marks\MarksSubmissionService;
@@ -170,6 +171,75 @@ class ApproveReturnReleasePhoneTest extends TestCase
         $this->assertStringContainsString('data-ka-filters', $html);
         $this->assertStringContainsString('data-exam-name="Mid Term"', $html);
         $this->assertStringContainsString('data-class-count="2"', $html);
+    }
+
+    public function test_release_page_shows_zero_whatsapp_hint_when_parent_has_phone_but_no_wa_link(): void
+    {
+        $this->mark($this->exam, $this->subject);
+
+        $link = StandardLink::query()->where('section_id', $this->section->id)->first();
+        StudentAcademic::create([
+            'school_id' => $this->school->id,
+            'academic_year_id' => $this->year->id,
+            'user_id' => $this->student->id,
+            'standardLink_id' => $link->id,
+        ]);
+        $parent = User::factory()->create([
+            'school_id' => null,
+            'usergroup_id' => 7,
+            'name' => 'Zara Parent',
+            'email' => 'zara.parent@north-ridge.test',
+            'status' => 'active',
+            'mobile_no' => '+256781000001',
+        ]);
+        StudentParentLink::create([
+            'school_id' => $this->school->id,
+            'parent_id' => $parent->id,
+            'student_id' => $this->student->id,
+            'status' => 1,
+        ]);
+        // No WhatsAppUser row — parent has phone but hasn't messaged the bot.
+
+        $html = $this->actingAs($this->admin)->get(route('admin.marks.releases.create'))->assertOk()->getContent();
+        $this->assertStringContainsString('data-testid="release-whatsapp-zero-hint"', $html);
+        $this->assertStringContainsString('1 parent has a phone number on file', $html);
+        $this->assertStringContainsString('has not started a WhatsApp conversation', $html);
+    }
+
+    public function test_release_page_hides_zero_whatsapp_hint_when_parent_is_on_whatsapp(): void
+    {
+        $this->mark($this->exam, $this->subject);
+
+        $link = StandardLink::query()->where('section_id', $this->section->id)->first();
+        StudentAcademic::create([
+            'school_id' => $this->school->id,
+            'academic_year_id' => $this->year->id,
+            'user_id' => $this->student->id,
+            'standardLink_id' => $link->id,
+        ]);
+        $parent = User::factory()->create([
+            'school_id' => null,
+            'usergroup_id' => 7,
+            'name' => 'Zara Parent',
+            'email' => 'zara.parent.wa@north-ridge.test',
+            'status' => 'active',
+            'mobile_no' => '+256781000002',
+        ]);
+        StudentParentLink::create([
+            'school_id' => $this->school->id,
+            'parent_id' => $parent->id,
+            'student_id' => $this->student->id,
+            'status' => 1,
+        ]);
+        WhatsAppUser::create([
+            'phone' => '+256781000002',
+            'user_id' => $parent->id,
+            'school_id' => $this->school->id,
+            'opted_in' => true,
+        ]);
+
+        $html = $this->actingAs($this->admin)->get(route('admin.marks.releases.create'))->assertOk()->getContent();
+        $this->assertStringNotContainsString('data-testid="release-whatsapp-zero-hint"', $html);
     }
 
     public function test_re_release_reason_is_visible_in_the_history(): void
