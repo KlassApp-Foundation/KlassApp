@@ -251,6 +251,27 @@ class ReleaseRequiresApprovalTest extends TestCase
         $this->assertStringNotContainsString('override_reason', (string) $log->properties);
     }
 
+    public function test_release_page_shows_warning_for_test_school(): void
+    {
+        $school = $this->fx['demo']['school'];
+        $school->forceFill(['is_test' => 1])->save();
+
+        $this->actingAs($this->admin())
+            ->get('/admin/marks/releases/new')
+            ->assertOk()
+            ->assertSee('data-testid="release-test-school-warning"', false)
+            ->assertSee('Outbound WhatsApp messages are blocked for test schools');
+    }
+
+    public function test_release_page_does_not_show_test_school_warning_for_normal_school(): void
+    {
+        $this->actingAs($this->admin())
+            ->get('/admin/marks/releases/new')
+            ->assertOk()
+            ->assertDontSee('data-testid="release-test-school-warning"', false)
+            ->assertSee('results_released');
+    }
+
     private function admin(): User
     {
         $school = $this->fx['demo']['school'];

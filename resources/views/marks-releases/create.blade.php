@@ -190,7 +190,13 @@
                 <label class="mr-wa-send" data-testid="release-whatsapp-send">
                     <span><input type="checkbox" name="whatsapp_send" value="1" @checked(old('whatsapp_send', $old['whatsapp_send'] ?? false))> Send these results on WhatsApp</span>
                 </label>
+                @if ($schoolIsTest ?? false)
+                    <p class="mr-sub ka-alert ka-alert-warning" style="margin:4px 0 0;" data-testid="release-test-school-warning">
+                        This is a test school. Outbound WhatsApp messages are blocked for test schools regardless of this setting — no messages will be sent.
+                    </p>
+                @else
                 <p class="mr-sub" style="margin:0">Off by default. With it off, the release still happens and opens the portal, Toshi and the report cards, and nothing is sent. A send also waits until <code>results_released</code> is approved by Meta.</p>
+                @endif
                 @error('scheduled_for')<p class="mr-error ka-alert ka-alert-error" role="alert">{{ $message }}</p>@enderror
                 @error('exam_id')<p class="mr-error">{{ $message }}</p>@enderror
                 @error('standard_link_id')<p class="mr-error">{{ $message }}</p>@enderror
