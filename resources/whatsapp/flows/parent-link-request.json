@@ -37,6 +37,14 @@
               },
               {
                 "type": "TextInput",
+                "name": "school_name",
+                "label": "School name",
+                "required": true,
+                "input-type": "text",
+                "helper-text": "This child's school"
+              },
+              {
+                "type": "TextInput",
                 "name": "child_class",
                 "label": "Child's class",
                 "required": true,
@@ -45,11 +53,11 @@
               },
               {
                 "type": "TextInput",
-                "name": "school_name",
-                "label": "School name",
-                "required": true,
+                "name": "child_stream",
+                "label": "Stream (optional)",
+                "required": false,
                 "input-type": "text",
-                "helper-text": "This child's school"
+                "helper-text": "e.g. East, West, A, B — leave blank if unsure"
               }
             ]
           },
@@ -61,8 +69,9 @@
               "payload": {
                 "parent_name": "${form.parent_name}",
                 "child_name": "${form.child_name}",
+                "school_name": "${form.school_name}",
                 "child_class": "${form.child_class}",
-                "school_name": "${form.school_name}"
+                "child_stream": "${form.child_stream}"
               }
             }
           }

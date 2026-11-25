@@ -19,6 +19,7 @@ class ParentLinkRequest extends Model implements Approvable
         'whatsapp_profile_name',
         'child_name',
         'child_class',
+        'child_stream',
         'school_name',
         'suggested_student_id',
         'matched_student_id',
@@ -62,7 +63,10 @@ class ParentLinkRequest extends Model implements Approvable
             ?: $this->school?->name
             ?: 'unknown school';
 
-        return "{$this->parent_name} → {$this->child_name} ({$this->child_class}) @ {$school}";
+        $stream = trim((string) ($this->child_stream ?? ''));
+        $classPart = $this->child_class.($stream !== '' ? " / {$stream}" : '');
+
+        return "{$this->parent_name} → {$this->child_name} ({$classPart}) @ {$school}";
     }
 
     /**
