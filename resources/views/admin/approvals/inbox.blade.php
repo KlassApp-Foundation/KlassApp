@@ -64,6 +64,12 @@
                                             <span class="text-xs block font-normal" style="color: var(--d-text-secondary, #64748B);">
                                                 {{ $approvable->phone }} · {{ $approvable->summaryLine() }}
                                             </span>
+                                            @if(trim((string) ($approvable->child_class ?? '')) === '')
+                                                <span class="inline-flex items-center gap-1 text-xs font-medium mt-1"
+                                                      style="color:#92400E;background:#FEF3C7;padding:2px 8px;border-radius:4px;border:1px solid #FDE68A;">
+                                                    ⚠ class not given
+                                                </span>
+                                            @endif
                                         @endif
                                     </span>
                                 </td>
