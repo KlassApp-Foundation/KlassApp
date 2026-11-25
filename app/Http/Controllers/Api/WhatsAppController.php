@@ -1571,11 +1571,16 @@ class WhatsAppController extends Controller
                 $this->sendAttendance($user, $phone, $whatsAppService);
                 return;
             }
-            if ($match(['code', 'link', 'link another student'])) {
-                $whatsAppService->sendText(
+            if ($match(['code', 'link', 'link another student', 'link another child'])) {
+                // Same two-path copy as the unlinked path: KlassApp ID or Request Link form.
+                $whatsAppService->sendInteractiveButtons(
                     $phone,
-                    "To link another student, reply with their 10-digit School Pay payment code.",
-                    'link_prompt',
+                    $this->parentLinkHelpMessage(),
+                    [
+                        ['title' => '📋 Request Link', 'id' => 'parent_link_flow'],
+                        ['title' => '❌ Not now', 'id' => 'exit'],
+                    ],
+                    'link_help',
                     $user->user_id,
                 );
                 return;
@@ -1773,6 +1778,7 @@ class WhatsAppController extends Controller
                         ['id' => 'HELP', 'title' => 'Help', 'description' => 'See what you can ask for'],
                         ['id' => 'DEMO', 'title' => 'Demo', 'description' => 'Try the sample school'],
                         ['id' => 'WEB_LOGIN', 'title' => 'Dashboard', 'description' => 'Open the full parent portal'],
+                        ['id' => 'parent_link_flow', 'title' => 'Link Another Child', 'description' => 'Add another child to your account'],
                     ],
                 ]],
                 description: "🏫 *KlassApp Menu* — Parent\n\nTap a button below or type any option keyword.",

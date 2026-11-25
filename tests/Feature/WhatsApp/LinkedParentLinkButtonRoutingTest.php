@@ -165,7 +165,79 @@ class LinkedParentLinkButtonRoutingTest extends TestCase
         $this->assertTrue($menuSent);
     }
 
-    public function test_school_admin_whatsapp_footer_includes_real_number(): void
+    public function test_linked_parent_typing_link_sends_two_path_help_buttons(): void
+    {
+        $captured = null;
+        $whatsApp = Mockery::mock(WhatsAppBusinessService::class);
+        $whatsApp->shouldReceive('sendInteractiveButtons')
+            ->once()
+            ->withArgs(function (string $phone, string $message, array $buttons, ?string $flowType) use (&$captured) {
+                $captured = compact('phone', 'message', 'buttons', 'flowType');
+
+                return $phone === $this->phone
+                    && $flowType === 'link_help'
+                    && collect($buttons)->contains(fn ($b) => ($b['id'] ?? '') === 'parent_link_flow');
+            })
+            ->andReturn(['success' => true, 'message_id' => 'wamid.link-help']);
+        $whatsApp->shouldNotReceive('sendText');
+        $whatsApp->shouldNotReceive('sendParentLinkRequestFlow');
+        $this->app->instance(WhatsAppBusinessService::class, $whatsApp);
+
+        $this->invokeProcessMetaMessage('link');
+
+        $this->assertNotNull($captured);
+        $this->assertSame('link_help', $captured['flowType']);
+        $this->assertStringContainsString('2 ways', $captured['message']);
+        $this->assertStringContainsString('KlassApp ID', $captured['message']);
+        $this->assertStringContainsString('Request Form', $captured['message']);
+        $this->assertStringNotContainsString('10-digit', $captured['message']);
+    }
+
+    public function test_linked_parent_typing_link_another_child_sends_two_path_help_buttons(): void
+    {
+        $captured = null;
+        $whatsApp = Mockery::mock(WhatsAppBusinessService::class);
+        $whatsApp->shouldReceive('sendInteractiveButtons')
+            ->once()
+            ->withArgs(function (string $phone, string $message, array $buttons, ?string $flowType) use (&$captured) {
+                $captured = compact('phone', 'message', 'buttons', 'flowType');
+
+                return $phone === $this->phone && $flowType === 'link_help';
+            })
+            ->andReturn(['success' => true, 'message_id' => 'wamid.link-another']);
+        $whatsApp->shouldNotReceive('sendText');
+        $this->app->instance(WhatsAppBusinessService::class, $whatsApp);
+
+        $this->invokeProcessMetaMessage('link another child');
+
+        $this->assertNotNull($captured);
+    }
+
+    public function test_parent_menu_includes_link_another_child_row(): void
+    {
+        $listRows = null;
+        $whatsApp = Mockery::mock(WhatsAppBusinessService::class);
+        $whatsApp->shouldReceive('sendText')->andReturn(['success' => true, 'message_id' => 'greet']);
+        $whatsApp->shouldReceive('sendList')
+            ->once()
+            ->withArgs(function (string $phone, string $title, array $sections) use (&$listRows) {
+                foreach ($sections as $section) {
+                    $listRows = $section['rows'] ?? [];
+                }
+
+                return true;
+            })
+            ->andReturn(['success' => true, 'message_id' => 'menu']);
+        $this->app->instance(WhatsAppBusinessService::class, $whatsApp);
+
+        $this->invokeProcessMetaMessage('menu');
+
+        $this->assertNotNull($listRows);
+        $ids = array_column($listRows, 'id');
+        $this->assertContains('parent_link_flow', $ids, 'Parent menu must contain Link Another Child (parent_link_flow)');
+    }
+
+        public function test_school_admin_whatsapp_footer_includes_real_number(): void
     {
         $schoolId = (int) $this->waUser->school_id;
         $phone = SiteHelper::schoolAdminWhatsAppPhone($schoolId);
