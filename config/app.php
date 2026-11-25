@@ -15,6 +15,8 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
+    'legal_draft_banner' => env('LEGAL_DRAFT_BANNER', 'Draft effective 25 November 2026. Under review.'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment

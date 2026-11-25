@@ -51,6 +51,7 @@ class ParentLinkRequestService
         $profileName = ParentLinkRequest::profileNameOrNull($senderName);
         $childName = trim((string) ($payload['child_name'] ?? ''));
         $childClass = trim((string) ($payload['child_class'] ?? ''));
+        $childStream = trim((string) ($payload['child_stream'] ?? ''));
         $schoolName = trim((string) ($payload['school_name'] ?? ''));
         $resolvedSchool = $this->resolveSchoolByName($schoolName);
 
@@ -70,13 +71,24 @@ class ParentLinkRequestService
             return $existingPending->loadMissing(['school', 'suggestedStudent']);
         }
 
-        return DB::transaction(function () use ($phone, $parentName, $profileName, $childName, $childClass, $schoolName, $flowToken, $resolvedSchool) {
+        return DB::transaction(function () use ($phone, $parentName, $profileName, $childName, $childClass, $childStream, $schoolName, $flowToken, $resolvedSchool) {
 
             $candidates = $this->findCandidateStudents(
                 $childName,
                 $childClass,
                 $resolvedSchool?->id,
+                $childStream,
             );
+
+            // Stream fallback: if the parent typed a stream but no candidates matched,
+            // retry without the stream filter so the request is never silently dropped.
+            if ($candidates->isEmpty() && $childStream !== '') {
+                $candidates = $this->findCandidateStudents(
+                    $childName,
+                    $childClass,
+                    $resolvedSchool?->id,
+                );
+            }
 
             // Fallback: if school-name match was ambiguous/missing, infer from
             // a single platform-wide child candidate (previous Day 2 behaviour).
@@ -104,6 +116,7 @@ class ParentLinkRequestService
                 'whatsapp_profile_name' => $profileName,
                 'child_name' => $childName,
                 'child_class' => $childClass,
+                'child_stream' => $childStream !== '' ? $childStream : null,
                 'school_name' => $schoolName !== '' ? $schoolName : null,
                 'suggested_student_id' => $suggestedStudentId,
                 'status' => 'pending',
@@ -603,8 +616,12 @@ class ParentLinkRequestService
     /**
      * @return Collection<int, User>
      */
-    public function findCandidateStudents(string $childName, string $childClass, ?int $schoolId = null): Collection
-    {
+    public function findCandidateStudents(
+        string $childName,
+        string $childClass,
+        ?int $schoolId = null,
+        string $childStream = '',
+    ): Collection {
         if ($childName === '') {
             return collect();
         }
@@ -630,6 +647,12 @@ class ParentLinkRequestService
                         $inner->orWhere('name', 'LIKE', '%'.$variant.'%');
                     }
                 });
+            });
+        }
+
+        if ($childStream !== '') {
+            $query->whereHas('studentAcademicLatest.standardLink', function ($q) use ($childStream) {
+                $q->whereRaw('LOWER(stream) LIKE ?', ['%'.mb_strtolower($childStream).'%']);
             });
         }
 
