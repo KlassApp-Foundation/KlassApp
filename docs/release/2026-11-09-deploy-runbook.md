@@ -67,7 +67,7 @@ How stacked PRs behave in this order:
 |---|---|---|
 | `FILESYSTEM_DISK` | the cloud object storage disk (not `local`) | Student photos, imports and generated files. Verified by the photo check in section 6 |
 | `MAIL_FROM_ADDRESS` | a valid sender address | Invite and password-reset-code emails (#1262, #1267). A blank or invalid value falls back to `connect@klassapp.xyz` (config/mail.php) |
-| `WHATSAPP_APPROVED_TEMPLATES` | leave unset | Empty means every gated WhatsApp send is refused. Releasing marks sends nothing to WhatsApp until `results_released` is recorded as approved by Meta **and** the release's "Send these results on WhatsApp" box is ticked (off by default) |
+| `WHATSAPP_APPROVED_TEMPLATES` | `results_released` | `results_released` (UTILITY, English) is confirmed Active in WhatsApp Manager as of 25 November 2026. Setting this unblocks WhatsApp sends for real schools when the release's "Send these results on WhatsApp" box is ticked (off by default). Leave unset to keep all gated sends refused. |
 | `STAFF_INVITE_WHATSAPP_ENABLED` | leave unset (false) | Teacher invites go by email only |
 | `RECORD_SNAPSHOTS_ALLOW_DROP` | leave unset (false) | Only for a deliberate rollback of migration 6 (section 5) |
 | `TOSHI_DEFAULT_MODE` | unchanged (`preview`) | AGENTS.md rule 33: AI stays off by default |
@@ -125,7 +125,7 @@ Mark any failure with the screenshot and the time; do not retry the release.
 - No `demo:refresh` or `demo:set-password` on production; no `db:seed`, `migrate:fresh` or `migrate:refresh` anywhere near production.
 - No one-off SQL on production (rule 1). Fixes go through a migration or a committed command.
 - No admin merge past a red or pending check (rule 32). If a merge breaks staging, open a revert PR first and investigate after (rule 36).
-- No WhatsApp send from a release until `results_released` is approved and recorded.
+- No WhatsApp send from a real-school release without `results_released` in `WHATSAPP_APPROVED_TEMPLATES` **and** the per-release "Send these results on WhatsApp" switch on. (`results_released` is confirmed Active as of 25 November 2026.)
 
 ## 8. How to roll back each step
 
