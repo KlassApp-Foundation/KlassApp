@@ -78,6 +78,13 @@ class ParentLinkRequestService
                 $resolvedSchool?->id,
             );
 
+            // If the class token matched nothing, retry without it.  A wrong or
+            // non-standard class label should not prevent the child from being
+            // suggested — the admin will confirm the right student anyway.
+            if ($candidates->isEmpty() && $childClass !== '') {
+                $candidates = $this->findCandidateStudents($childName, '', $resolvedSchool?->id);
+            }
+
             // Fallback: if school-name match was ambiguous/missing, infer from
             // a single platform-wide child candidate (previous Day 2 behaviour).
             if ($resolvedSchool === null) {
@@ -453,9 +460,20 @@ class ParentLinkRequestService
 
     /**
      * Fuzzy-match a typed school name against active schools.
-     * Exact (case-insensitive) match wins; otherwise a single LIKE hit;
-     * otherwise a unique alphanumeric-normalized match ("Green field" ↔ "Greenfield").
-     * Ambiguous (0 or 2+) returns null so the caller can fall back.
+     *
+     * Resolution order (first match wins):
+     *   1. Exact case-insensitive match.
+     *   2. Single LIKE-contains match.
+     *   3. Single alphanumeric-normalised match ("Green field" ↔ "Greenfield").
+     *   4. Single close-match via Levenshtein on the normalised key, also
+     *      tried on a word-sorted key (handles word-order variations like
+     *      "Academy Hillcrest" ↔ "Hillcrest Academy").  Accepted only when
+     *      one school is unambiguously closest: its edit distance is at least
+     *      2 edits ahead of the next candidate.
+     *
+     * When ambiguous or unresolvable, returns null.  The caller is responsible
+     * for saving the submission with the typed name and no school_id — a
+     * submission must never be dropped because the school name did not resolve.
      */
     public function resolveSchoolByName(string $schoolName): ?School
     {
@@ -463,6 +481,7 @@ class ParentLinkRequestService
             return null;
         }
 
+        // Step 1 — exact (case-insensitive).
         $exact = School::query()
             ->where('status', 1)
             ->whereRaw('LOWER(name) = ?', [mb_strtolower($schoolName)])
@@ -472,6 +491,7 @@ class ParentLinkRequestService
             return $exact;
         }
 
+        // Step 2 — unique contains.
         $matches = School::query()
             ->where('status', 1)
             ->where('name', 'LIKE', '%'.$schoolName.'%')
@@ -482,21 +502,56 @@ class ParentLinkRequestService
             return $matches->first();
         }
 
-        // WhatsApp Flow free-text often inserts spaces ("Green field" vs "Greenfield").
-        // Collapse non-alphanumerics so those variants still resolve uniquely.
+        // Step 3 — unique alphanumeric-normalised ("Green field" ↔ "Greenfield").
         $needle = $this->normalizeSchoolNameKey($schoolName);
         if ($needle === '') {
             return null;
         }
 
-        $normalizedHits = School::query()
-            ->where('status', 1)
-            ->get(['id', 'name'])
+        $allSchools = School::query()->where('status', 1)->get(['id', 'name']);
+
+        $normalizedHits = $allSchools
             ->filter(fn (School $school): bool => $this->normalizeSchoolNameKey((string) $school->name) === $needle)
             ->values();
 
         if ($normalizedHits->count() === 1) {
             return School::query()->where('status', 1)->find($normalizedHits->first()->id);
+        }
+
+        // Step 4 — close-match: Levenshtein on the alphanumeric key, with a
+        // word-sorted variant to handle word-order differences.
+        // Threshold: up to 25 % of the needle length (min 2 edits).
+        $needleWordSorted = $this->wordSortedKey($schoolName);
+        $threshold = max(2, (int) ceil(mb_strlen($needle) * 0.25));
+
+        $scored = [];
+        foreach ($allSchools as $school) {
+            $hay = $this->normalizeSchoolNameKey((string) $school->name);
+            $hayWS = $this->wordSortedKey((string) $school->name);
+            $dist = min(
+                levenshtein($needle, $hay),
+                levenshtein($needleWordSorted, $hayWS),
+            );
+            // dist = 0 is valid here: it means the word-sorted keys are
+            // identical (perfect word-order match) while the normalized keys
+            // differ (otherwise step 3 would have returned already).
+            if ($dist <= $threshold) {
+                $scored[] = ['id' => (int) $school->id, 'dist' => $dist];
+            }
+        }
+
+        if ($scored === []) {
+            return null;
+        }
+
+        usort($scored, fn (array $a, array $b): int => $a['dist'] <=> $b['dist']);
+
+        $best = $scored[0];
+        $second = $scored[1] ?? null;
+
+        // Accept only when unambiguously best: gap of ≥ 2 edits ahead of second.
+        if ($second === null || ($second['dist'] - $best['dist']) >= 2) {
+            return School::query()->where('status', 1)->find($best['id']);
         }
 
         return null;
@@ -511,6 +566,19 @@ class ParentLinkRequestService
         $collapsed = preg_replace('/[^a-z0-9]+/u', '', $collapsed) ?? '';
 
         return $collapsed;
+    }
+
+    /**
+     * Word-sorted alphanumeric key: sorts tokens alphabetically before
+     * joining so "Academy Hillcrest Primary" and "Hillcrest Primary Academy"
+     * collapse to the same key.
+     */
+    private function wordSortedKey(string $name): string
+    {
+        $words = preg_split('/[^a-z0-9]+/u', mb_strtolower(trim($name)), -1, PREG_SPLIT_NO_EMPTY) ?? [];
+        sort($words);
+
+        return implode('', $words);
     }
 
     /**
