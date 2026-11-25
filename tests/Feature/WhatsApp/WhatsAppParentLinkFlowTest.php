@@ -314,7 +314,12 @@ class WhatsAppParentLinkFlowTest extends TestCase
         $this->assertSame('parent_link_flow', $captured['buttons'][0]['id']);
     }
 
-    public function test_duplicate_flow_completion_while_pending_sends_pending_status(): void
+    /**
+     * When a pending row exists for child A, re-submitting for the SAME child is deduped
+     * and returns the pending-status message.  Submitting for a DIFFERENT child creates
+     * its own row (child-name is now part of the dedup key).
+     */
+    public function test_duplicate_flow_for_same_child_sends_pending_status(): void
     {
         ParentLinkRequest::create([
             'phone' => $this->phone,
@@ -342,6 +347,53 @@ class WhatsAppParentLinkFlowTest extends TestCase
 
         $controller = app(WhatsAppController::class);
         $method = new ReflectionMethod(WhatsAppController::class, 'processMetaFlowReply');
+        // Re-submit for the SAME child — must dedup.
+        $method->invoke($controller, $this->phone, [
+            'name' => 'flow',
+            'response_json' => json_encode([
+                'parent_name' => 'New Attempt',
+                'child_name' => 'Existing Child',
+                'child_class' => 'P.3',
+                'school_name' => 'Demo Primary',
+            ]),
+        ], 'New Attempt');
+
+        $this->assertNotNull($captured);
+        $this->assertSame(1, ParentLinkRequest::where('phone', $this->phone)->count());
+        $this->assertSame('Existing Parent', ParentLinkRequest::where('phone', $this->phone)->first()->parent_name);
+    }
+
+    public function test_duplicate_flow_for_different_child_creates_separate_request(): void
+    {
+        Http::fake([
+            'graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.test']]], 200),
+        ]);
+
+        ParentLinkRequest::create([
+            'phone' => $this->phone,
+            'parent_name' => 'Existing Parent',
+            'child_name' => 'Existing Child',
+            'child_class' => 'P.3',
+            'school_name' => 'Demo Primary',
+            'status' => 'pending',
+        ]);
+
+        $ackSent = false;
+        $whatsApp = Mockery::mock(WhatsAppBusinessService::class);
+        $whatsApp->shouldReceive('sendText')
+            ->once()
+            ->withArgs(function (string $phone, string $message, ?string $flowType) use (&$ackSent) {
+                $ackSent = $flowType === 'parent_link_flow_ack'
+                    && str_contains($message, 'Other Child');
+
+                return $phone === $this->phone && $flowType === 'parent_link_flow_ack';
+            })
+            ->andReturn(['success' => true, 'message_id' => 'ack']);
+        $this->app->instance(WhatsAppBusinessService::class, $whatsApp);
+
+        $controller = app(WhatsAppController::class);
+        $method = new ReflectionMethod(WhatsAppController::class, 'processMetaFlowReply');
+        // Submit for a DIFFERENT child — must create its own row.
         $method->invoke($controller, $this->phone, [
             'name' => 'flow',
             'response_json' => json_encode([
@@ -352,9 +404,8 @@ class WhatsAppParentLinkFlowTest extends TestCase
             ]),
         ], 'New Attempt');
 
-        $this->assertNotNull($captured);
-        $this->assertSame(1, ParentLinkRequest::where('phone', $this->phone)->count());
-        $this->assertSame('Existing Parent', ParentLinkRequest::where('phone', $this->phone)->first()->parent_name);
+        $this->assertTrue($ackSent, 'Ack must confirm the new child, not the existing pending one');
+        $this->assertSame(2, ParentLinkRequest::where('phone', $this->phone)->count());
     }
 
     protected function tearDown(): void
