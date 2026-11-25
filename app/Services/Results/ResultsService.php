@@ -644,6 +644,18 @@ final class ResultsService
                 }
                 $cells[$subjectId] = $real;
             }
+
+            // Did this learner produce a result for this sitting? A recorded
+            // absence is a result the policy may count as zero; a subject with
+            // no mark row at all is not. Only the first can hold a place.
+            $sat = false;
+            foreach ($cells as $cell) {
+                if ($cell->status === ResultCell::MARKED || $cell->status === ResultCell::ABSENT) {
+                    $sat = true;
+                    break;
+                }
+            }
+
             [$total, $counted, $average, $aggregate, $division, $displayTotal, $displayAverage] = $this->totals(
                 $policy,
                 $cells,
@@ -665,6 +677,7 @@ final class ResultsService
                 'displayAverage' => $displayAverage,
                 'registrationNumber' => trim((string) ($user->registration_number ?? '')),
                 'key' => $this->rankKey($policy, $total, $average, $aggregate),
+                'sat' => $sat,
             ];
         }
 
@@ -998,12 +1011,18 @@ final class ResultsService
     }
 
     /**
-     * @param list<array{studentId: int, linkId: int, key: ?float}> $drafts
+     * @param list<array{studentId: int, linkId: int, key: ?float, sat: bool}> $drafts
      * @return array{class: array<int, array{position: ?int, outOf: int}>, stream: array<int, array{position: ?int, outOf: int}>}
      */
     private function positions(ResultsPolicy $policy, array $drafts): array
     {
-        $ranked = array_values(array_filter($drafts, fn (array $draft) => $draft['key'] !== null));
+        // A learner with no mark in this sitting holds no place, even when the
+        // policy counts a blank as zero. The roster still decides "out of":
+        // a class of 30 reports 30 pupils while two are still missing marks.
+        $ranked = array_values(array_filter(
+            $drafts,
+            fn (array $draft) => $draft['key'] !== null && ($draft['sat'] ?? false),
+        ));
         usort($ranked, function (array $left, array $right) use ($policy) {
             $compared = $left['key'] <=> $right['key'];
             if ($policy->higherIsBetter) {
@@ -1017,8 +1036,13 @@ final class ResultsService
         });
 
         $classPositions = $this->assignShared($ranked);
-        $classOutOf = count($ranked);
+        $classOutOf = count($drafts);
+
         $byStream = [];
+        $streamRoster = [];
+        foreach ($drafts as $entry) {
+            $streamRoster[$entry['linkId']] = ($streamRoster[$entry['linkId']] ?? 0) + 1;
+        }
         foreach ($ranked as $entry) {
             $byStream[$entry['linkId']][] = $entry;
         }
@@ -1029,7 +1053,7 @@ final class ResultsService
             foreach ($this->assignShared($group) as $studentId => $position) {
                 $streamPositions[$studentId] = $position;
             }
-            $streamOutOf[$linkId] = count($group);
+            $streamOutOf[$linkId] = $streamRoster[$linkId] ?? count($group);
         }
 
         $class = [];
@@ -1042,7 +1066,7 @@ final class ResultsService
             ];
             $stream[$id] = [
                 'position' => $streamPositions[$id] ?? null,
-                'outOf' => $streamOutOf[$draft['linkId']] ?? 0,
+                'outOf' => $streamOutOf[$draft['linkId']] ?? ($streamRoster[$draft['linkId']] ?? 0),
             ];
         }
 

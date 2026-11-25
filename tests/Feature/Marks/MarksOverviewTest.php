@@ -300,7 +300,9 @@ class MarksOverviewTest extends TestCase
         $bea = $sheet->student($this->bea->id);
         $this->assertSame(50.0, $ada->displayTotal);
         $this->assertSame(1, $ada->classPosition);
-        $this->assertSame(1, $ada->classOutOf);
+        // Two learners are enrolled. Bea has no mark and holds no place,
+        // but she is still one of the pupils the class reports.
+        $this->assertSame(2, $ada->classOutOf);
         $this->assertSame(ResultCell::MARKED, $ada->cell($this->english->id)->status);
         $this->assertSame(50.0, $ada->cell($this->english->id)->mark);
         $this->assertSame(ResultCell::UNAPPROVED, $ada->cell($this->science->id)->status);
@@ -380,7 +382,7 @@ class MarksOverviewTest extends TestCase
         $this->assertStringContainsString('KLS0010001', $card);
         $this->assertStringContainsString('KLS0010001 · East', $card);
         $this->assertStringContainsString('ka-learner-pos', $card);
-        $this->assertMatchesRegularExpression('/data-testid="marks-phone-position">\s*of 1\s*</', $card);
+        $this->assertMatchesRegularExpression('/data-testid="marks-phone-position">\s*of 2\s*</', $card);
         $this->assertStringContainsString($this->english->name, $card);
         $this->assertStringContainsString($this->reading->name, $card);
         $this->assertStringContainsString($this->science->name, $card);

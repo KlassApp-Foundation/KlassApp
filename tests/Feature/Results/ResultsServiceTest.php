@@ -689,6 +689,65 @@ class ResultsServiceTest extends TestCase
     /**
      * @return array{school: School, year: AcademicYear, standard: Standard, section: Section, link: StandardLink, teacher: User, english: Subject, maths: Subject}
      */
+    public function test_a_learner_with_no_marks_keeps_a_roster_place_and_holds_no_position(): void
+    {
+        $ctx = $this->school();
+        $term = $this->term($ctx);
+        $this->bands($ctx, [
+            ['grade' => 'F', 'points' => 9, 'min' => 0, 'max' => 79],
+            ['grade' => 'D', 'points' => 1, 'min' => 80, 'max' => 100],
+        ]);
+        $english = $this->exam($ctx, $term, $ctx['english'], '2026-04-01');
+
+        $first = $this->student($ctx, 'First Student');
+        $second = $this->student($ctx, 'Second Student');
+        $blank = $this->student($ctx, 'No Marks Student');
+        $this->mark($ctx, $english, $ctx['english'], $first, 90, 'D');
+        $this->mark($ctx, $english, $ctx['english'], $second, 60, 'F');
+
+        foreach ([true, false] as $countMissingAsZero) {
+            $sheet = $this->sheet($ctx, $term, $this->policy(countMissingAsZero: $countMissingAsZero));
+
+            // Three enrolled, two with a mark. Every learner reports 3.
+            $this->assertSame(3, $sheet->student($first->id)->classOutOf);
+            $this->assertSame(3, $sheet->student($second->id)->classOutOf);
+            $this->assertSame(3, $sheet->student($blank->id)->classOutOf);
+
+            $this->assertSame(1, $sheet->student($first->id)->classPosition);
+            $this->assertSame(2, $sheet->student($second->id)->classPosition);
+            $this->assertNull($sheet->student($blank->id)->classPosition);
+        }
+    }
+
+    public function test_a_stream_reports_its_roster_when_one_member_has_no_marks(): void
+    {
+        $ctx = $this->school();
+        $west = $this->stream($ctx, 'West');
+        $term = $this->term($ctx);
+        $this->bands($ctx, [
+            ['grade' => 'F', 'points' => 9, 'min' => 0, 'max' => 79],
+            ['grade' => 'D', 'points' => 1, 'min' => 80, 'max' => 100],
+        ]);
+        $english = $this->exam($ctx, $term, $ctx['english'], '2026-04-01');
+
+        $ada = $this->student($ctx, 'Ada East');
+        $bea = $this->student($ctx, 'Bea East');
+        $cal = $this->student($ctx, 'Cal West', $west);
+        $dan = $this->student($ctx, 'Dan West', $west);
+        $this->mark($ctx, $english, $ctx['english'], $ada, 90, 'D');
+        $this->mark($ctx, $english, $ctx['english'], $bea, 70, 'F');
+        $this->mark($ctx, $english, $ctx['english'], $dan, 80, 'D');
+
+        $sheet = $this->sheet($ctx, $term, $this->policy(countMissingAsZero: true));
+
+        $this->assertSame(4, $sheet->student($cal->id)->classOutOf);
+        $this->assertSame(2, $sheet->student($ada->id)->streamOutOf);
+        $this->assertSame(2, $sheet->student($cal->id)->streamOutOf);
+        $this->assertSame(1, $sheet->student($ada->id)->streamPosition);
+        $this->assertSame(1, $sheet->student($dan->id)->streamPosition);
+        $this->assertNull($sheet->student($cal->id)->streamPosition);
+    }
+
     private function school(string $name = 'Results School'): array
     {
         $school = School::create([

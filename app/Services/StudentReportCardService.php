@@ -324,7 +324,7 @@ class StudentReportCardService
             throw new \RuntimeException('No exam set found for this class.');
         }
 
-        $allStudentIds = $this->studentIds($exam);
+        $classSize = $this->classSize($schoolId, $stdLink, (int) $exam->academic_year_id);
         $helper = app(StudentReportHelperService::class);
         $svc = new ReportCardCommentService;
         $positionMap = $this->computePositionMap($exam, $schoolId, $onlyExamTypeIds);
@@ -337,7 +337,7 @@ class StudentReportCardService
             $schoolId,
             $helper,
             $svc,
-            $allStudentIds->count(),
+            $classSize,
             $myPos,
             $templateKey,
             false,
@@ -384,6 +384,28 @@ class StudentReportCardService
             ->orderBy('name')
             ->orderBy('id')
             ->get();
+    }
+
+    /**
+     * Learners enrolled in this class (the section, across its streams) for
+     * the exam's academic year. This is the denominator a card prints next to
+     * a position: it never shrinks because a learner has no mark for the set
+     * being ranked.
+     */
+    public function classSize(int $schoolId, StandardLink $stdLink, ?int $academicYearId = null): int
+    {
+        return (int) \App\Models\StudentAcademic::query()
+            ->where('school_id', $schoolId)
+            ->when($academicYearId !== null && $academicYearId > 0, fn ($query) => $query->where('academic_year_id', $academicYearId))
+            ->whereHas('standardLink', function ($query) use ($schoolId, $stdLink) {
+                $query->where('school_id', $schoolId)
+                    ->where('section_id', $stdLink->section_id);
+            })
+            ->whereHas('user', function ($query) {
+                $query->where('status', 'active')->where('usergroup_id', 6);
+            })
+            ->distinct()
+            ->count('user_id');
     }
 
     /**
@@ -559,7 +581,15 @@ class StudentReportCardService
         ?array $onlyExamTypeIds = null,
     ): string {
         $learner = User::find($sid);
-        $learner = $helper->learner($schoolId, $learner, $exam);
+        $withMarks = $helper->learner($schoolId, $learner, $exam);
+        if ($withMarks !== null) {
+            $learner = $withMarks;
+        } else {
+            // Enrolled but no mark row in this term. The card still prints,
+            // with every subject showing its blank state.
+            $learner->setRelation('marks', collect());
+            $learner->loadMissing(['school', 'userprofile']);
+        }
         $subjects = $helper->subjects($schoolId, $stdLink->section_id, $learner, $exam);
         $subjects = \App\Models\Subject::sortByReportOrder($subjects);
         $exams = $helper->exam($schoolId, $exam);
@@ -681,6 +711,11 @@ class StudentReportCardService
             $ranked = [];
             foreach ($streamRows as $rankedSid) {
                 $chosen = $this->chosenMarksBySubject($streamMarks->get($rankedSid, collect()), $contributing);
+                if ($chosen === []) {
+                    // No mark in this sitting: the learner keeps a card and a
+                    // roster place, but holds no position in the stream.
+                    continue;
+                }
                 $ranked[$rankedSid] = array_sum(array_map(
                     fn ($mark) => ResultsPolicy::roundTo((float) $mark->marks),
                     $chosen
@@ -694,7 +729,7 @@ class StudentReportCardService
                     break;
                 }
             }
-            $streamTotal = count($ranked);
+            $streamTotal = count($streamRows);
         }
 
         $total = array_sum(array_map(

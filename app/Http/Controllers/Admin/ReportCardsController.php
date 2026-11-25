@@ -312,16 +312,21 @@ class ReportCardsController extends Controller
             $exam = $this->resolveExam($schoolId, $sl, $academicTermId ? (int) $academicTermId : null);
             if (!$exam) continue;
 
-            $studentIds = $this->studentIds($exam);
-            $students = \App\Models\User::whereIn('id', $studentIds)
-                ->where('status', 'active')
-                ->where('name', 'regexp', '^[^0-9]+$')
-                ->whereNotIn('id', function ($q) use ($eotIds) {
-                    $q->select('student_id')->from('marks')
-                        ->whereIn('exam_id', $eotIds)->distinct();
-                })
-                ->orderBy('name')
-                ->get(['id', 'name']);
+            // The roster decides who is chased, not the mark rows: a learner
+            // with no End-of-Term mark anywhere is the one this report is for.
+            $markedEot = \Illuminate\Support\Facades\DB::table('marks')
+                ->where('school_id', $schoolId)
+                ->whereIn('exam_id', $eotIds)
+                ->pluck('student_id')
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->all();
+
+            $students = app(\App\Services\StudentReportCardService::class)
+                ->reportLearners($schoolId, $sl, $academicTermId ? (int) $academicTermId : null)
+                ->reject(fn ($student) => in_array((int) $student->id, $markedEot, true))
+                ->reject(fn ($student) => preg_match('/[0-9]/', (string) $student->name) === 1)
+                ->values();
 
             if ($students->isNotEmpty()) {
                 $missing[] = [
@@ -413,16 +418,6 @@ class ReportCardsController extends Controller
         return $belongs ? $id : null;
     }
 
-    private function studentIds(Exam $exam)
-    {
-        return app(StudentReportCardService::class)->studentIds($exam);
-    }
-
-    private function computePositionMap(Exam $exam, int $schoolId): array
-    {
-        return app(StudentReportCardService::class)->computePositionMap($exam, $schoolId);
-    }
-
     /**
      * Backward-compatible entry point for jobs/commands. Real implementation:
      * StudentReportCardService::generatePdf().
@@ -479,7 +474,7 @@ class ReportCardsController extends Controller
 
         $helper = app(\App\Services\StudentReportHelperService::class);
         $svc = app(ReportCardCommentService::class);
-        $totalLearners = \App\Models\Academics\Marks::where('exam_id', $exam->id)->distinct('student_id')->count();
+        $totalLearners = $reports->classSize($schoolId, $stdLink, (int) $exam->academic_year_id);
         $positionMap = $reports->computePositionMap($exam, $schoolId);
         $myPos = $positionMap[$learner->id] ?? 0;
 
