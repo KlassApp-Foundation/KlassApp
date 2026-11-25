@@ -11,7 +11,7 @@
     $spanClass = ($item['small'] ?? false) ? '' : 'mx-3 whitespace-nowrap';
 @endphp
 <li class="{{ $liClasses }}">
-    <a href="{{ $href }}" class="{{ $aClass }}"
+    <a href="{{ $href }}" class="{{ $aClass }}" {{ ($navNavigate ?? fn () => '')($href) }}
        @if(!empty($item['external'])) target="_blank" rel="noopener noreferrer" @endif
        @isset($item['title']) title="{{ $item['title'] }}" @endisset
        @isset($item['testid']) data-testid="{{ $item['testid'] }}" @endisset>

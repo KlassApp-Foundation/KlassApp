@@ -57,6 +57,29 @@
         return $href;
     };
 
+    // Instant navigation: a sidebar click swaps the page body without a full
+    // reload. Some destinations stay full page loads on purpose, because the
+    // page owns state a swap would lose or repeats an action a second time:
+    // teacher marks entry (a live form), Marks Release (a one-way action),
+    // print and PDF pages, and the onboarding wizard.
+    $navNavigate = function (string $href): string {
+        $path = trim((string) parse_url($href, PHP_URL_PATH), '/');
+        foreach ([
+            'teacher/exam/*/marks/enter',
+            'teacher/exam/*/marks/enter/*',
+            'admin/marks/releases*',
+            'teacher/marks/releases*',
+            '*/print', '*/print/*', '*/pdf', '*/pdf/*',
+            'admin/onboarding*',
+        ] as $pattern) {
+            if (\Illuminate\Support\Str::is($pattern, $path)) {
+                return '';
+            }
+        }
+
+        return 'wire:navigate';
+    };
+
     // Active state is derived from route/path patterns (never from a hard-coded
     // URL segment index, which is what the retired per-role helpers did).
     $navActive = function (array $item) use ($prefix): bool {
@@ -196,10 +219,10 @@
 @endphp
 <ul class="list-reset text-sm{{ ($nav['layout'] ?? '') === 'v3' ? ' sidebar-v3-list' : '' }}" @if(($nav['layout'] ?? '') === 'v3') data-sidebar-v3 @endif>
     @if(($nav['layout'] ?? 'flat') === 'v3')
-        @include('layouts.partials.sidebar-menu-v3', compact('nav', 'itemClass', 'activeClass', 'navHref', 'navActive', 'showItem', 'navCounts'))
+        @include('layouts.partials.sidebar-menu-v3', compact('nav', 'itemClass', 'activeClass', 'navHref', 'navActive', 'showItem', 'navCounts', 'navNavigate'))
     @elseif(($nav['layout'] ?? 'flat') === 'grouped')
         @foreach(array_filter($nav['items'], $showItem) as $item)
-            @include('layouts.partials.sidebar-menu-item', compact('item', 'itemClass', 'activeClass', 'navHref', 'navActive'))
+            @include('layouts.partials.sidebar-menu-item', compact('item', 'itemClass', 'activeClass', 'navHref', 'navActive', 'navNavigate'))
         @endforeach
 
         @foreach($nav['groups'] as $group)
@@ -257,7 +280,7 @@
                 </div>
                 <ul x-show="open || previewOpen" x-collapse.duration.200ms>
                     @foreach($visibleGroupItems as $item)
-                        @include('layouts.partials.sidebar-menu-item', compact('item', 'itemClass', 'activeClass', 'navHref', 'navActive'))
+                        @include('layouts.partials.sidebar-menu-item', compact('item', 'itemClass', 'activeClass', 'navHref', 'navActive', 'navNavigate'))
                     @endforeach
                 </ul>
             </li>
@@ -290,7 +313,7 @@
                         </ul>
                     </li>
                 @else
-                    @include('layouts.partials.sidebar-menu-item', compact('item', 'itemClass', 'activeClass', 'navHref', 'navActive'))
+                    @include('layouts.partials.sidebar-menu-item', compact('item', 'itemClass', 'activeClass', 'navHref', 'navActive', 'navNavigate'))
                 @endif
             @endif
         @endforeach
