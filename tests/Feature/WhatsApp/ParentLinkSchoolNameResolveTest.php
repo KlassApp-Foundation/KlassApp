@@ -191,6 +191,125 @@ class ParentLinkSchoolNameResolveTest extends TestCase
         $this->assertSame(0, $orphan->approvals()->count());
     }
 
+    // ------------------------------------------------------------------ //
+    // Step 4: close-match (typo-tolerant + word-order)
+    // ------------------------------------------------------------------ //
+
+    public function test_resolve_school_one_typo_matches(): void
+    {
+        $school = School::create([
+            'name'   => 'Hillcrest Primary Academy',
+            'email'  => 'hillcrest-typo@test.sch.ug',
+            'status' => 1,
+        ]);
+
+        // "Primery" is one substitution (a→e) from "Primary".
+        $resolved = app(ParentLinkRequestService::class)
+            ->resolveSchoolByName('Hillcrest Primery Academy');
+
+        $this->assertNotNull($resolved);
+        $this->assertSame($school->id, $resolved->id);
+    }
+
+    public function test_resolve_school_word_order_matches(): void
+    {
+        $school = School::create([
+            'name'   => 'Hillcrest Primary Academy',
+            'email'  => 'hillcrest-wordorder@test.sch.ug',
+            'status' => 1,
+        ]);
+
+        // Words rearranged — word-sorted keys collapse to the same string.
+        $resolved = app(ParentLinkRequestService::class)
+            ->resolveSchoolByName('Primary Academy Hillcrest');
+
+        $this->assertNotNull($resolved);
+        $this->assertSame($school->id, $resolved->id);
+    }
+
+    public function test_resolve_school_two_close_schools_ambiguous_returns_null(): void
+    {
+        // Both schools have the same edit distance (4 insertions) from the input.
+        // Input "Greenview Primary" (normalized: "greenviewprimary", 16 chars):
+        //   vs "Greenview East Primary" (normalized: "greenvieweastprimary")  → dist 4
+        //   vs "Greenview West Primary" (normalized: "greenviewwestprimary")  → dist 4
+        // Threshold = max(2, ceil(16 × 0.25)) = 4.  Both within threshold, gap = 0 < 2.
+        School::create(['name' => 'Greenview East Primary', 'email' => 'gv-east@test.sch.ug', 'status' => 1]);
+        School::create(['name' => 'Greenview West Primary', 'email' => 'gv-west@test.sch.ug', 'status' => 1]);
+
+        $resolved = app(ParentLinkRequestService::class)
+            ->resolveSchoolByName('Greenview Primary');
+
+        $this->assertNull($resolved);
+    }
+
+    public function test_resolve_school_no_match_returns_null(): void
+    {
+        School::create(['name' => 'Greenfield Primary School', 'email' => 'gps-nm@test.sch.ug', 'status' => 1]);
+
+        $resolved = app(ParentLinkRequestService::class)
+            ->resolveSchoolByName('XYZ Completely Different');
+
+        $this->assertNull($resolved);
+    }
+
+    public function test_flow_submission_unresolvable_school_still_creates_request(): void
+    {
+        // No school at all — the submission must arrive with school_name preserved
+        // and no Approval (admin or platform resolves it manually).
+        $request = app(ParentLinkRequestService::class)->createFromFlowSubmission(
+            '+256700000099',
+            [
+                'parent_name' => 'Sunday Johnson',
+                'child_name'  => 'Grace Auma',
+                'child_class' => 'P.7',
+                'school_name' => 'Completely Unknown School XYZ',
+            ],
+        );
+
+        $this->assertTrue($request->wasRecentlyCreated);
+        $this->assertNull($request->school_id);
+        $this->assertSame('Completely Unknown School XYZ', $request->school_name);
+        // No approval row — will be resolved by admin.
+        $this->assertDatabaseMissing('approvals', [
+            'approvable_type' => ParentLinkRequest::class,
+            'approvable_id'   => $request->id,
+        ]);
+    }
+
+    public function test_class_filter_fallback_finds_candidate_when_class_mismatches(): void
+    {
+        $school = School::create([
+            'name'   => 'Fallback Class School',
+            'email'  => 'fallback-class@test.sch.ug',
+            'status' => 1,
+        ]);
+        // Student is in "Primary Seven" but parent types a non-standard "Senior 7".
+        $link    = $this->createStandardLink($school, 'Primary Seven');
+        $student = $this->createStudent($school, $link, 'Grace Auma');
+
+        // "Senior 7" matches no section variant — fallback retries without class.
+        $candidates = app(ParentLinkRequestService::class)
+            ->findCandidateStudents('Grace Auma', 'Senior 7', $school->id);
+
+        // The direct call returns whatever the class filter allows; the
+        // createFromFlowSubmission retry is integration-tested here via a submission.
+        $request = app(ParentLinkRequestService::class)->createFromFlowSubmission(
+            '+256700000098',
+            [
+                'parent_name' => 'Sunday Johnson',
+                'child_name'  => 'Grace Auma',
+                'child_class' => 'Senior 7',
+                'school_name' => 'Fallback Class School',
+            ],
+        );
+
+        $this->assertTrue($request->wasRecentlyCreated);
+        $this->assertSame($school->id, $request->school_id);
+        // The fallback retry (no class filter) must have found Grace Auma.
+        $this->assertSame($student->id, $request->suggested_student_id);
+    }
+
     private function createStandardLink(School $school, string $sectionName): StandardLink
     {
         $ay = AcademicYear::create([
