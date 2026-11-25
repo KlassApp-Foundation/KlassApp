@@ -121,21 +121,18 @@ class ReceptionistOperationsToolsTest extends TestCase
     public function test_school_admin_tool_denies_receptionist_via_authorize(): void
     {
         $this->actingAs($this->receptionist);
-        ToshiActionService::$bypassConfirm = true;
 
         $result = (new AddCoAdminTool)->handle(new Request([
             'name' => 'Should Fail',
             'email' => 'coadmin.fail@test.sch.ug',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringStartsWith('❌', $result);
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_manage_visitor_log_happy_path_and_requires_confirmation(): void
     {
         $this->actingAs($this->receptionist);
-        ToshiActionService::$bypassConfirm = false;
         ToshiActionService::$pendingConfirmPayload = null;
 
         $pending = (new ManageVisitorLogTool)->handle(new Request([
@@ -149,23 +146,20 @@ class ReceptionistOperationsToolsTest extends TestCase
         $this->assertSame('toolReceptionistManageVisitorLog', $decoded['tool']);
         $this->assertFalse(VisitorLog::where('name', 'Guest Visitor')->exists());
 
-        ToshiActionService::$bypassConfirm = true;
         $ok = (new ManageVisitorLogTool)->handle(new Request([
             'name' => 'Guest Visitor',
             'contact_number' => '+256700111222',
             'visiting_purpose' => 'Enquiry',
             'date_of_visit' => '2026-08-01',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $ok);
         $this->assertTrue(VisitorLog::where('name', 'Guest Visitor')->where('school_id', $this->schoolId)->exists());
 
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_manage_call_and_postal_logs_happy_path(): void
     {
         $this->actingAs($this->receptionist);
-        ToshiActionService::$bypassConfirm = true;
 
         $call = (new ManageCallLogTool)->handle(new Request([
             'name' => 'Parent Caller',
@@ -173,7 +167,7 @@ class ReceptionistOperationsToolsTest extends TestCase
             'call_date' => '2026-07-15',
             'incoming_number' => '0700111222',
             'description' => 'Fee enquiry',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $call);
         $this->assertTrue(CallLog::where('name', 'Parent Caller')->where('call_type', 'incoming')->exists());
 
@@ -183,27 +177,24 @@ class ReceptionistOperationsToolsTest extends TestCase
             'description' => 'Ministry circular',
             'postal_date' => '2026-07-20',
             'reference_number' => 'REF-1',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $postal);
         $this->assertTrue(PostalRecord::where('reference_number', 'REF-1')->exists());
 
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_create_task_happy_path(): void
     {
         $this->actingAs($this->receptionist);
-        ToshiActionService::$bypassConfirm = true;
 
         $result = (new CreateTaskTool)->handle(new Request([
             'title' => 'Follow up visitor',
             'task_date' => '2026-08-10',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringStartsWith('✅', $result);
         $this->assertTrue(Task::where('user_id', $this->receptionist->id)->where('title', 'Follow up visitor')->exists());
 
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_view_tools_authorized_for_receptionist(): void

@@ -23,7 +23,7 @@ use Laravel\Ai\Tools\Request;
  * Buttons: ty_{token} / tn_{token}
  * Text:    YES|NO {token}  (same token)
  *
- * Resumes native Approvable via Decision::approve()/reject(), or Tier-2 via bypassConfirm.
+ * Resumes native Approvable via Decision::approve()/reject(), or Tier-2 with a confirmed WriteContext.
  * Payroll and impersonation tools are refused (web-only).
  */
 class WhatsAppConfirmationBridge
@@ -463,35 +463,41 @@ class WhatsAppConfirmationBridge
 
         $tool = app($class);
         $request = new Request($args);
+        $context = \App\Services\Toshi\WriteContext::confirmed($toolName, $args, $user);
 
-        ToshiActionService::$bypassConfirm = true;
-        try {
-            $result = (string) $tool->handle($request);
+        $result = (string) $tool->handle($request, $context);
 
-            if (
-                str_starts_with($result, '✅')
-                && $tool instanceof \App\AiAgents\Concerns\VerifiableTool
-            ) {
-                $verification = $tool->verify($request);
-                if (! ($verification['verified'] ?? false)) {
-                    $result = '⚠️ The action appeared to succeed, but verification could not confirm the data was saved. '
-                        .($verification['message'] ?? 'You may want to check manually.');
-                }
+        if (
+            str_starts_with($result, '✅')
+            && $tool instanceof \App\AiAgents\Concerns\VerifiableTool
+        ) {
+            $verification = $tool->verify($request);
+            if (! ($verification['verified'] ?? false)) {
+                $result = '⚠️ The action appeared to succeed, but verification could not confirm the data was saved. '
+                    .($verification['message'] ?? 'You may want to check manually.');
             }
-
-            ToshiAuditService::logExecution(
-                user: $user,
-                school: $school,
-                toolName: $toolName,
-                arguments: $args,
-                result: $result,
-                approver: $user,
-                actingUser: $user,
-            );
-
-            return $result;
-        } finally {
-            ToshiActionService::$bypassConfirm = false;
         }
+
+        ToshiAuditService::logExecution(
+            user: $user,
+            school: $school,
+            toolName: $toolName,
+            arguments: $args,
+            result: $result,
+            approver: $user,
+            actingUser: $user,
+        );
+
+        if ($school !== null) {
+            \App\Models\OnboardingPlanStep::record(
+                schoolId: (int) $school->id,
+                step: 'tool:'.$toolName,
+                actorId: $user->id,
+                previewHash: $context->argsHash(),
+                appliedCounts: ['tool' => $toolName],
+            );
+        }
+
+        return $result;
     }
 }

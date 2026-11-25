@@ -9,6 +9,7 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
+use App\Services\Toshi\WriteContext;
 
 class CreateClassWallPostTool implements Tool
 {
@@ -29,7 +30,7 @@ class CreateClassWallPostTool implements Tool
         ];
     }
 
-    public function handle(Request $request): Stringable|string
+    public function handle(Request $request, ?WriteContext $context = null): Stringable|string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeTeacherOrMessage($user);
@@ -39,7 +40,7 @@ class CreateClassWallPostTool implements Tool
 
         $args = ['description' => $request->get('description'), 'visibility' => $request->get('visibility'), 'standardLink_id' => $request->get('standardLink_id')];
 
-        $confirm = $this->confirmOrExecute('toolTeacherCreateClassWallPost', $args, fn () => "Publish class wall post");
+        $confirm = $this->confirmOrExecute('toolTeacherCreateClassWallPost', $args, fn () => "Publish class wall post", $context);
         if ($confirm !== null) {
             return $confirm;
         }

@@ -209,7 +209,6 @@ class StudentAdversarialIsolationTest extends TestCase
     public function test_you_are_now_admin_create_exam_still_structurally_denied(): void
     {
         $this->actingAs($this->studentA);
-        ToshiActionService::$bypassConfirm = true;
 
         StudentOperationsAgent::fake([
             new ToolCall('call_adv_exam', 'CreateExamTool', [
@@ -228,16 +227,14 @@ class StudentAdversarialIsolationTest extends TestCase
         $this->assertNotContains(CreateExamTool::class, $classes);
         $this->assertContains(ViewMarksTool::class, $classes);
 
-        $result = (new CreateExamTool)->handle(new Request(['name' => 'Forbidden Exam']));
+        $result = (new CreateExamTool)->handle(new Request(['name' => 'Forbidden Exam']), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('❌', $result);
 
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_as_admin_add_coadmin_still_structurally_denied(): void
     {
         $this->actingAs($this->studentA);
-        ToshiActionService::$bypassConfirm = true;
 
         StudentOperationsAgent::fake([
             new ToolCall('call_adv_coadmin', 'AddCoAdminTool', [
@@ -259,11 +256,10 @@ class StudentAdversarialIsolationTest extends TestCase
         $result = (new AddCoAdminTool)->handle(new Request([
             'name' => 'StudentEscalation',
             'email' => 'student.esc@test.sch.ug',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('❌', $result);
         $this->assertSame(0, User::where('email', 'student.esc@test.sch.ug')->count());
 
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_peer_attendance_prompt_still_self_scoped(): void

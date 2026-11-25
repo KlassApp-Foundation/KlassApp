@@ -20,7 +20,6 @@ class ToshiReportCardPipelineFixTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        ToshiActionService::$bypassConfirm = false;
         ToshiActionService::$pendingConfirmPayload = null;
 
         DB::table('usergroups')->upsert([
@@ -197,7 +196,6 @@ class ToshiReportCardPipelineFixTest extends TestCase
         ]);
 
         $this->actingAs($teacher);
-        ToshiActionService::$bypassConfirm = true;
 
         // First entry: mark = 60
         $r1 = ToshiActionService::enterMark($teacher, [

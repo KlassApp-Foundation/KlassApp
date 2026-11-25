@@ -9,6 +9,7 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
+use App\Services\Toshi\WriteContext;
 
 class ApplyLeaveTool implements Tool
 {
@@ -32,7 +33,7 @@ class ApplyLeaveTool implements Tool
         ];
     }
 
-    public function handle(Request $request): Stringable|string
+    public function handle(Request $request, ?WriteContext $context = null): Stringable|string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeTeacherOrMessage($user);
@@ -42,7 +43,7 @@ class ApplyLeaveTool implements Tool
 
         $args = ['from_date' => $request->get('from_date'), 'to_date' => $request->get('to_date'), 'reason_id' => (int) $request->get('reason_id'), 'leave_type_id' => (int) $request->get('leave_type_id'), 'session' => $request->get('session'), 'remarks' => $request->get('remarks')];
 
-        $confirm = $this->confirmOrExecute('toolTeacherApplyLeave', $args, fn () => "Apply leave {$args['from_date']} to {$args['to_date']}");
+        $confirm = $this->confirmOrExecute('toolTeacherApplyLeave', $args, fn () => "Apply leave {$args['from_date']} to {$args['to_date']}", $context);
         if ($confirm !== null) {
             return $confirm;
         }

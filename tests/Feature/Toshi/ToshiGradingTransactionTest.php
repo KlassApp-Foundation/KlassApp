@@ -20,7 +20,6 @@ class ToshiGradingTransactionTest extends TestCase
     {
         parent::setUp();
 
-        ToshiActionService::$bypassConfirm = false;
         ToshiActionService::$pendingConfirmPayload = null;
 
         DB::table('usergroups')->upsert([
@@ -80,7 +79,6 @@ class ToshiGradingTransactionTest extends TestCase
         ]);
         $this->actingAs($admin);
 
-        ToshiActionService::$bypassConfirm = true;
 
         $tool = new \App\AiAgents\Tools\SetGradingScaleTool;
 
@@ -104,7 +102,7 @@ class ToshiGradingTransactionTest extends TestCase
             'gradeDefinitions' => $definitions,
         ]);
 
-        $result = $tool->handle($request);
+        $result = $tool->handle($request, \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringStartsWith('✅', $result);
 
@@ -151,7 +149,6 @@ class ToshiGradingTransactionTest extends TestCase
         ]);
         $this->actingAs($admin);
 
-        ToshiActionService::$bypassConfirm = true;
 
         $tool = new \App\AiAgents\Tools\SetGradingScaleTool;
 
@@ -160,7 +157,7 @@ class ToshiGradingTransactionTest extends TestCase
             'gradeDefinitions' => [],
         ]);
 
-        $result = $tool->handle($request);
+        $result = $tool->handle($request, \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringStartsWith('❌', $result);
 

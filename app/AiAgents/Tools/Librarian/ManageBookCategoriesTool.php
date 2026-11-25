@@ -9,6 +9,7 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
+use App\Services\Toshi\WriteContext;
 
 class ManageBookCategoriesTool implements Tool
 {
@@ -27,7 +28,7 @@ class ManageBookCategoriesTool implements Tool
         ];
     }
 
-    public function handle(Request $request): Stringable|string
+    public function handle(Request $request, ?WriteContext $context = null): Stringable|string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeLibrarianOrMessage($user);
@@ -42,8 +43,7 @@ class ManageBookCategoriesTool implements Tool
         $confirm = $this->confirmOrExecute(
             'toolLibrarianManageBookCategories',
             $args,
-            fn () => "Add book category: {$args['category']}"
-        );
+            fn () => "Add book category: {$args['category']}", $context);
         if ($confirm !== null) {
             return $confirm;
         }

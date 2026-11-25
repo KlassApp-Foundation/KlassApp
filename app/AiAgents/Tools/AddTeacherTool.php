@@ -10,6 +10,7 @@ use App\AiAgents\Concerns\ConfirmsBeforeWrite;
 use App\AiAgents\Concerns\VerifiableTool;
 use App\Models\TeacherInvite;
 use App\Models\User;
+use App\Services\Toshi\WriteContext;
 
 class AddTeacherTool implements Tool, VerifiableTool
 {
@@ -32,7 +33,7 @@ class AddTeacherTool implements Tool, VerifiableTool
         ];
     }
 
-    public function handle(Request $request): string
+    public function handle(Request $request, ?WriteContext $context = null): string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeOrMessage($user);
@@ -43,7 +44,7 @@ class AddTeacherTool implements Tool, VerifiableTool
         $confirm = $this->confirmOrExecute('toolAddTeacher', $args,
             fn() => "Add teacher: {$args['name']}"
                 . (!empty($args['email']) ? ", email: {$args['email']}" : '')
-                . (!empty($args['phone']) ? ", phone: {$args['phone']}" : ''));
+                . (!empty($args['phone']) ? ", phone: {$args['phone']}" : ''), $context);
         if ($confirm !== null) return $confirm;
 
         $user = \App\Services\ToshiActionService::getEffectiveUser($user);

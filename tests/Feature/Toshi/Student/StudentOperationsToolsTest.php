@@ -281,15 +281,13 @@ class StudentOperationsToolsTest extends TestCase
     public function test_school_admin_tool_denies_student(): void
     {
         $this->actingAs($this->studentA);
-        ToshiActionService::$bypassConfirm = true;
 
         $result = (new AddCoAdminTool)->handle(new Request([
             'name' => 'Should Fail',
             'email' => 'coadmin.fail@test.sch.ug',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringStartsWith('❌', $result);
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_view_tools_authorized_for_student(): void
@@ -345,14 +343,13 @@ class StudentOperationsToolsTest extends TestCase
     public function test_cross_student_submit_assignment_with_peer_class_id_denied(): void
     {
         $this->actingAs($this->studentA);
-        ToshiActionService::$bypassConfirm = true;
 
         $denied = (new SubmitAssignmentTool)->handle(new Request([
             'assignment_id' => $this->assignmentPeerOnly->id,
             'note' => 'Trying to submit other class work',
             'student_id' => $this->studentB->id, // ignored / must not stamp B
             'user_id' => $this->studentB->id,
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringStartsWith('❌', $denied);
         $this->assertTrue(
@@ -366,26 +363,24 @@ class StudentOperationsToolsTest extends TestCase
             'assignment_id' => $this->assignmentForClass->id,
             'note' => 'My work',
             'user_id' => $this->studentB->id, // must still stamp A
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $ok);
         $row = StudentAssignment::where('assignment_id', $this->assignmentForClass->id)->first();
         $this->assertNotNull($row);
         $this->assertSame($this->studentA->id, (int) $row->user_id);
         $this->assertNotSame($this->studentB->id, (int) $row->user_id);
 
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_cross_student_submit_homework_with_peer_class_id_denied(): void
     {
         $this->actingAs($this->studentA);
-        ToshiActionService::$bypassConfirm = true;
 
         $denied = (new SubmitHomeworkTool)->handle(new Request([
             'homework_id' => $this->homeworkPeerOnly->id,
             'note' => 'peer homework',
             'student_id' => $this->studentB->id,
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('❌', $denied);
         $this->assertTrue(
             str_contains(strtolower($denied), 'access denied')
@@ -397,12 +392,11 @@ class StudentOperationsToolsTest extends TestCase
         $ok = (new SubmitHomeworkTool)->handle(new Request([
             'homework_id' => $this->homeworkForClass->id,
             'note' => 'my homework',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $ok);
         $row = StudentHomework::where('homework_id', $this->homeworkForClass->id)->first();
         $this->assertSame($this->studentA->id, (int) $row->user_id);
 
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_manage_tasks_never_touches_peer_task(): void
@@ -421,7 +415,6 @@ class StudentOperationsToolsTest extends TestCase
         ]);
 
         $this->actingAs($this->studentA);
-        ToshiActionService::$bypassConfirm = true;
 
         $list = StudentActionService::manageTasks($this->studentA, ['action' => 'list']);
         $this->assertTrue($list['success']);
@@ -430,12 +423,11 @@ class StudentOperationsToolsTest extends TestCase
         $denied = (new ManageTasksTool)->handle(new Request([
             'action' => 'complete',
             'task_id' => $peerTask->id,
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('❌', $denied);
         $this->assertStringContainsString('access denied', strtolower($denied));
         $this->assertSame(0, (int) $peerTask->fresh()->task_status);
 
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_manage_conversations_never_touches_peer_thread(): void
@@ -459,12 +451,11 @@ class StudentOperationsToolsTest extends TestCase
         ]);
 
         $this->actingAs($this->studentA);
-        ToshiActionService::$bypassConfirm = true;
 
         $show = (new ManageConversationsTool)->handle(new Request([
             'action' => 'show',
             'conversation_id' => $peerConversationId,
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('❌', $show);
         $this->assertStringContainsString('access denied', strtolower($show));
         $this->assertStringNotContainsString('Secret from B', $show);
@@ -473,7 +464,7 @@ class StudentOperationsToolsTest extends TestCase
             'action' => 'send',
             'conversation_id' => $peerConversationId,
             'body' => 'A trying to inject',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('❌', $send);
         $this->assertFalse(
             DB::table('conversation_messages')
@@ -482,13 +473,11 @@ class StudentOperationsToolsTest extends TestCase
                 ->exists()
         );
 
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_submit_assignment_requires_confirmation(): void
     {
         $this->actingAs($this->studentA);
-        ToshiActionService::$bypassConfirm = false;
         ToshiActionService::$pendingConfirmPayload = null;
 
         $pending = (new SubmitAssignmentTool)->handle(new Request([

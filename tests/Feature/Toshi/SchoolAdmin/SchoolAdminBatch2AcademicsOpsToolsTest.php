@@ -187,7 +187,6 @@ class SchoolAdminBatch2AcademicsOpsToolsTest extends TestCase
     public function test_happy_path_timetable_homework_and_review(): void
     {
         $this->actingAs($this->schoolAdmin);
-        ToshiActionService::$bypassConfirm = true;
 
         $createSlot = (new CreateTimetableSlotTool)->handle(new Request([
             'section_id' => $this->sectionId,
@@ -197,17 +196,17 @@ class SchoolAdminBatch2AcademicsOpsToolsTest extends TestCase
             'start_time' => '09:00',
             'end_time' => '10:00',
             'room' => 'R1',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $createSlot);
 
         $slot = TimetableSlot::where('school_id', $this->schoolId)->firstOrFail();
-        $listSlots = (new ListTimetableSlotsTool)->handle(new Request([]));
+        $listSlots = (new ListTimetableSlotsTool)->handle(new Request([]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringContainsString('#'.$slot->id, $listSlots);
 
         $updateSlot = (new UpdateTimetableSlotTool)->handle(new Request([
             'slot_id' => $slot->id,
             'room' => 'R2',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $updateSlot);
         $this->assertSame('R2', $slot->fresh()->room);
 
@@ -218,7 +217,7 @@ class SchoolAdminBatch2AcademicsOpsToolsTest extends TestCase
             'date' => '2026-08-10',
             'submission_date' => '2026-08-15',
             'teacher_id' => $this->teacher->id,
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $createHw);
 
         $homework = Homework::where('description', 'Read chapter one')->firstOrFail();
@@ -228,19 +227,19 @@ class SchoolAdminBatch2AcademicsOpsToolsTest extends TestCase
             'status' => 'pending',
         ]);
 
-        $listHw = (new ListHomeworkTool)->handle(new Request(['status' => 'pending']));
+        $listHw = (new ListHomeworkTool)->handle(new Request(['status' => 'pending']), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringContainsString('#'.$homework->id, $listHw);
 
         $updateHw = (new UpdateHomeworkTool)->handle(new Request([
             'homework_id' => $homework->id,
             'description' => 'Read chapters one and two',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $updateHw);
 
         $approve = (new ApproveHomeworkTool)->handle(new Request([
             'homework_id' => $homework->id,
             'comments' => 'Looks good',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $approve);
         $this->assertDatabaseHas('homework_approvals', [
             'homework_id' => $homework->id,
@@ -263,28 +262,26 @@ class SchoolAdminBatch2AcademicsOpsToolsTest extends TestCase
 
         $listSh = (new ListStudentHomeworkTool)->handle(new Request([
             'homework_id' => $homework->id,
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringContainsString('#'.$submission->id, $listSh);
 
         $showSh = (new ShowStudentHomeworkTool)->handle(new Request([
             'student_homework_id' => $submission->id,
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringContainsString('student_id: '.$student->id, $showSh);
 
         $check = (new UpdateStudentHomeworkTool)->handle(new Request([
             'student_homework_id' => $submission->id,
             'comments' => 'Well done',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $check);
         $this->assertSame('checked', $submission->fresh()->status);
 
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_validation_rejects_bad_timetable_and_homework(): void
     {
         $this->actingAs($this->schoolAdmin);
-        ToshiActionService::$bypassConfirm = true;
 
         $badSlot = (new CreateTimetableSlotTool)->handle(new Request([
             'section_id' => $this->sectionId,
@@ -293,7 +290,7 @@ class SchoolAdminBatch2AcademicsOpsToolsTest extends TestCase
             'day_of_week' => 1,
             'start_time' => '10:00',
             'end_time' => '09:00',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('❌', $badSlot);
 
         $badHw = (new CreateHomeworkTool)->handle(new Request([
@@ -302,10 +299,9 @@ class SchoolAdminBatch2AcademicsOpsToolsTest extends TestCase
             'description' => 'ab',
             'date' => '2026-08-10',
             'submission_date' => '2026-08-09',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('❌', $badHw);
 
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_cross_school_homework_manage_denied_via_gate_and_tool(): void
@@ -325,12 +321,10 @@ class SchoolAdminBatch2AcademicsOpsToolsTest extends TestCase
         $this->actingAs($this->schoolAdmin);
         $this->assertTrue(Gate::denies('homework-manage', $foreign));
 
-        ToshiActionService::$bypassConfirm = true;
         $result = (new ApproveHomeworkTool)->handle(new Request([
             'homework_id' => $foreign->id,
             'comments' => 'Nope',
-        ]));
-        ToshiActionService::$bypassConfirm = false;
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringStartsWith('❌', $result);
         $this->assertStringContainsString('not authorized', strtolower($result));
@@ -355,12 +349,10 @@ class SchoolAdminBatch2AcademicsOpsToolsTest extends TestCase
         ]);
 
         $this->actingAs($this->schoolAdmin);
-        ToshiActionService::$bypassConfirm = true;
         $result = (new UpdateTimetableSlotTool)->handle(new Request([
             'slot_id' => $foreignSlot->id,
             'room' => 'Hijacked',
-        ]));
-        ToshiActionService::$bypassConfirm = false;
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringStartsWith('❌', $result);
         $this->assertSame('X', $foreignSlot->fresh()->room);
@@ -394,12 +386,10 @@ class SchoolAdminBatch2AcademicsOpsToolsTest extends TestCase
         $this->actingAs($this->schoolAdmin);
         $this->assertTrue(Gate::denies('studentHomework-review', $foreignSh));
 
-        ToshiActionService::$bypassConfirm = true;
         $result = (new UpdateStudentHomeworkTool)->handle(new Request([
             'student_homework_id' => $foreignSh->id,
             'comments' => 'Hijack',
-        ]));
-        ToshiActionService::$bypassConfirm = false;
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringStartsWith('❌', $result);
         $this->assertSame('unchecked', $foreignSh->fresh()->status);
@@ -408,7 +398,6 @@ class SchoolAdminBatch2AcademicsOpsToolsTest extends TestCase
     public function test_reject_homework_happy_path(): void
     {
         $this->actingAs($this->schoolAdmin);
-        ToshiActionService::$bypassConfirm = true;
 
         (new CreateHomeworkTool)->handle(new Request([
             'standardLink_id' => $this->standardLinkId,
@@ -416,14 +405,13 @@ class SchoolAdminBatch2AcademicsOpsToolsTest extends TestCase
             'description' => 'To reject',
             'date' => '2026-08-10',
             'submission_date' => '2026-08-15',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $homework = Homework::where('description', 'To reject')->firstOrFail();
 
         $reject = (new RejectHomeworkTool)->handle(new Request([
             'homework_id' => $homework->id,
             'comments' => 'Needs work',
-        ]));
-        ToshiActionService::$bypassConfirm = false;
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringStartsWith('✅', $reject);
         $this->assertDatabaseHas('homework_approvals', [

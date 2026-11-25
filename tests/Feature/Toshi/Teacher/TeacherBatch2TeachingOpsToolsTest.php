@@ -157,7 +157,6 @@ class TeacherBatch2TeachingOpsToolsTest extends TestCase
     public function test_happy_path_homework_assignment_and_own_leave(): void
     {
         $this->actingAs($this->teacher);
-        ToshiActionService::$bypassConfirm = true;
 
         $homework = Homework::create([
             'school_id' => $this->schoolId,
@@ -177,16 +176,16 @@ class TeacherBatch2TeachingOpsToolsTest extends TestCase
             'status' => 'unchecked',
         ]);
 
-        $listHw = (new ListStudentHomeworkTool)->handle(new Request(['homework_id' => $homework->id]));
+        $listHw = (new ListStudentHomeworkTool)->handle(new Request(['homework_id' => $homework->id]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringContainsString('#'.$submission->id, $listHw);
 
-        $showHw = (new ShowStudentHomeworkTool)->handle(new Request(['student_homework_id' => $submission->id]));
+        $showHw = (new ShowStudentHomeworkTool)->handle(new Request(['student_homework_id' => $submission->id]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringContainsString('student_id: '.$this->student->id, $showHw);
 
         $check = (new UpdateStudentHomeworkTool)->handle(new Request([
             'student_homework_id' => $submission->id,
             'comments' => 'Nice',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $check);
         $this->assertSame('checked', $submission->fresh()->status);
 
@@ -214,19 +213,19 @@ class TeacherBatch2TeachingOpsToolsTest extends TestCase
         $listSa = (new ListStudentAssignmentsTool)->handle(new Request([
             'assignment_id' => $assignment->id,
             'status' => 'submitted',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringContainsString('#'.$sa->id, $listSa);
 
         $showSa = (new ShowStudentAssignmentTool)->handle(new Request([
             'student_assignment_id' => $sa->id,
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringContainsString('student_id: '.$this->student->id, $showSa);
 
         $mark = (new MarkStudentAssignmentTool)->handle(new Request([
             'student_assignment_id' => $sa->id,
             'obtained_marks' => 8,
             'comments' => 'Good',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $mark);
         $this->assertSame('completed', $sa->fresh()->status);
 
@@ -240,23 +239,21 @@ class TeacherBatch2TeachingOpsToolsTest extends TestCase
             'status' => 'pending',
         ]);
 
-        $listLeave = (new ListMyLeavesTool)->handle(new Request([]));
+        $listLeave = (new ListMyLeavesTool)->handle(new Request([]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringContainsString('#'.$leave->id, $listLeave);
 
-        $showLeave = (new ShowMyLeaveTool)->handle(new Request(['leave_id' => $leave->id]));
+        $showLeave = (new ShowMyLeaveTool)->handle(new Request(['leave_id' => $leave->id]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringContainsString('Leave #'.$leave->id, $showLeave);
 
-        $cancel = (new CancelMyLeaveTool)->handle(new Request(['leave_id' => $leave->id]));
+        $cancel = (new CancelMyLeaveTool)->handle(new Request(['leave_id' => $leave->id]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $cancel);
         $this->assertSoftDeleted('teacher_leave_applications', ['id' => $leave->id]);
 
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_validation_rejects_over_marks_and_missing_leave(): void
     {
         $this->actingAs($this->teacher);
-        ToshiActionService::$bypassConfirm = true;
 
         $assignment = Assignment::create([
             'school_id' => $this->schoolId,
@@ -282,14 +279,13 @@ class TeacherBatch2TeachingOpsToolsTest extends TestCase
         $over = (new MarkStudentAssignmentTool)->handle(new Request([
             'student_assignment_id' => $sa->id,
             'obtained_marks' => 99,
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('❌', $over);
         $this->assertSame('submitted', $sa->fresh()->status);
 
-        $missing = (new ShowMyLeaveTool)->handle(new Request(['leave_id' => 999999]));
+        $missing = (new ShowMyLeaveTool)->handle(new Request(['leave_id' => 999999]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('❌', $missing);
 
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_peer_teacher_denied_by_gates_and_tools(): void
@@ -347,19 +343,17 @@ class TeacherBatch2TeachingOpsToolsTest extends TestCase
         $this->assertTrue(Gate::denies('studentAssignment-review', $assignment));
         $this->assertTrue(Gate::denies('teacher-leave', $leave));
 
-        ToshiActionService::$bypassConfirm = true;
-        $this->assertStringStartsWith('❌', (new ListStudentHomeworkTool)->handle(new Request(['homework_id' => $homework->id])));
+        $this->assertStringStartsWith('❌', (new ListStudentHomeworkTool)->handle(new Request(['homework_id' => $homework->id]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user())));
         $this->assertStringStartsWith('❌', (new UpdateStudentHomeworkTool)->handle(new Request([
             'student_homework_id' => $hwSubmission->id,
             'comments' => 'Nope',
-        ])));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user())));
         $this->assertStringStartsWith('❌', (new MarkStudentAssignmentTool)->handle(new Request([
             'student_assignment_id' => $sa->id,
             'obtained_marks' => 5,
-        ])));
-        $this->assertStringStartsWith('❌', (new ShowMyLeaveTool)->handle(new Request(['leave_id' => $leave->id])));
-        $this->assertStringStartsWith('❌', (new CancelMyLeaveTool)->handle(new Request(['leave_id' => $leave->id])));
-        ToshiActionService::$bypassConfirm = false;
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user())));
+        $this->assertStringStartsWith('❌', (new ShowMyLeaveTool)->handle(new Request(['leave_id' => $leave->id]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user())));
+        $this->assertStringStartsWith('❌', (new CancelMyLeaveTool)->handle(new Request(['leave_id' => $leave->id]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user())));
 
         $this->assertSame('unchecked', $hwSubmission->fresh()->status);
         $this->assertSame('submitted', $sa->fresh()->status);

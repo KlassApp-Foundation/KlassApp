@@ -11,6 +11,7 @@ use App\AiAgents\Concerns\VerifiableTool;
 use App\Models\Teacherlink;
 use App\Models\Subject;
 use App\Models\User;
+use App\Services\Toshi\WriteContext;
 
 class AssignTeacherTool implements Tool, VerifiableTool
 {
@@ -31,7 +32,7 @@ class AssignTeacherTool implements Tool, VerifiableTool
         ];
     }
 
-    public function handle(Request $request): string
+    public function handle(Request $request, ?WriteContext $context = null): string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeOrMessage($user);
@@ -44,7 +45,7 @@ class AssignTeacherTool implements Tool, VerifiableTool
         ];
 
         $confirm = $this->confirmOrExecute('toolAssignTeacher', $args,
-            fn() => "Assign teacher {$args['teacher_email']} to {$args['subject_name']} for {$args['class_name']}");
+            fn() => "Assign teacher {$args['teacher_email']} to {$args['subject_name']} for {$args['class_name']}", $context);
         if ($confirm !== null) return $confirm;
 
         $user = \App\Services\ToshiActionService::getEffectiveUser($user);

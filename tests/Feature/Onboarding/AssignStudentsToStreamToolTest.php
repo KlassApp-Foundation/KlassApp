@@ -151,7 +151,6 @@ class AssignStudentsToStreamToolTest extends TestCase
             ]);
         }
 
-        ToshiActionService::$bypassConfirm = true;
     }
 
     #[Test]
@@ -166,7 +165,7 @@ class AssignStudentsToStreamToolTest extends TestCase
             'students' => ['KLS0010001'],
         ]);
 
-        $result = $tool->handle($request);
+        $result = $tool->handle($request, \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringStartsWith('✅', $result);
 
@@ -190,7 +189,7 @@ class AssignStudentsToStreamToolTest extends TestCase
             'students' => ['Grace Nakato'],
         ]);
 
-        $result = $tool->handle($request);
+        $result = $tool->handle($request, \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringStartsWith('✅', $result);
 
@@ -231,7 +230,7 @@ class AssignStudentsToStreamToolTest extends TestCase
             'students' => ['NONEXISTENT_REG'],
         ]);
 
-        $result = $tool->handle($request);
+        $result = $tool->handle($request, \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringContainsString('Unmatched', $result);
         $this->assertStringStartsWith('❌', $result, 'Non-existent reg number must report as unmatched');
@@ -260,7 +259,7 @@ class AssignStudentsToStreamToolTest extends TestCase
             'students' => ['James Odoi'],
         ]);
 
-        $result = $tool->handle($request);
+        $result = $tool->handle($request, \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringContainsString('ambiguous', strtolower($result));
         $this->assertStringStartsWith('❌', $result, 'Must not guess when name is ambiguous');
@@ -278,7 +277,7 @@ class AssignStudentsToStreamToolTest extends TestCase
             'students' => ['NonExistent Student'],
         ]);
 
-        $result = $tool->handle($request);
+        $result = $tool->handle($request, \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringContainsString('Unmatched', $result);
         $this->assertStringStartsWith('❌', $result, 'Must report failure when no student matches');
@@ -327,7 +326,7 @@ class AssignStudentsToStreamToolTest extends TestCase
             'students' => ['KLS0010001'],
         ]);
 
-        $result = $tool->handle($request);
+        $result = $tool->handle($request, \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $result);
 
         // Current year row should be updated
@@ -368,7 +367,7 @@ class AssignStudentsToStreamToolTest extends TestCase
             'students' => ['New Kid'],
         ]);
 
-        $result = $tool->handle($request);
+        $result = $tool->handle($request, \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $result);
 
         $academic = StudentAcademic::where('school_id', $this->school->id)
@@ -391,7 +390,7 @@ class AssignStudentsToStreamToolTest extends TestCase
             'students' => ['KLS0010001', 'Grace Nakato'],
         ]);
 
-        $tool->handle($request);
+        $tool->handle($request, \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $verifyResult = $tool->verify($request);
         $this->assertTrue($verifyResult['verified']);

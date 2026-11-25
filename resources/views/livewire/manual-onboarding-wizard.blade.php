@@ -14,6 +14,26 @@
     {{-- Stable phase key: swapping finished ↔ flow without this caused Livewire morph
          TypeError: Cannot read properties of null (reading 'before') on Confirm & finish. --}}
     <div wire:key="wizard-phase-{{ $finished ? 'done' : 'flow' }}" data-testid="wizard-phase-{{ $finished ? 'done' : 'flow' }}">
+        @if($dpaRequired && !$dpaConfirmed)
+            <div class="ds-card" data-testid="wizard-dpa-gate" style="max-width:720px;margin:0 auto 20px;padding:20px;border:1px solid #E2E8F0;border-radius:12px;background:#fff;">
+                <h2 class="ds-page-head-title" style="margin:0 0 8px;">Data processing agreement</h2>
+                <p class="ds-page-head-sub" style="margin:0 0 14px;">
+                    Before this school is set up, confirm that it has approved the data processing
+                    agreement for the people in its records. Nothing is written to the school until
+                    this is confirmed.
+                </p>
+                <label style="display:flex;gap:10px;align-items:flex-start;margin-bottom:14px;">
+                    <input type="checkbox" wire:model="dpaAccepted" data-testid="wizard-dpa-checkbox" style="margin-top:3px;">
+                    <span>The school has confirmed the data processing agreement.</span>
+                </label>
+                @error('dpaAccepted')
+                    <p style="color:#B91C1C;margin:0 0 12px;">{{ $message }}</p>
+                @enderror
+                <button type="button" class="ds-btn ds-btn-primary" wire:click="confirmDpa" data-testid="wizard-dpa-confirm">
+                    Confirm and continue
+                </button>
+            </div>
+        @endif
         @if($finished)
             <x-card padding="lg" shadow="md" class="max-w-3xl mx-auto manual-wizard-card">
                 <div class="text-center mb-6">

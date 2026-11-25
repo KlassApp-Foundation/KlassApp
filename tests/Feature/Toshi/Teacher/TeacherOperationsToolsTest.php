@@ -107,27 +107,24 @@ class TeacherOperationsToolsTest extends TestCase
     public function test_school_admin_tool_denies_teacher_via_authorize(): void
     {
         $this->actingAs($this->teacher);
-        ToshiActionService::$bypassConfirm = true;
 
         $result = (new AddCoAdminTool)->handle(new Request([
             'name' => 'Should Fail',
             'email' => 'coadmin.fail@test.sch.ug',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringStartsWith('❌', $result);
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_mark_attendance_happy_path_and_validation(): void
     {
         $this->actingAs($this->teacher);
-        ToshiActionService::$bypassConfirm = true;
 
         $ok = (new MarkAttendanceTool)->handle(new Request([
             'student' => $this->student->email,
             'date' => '2026-08-01',
             'status' => 'present',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $ok);
         $this->assertTrue(Attendance::where('user_id', $this->student->id)->whereDate('date', '2026-08-01')->exists());
 
@@ -135,16 +132,14 @@ class TeacherOperationsToolsTest extends TestCase
             'student' => $this->student->email,
             'date' => 'not-a-date',
             'status' => 'present',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('❌', $bad);
 
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_mark_attendance_requires_confirmation_without_bypass(): void
     {
         $this->actingAs($this->teacher);
-        ToshiActionService::$bypassConfirm = false;
         ToshiActionService::$pendingConfirmPayload = null;
 
         $result = (new MarkAttendanceTool)->handle(new Request([
@@ -162,23 +157,20 @@ class TeacherOperationsToolsTest extends TestCase
     public function test_create_task_happy_path(): void
     {
         $this->actingAs($this->teacher);
-        ToshiActionService::$bypassConfirm = true;
 
         $result = (new CreateTaskTool)->handle(new Request([
             'title' => 'Prepare lesson',
             'task_date' => '2026-08-10',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringStartsWith('✅', $result);
         $this->assertTrue(Task::where('user_id', $this->teacher->id)->where('title', 'Prepare lesson')->exists());
 
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_apply_leave_happy_path(): void
     {
         $this->actingAs($this->teacher);
-        ToshiActionService::$bypassConfirm = true;
 
         // Minimal leave type / reason rows
         $reasonId = DB::table('absent_reasons')->insertGetId([
@@ -202,12 +194,11 @@ class TeacherOperationsToolsTest extends TestCase
             'to_date' => '2026-09-02',
             'reason_id' => $reasonId,
             'leave_type_id' => $typeId,
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
 
         $this->assertStringStartsWith('✅', $result);
         $this->assertTrue(TeacherLeaveApplication::where('user_id', $this->teacher->id)->exists());
 
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_view_tools_authorized_for_teacher(): void

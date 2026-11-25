@@ -21,6 +21,7 @@ use App\Models\User;
 use App\Models\Userprofile;
 use App\Models\WhatsAppUser;
 use App\Onboarding\Country\CountryProfiles;
+use App\Onboarding\OnboardingDpaGate;
 use App\Services\StudentIdGeneratorService;
 use App\Services\WhatsApp\WhatsAppOnboardingOtpService;
 use App\Helpers\DashboardCache;
@@ -83,8 +84,21 @@ class OnboardingEngine
      *
      * @throws ValidationException
      */
+    /**
+     * Every onboarding write on a real school requires a confirmed DPA.
+     * Demo and test schools are exempt (see OnboardingDpaGate).
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    private function assertDpaConfirmed(School $school): void
+    {
+        app(OnboardingDpaGate::class)->assertConfirmed($school);
+    }
+
     public function saveSchoolName(School $school, string $name): School
     {
+        $this->assertDpaConfirmed($school);
+
         $name = trim($name);
 
         $validator = Validator::make(
@@ -123,6 +137,8 @@ class OnboardingEngine
      */
     public function saveStudentSize(School $school, string $studentSize): void
     {
+        $this->assertDpaConfirmed($school);
+
         $studentSize = trim($studentSize);
 
         if ($studentSize === '' || ! in_array($studentSize, OnboardingStepsService::STUDENT_SIZE_OPTIONS, true)) {
@@ -142,6 +158,8 @@ class OnboardingEngine
      */
     public function saveCountry(School $school, string $country): void
     {
+        $this->assertDpaConfirmed($school);
+
         $country = trim($country);
 
         if ($country === '') {
@@ -158,6 +176,8 @@ class OnboardingEngine
      */
     public function saveCurriculum(School $school, string $curriculum): void
     {
+        $this->assertDpaConfirmed($school);
+
         $curriculum = strtolower(trim($curriculum));
 
         if ($curriculum === '') {
@@ -180,6 +200,8 @@ class OnboardingEngine
      */
     public function saveSchoolCategory(School $school, string $category): void
     {
+        $this->assertDpaConfirmed($school);
+
         $category = trim($category);
 
         if ($category === '' || ! array_key_exists($category, SchoolCategorySeeder::CATEGORIES)) {
@@ -199,6 +221,8 @@ class OnboardingEngine
      */
     public function saveEmis(School $school, string $ministryCode): void
     {
+        $this->assertDpaConfirmed($school);
+
         $ministryCode = trim($ministryCode);
 
         if (! CountryProfiles::requiresMinistryCode($school->registration_country)) {
@@ -236,6 +260,8 @@ class OnboardingEngine
     // FLAGGED(product-decision): the centre number stored here is the UNEB centre number. see docs/onboarding-engine-plan.md
     public function saveUnebCenter(School $school, ?string $unebCenterNumber): void
     {
+        $this->assertDpaConfirmed($school);
+
         if (! Schema::hasColumn('schools', 'uneb_center_number')) {
             return;
         }
@@ -255,6 +281,8 @@ class OnboardingEngine
      */
     public function saveAcademicYear(School $school, string $name, ?string $start = null, ?string $end = null, ?string $description = null): AcademicYear
     {
+        $this->assertDpaConfirmed($school);
+
         $name = trim($name);
 
         if ($name === '') {
@@ -1279,6 +1307,8 @@ class OnboardingEngine
      */
     public function saveStandards(School $school, AcademicYear $year, array $classes): void
     {
+        $this->assertDpaConfirmed($school);
+
         app(ClassStructureService::class)->saveClasses($school, $year, $classes);
     }
 
@@ -1301,6 +1331,8 @@ class OnboardingEngine
      */
     public function saveSubjects(School $school, AcademicYear $year, array $subjectsByClass): void
     {
+        $this->assertDpaConfirmed($school);
+
         if (empty($subjectsByClass)) {
             throw ValidationException::withMessages(['subjects' => 'Add at least one subject.']);
         }
@@ -1373,6 +1405,8 @@ class OnboardingEngine
      */
     public function saveTerms(School $school, AcademicYear $year, array $terms): void
     {
+        $this->assertDpaConfirmed($school);
+
         if (empty($terms)) {
             throw ValidationException::withMessages(['terms' => 'Add at least one term.']);
         }
@@ -1503,6 +1537,8 @@ class OnboardingEngine
      */
     public function saveFees(School $school, array $fees): void
     {
+        $this->assertDpaConfirmed($school);
+
         if (empty($fees)) {
             throw ValidationException::withMessages(['fees' => 'Add at least one fee.']);
         }
@@ -1897,6 +1933,8 @@ class OnboardingEngine
      */
     public function saveTeachers(School $school, AcademicYear $year, array $teachers): array
     {
+        $this->assertDpaConfirmed($school);
+
         try {
             $result = DB::transaction(function () use ($school, $year, $teachers) {
                 $created = [];
@@ -2113,6 +2151,8 @@ class OnboardingEngine
      */
     public function saveStudents(School $school, AcademicYear $year, array $students, ?int $onlyStandardLinkId = null): array
     {
+        $this->assertDpaConfirmed($school);
+
         try {
             $result = DB::transaction(function () use ($school, $year, $students, $onlyStandardLinkId) {
                 $created = [];
@@ -2530,6 +2570,347 @@ class OnboardingEngine
     }
 
     /**
+     * The one class-teacher write in the engine.
+     *
+     * Both channels call this: the wizard's class-teacher upload and the
+     * checklist flow. A row may name a teacher who already exists (matched by
+     * email, then by phone) or someone new (created through saveTeachers, so the
+     * plan limit and duplicate-email rules still apply).
+     *
+     * Row keys: class, stream, name, email, phone, row (spreadsheet line, optional).
+     *
+     * Idempotent per class: assigning again replaces the class teacher through
+     * ClassTeacherAssignmentService, which owns the invite/notification rules.
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     * @return array{added: int, skipped: int, skips: list<array{row: int, reason: string}>, missing_streams: list<array{class: string, stream: string}>, teachers_created: int}
+     *
+     * @throws ValidationException
+     */
+    public function saveClassTeachers(School $school, AcademicYear $year, array $rows, ?int $actorId = null): array
+    {
+        $this->assertDpaConfirmed($school);
+
+        $actor = $actorId !== null ? User::query()->find($actorId) : Auth::user();
+        if (! $actor instanceof User) {
+            throw ValidationException::withMessages(['classTeachers' => 'Sign in before assigning class teachers.']);
+        }
+
+        $added = 0;
+        $teachersCreated = 0;
+        $skips = [];
+        $missing = [];
+
+        foreach ($rows as $index => $row) {
+            $line = (int) ($row['row'] ?? ($index + 2));
+            $name = trim((string) ($row['name'] ?? ''));
+            if ($name === '') {
+                $skips[] = ['row' => $line, 'reason' => 'missing name'];
+
+                continue;
+            }
+
+            $email = trim((string) ($row['email'] ?? ''));
+            if ($email !== '' && ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $skips[] = ['row' => $line, 'reason' => 'bad email'];
+
+                continue;
+            }
+
+            $phone = trim((string) ($row['phone'] ?? ''));
+            if ($phone !== '') {
+                $normalised = PhoneCountry::normalise($phone, (string) $school->registration_country);
+                if ($normalised === null) {
+                    $skips[] = ['row' => $line, 'reason' => 'invalid phone'];
+
+                    continue;
+                }
+                $phone = $normalised;
+            }
+
+            if ((int) $year->school_id !== (int) $school->id) {
+                $skips[] = ['row' => $line, 'reason' => 'unknown class'];
+
+                continue;
+            }
+
+            $resolved = $this->resolveClassTeacherLink(
+                $school,
+                $year,
+                (string) ($row['class'] ?? ''),
+                (string) ($row['stream'] ?? ''),
+            );
+            if (! $resolved['link'] instanceof StandardLink) {
+                $skips[] = ['row' => $line, 'reason' => $resolved['reason']];
+                if (is_array($resolved['missing'] ?? null)) {
+                    $missing[] = $resolved['missing'];
+                }
+
+                continue;
+            }
+
+            $teacher = $this->findOrCreateClassTeacher($school, $year, $name, $email, $phone);
+            if (! $teacher['user'] instanceof User) {
+                $skips[] = ['row' => $line, 'reason' => $teacher['reason']];
+
+                continue;
+            }
+
+            $result = app(ClassTeacherAssignmentService::class)->assignFromUpload(
+                $actor,
+                $resolved['link'],
+                $teacher['user'],
+                (bool) $teacher['created'],
+            );
+            if (! ($result['success'] ?? false)) {
+                $skips[] = ['row' => $line, 'reason' => 'could not save'];
+
+                continue;
+            }
+
+            if ($teacher['created']) {
+                $teachersCreated++;
+            }
+            $added++;
+        }
+
+        return [
+            'added' => $added,
+            'skipped' => count($skips),
+            'skips' => $skips,
+            'missing_streams' => array_values(array_unique($missing, SORT_REGULAR)),
+            'teachers_created' => $teachersCreated,
+        ];
+    }
+
+    /**
+     * The named entry point for a school's fee structure.
+     *
+     * saveFees() already owns the write (class-scoped, level-scoped or
+     * whole-school). This method only normalises the workbook's column names,
+     * so the checklist channel and the wizard step feed the same writer.
+     *
+     * Row keys: name (or label/fee_name), amount, class, level, term, duration
+     * (or frequency/how_often).
+     *
+     * @param  array<int, array<string, mixed>>  $fees
+     * @return int number of fee rows written
+     *
+     * @throws ValidationException
+     */
+    public function saveFeeStructure(School $school, array $fees): int
+    {
+        $rows = [];
+
+        foreach ($fees as $fee) {
+            if (! is_array($fee)) {
+                continue;
+            }
+
+            $row = $fee;
+            $row['name'] = trim((string) ($fee['name'] ?? $fee['label'] ?? $fee['fee_name'] ?? ''));
+            $row['duration'] = $fee['duration'] ?? $fee['frequency'] ?? $fee['how_often'] ?? null;
+
+            $rows[] = $row;
+        }
+
+        $this->saveFees($school, $rows);
+
+        return count($rows);
+    }
+
+    /**
+     * @return array{link: ?StandardLink, reason: string, missing?: array{class: string, stream: string}}
+     */
+    private function resolveClassTeacherLink(School $school, AcademicYear $year, string $className, string $stream): array
+    {
+        $className = trim($className);
+        $stream = trim($stream);
+        if ($className === '') {
+            return ['link' => null, 'reason' => 'unknown class'];
+        }
+
+        $links = $this->standardLinksForClass($school, $year, $className)
+            ->filter(fn (StandardLink $link) => $this->classTeacherLinkIsAssignable($school, $link))
+            ->values();
+        if ($links->isEmpty()) {
+            return ['link' => null, 'reason' => 'unknown class'];
+        }
+
+        if ($stream !== '') {
+            $classified = $this->classifyClassAndStream($school, $year, $className, $stream);
+            if ($classified['status'] === 'missing_stream') {
+                return [
+                    'link' => null,
+                    'reason' => $classified['reason'],
+                    'missing' => [
+                        'class' => $classified['class'],
+                        'stream' => $classified['stream'],
+                    ],
+                ];
+            }
+            $streamLink = $classified['link'];
+            if (! $streamLink instanceof StandardLink || ! $this->classTeacherLinkIsAssignable($school, $streamLink)) {
+                return ['link' => null, 'reason' => $classified['reason'] !== '' ? $classified['reason'] : 'unknown stream'];
+            }
+            $belongs = $links->contains(fn (StandardLink $link) => (int) $link->id === (int) $streamLink->id);
+            if (! $belongs) {
+                return [
+                    'link' => null,
+                    'reason' => self::missingStreamMessage(
+                        $classified['class'] !== '' ? $classified['class'] : $className,
+                        $classified['stream'] !== '' ? $classified['stream'] : $stream,
+                    ),
+                    'missing' => [
+                        'class' => $classified['class'] !== '' ? $classified['class'] : $className,
+                        'stream' => $classified['stream'] !== '' ? $classified['stream'] : $stream,
+                    ],
+                ];
+            }
+
+            return ['link' => $streamLink, 'reason' => ''];
+        }
+
+        $inputKeys = array_map('strtolower', self::classNameCandidates($className));
+        $exact = $links->filter(function (StandardLink $link) use ($inputKeys) {
+            $sectionName = trim((string) ($link->section?->name ?? ''));
+            if ($sectionName === '') {
+                return false;
+            }
+            $sectionKeys = array_map('strtolower', self::classNameCandidates($sectionName));
+
+            return array_intersect($inputKeys, $sectionKeys) !== [];
+        })->values();
+
+        $chosen = $exact->isNotEmpty() ? $exact : $links;
+        $base = $chosen->first(function (StandardLink $link) {
+            return $link->section && app(ClassStructureService::class)->isBaseSection($link->section);
+        });
+        $link = $base ?? $chosen->sortBy(fn (StandardLink $link) => strlen(trim((string) ($link->section?->name ?? ''))))->first();
+        if (! $link instanceof StandardLink) {
+            return ['link' => null, 'reason' => 'unknown class'];
+        }
+
+        return ['link' => $link, 'reason' => ''];
+    }
+
+    private function classTeacherLinkIsAssignable(School $school, StandardLink $link): bool
+    {
+        if ((int) $link->school_id !== (int) $school->id || (string) $link->status !== '1') {
+            return false;
+        }
+
+        $section = $link->section;
+        if (! $section || (int) $section->school_id !== (int) $school->id) {
+            return false;
+        }
+
+        return (string) $section->status === '1' || (int) $section->status === 1;
+    }
+
+    /**
+     * Find an active teacher in this school by email, then by phone. A new
+     * email creates a teacher the same way the teacher upload does. An email
+     * that already belongs to someone else is not reused.
+     *
+     * @return array{user: ?User, reason: string, created: bool}
+     */
+    private function findOrCreateClassTeacher(School $school, AcademicYear $year, string $name, string $email, string $phone): array
+    {
+        $emailKey = strtolower($email);
+        if ($emailKey !== '') {
+            $byEmail = $this->activeSchoolTeacherQuery($school)
+                ->whereRaw('LOWER(email) = ?', [$emailKey])
+                ->first();
+            if ($byEmail instanceof User) {
+                return ['user' => $byEmail, 'reason' => '', 'created' => false];
+            }
+            if (User::withTrashed()->whereRaw('LOWER(email) = ?', [$emailKey])->exists()) {
+                return ['user' => null, 'reason' => 'already exists', 'created' => false];
+            }
+        }
+
+        if ($phone !== '') {
+            $byPhone = $this->activeSchoolTeacherQuery($school)
+                ->where('mobile_no', $phone)
+                ->limit(2)
+                ->get();
+            if ($byPhone->count() > 1) {
+                return ['user' => null, 'reason' => 'duplicate phone', 'created' => false];
+            }
+            if ($byPhone->count() === 1) {
+                if ($emailKey === '') {
+                    return ['user' => $byPhone->first(), 'reason' => '', 'created' => false];
+                }
+
+                return ['user' => null, 'reason' => 'duplicate phone', 'created' => false];
+            }
+        }
+
+        $emailForCreate = $email !== ''
+            ? $email
+            : $this->allocateGeneratedEmail($school, 'teacher', '.test');
+
+        try {
+            $result = $this->saveTeachers($school, $year, [[
+                'name' => $name,
+                'email' => $emailForCreate,
+                'phone' => $phone,
+                'links' => [],
+            ]]);
+        } catch (ValidationException $e) {
+            $detail = (string) (collect($e->errors())->flatten()->first() ?: 'could not save');
+
+            return ['user' => null, 'reason' => $this->classTeacherSkipReason($detail), 'created' => false];
+        } catch (UniqueConstraintViolationException $e) {
+            return ['user' => null, 'reason' => 'already exists', 'created' => false];
+        }
+
+        $userId = (int) ($result['created'][0]['user_id'] ?? 0);
+        $user = $userId > 0
+            ? $this->activeSchoolTeacherQuery($school)->whereKey($userId)->first()
+            : null;
+        if (! $user instanceof User) {
+            $detail = (string) (collect($result['skipped'] ?? [])->pluck('reason')->filter()->first() ?: 'could not save');
+
+            return ['user' => null, 'reason' => $this->classTeacherSkipReason($detail), 'created' => false];
+        }
+
+        return ['user' => $user, 'reason' => '', 'created' => true];
+    }
+
+    private function classTeacherSkipReason(string $detail): string
+    {
+        $reason = trim($detail);
+        $lower = strtolower($reason);
+        if (str_contains($lower, 'already registered') || str_contains($lower, 'already exists')) {
+            return 'already exists';
+        }
+        if (str_contains($lower, 'phone')) {
+            return 'invalid phone';
+        }
+        if (str_contains($lower, 'email') && str_contains($lower, 'more than once')) {
+            return 'duplicate email';
+        }
+        if (str_contains($lower, 'invalid name') || $lower === 'invalid name or email') {
+            return 'missing name';
+        }
+        if (str_contains($lower, 'email')) {
+            return 'bad email';
+        }
+
+        return $reason !== '' ? $reason : 'could not save';
+    }
+
+    private function activeSchoolTeacherQuery(School $school): \Illuminate\Database\Eloquent\Builder
+    {
+        return User::query()
+            ->where('school_id', $school->id)
+            ->where('usergroup_id', 5)
+            ->where('status', 'active');
+    }
+
+    /**
      * Persist exams collected during Toshi onboarding.
      *
      * Each entry should include at least 'type' (exam type / label) and 'class'.
@@ -2700,6 +3081,8 @@ class OnboardingEngine
      */
     public function saveWhatsApp(School $school, int $userId, string $phone, bool $codeWasVerified = false): array
     {
+        $this->assertDpaConfirmed($school);
+
         $phone = $this->normaliseOnboardingPhone($school, $phone, 'whatsappPhone', true);
 
         if ($phone === '') {
@@ -2940,6 +3323,8 @@ class OnboardingEngine
      */
     public function savePlan(School $school, int $planId, bool $skipCompletionCheck = false, ?int $userId = null): CurrentPlan
     {
+        $this->assertDpaConfirmed($school);
+
         if (! $skipCompletionCheck) {
             foreach (OnboardingStepsService::incompleteSteps($school->fresh(), $userId) as $step) {
                 if (in_array($step['key'], OnboardingStepsService::OPTIONAL_STEPS, true)

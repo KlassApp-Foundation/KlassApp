@@ -9,6 +9,7 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
+use App\Services\Toshi\WriteContext;
 
 class MarkAttendanceTool implements Tool
 {
@@ -31,7 +32,7 @@ class MarkAttendanceTool implements Tool
         ];
     }
 
-    public function handle(Request $request): Stringable|string
+    public function handle(Request $request, ?WriteContext $context = null): Stringable|string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeTeacherOrMessage($user);
@@ -41,7 +42,7 @@ class MarkAttendanceTool implements Tool
 
         $args = ['student' => $request->get('student'), 'date' => $request->get('date'), 'status' => $request->get('status', 'present'), 'standardLink_id' => $request->get('standardLink_id'), 'session' => $request->get('session')];
 
-        $confirm = $this->confirmOrExecute('toolTeacherMarkAttendance', $args, fn () => "Record attendance: {$args['student']} on {$args['date']} as {$args['status']}");
+        $confirm = $this->confirmOrExecute('toolTeacherMarkAttendance', $args, fn () => "Record attendance: {$args['student']} on {$args['date']} as {$args['status']}", $context);
         if ($confirm !== null) {
             return $confirm;
         }

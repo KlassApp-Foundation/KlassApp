@@ -3,6 +3,7 @@
 namespace App\AiAgents\Concerns;
 
 use App\Services\ToshiActionService;
+use App\Services\Toshi\WriteContext;
 
 /**
  * For write tools that should require user confirmation before executing.
@@ -16,24 +17,31 @@ use App\Services\ToshiActionService;
  *   );
  *   if ($confirm !== null) return $confirm;
  *
- * When ToshiActionService::$bypassConfirm is false (the default), the tool
- * returns a __tier2_confirm JSON that AgentToshi converts into the pending
- * confirmation card. When bypassConfirm is true (set by confirmYes() on the
- * second pass), confirmOrExecute() returns null and the tool proceeds to
- * call ToshiActionService and write to the database.
+ * When no confirmed WriteContext is passed (the default), the tool returns a
+ * __tier2_confirm JSON that AgentToshi converts into the pending confirmation
+ * card. When a confirmed context for this tool and these arguments is passed,
+ * confirmOrExecute() returns null and the tool proceeds to write.
+ *
+ * The context is an argument, not a flag: a write can only run unconfirmed if
+ * the caller explicitly says who confirmed it.
  */
 trait ConfirmsBeforeWrite
 {
     /**
      * If confirmation is required, return the JSON payload to trigger the
-     * confirmation card. Returns null when bypassed — tool should execute.
+     * confirmation card. Returns null when the passed context confirms it.
      */
-    protected function confirmOrExecute(string $toolName, array $args, callable $preview): ?string
-    {
+    protected function confirmOrExecute(
+        string $toolName,
+        array $args,
+        callable $preview,
+        ?WriteContext $context = null,
+    ): ?string {
         return ToshiActionService::confirmationPayload(
             $toolName,
             $args,
             $preview(),
+            $context,
         );
     }
 }

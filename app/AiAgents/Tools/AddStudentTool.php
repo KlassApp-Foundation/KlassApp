@@ -9,6 +9,7 @@ use App\AiAgents\Concerns\AuthorizesToshiAction;
 use App\AiAgents\Concerns\ConfirmsBeforeWrite;
 use App\AiAgents\Concerns\VerifiableTool;
 use App\Models\User;
+use App\Services\Toshi\WriteContext;
 
 class AddStudentTool implements Tool, VerifiableTool
 {
@@ -32,7 +33,7 @@ class AddStudentTool implements Tool, VerifiableTool
         ];
     }
 
-    public function handle(Request $request): string
+    public function handle(Request $request, ?WriteContext $context = null): string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeOrMessage($user);
@@ -43,11 +44,19 @@ class AddStudentTool implements Tool, VerifiableTool
         $confirm = $this->confirmOrExecute('toolAddStudent', $args,
             fn() => "Add student: {$args['name']} to {$args['class']}"
                 . (!empty($args['stream']) ? ", stream: {$args['stream']}" : '')
-                . (!empty($args['parent']) ? ", parent: {$args['parent']}" : ''));
+                . (!empty($args['parent']) ? ", parent: {$args['parent']}" : ''), $context);
         if ($confirm !== null) return $confirm;
 
         $user = \App\Services\ToshiActionService::getEffectiveUser($user);
-        $result = \App\Services\ToshiActionService::addStudent($user, $args);
+
+        try {
+            $result = \App\Services\ToshiActionService::addStudent($user, $args);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // A refused onboarding write (for example the DPA gate) is a message
+            // for the person, not an exception for the panel to crash on.
+            return '❌ ' . $e->getMessage();
+        }
+
         return $result['success'] ? '✅ ' . $result['message'] : '❌ ' . $result['message'];
     }
 

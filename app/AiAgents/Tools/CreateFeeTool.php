@@ -9,6 +9,7 @@ use App\AiAgents\Concerns\AuthorizesToshiAction;
 use App\AiAgents\Concerns\ConfirmsBeforeWrite;
 use App\AiAgents\Concerns\VerifiableTool;
 use App\Models\FeesCategories;
+use App\Services\Toshi\WriteContext;
 
 class CreateFeeTool implements Tool, VerifiableTool
 {
@@ -31,7 +32,7 @@ class CreateFeeTool implements Tool, VerifiableTool
         ];
     }
 
-    public function handle(Request $request): string
+    public function handle(Request $request, ?WriteContext $context = null): string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeOrMessage($user);
@@ -41,7 +42,7 @@ class CreateFeeTool implements Tool, VerifiableTool
 
         $confirm = $this->confirmOrExecute('toolCreateFee', $args,
             fn() => "Create fee: {$args['name']}, UGX {$args['amount']}"
-                . (!empty($args['class']) ? ", class: {$args['class']}" : ''));
+                . (!empty($args['class']) ? ", class: {$args['class']}" : ''), $context);
         if ($confirm !== null) return $confirm;
 
         $user = \App\Services\ToshiActionService::getEffectiveUser($user);

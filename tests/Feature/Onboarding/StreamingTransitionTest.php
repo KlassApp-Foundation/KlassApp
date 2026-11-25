@@ -111,7 +111,6 @@ class StreamingTransitionTest extends TestCase
             $students[] = $student;
         }
 
-        ToshiActionService::$bypassConfirm = true;
     }
 
     #[Test]
@@ -126,7 +125,7 @@ class StreamingTransitionTest extends TestCase
         $createResult = $createTool->handle(new \Laravel\Ai\Tools\Request([
             'className' => 'Primary 1',
             'streams' => ['East', 'West'],
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $createResult, 'CreateStreamTool must allow adding streams to a direct class');
 
         // Step 2: Verify the 3 students are still on the old no-stream link (not broken)
@@ -161,14 +160,14 @@ class StreamingTransitionTest extends TestCase
             'className' => 'Primary 1',
             'streamName' => 'East',
             'students' => ['Alice Mwangi', 'Bob Okello'],
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $assignEastResult, 'Must assign Alice and Bob to East');
 
         $assignWestResult = $assignTool->handle(new \Laravel\Ai\Tools\Request([
             'className' => 'Primary 1',
             'streamName' => 'West',
             'students' => ['Charlie Nabunya'],
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('✅', $assignWestResult, 'Must assign Charlie to West');
 
         // Step 5: Assert final state

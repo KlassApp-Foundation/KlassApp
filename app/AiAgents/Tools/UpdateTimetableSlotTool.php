@@ -9,6 +9,7 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
+use App\Services\Toshi\WriteContext;
 
 class UpdateTimetableSlotTool implements Tool
 {
@@ -35,7 +36,7 @@ class UpdateTimetableSlotTool implements Tool
         ];
     }
 
-    public function handle(Request $request): Stringable|string
+    public function handle(Request $request, ?WriteContext $context = null): Stringable|string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeOrMessage($user);
@@ -56,7 +57,7 @@ class UpdateTimetableSlotTool implements Tool
         ];
 
         $confirm = $this->confirmOrExecute('toolUpdateTimetableSlot', $args,
-            fn () => "Update timetable slot #".$args['slot_id']);
+            fn () => "Update timetable slot #".$args['slot_id'], $context);
         if ($confirm !== null) {
             return $confirm;
         }

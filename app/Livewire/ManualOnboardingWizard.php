@@ -13,6 +13,8 @@ use App\Models\StandardLink;
 
 use App\Models\Subject;
 use App\Models\User;
+use App\Onboarding\OnboardingDpaGate;
+use App\Onboarding\OnboardingProgress;
 
 use App\Models\WhatsAppUser;
 use App\Services\ClassStructureService;
@@ -64,6 +66,10 @@ class ManualOnboardingWizard extends Component
     public int $stepsGrewBy = 0;
 
     public bool $finished = false;
+    /** DPA gate: a real school must confirm before any onboarding write. */
+    public bool $dpaRequired = false;
+    public bool $dpaConfirmed = false;
+    public bool $dpaAccepted = false;
 
     /** Non-blocking plan over-limit notice shown after students are saved. */
     public ?string $overLimitNotice = null;
@@ -382,6 +388,11 @@ class ManualOnboardingWizard extends Component
     {
         $school = $this->school();
         $user = Auth::user();
+
+        $dpa = app(OnboardingDpaGate::class);
+        $school = $school->fresh();
+        $this->dpaRequired = $dpa->requiredFor($school);
+        $this->dpaConfirmed = $dpa->confirmed($school);
 
         $this->refreshSteps();
         $this->hydrateFieldsFromSchool($school);
@@ -1403,6 +1414,44 @@ class ManualOnboardingWizard extends Component
         }
     }
 
+    /**
+     * Record the school's acceptance of the data processing agreement.
+     * Until this runs, the engine refuses every onboarding write for a real
+     * school (demo and test schools are exempt).
+     */
+    public function confirmDpa(): void
+    {
+        $this->errorMessage = '';
+
+        $gate = app(OnboardingDpaGate::class);
+        if (! $gate->enabled()) {
+            $this->addError('dpaAccepted', 'The data processing agreement step is not enabled.');
+
+            return;
+        }
+
+        if (! $this->dpaAccepted) {
+            $this->addError('dpaAccepted', 'Tick the box to confirm the data processing agreement.');
+
+            return;
+        }
+
+        $school = $this->school()->fresh();
+        $gate->record($school, Auth::user());
+
+        \App\Models\OnboardingPlanStep::record(
+            schoolId: (int) $school->id,
+            step: 'dpa',
+            actorId: Auth::id(),
+            previewHash: hash('sha256', 'dpa|'.$gate->version()),
+            appliedCounts: ['version' => $gate->version()],
+        );
+
+        $this->dpaConfirmed = true;
+        $this->dpaRequired = true;
+        $this->resetErrorBag('dpaAccepted');
+    }
+
     public function confirmReview(): void
     {
         $this->errorMessage = '';
@@ -1423,6 +1472,20 @@ class ManualOnboardingWizard extends Component
         $this->finished = true;
         $this->returnToStepIndex = null;
         $this->returnToStepKey = null;
+
+        // Who confirmed the finish, and what the school looked like at that
+        // point. Session state is not the record.
+        \App\Models\OnboardingPlanStep::record(
+            schoolId: (int) $school->id,
+            step: 'review',
+            actorId: Auth::id(),
+            previewHash: hash('sha256', 'review|'.$school->id.'|'.json_encode($this->buildReviewSummary())),
+            appliedCounts: [
+                'done' => OnboardingProgress::for($school, Auth::id())['done'],
+                'total' => OnboardingProgress::for($school, Auth::id())['total'],
+            ],
+        );
+
         if ($finishedNow) {
             $this->notifyToshiOnboardingFinished();
         }
@@ -3034,302 +3097,50 @@ class ManualOnboardingWizard extends Component
     {
         $this->classTeacherUploadRows = $rows;
         $this->classTeacherMissingStreams = [];
-        $added = 0;
-        $skipped = [];
-        $created = 0;
+
         $school = $this->school();
         $year = AcademicYear::where('school_id', $school->id)->where('status', 1)->first()
             ?? AcademicYear::where('school_id', $school->id)->first();
 
-        foreach ($rows as $index => $row) {
-            $line = (int) ($row['row'] ?? ($index + 2));
-            $name = trim((string) ($row['name'] ?? ''));
-            if ($name === '') {
-                $skipped[] = ['row' => $line, 'reason' => 'missing name'];
-
-                continue;
+        if (! $year instanceof AcademicYear) {
+            $skips = [];
+            foreach ($rows as $index => $row) {
+                $skips[] = ['row' => (int) ($row['row'] ?? ($index + 2)), 'reason' => 'unknown class'];
             }
 
-            $email = trim((string) ($row['email'] ?? ''));
-            if ($email !== '' && ! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $skipped[] = ['row' => $line, 'reason' => 'bad email'];
+            $this->classTeacherUploadSkips = $skips;
+            $this->classTeacherUploadReport = $this->formatClassTeacherUploadReport(0, count($skips));
 
-                continue;
-            }
-
-            $phone = $this->normaliseOptionalPhone(trim((string) ($row['phone'] ?? '')), false, false);
-            if ($phone === null) {
-                $skipped[] = ['row' => $line, 'reason' => 'invalid phone'];
-
-                continue;
-            }
-
-            if (! $year || (int) $year->school_id !== (int) $school->id) {
-                $skipped[] = ['row' => $line, 'reason' => 'unknown class'];
-
-                continue;
-            }
-
-            $resolved = $this->resolveClassTeacherLink(
-                $school,
-                $year,
-                (string) ($row['class'] ?? ''),
-                (string) ($row['stream'] ?? ''),
-            );
-            if (! $resolved['link'] instanceof StandardLink) {
-                $skipped[] = ['row' => $line, 'reason' => $resolved['reason']];
-                if (is_array($resolved['missing'] ?? null)) {
-                    $this->rememberMissingStream($this->classTeacherMissingStreams, $resolved['missing']);
-                }
-
-                continue;
-            }
-
-            $teacher = $this->findOrCreateClassTeacher($school, $year, $name, $email, $phone);
-            if (! $teacher['user'] instanceof User) {
-                $skipped[] = ['row' => $line, 'reason' => $teacher['reason']];
-
-                continue;
-            }
-
-            if (! $this->writeClassTeacherAssignment($school, $resolved['link'], $teacher['user'], (bool) $teacher['created'])) {
-                $skipped[] = ['row' => $line, 'reason' => 'could not save'];
-
-                continue;
-            }
-
-            if ($teacher['created']) {
-                $created++;
-            }
-            $added++;
+            return [
+                'added' => 0,
+                'skipped' => count($skips),
+                'skips' => $skips,
+                'notes' => [],
+                'missing_streams' => [],
+            ];
         }
 
-        if ($created > 0) {
+        // One write layer: the engine owns the class-teacher resolution and write.
+        $result = app(OnboardingEngine::class)->saveClassTeachers($school, $year, $rows, Auth::id());
+
+        if (($result['teachers_created'] ?? 0) > 0) {
             $this->noteTeacherPlanLimit($school);
         }
 
-        $this->classTeacherUploadSkips = $skipped;
-        $this->classTeacherUploadReport = $this->formatClassTeacherUploadReport($added, count($skipped));
-
-        return [
-            'added' => $added,
-            'skipped' => count($skipped),
-            'skips' => $skipped,
-            'notes' => [],
-            'missing_streams' => $this->classTeacherMissingStreams,
-        ];
-    }
-
-    /**
-     * @return array{link: ?StandardLink, reason: string, missing?: array{class: string, stream: string}}
-     */
-    private function resolveClassTeacherLink(School $school, AcademicYear $year, string $className, string $stream): array
-    {
-        $className = trim($className);
-        $stream = trim($stream);
-        if ($className === '') {
-            return ['link' => null, 'reason' => 'unknown class'];
-        }
-
-        $engine = app(OnboardingEngine::class);
-        $links = $engine->standardLinksForClass($school, $year, $className)
-            ->filter(fn (StandardLink $link) => $this->classTeacherLinkIsAssignable($school, $link))
-            ->values();
-        if ($links->isEmpty()) {
-            return ['link' => null, 'reason' => 'unknown class'];
-        }
-
-        if ($stream !== '') {
-            $classified = $engine->classifyClassAndStream($school, $year, $className, $stream);
-            if ($classified['status'] === 'missing_stream') {
-                return [
-                    'link' => null,
-                    'reason' => $classified['reason'],
-                    'missing' => [
-                        'class' => $classified['class'],
-                        'stream' => $classified['stream'],
-                    ],
-                ];
-            }
-            $streamLink = $classified['link'];
-            if (! $streamLink instanceof StandardLink || ! $this->classTeacherLinkIsAssignable($school, $streamLink)) {
-                return ['link' => null, 'reason' => $classified['reason'] !== '' ? $classified['reason'] : 'unknown stream'];
-            }
-            $belongs = $links->contains(fn (StandardLink $link) => (int) $link->id === (int) $streamLink->id);
-            if (! $belongs) {
-                return [
-                    'link' => null,
-                    'reason' => OnboardingEngine::missingStreamMessage($classified['class'] !== '' ? $classified['class'] : $className, $classified['stream'] !== '' ? $classified['stream'] : $stream),
-                    'missing' => [
-                        'class' => $classified['class'] !== '' ? $classified['class'] : $className,
-                        'stream' => $classified['stream'] !== '' ? $classified['stream'] : $stream,
-                    ],
-                ];
-            }
-
-            return ['link' => $streamLink, 'reason' => ''];
-        }
-
-        $inputKeys = array_map('strtolower', OnboardingEngine::classNameCandidates($className));
-        $exact = $links->filter(function (StandardLink $link) use ($inputKeys) {
-            $sectionName = trim((string) ($link->section?->name ?? ''));
-            if ($sectionName === '') {
-                return false;
-            }
-            $sectionKeys = array_map('strtolower', OnboardingEngine::classNameCandidates($sectionName));
-
-            return array_intersect($inputKeys, $sectionKeys) !== [];
-        })->values();
-
-        $chosen = $exact->isNotEmpty() ? $exact : $links;
-        $base = $chosen->first(function (StandardLink $link) {
-            return $link->section && app(ClassStructureService::class)->isBaseSection($link->section);
-        });
-        $link = $base ?? $chosen->sortBy(fn (StandardLink $link) => strlen(trim((string) ($link->section?->name ?? ''))))->first();
-        if (! $link instanceof StandardLink) {
-            return ['link' => null, 'reason' => 'unknown class'];
-        }
-
-        return ['link' => $link, 'reason' => ''];
-    }
-
-    private function classTeacherLinkIsAssignable(School $school, StandardLink $link): bool
-    {
-        if ((int) $link->school_id !== (int) $school->id || (string) $link->status !== '1') {
-            return false;
-        }
-
-        $section = $link->section;
-        if (! $section || (int) $section->school_id !== (int) $school->id) {
-            return false;
-        }
-
-        return (string) $section->status === '1' || (int) $section->status === 1;
-    }
-
-    /**
-     * Find an active teacher in this school by email, then by phone. A new
-     * email creates a teacher the same way the teacher upload does. An email
-     * that already belongs to someone else is not reused.
-     *
-     * @return array{user: ?User, reason: string, created: bool}
-     */
-    private function findOrCreateClassTeacher(School $school, AcademicYear $year, string $name, string $email, string $phone): array
-    {
-        $emailKey = strtolower($email);
-        $byEmail = null;
-        if ($emailKey !== '') {
-            $byEmail = $this->activeSchoolTeacherQuery($school)
-                ->whereRaw('LOWER(email) = ?', [$emailKey])
-                ->first();
-            if (! $byEmail && User::withTrashed()->whereRaw('LOWER(email) = ?', [$emailKey])->exists()) {
-                return ['user' => null, 'reason' => 'already exists', 'created' => false];
-            }
-        }
-
-        if ($byEmail instanceof User) {
-            return ['user' => $byEmail, 'reason' => '', 'created' => false];
-        }
-
-        if ($phone !== '') {
-            $byPhone = $this->activeSchoolTeacherQuery($school)
-                ->where('mobile_no', $phone)
-                ->limit(2)
-                ->get();
-            if ($byPhone->count() > 1) {
-                return ['user' => null, 'reason' => 'duplicate phone', 'created' => false];
-            }
-            if ($byPhone->count() === 1) {
-                if ($emailKey === '') {
-                    return ['user' => $byPhone->first(), 'reason' => '', 'created' => false];
-                }
-
-                return ['user' => null, 'reason' => 'duplicate phone', 'created' => false];
-            }
-        }
-
-        $emailForCreate = $email !== ''
-            ? $email
-            : app(OnboardingEngine::class)->allocateGeneratedEmail($school, 'teacher', '.test');
-
-        try {
-            $result = app(OnboardingEngine::class)->saveTeachers($school, $year, [[
-                'name' => $name,
-                'email' => $emailForCreate,
-                'phone' => $phone,
-                'links' => [],
-            ]]);
-        } catch (ValidationException $e) {
-            $detail = (string) (collect($e->errors())->flatten()->first() ?: 'could not save');
-
-            return ['user' => null, 'reason' => $this->classTeacherSkipReason($detail), 'created' => false];
-        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
-            return ['user' => null, 'reason' => 'already exists', 'created' => false];
-        }
-
-        $userId = (int) ($result['created'][0]['user_id'] ?? 0);
-        $user = $userId > 0
-            ? $this->activeSchoolTeacherQuery($school)->whereKey($userId)->first()
-            : null;
-        if (! $user instanceof User) {
-            $detail = (string) (collect($result['skipped'] ?? [])->pluck('reason')->filter()->first() ?: 'could not save');
-
-            return ['user' => null, 'reason' => $this->classTeacherSkipReason($detail), 'created' => false];
-        }
-
-        return ['user' => $user, 'reason' => '', 'created' => true];
-    }
-
-    private function classTeacherSkipReason(string $detail): string
-    {
-        $reason = $this->shortTeacherSkipReason($detail);
-
-        return $reason === 'invalid email' ? 'bad email' : $reason;
-    }
-
-    private function activeSchoolTeacherQuery(School $school): \Illuminate\Database\Eloquent\Builder
-    {
-        return User::query()
-            ->where('school_id', $school->id)
-            ->where('usergroup_id', 5)
-            ->where('status', 'active');
-    }
-
-    private function writeClassTeacherAssignment(School $school, StandardLink $link, User $teacher, bool $justCreated = false): bool
-    {
-        if ((int) $teacher->school_id !== (int) $school->id || (int) $teacher->usergroup_id !== 5) {
-            return false;
-        }
-
-        $link = StandardLink::query()
-            ->where('school_id', $school->id)
-            ->whereKey($link->id)
-            ->first();
-        if (! $link || ! $this->classTeacherLinkIsAssignable($school, $link)) {
-            return false;
-        }
-
-        $section = Section::query()
-            ->where('school_id', $school->id)
-            ->whereKey($link->section_id)
-            ->first();
-        if (! $section || (int) $section->school_id !== (int) $school->id) {
-            return false;
-        }
-
-        $actor = Auth::user();
-        if (! $actor instanceof User) {
-            return false;
-        }
-
-        $result = app(\App\Services\ClassTeacherAssignmentService::class)->assignFromUpload(
-            $actor,
-            $link,
-            $teacher,
-            $justCreated,
+        $this->classTeacherMissingStreams = $result['missing_streams'] ?? [];
+        $this->classTeacherUploadSkips = $result['skips'] ?? [];
+        $this->classTeacherUploadReport = $this->formatClassTeacherUploadReport(
+            (int) ($result['added'] ?? 0),
+            (int) ($result['skipped'] ?? 0),
         );
 
-        return (bool) ($result['success'] ?? false);
+        return [
+            'added' => (int) ($result['added'] ?? 0),
+            'skipped' => (int) ($result['skipped'] ?? 0),
+            'skips' => $result['skips'] ?? [],
+            'notes' => [],
+            'missing_streams' => $result['missing_streams'] ?? [],
+        ];
     }
 
     /**
@@ -4210,7 +4021,7 @@ class ManualOnboardingWizard extends Component
         }
 
         try {
-            app(OnboardingEngine::class)->saveFees($school, $payload);
+            app(OnboardingEngine::class)->saveFeeStructure($school, $payload);
         } catch (ValidationException $e) {
             throw ValidationException::withMessages(['feeName' => collect($e->errors())->flatten()->first()]);
         }

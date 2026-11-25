@@ -9,6 +9,7 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
+use App\Services\Toshi\WriteContext;
 
 class ManageLendingTool implements Tool
 {
@@ -29,7 +30,7 @@ class ManageLendingTool implements Tool
         ];
     }
 
-    public function handle(Request $request): Stringable|string
+    public function handle(Request $request, ?WriteContext $context = null): Stringable|string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeLibrarianOrMessage($user);
@@ -46,8 +47,7 @@ class ManageLendingTool implements Tool
         $confirm = $this->confirmOrExecute(
             'toolLibrarianManageLending',
             $args,
-            fn () => "Issue book {$args['book_code_no']} on card {$args['library_card_no']}"
-        );
+            fn () => "Issue book {$args['book_code_no']} on card {$args['library_card_no']}", $context);
         if ($confirm !== null) {
             return $confirm;
         }

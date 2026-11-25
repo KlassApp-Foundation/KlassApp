@@ -9,6 +9,7 @@ use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
+use App\Services\Toshi\WriteContext;
 
 class CreateLessonPlanTool implements Tool
 {
@@ -33,7 +34,7 @@ class CreateLessonPlanTool implements Tool
         ];
     }
 
-    public function handle(Request $request): Stringable|string
+    public function handle(Request $request, ?WriteContext $context = null): Stringable|string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeTeacherOrMessage($user);
@@ -43,7 +44,7 @@ class CreateLessonPlanTool implements Tool
 
         $args = ['standardLink_id' => (int) $request->get('standardLink_id'), 'subject_id' => (int) $request->get('subject_id'), 'title' => $request->get('title'), 'description' => $request->get('description'), 'unit_no' => $request->get('unit_no'), 'unit_name' => $request->get('unit_name'), 'duration' => $request->get('duration')];
 
-        $confirm = $this->confirmOrExecute('toolTeacherCreateLessonPlan', $args, fn () => "Create lesson plan: {$args['title']}");
+        $confirm = $this->confirmOrExecute('toolTeacherCreateLessonPlan', $args, fn () => "Create lesson plan: {$args['title']}", $context);
         if ($confirm !== null) {
             return $confirm;
         }

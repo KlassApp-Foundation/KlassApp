@@ -9,6 +9,7 @@ use App\AiAgents\Concerns\AuthorizesToshiAction;
 use App\AiAgents\Concerns\ConfirmsBeforeWrite;
 use App\AiAgents\Concerns\VerifiableTool;
 use App\Models\Subject;
+use App\Services\Toshi\WriteContext;
 
 class CreateSubjectTool implements Tool, VerifiableTool
 {
@@ -28,7 +29,7 @@ class CreateSubjectTool implements Tool, VerifiableTool
         ];
     }
 
-    public function handle(Request $request): string
+    public function handle(Request $request, ?WriteContext $context = null): string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeOrMessage($user);
@@ -38,7 +39,7 @@ class CreateSubjectTool implements Tool, VerifiableTool
 
         $confirm = $this->confirmOrExecute('toolCreateSubject', $args,
             fn() => "Create subject: {$args['name']}"
-                . (!empty($args['code']) ? " ({$args['code']})" : ''));
+                . (!empty($args['code']) ? " ({$args['code']})" : ''), $context);
         if ($confirm !== null) return $confirm;
 
         $user = \App\Services\ToshiActionService::getEffectiveUser($user);

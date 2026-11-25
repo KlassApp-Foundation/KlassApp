@@ -25,7 +25,6 @@ class ToshiFreeTextConfirmParityTest extends TestCase
     {
         parent::setUp();
 
-        ToshiActionService::$bypassConfirm = false;
         ToshiActionService::$pendingConfirmPayload = null;
 
         DB::table('usergroups')->upsert([

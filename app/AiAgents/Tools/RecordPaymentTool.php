@@ -9,6 +9,7 @@ use App\AiAgents\Concerns\AuthorizesToshiAction;
 use App\AiAgents\Concerns\ConfirmsBeforeWrite;
 use App\AiAgents\Concerns\VerifiableTool;
 use App\Models\FeePayment;
+use App\Services\Toshi\WriteContext;
 
 class RecordPaymentTool implements Tool, VerifiableTool
 {
@@ -30,7 +31,7 @@ class RecordPaymentTool implements Tool, VerifiableTool
         ];
     }
 
-    public function handle(Request $request): string
+    public function handle(Request $request, ?WriteContext $context = null): string
     {
         $user = auth()->user() ?? request()->user();
         $error = $this->authorizeOrMessage($user);
@@ -44,7 +45,7 @@ class RecordPaymentTool implements Tool, VerifiableTool
         ];
 
         $confirm = $this->confirmOrExecute('toolRecordPayment', $args,
-            fn() => "Record payment: UGX {$args['amount']} for student ID {$args['student_id']} via {$args['payment_method']}");
+            fn() => "Record payment: UGX {$args['amount']} for student ID {$args['student_id']} via {$args['payment_method']}", $context);
         if ($confirm !== null) return $confirm;
 
         $user = \App\Services\ToshiActionService::getEffectiveUser($user);

@@ -193,6 +193,11 @@ class SchoolSignupBootstrapService
             $school->refresh();
         }
 
+        // Onboarding starts at signup: a real school must confirm the data
+        // processing agreement before any onboarding write. Demo and test
+        // schools are exempt (OnboardingDpaGate).
+        app(\App\Onboarding\OnboardingDpaGate::class)->markRequired($school);
+
         // A blank answer means the onboarding default (#1246); persisting it
         // keeps registration_country and country_id together (#1249).
         $countryName = $country !== null && trim($country) !== ''

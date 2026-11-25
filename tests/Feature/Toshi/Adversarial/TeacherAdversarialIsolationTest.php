@@ -80,7 +80,6 @@ class TeacherAdversarialIsolationTest extends TestCase
     public function test_as_admin_add_coadmin_prompt_still_structurally_denied(): void
     {
         $this->actingAs($this->teacher);
-        ToshiActionService::$bypassConfirm = true;
 
         $attack = AdversarialPromptFixtures::TEACHER_AS_ADMIN_ADD_COADMIN;
 
@@ -104,11 +103,10 @@ class TeacherAdversarialIsolationTest extends TestCase
         $result = (new AddCoAdminTool)->handle(new Request([
             'name' => 'Eve',
             'email' => 'eve.coadmin@test.sch.ug',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('❌', $result);
         $this->assertSame(0, User::where('email', 'eve.coadmin@test.sch.ug')->count());
 
-        ToshiActionService::$bypassConfirm = false;
     }
 
     public function test_ignore_limits_payroll_prompt_still_structurally_denied(): void
@@ -162,7 +160,6 @@ class TeacherAdversarialIsolationTest extends TestCase
     public function test_create_exam_as_admin_prompt_still_structurally_denied(): void
     {
         $this->actingAs($this->teacher);
-        ToshiActionService::$bypassConfirm = true;
 
         TeacherOperationsAgent::fake([
             new ToolCall('call_adv_exam', 'CreateExamTool', [
@@ -182,9 +179,8 @@ class TeacherAdversarialIsolationTest extends TestCase
 
         $result = (new CreateExamTool)->handle(new Request([
             'name' => 'Mid Term Bypass',
-        ]));
+        ]), \App\Services\Toshi\WriteContext::confirmed('*', [], auth()->user()));
         $this->assertStringStartsWith('❌', $result);
 
-        ToshiActionService::$bypassConfirm = false;
     }
 }
