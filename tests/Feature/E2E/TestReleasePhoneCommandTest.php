@@ -189,10 +189,10 @@ class TestReleasePhoneCommandTest extends TestCase
     }
 
     // ------------------------------------------------------------------ //
-    // Test 4: platform admin number → refuses
+    // Test 4: platform admin number → ignored, not refused; continues
     // ------------------------------------------------------------------ //
 
-    public function test_refuses_platform_admin_number(): void
+    public function test_ignores_platform_admin_and_continues(): void
     {
         foreach ([1, 2] as $group) {
             $school = $this->makeTestSchool("E2E Platform Admin Group {$group}");
@@ -200,12 +200,77 @@ class TestReleasePhoneCommandTest extends TestCase
             $user   = $this->makeUser($school, $phone);
             $user->forceFill(['usergroup_id' => $group])->save();
 
+            // Exits successfully: "ignored … platform admin" is printed; nothing is released.
             $this->artisan('test:release-phone', ['--phone' => [$phone], '--force' => true])
-                ->expectsOutputToContain('platform admin')
-                ->assertExitCode(1);
+                ->expectsOutputToContain('platform admin, not a test-school tie')
+                ->assertExitCode(0);
 
+            // Platform admin's mobile_no is never cleared — it was ignored.
             $this->assertDatabaseHas('users', ['id' => $user->id, 'mobile_no' => $phone]);
         }
+    }
+
+    // ------------------------------------------------------------------ //
+    // Test 4b: no-school owner → ignored, not refused; continues
+    // ------------------------------------------------------------------ //
+
+    public function test_ignores_no_school_owner_and_continues(): void
+    {
+        $phone = '+256770100099';
+
+        // User with no school_id (parent who was never assigned a school).
+        $user = User::create([
+            'school_id'    => null,
+            'usergroup_id' => 7,
+            'name'         => 'No School Parent',
+            'email'        => 'no-school-' . rand() . '@test.example',
+            'password'     => bcrypt('password'),
+            'status'       => 'active',
+        ]);
+        \DB::table('users')->where('id', $user->id)->update(['mobile_no' => $phone]);
+
+        // No whatsapp_users row, no test-school ties — just the mobile_no on a no-school user.
+        $this->artisan('test:release-phone', ['--phone' => [$phone]])
+            ->expectsOutputToContain('has no school, not a test-school tie')
+            ->assertExitCode(0);
+
+        // mobile_no untouched.
+        $this->assertDatabaseHas('users', ['id' => $user->id, 'mobile_no' => $phone]);
+    }
+
+    // ------------------------------------------------------------------ //
+    // Test 4c: mixed — no-school owner + test-school tie → clears tie, ignores no-school
+    // ------------------------------------------------------------------ //
+
+    public function test_mixed_no_school_owner_and_test_school_tie_clears_test_tie(): void
+    {
+        $school = $this->makeTestSchool('E2E Mixed Owner School');
+        $phone  = '+256770100098';
+
+        // No-school user holds the same number.
+        $noSchoolUser = User::create([
+            'school_id'    => null,
+            'usergroup_id' => 7,
+            'name'         => 'No School Parent',
+            'email'        => 'mixed-noschl-' . rand() . '@test.example',
+            'password'     => bcrypt('password'),
+            'status'       => 'active',
+        ]);
+        \DB::table('users')->where('id', $noSchoolUser->id)->update(['mobile_no' => $phone]);
+
+        // Test-school user also holds the number (Tie C).
+        $testUser = $this->makeUser($school, $phone);
+        $wauId    = $this->insertWhatsAppUser($school, $testUser, $phone);
+
+        $this->artisan('test:release-phone', ['--phone' => [$phone], '--force' => true])
+            ->assertExitCode(0);
+
+        // Test-school tie cleared.
+        $this->assertDatabaseMissing('users', ['id' => $testUser->id, 'mobile_no' => $phone]);
+        $this->assertDatabaseMissing('whatsapp_users', ['id' => $wauId]);
+
+        // No-school user's mobile_no is untouched (was ignored, not a test tie).
+        $this->assertDatabaseHas('users', ['id' => $noSchoolUser->id, 'mobile_no' => $phone]);
     }
 
     // ------------------------------------------------------------------ //

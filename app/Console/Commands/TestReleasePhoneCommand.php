@@ -97,8 +97,10 @@ class TestReleasePhoneCommand extends Command
             return self::FAILURE;
         }
 
-        // --- Safety: refuse if any user with this mobile_no is at a non-test
-        //             school or is a platform admin. ---
+        // --- Safety: refuse if any user with this mobile_no is at a real (non-test) school.
+        //   Platform admins (groups 1 & 2) and no-school users are not test-school ties;
+        //   they are listed as ignored and processing continues.
+        //   Only a tie to a confirmed non-test school causes a hard refusal. ---
         $users = DB::table('users')
             ->whereIn('mobile_no', $forms)
             ->get(['id', 'school_id', 'usergroup_id', 'mobile_no']);
@@ -108,12 +110,16 @@ class TestReleasePhoneCommand extends Command
                 continue;
             }
             if (in_array((int) $user->usergroup_id, self::PLATFORM_USERGROUPS, true)) {
-                $this->error("phone {$phone} belongs to platform admin user {$user->id} — refusing.");
-
-                return self::FAILURE;
+                $this->line("  ignored: user {$user->id} is a platform admin, not a test-school tie.");
+                continue;
             }
-            if (! $this->isTestSchool((int) $user->school_id)) {
-                $this->error("phone {$phone} belongs to user {$user->id} at non-test school {$user->school_id} — refusing.");
+            $userSchoolId = (int) $user->school_id;
+            if ($userSchoolId < 1) {
+                $this->line("  ignored: user {$user->id} has no school, not a test-school tie.");
+                continue;
+            }
+            if (! $this->isTestSchool($userSchoolId)) {
+                $this->error("phone {$phone} belongs to user {$user->id} at non-test school {$userSchoolId} — refusing.");
 
                 return self::FAILURE;
             }
@@ -238,12 +244,16 @@ class TestReleasePhoneCommand extends Command
         }
 
         // Tie C: users.mobile_no → is_test school.
+        // Platform admins (groups 1 & 2) are excluded: they are not test-school ties.
         $users = DB::table('users')
             ->whereIn('mobile_no', $allForms)
-            ->get(['id', 'mobile_no', 'school_id']);
+            ->get(['id', 'mobile_no', 'school_id', 'usergroup_id']);
 
         foreach ($users as $user) {
             if (! $this->matchesFullNumber((string) $user->mobile_no, $forms)) {
+                continue;
+            }
+            if (in_array((int) $user->usergroup_id, self::PLATFORM_USERGROUPS, true)) {
                 continue;
             }
             $userSchoolId = (int) $user->school_id;
