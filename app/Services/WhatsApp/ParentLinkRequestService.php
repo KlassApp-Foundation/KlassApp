@@ -683,7 +683,15 @@ class ParentLinkRequestService
     }
 
     /**
-     * Expand Flow class tokens (P.7 / S.1) into roster section names (Primary Seven / Senior One).
+     * Expand any recognised class token into every stored variant so the
+     * LIKE query hits the section name regardless of how the parent typed it.
+     *
+     * Supported forms (case-insensitive, inner spaces normalised):
+     *   Primary grades 1–7 : P.5  P5  P 5  Primary 5  Primary Five
+     *   Senior  grades 1–6 : S.1  S1  S 1  Senior 1   Senior One
+     *
+     * Unknown tokens are returned as-is; the LIKE query still runs and the
+     * request is created even if no section matches (candidate left unresolved).
      *
      * @return list<string>
      */
@@ -693,37 +701,50 @@ class ParentLinkRequestService
         $variants = [$raw];
 
         $primaryWords = [
-            1 => 'One',
-            2 => 'Two',
-            3 => 'Three',
-            4 => 'Four',
-            5 => 'Five',
-            6 => 'Six',
-            7 => 'Seven',
+            1 => 'One', 2 => 'Two', 3 => 'Three', 4 => 'Four',
+            5 => 'Five', 6 => 'Six', 7 => 'Seven',
         ];
         $seniorWords = [
-            1 => 'One',
-            2 => 'Two',
-            3 => 'Three',
-            4 => 'Four',
-            5 => 'Five',
-            6 => 'Six',
+            1 => 'One', 2 => 'Two', 3 => 'Three',
+            4 => 'Four', 5 => 'Five', 6 => 'Six',
         ];
 
+        // --- Primary grade: detect digit from any recognised form ---
+        $primaryN = null;
         if (preg_match('/^P\.?\s*([1-7])$/i', $raw, $m)) {
-            $n = (int) $m[1];
-            $variants[] = 'P.'.$n;
-            $variants[] = 'P'.$n;
-            $variants[] = 'Primary '.$primaryWords[$n];
-            $variants[] = 'Primary'.$primaryWords[$n];
-        } elseif (preg_match('/^S\.?\s*([1-6])$/i', $raw, $m)) {
-            $n = (int) $m[1];
-            $variants[] = 'S.'.$n;
-            $variants[] = 'S'.$n;
-            $variants[] = 'Senior '.$seniorWords[$n];
-            $variants[] = 'Secondary '.$seniorWords[$n];
-        } elseif (preg_match('/^Primary\s+([1-7]|One|Two|Three|Four|Five|Six|Seven)$/i', $raw)) {
-            $variants[] = $raw;
+            $primaryN = (int) $m[1];
+        } elseif (preg_match('/^Primary\s+([1-7])$/i', $raw, $m)) {
+            $primaryN = (int) $m[1];
+        } elseif (preg_match('/^Primary\s+(One|Two|Three|Four|Five|Six|Seven)$/i', $raw, $m)) {
+            $primaryN = (int) (array_search(ucfirst(strtolower($m[1])), $primaryWords, true) ?: 0) ?: null;
+        }
+
+        if ($primaryN !== null && isset($primaryWords[$primaryN])) {
+            $word = $primaryWords[$primaryN];
+            $variants[] = 'P.'.$primaryN;
+            $variants[] = 'P'.$primaryN;
+            $variants[] = 'Primary '.$primaryN;
+            $variants[] = 'Primary '.$word;
+            $variants[] = 'Primary'.$word;
+        }
+
+        // --- Senior grade: detect digit from any recognised form ---
+        $seniorN = null;
+        if (preg_match('/^S\.?\s*([1-6])$/i', $raw, $m)) {
+            $seniorN = (int) $m[1];
+        } elseif (preg_match('/^Senior\s+([1-6])$/i', $raw, $m)) {
+            $seniorN = (int) $m[1];
+        } elseif (preg_match('/^Senior\s+(One|Two|Three|Four|Five|Six)$/i', $raw, $m)) {
+            $seniorN = (int) (array_search(ucfirst(strtolower($m[1])), $seniorWords, true) ?: 0) ?: null;
+        }
+
+        if ($seniorN !== null && isset($seniorWords[$seniorN])) {
+            $word = $seniorWords[$seniorN];
+            $variants[] = 'S.'.$seniorN;
+            $variants[] = 'S'.$seniorN;
+            $variants[] = 'Senior '.$seniorN;
+            $variants[] = 'Senior '.$word;
+            $variants[] = 'Secondary '.$word;
         }
 
         return array_values(array_unique(array_filter($variants, fn (string $v): bool => $v !== '')));
