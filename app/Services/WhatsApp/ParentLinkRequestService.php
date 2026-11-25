@@ -58,9 +58,10 @@ class ParentLinkRequestService
             $phone,
             $resolvedSchool?->id,
             $schoolName,
+            $childName,
         );
         if ($existingPending !== null) {
-            Log::info('Parent link request duplicate suppressed — pending already exists for this phone+school', [
+            Log::info('Parent link request duplicate suppressed — pending already exists for this phone+school+child', [
                 'parent_link_request_id' => $existingPending->id,
                 'phone' => $phone,
                 'school_id' => $resolvedSchool?->id,
@@ -149,7 +150,7 @@ class ParentLinkRequestService
         $profileName = ParentLinkRequest::profileNameOrNull($profileName);
         $schoolId = (int) $student->school_id;
 
-        $existing = $this->findPendingForPhoneAtSchool($phone, $schoolId, (string) ($student->school?->name ?? ''));
+        $existing = $this->findPendingForPhoneAtSchool($phone, $schoolId, (string) ($student->school?->name ?? ''), (string) $student->name);
         if ($existing !== null) {
             return $existing->loadMissing(['school', 'suggestedStudent']);
         }
@@ -275,22 +276,26 @@ class ParentLinkRequestService
     }
 
     /**
-     * Pending request for this phone at a specific school.
+     * Pending request for this phone at a specific school and child.
      *
      * When $schoolId is known, match that school_id (also treating an older
      * unresolved pending row with the same submitted school_name as a duplicate).
      * When unresolved, match on submitted school_name only — never another school.
+     * When $childName is provided, only an existing pending row for the same child
+     * is treated as a duplicate; a different child gets its own request.
      */
     public function findPendingForPhoneAtSchool(
         string $phone,
         ?int $schoolId,
         string $schoolName = '',
+        string $childName = '',
     ): ?ParentLinkRequest {
         $phone = $this->storedPhone($phone);
         if ($phone === null) {
             return null;
         }
         $schoolName = trim($schoolName);
+        $childName  = trim($childName);
 
         $query = ParentLinkRequest::query()
             ->where('phone', $phone)
@@ -311,6 +316,11 @@ class ParentLinkRequestService
         } else {
             // No school identity — do not suppress against other schools' pending rows.
             return null;
+        }
+
+        // A different child at the same school gets its own pending request.
+        if ($childName !== '') {
+            $query->whereRaw('LOWER(TRIM(COALESCE(child_name, ""))) = ?', [mb_strtolower($childName)]);
         }
 
         return $query->latest('id')->with(['school'])->first();
