@@ -1,8 +1,5 @@
 <?php
-/**
- * SPDX-License-Identifier: MIT
- * (c) 2025 GegoSoft Technologies and GegoK12 Contributors
- */
+// SPDX-License-Identifier: MIT
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Auth;

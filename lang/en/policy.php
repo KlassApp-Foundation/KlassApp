@@ -1,36 +1,62 @@
 <?php
 
+// SPDX-License-Identifier: MIT
+// KlassApp Privacy Policy — draft v0.1, 25 November 2026.
+// Square-bracketed items are open placeholders pending a decision.
+
 return [
 
+'title' => 'Privacy Policy',
 
-'privacy_policy'=>'Privacy Policy',
+'s1_heading' => '1. Who we are',
+'s1_body'    => 'KlassApp is an open education protocol for humans and agents, operated by [KlassApp legal entity name] ("KlassApp", "we", "us"). This policy explains what personal data we handle when schools, teachers, parents and students use klassapp.xyz, the KlassApp apps, and KlassApp on WhatsApp (together, the "Platform"). Contact: <a href="mailto:connect@klassapp.xyz">connect@klassapp.xyz</a>.',
 
-'text_1'=>'This is a detailed structure of our privacy policy. This page covers every Gegosoft products and websites that link here.',
+'s2_heading' => '2. Our role: schools decide, we process',
+'s2_body'    => 'A school that uses KlassApp is the controller of its learners&#39; data. It decides what data goes in and why. KlassApp is the processor: we handle that data only to run the Platform for the school, under the school&#39;s instructions and a data processing agreement. For the data we collect for our own purposes, such as website visits, early-access requests and account security, we are the controller.<br><br>If you are a parent or student and want to see, correct or delete your data, ask your school first. We will help the school respond.',
 
-'text_2'=>'Information Gegosoft collects',
+'s3_heading' => '3. What we collect',
+'s3_body'    => '<ul style="margin:.5em 0;padding-left:1.5em;list-style:disc;">
+<li><strong>Account details:</strong> name, email address, phone number, role (administrator, teacher, parent), and a password stored only in hashed form.</li>
+<li><strong>School records entered by the school:</strong> class lists, learner names and identifiers, guardians&#39; contact details, attendance, exams and marks, report cards, fee records, timetables and messages.</li>
+<li><strong>WhatsApp:</strong> your WhatsApp number and display name, the messages you send to the KlassApp number, the link request that connects you to a child, your consent choice, and delivery status of messages we send.</li>
+<li><strong>Early-access and contact forms:</strong> the name, email, school and message you submit.</li>
+<li><strong>Technical data:</strong> log data such as IP address, browser, pages visited and errors, used to keep the Platform secure and working.</li>
+<li><strong>AI features:</strong> the questions you ask Toshi, our assistant, and the school data needed to answer them.</li>
+</ul>
+We do not collect payment card details. Payments, where offered, go through third-party payment providers.',
 
-'text_3'=>'Gegosoft has never sold your data to anyone else for advertising or has made money showing your other’s people’s data. This is our approach, and we always adhere to it. This Privacy Policy allows you to know what information we will collect from you, who can have access to it, and what we do with your information.',
+'s4_heading' => '4. How we use it',
+'s4_body'    => '<ul style="margin:.5em 0;padding-left:1.5em;list-style:disc;">
+<li>To provide the Platform: sign-in, marks, attendance, fees, reports and messages.</li>
+<li>To send results and notices to parents who have linked themselves on WhatsApp.</li>
+<li>To keep the Platform secure, prevent misuse and fix faults.</li>
+<li>To answer requests and support questions.</li>
+<li>To improve the Platform using aggregated or de-identified information.</li>
+</ul>
+We do not sell personal data. We do not show advertising. We do not use learners&#39; data for programmes, demonstrations or proofs of concept; demonstrations use made-up data only.',
 
-'text_4'=>'We only collect information from you which we need. Some of that information includes the ones you voluntarily give us when you sign up or register for an account, ask for support from customer care, or buy a product from us. We do not store your payment details or credit card details, but we do store your name and contact information with us. ',
+'s5_heading' => '5. WhatsApp',
+'s5_body'    => 'KlassApp does not message anyone first. A parent links themselves to a child by messaging the KlassApp number, and the school approves the link. After that, the school can send results and notices to that parent. You can stop messages at any time by replying STOP or telling your school, and you can ask for a link to be removed. WhatsApp is provided by Meta, which processes messages under its own terms and privacy policy.',
 
-'text_5'=>'We also receive information from you indirectly when you enquire about our products through a referral program or sign in using any online service provider like Google or Facebook. If you engage with our social media or brand, we will have information regarding your profile.',
+'s6_heading' => '6. AI features',
+'s6_body'    => 'Toshi and other AI features send the text of your request and the school data needed to answer it to third-party AI model providers. Those providers act as our sub-processors and do not use the data to train their models. A person or the school stays in charge: AI features do not change school records without the school&#39;s approval, and actions are logged.',
 
-'text_6'=>'What we do with your data',
+'s7_heading' => '7. Who we share data with',
+'s7_body'    => 'Only with those who help us run the Platform, under written terms: hosting and storage providers, email and messaging providers (including Meta for WhatsApp), AI model providers, and payment providers. A current list of sub-processors is available from us on request and is named in the data processing agreement. We may disclose data if the law requires it or to protect safety.',
 
-'text_7'=>'Gegosoft uses your information to provide you service which you have requested. By using that data, we will create and maintain your account and communicate to you about the products that are currently in use, your customer support requirements, and the new products you would like. We analyze this information to understand the needs of the user and to improve our service and website.',
+'s8_heading' => '8. Children\'s data',
+'s8_body'    => 'Most of the learners on KlassApp are children. Their data is entered and controlled by their school, which must have the lawful basis and any parent or guardian consent that its country&#39;s law requires. We collect no more of a child&#39;s data than the school provides, and children do not create their own accounts without a school.',
 
-'text_8'=>'You can decline specific information uses by not providing them, or you can opt-out of it later. We do not use cookies on any of our websites, so you can stop worrying about disabling cookies. We limit the access of your data to our contractors and employees. If we share your information with other parties, it will only be after seeking your permission, and the details will be shared only with parties like developers, customer support, service provider, and domain registrars.',
+'s9_heading' => '9. Where data is stored and for how long',
+'s9_body'    => 'Data is stored with our cloud providers in [hosting region]. We keep school data for as long as the school&#39;s account is active and for [retention period] afterwards, then delete or anonymize it, unless the law requires us to keep it. A school can ask us to export or delete its data at any time.',
 
-'text_9'=>'We keep your information as long as it is required for the purposes stated by us. When we no longer require your data or have any legitimate need to possess it, we delete, isolate, or anonymize your information from our database.',
+'s10_heading' => '10. Security',
+'s10_body'    => 'We use encrypted connections (HTTPS), role-based access so people see only what their role allows, hashed passwords, and logs of important actions. No system is perfectly secure. Tell us at once at <a href="mailto:connect@klassapp.xyz">connect@klassapp.xyz</a> if you think an account is at risk, and we will tell the affected school without undue delay if personal data is breached.',
 
-'text_10'=>'General',
+'s11_heading' => '11. Your rights',
+'s11_body'    => 'Depending on where you live, you may have the right to access, correct, delete or move your data, to object to some uses, and to complain to your data protection authority. Contact your school first, or write to us.',
 
-'text_11'=>'Gegosoft will disclose some information if it is necessary to comply with a legal obligation, prevent fraud, or protect user’s safety. Social media modules and third party websites have their own privacy policies. Always check the relevant policy before committing to sharing access to your information with third parties.',
-
-'text_12'=>'You can always ask us questions about our privacy policies or bring to our notice if we have collected information from a minor or need to have your personal data removed from our forums. You can always check on our privacy policies and security policy.',
-
-
-
-
+'s12_heading' => '12. Changes and contact',
+'s12_body'    => 'We will post changes here and update the date at the top. Questions: <a href="mailto:connect@klassapp.xyz">connect@klassapp.xyz</a> [and phone number].',
 
 ];

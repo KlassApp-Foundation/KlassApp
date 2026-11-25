@@ -1,129 +1,53 @@
 <?php
 
+// SPDX-License-Identifier: MIT
+// KlassApp Terms of Service — draft v0.1, 25 November 2026.
+// Square-bracketed items are open placeholders pending a decision.
+
 return [
 
-'terms_title' => 'Terms of Service',
+'title' => 'Terms of Service',
 
-'last_updated' => 'Last Updated: :date',
+'s1_heading' => '1. Agreement',
+'s1_body'    => 'These Terms govern your use of the Platform provided by [KlassApp legal entity name]. By creating an account, accepting an invite or using the Platform, you agree to them. A school that uses the Platform also agrees to the data processing agreement. If you use the Platform for a school, you confirm you have authority to do so.',
 
-'welcome' => 'Welcome to KlassApp, a cloud-based school management platform operated by GegoSoft Technologies.',
+'s2_heading' => '2. Who can use KlassApp',
+'s2_body'    => 'KlassApp is for schools and the people who work with them: administrators, teachers, parents and guardians, and learners. Learners use KlassApp only through their school. Where a person is under the age of digital consent in their country, their school or parent must authorise their use.',
 
-'introduction' => 'Introduction',
+'s3_heading' => '3. Accounts',
+'s3_body'    => 'Keep your sign-in details private and tell us at once if you think someone else has used them. You are responsible for what happens under your account. School administrators decide who at their school has access.',
 
-'introduction_detail' => 'These Terms of Service govern your use of KlassApp (the "Platform"), including our website, mobile applications, and any related services. By accessing or using the Platform, you agree to be bound by these Terms and all applicable laws and regulations, including the Uganda Data Protection and Privacy Act, 2019, and other relevant Ugandan legislation.',
+'s4_heading' => '4. School responsibilities',
+'s4_body'    => 'A school must have the legal right to enter its learners&#39; data, including any parent or guardian consent its local law requires. It must keep records accurate, give people access only as their role needs, and tell us about any misuse. The school remains responsible for its decisions about its learners; KlassApp supplies the tools.',
 
-'eligibility' => 'Eligibility',
+'s5_heading' => '5. Acceptable use',
+'s5_body'    => 'Do not use the Platform to harass or harm anyone, enter false or unlawful content, attempt to break into the Platform or another school&#39;s data, scrape data, send unrequested messages through the Platform, or use it in a way that breaks the law. We may suspend an account that does.',
 
-'eligibility_content' => 'The Platform is intended for educational institutions, teachers, administrators, parents, and students in Uganda and across East Africa. You must be at least 13 years old to register for an account, or have parental consent if you are between 13 and 18 years old. Schools must have legal authority to use educational technology platforms.',
+'s6_heading' => '6. WhatsApp and messaging',
+'s6_body'    => 'Messages from KlassApp go only to people who have linked themselves and whom the school has approved. Using WhatsApp is subject to WhatsApp&#39;s own terms. Message delivery depends on third parties and is not guaranteed.',
 
-'school_data' => 'School Data Management',
+'s7_heading' => '7. AI features',
+'s7_body'    => 'AI features can make mistakes. A person at the school must check anything that affects a learner&#39;s record, marks or report before relying on it. AI features act only within the permissions of the person using them.',
 
-'school_data_content' => 'Schools using KlassApp must ensure that all student data entered into the system belongs to their institution or is entered with proper parental consent. Schools are responsible for maintaining the accuracy of student records, including but not limited to: academic performance, attendance records, health information, and personal identifiers.',
+'s8_heading' => '8. Fees and early-access programmes',
+'s8_body'    => 'Some features are free during early-access programmes, on the programme&#39;s own terms. Where a fee applies, it is set out in the school&#39;s plan and paid through our payment providers. [Refund and billing terms to be confirmed.]',
 
-'parental_consent' => 'Parental Consent and Data Sharing',
+'s9_heading' => '9. Open-source code',
+'s9_body'    => 'The KlassApp source code is public under the MIT licence, and that licence governs the code. These Terms govern the hosted Platform and KlassApp&#39;s name and branding.',
 
-'parental_consent_content' => 'By registering for KlassApp, schools confirm they have obtained appropriate parental consent for processing student data. Parents may communicate with teachers through the Platform\'\s messaging system, and all communications are subject to these Terms. Schools must maintain records of parental consent for data processing activities.',
+'s10_heading' => '10. Your content and our service',
+'s10_body'    => 'Schools and users keep ownership of the data they enter. They give us permission to process it as needed to run the Platform. KlassApp keeps its rights in the Platform, name and branding, apart from the open-source licence.',
 
-'data_protection' => 'Data Protection and Security',
+'s11_heading' => '11. Availability and liability',
+'s11_body'    => 'We work to keep the Platform available but do not promise it will always be uninterrupted or error-free. To the extent the law allows, KlassApp is not liable for indirect or consequential loss, or for loss caused by third-party services, and our total liability is limited to the fees the school paid in the previous 12 months. [Danson to confirm this clause.] Nothing here limits liability that the law does not allow us to limit.',
 
-'data_protection_content_1' => 'KlassApp takes data protection seriously and implements industry-standard security measures including:',
+'s12_heading' => '12. Ending use',
+'s12_body'    => 'You may stop using the Platform at any time. A school may close its account and ask us to export or delete its data. We may suspend or end access for serious or repeated breach of these Terms, and will tell the school why where we can.',
 
-'data_protection_encryption' => 'End-to-end encryption for data transmission',
+'s13_heading' => '13. Governing law and disputes',
+'s13_body'    => 'These Terms are governed by the laws of [governing law, to be confirmed by Danson]. We will try to settle any dispute by talking first, then by mediation, before any court. [Venue to be confirmed.]',
 
-'data_protection_access' => 'Role-based access control limiting data access to authorized personnel only',
-
-'data_protection_backup' => 'Regular automated backups with secure storage',
-
-'data_protection_compliance' => 'Compliance with Uganda Data Protection and Privacy Act, 2019',
-
-'data_protection_audits' => 'Regular security audits and vulnerability assessments',
-
-'data_protection_content_2' => 'We never sell your data to third parties for marketing purposes. Student data is processed solely for educational purposes and is not used for targeted advertising.',
-
-'ugandan_law_compliance' => 'Compliance with Ugandan Laws',
-
-'ugandan_law_content_1' => 'KlassApp complies with the following Ugandan laws and regulations:',
-
-'ugandan_dpa' => 'Uganda Data Protection and Privacy Act, 2019',
-
-'ugandan_computer_misuse' => 'Uganda Computer Misuse Act, 2011',
-
-'ugandan_education' => 'Uganda National Education Policy',
-
-'ugandan_taxation' => 'Uganda Revenue Authority regulations for digital services',
-
-'ugandan_law_content_2' => 'Data localization: While we use international cloud providers, we comply with Ugandan data protection requirements for processing personal data of Ugandan residents.',
-
-'account_responsibilities' => 'Account Responsibilities',
-
-'account_content' => 'Schools and administrators are responsible for:',
-
-'responsibility_accuracy' => 'Ensuring data accuracy and updating information promptly',
-
-'responsibility_compliance' => 'Complying with all applicable educational regulations',
-
-'responsibility_security' => 'Maintaining the confidentiality of account credentials',
-
-'responsibility_termination' => 'Notifying KlassApp immediately of any unauthorized access',
-
-'responsibility_audit' => 'Maintaining records required by educational authorities',
-
-'acceptable_use' => 'Acceptable Use',
-
-'acceptable_use_content' => 'You agree not to use the Platform to:',
-
-'prohibited_harassment' => 'Harass, bully, or threaten other users',
-
-'prohibited_false_info' => 'Submit false or misleading information',
-
-'prohibited_attack' => 'Attempt to gain unauthorized access to the Platform',
-
-'prohibited_commercial' => 'Use the Platform for commercial purposes beyond your subscription',
-
-'prohibited_mining' => 'Extract or scrape data for commercial use',
-
-'intellectual_property' => 'Intellectual Property',
-
-'ip_content' => 'All content, features, and functionality on KlassApp, including but not limited to software, text, graphics, logos, and designs, are owned by GegoSoft Technologies or its licensors and protected by Ugandan and international copyright laws. The Platform is licensed, not sold, to users under the terms of their subscription.',
-
-'third_party_services' => 'Third-Party Services',
-
-'third_party_content' => 'KlassApp may integrate with third-party services such as WhatsApp, Google, and payment processors. Your use of these services is subject to their respective terms of service. We are not responsible for the actions or content of these third parties.',
-
-'payments' => 'Payments and Subscriptions',
-
-'payments_content' => 'Payments for premium features are processed securely through third-party payment processors. All fees are quoted in USD. Schools are responsible for maintaining valid payment information. No refunds are provided for partial periods, but unused time will be credited if the account is terminated for cause.',
-
-'term_and_termination' => 'Term and Termination',
-
-'termination_content' => 'These Terms remain in effect until terminated. Either party may terminate the agreement with 30 days written notice. GegoSoft Technologies may terminate or suspend your account immediately for violation of these Terms or applicable law. Upon termination, all data access rights are revoked.',
-
-'dispute_resolution' => 'Dispute Resolution',
-
-'dispute_content' => 'Any disputes arising from these Terms shall be resolved through good-faith negotiation. If unresolved, disputes shall be submitted to mediation in Kampala, Uganda. If mediation fails, disputes shall be submitted to the courts of Kampala, Uganda.',
-
-'governing_law' => 'Governing Law',
-
-'governing_content' => 'These Terms are governed by and construed in accordance with the laws of Uganda, without regard to its conflict of law principles.',
-
-'limitation_of_liability' => 'Limitation of Liability',
-
-'liability_content' => 'To the maximum extent permitted by law, GegoSoft Technologies shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of data, profits, or business opportunity, even if advised of the possibility thereof.',
-
-'indemnification' => 'Indemnification',
-
-'indemnification_content' => 'You agree to indemnify and hold harmless GegoSoft Technologies, its affiliates, and their respective officers, directors, employees, and agents from and against any claims, losses, damages, liabilities, costs, and expenses arising from your use of the Platform or violation of these Terms.',
-
-'changes_to_terms' => 'Changes to Terms',
-
-'changes_content' => 'We may revise these Terms at any time. Changes will be effective upon posting to the Platform. Continued use of the Platform after changes are posted constitutes acceptance of the revised Terms.',
-
-'contact_information' => 'Contact Information',
-
-'contact_content' => 'If you have questions about these Terms, please contact us at connect@klassapp.xyz or call +256-XXX-XXXXXX.',
-
-'acknowledgment' => 'Acknowledgment',
-
-'acknowledgment_content' => 'By clicking "I Agree" or using KlassApp, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.',
+'s14_heading' => '14. Changes and contact',
+'s14_body'    => 'We may update these Terms and will post the new version and date here. Using the Platform after a change means you accept it. Contact: <a href="mailto:connect@klassapp.xyz">connect@klassapp.xyz</a> [and phone number].',
 
 ];

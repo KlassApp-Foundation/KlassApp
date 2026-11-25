@@ -1,46 +1,34 @@
 {{-- SPDX-License-Identifier: MIT --}}
+{{-- KlassApp Privacy Policy (/privacy). Text comes from lang/en/policy.php. --}}
+{{-- Remove the draft banner by clearing config('app.legal_draft_banner'). --}}
 @extends('layouts.main')
 
-@section('content')
-<!-- start -->
-<div class="bg-red-600 py-16">
-	<div class="container mx-auto h-full">
-		<div class="text-center flex flex-col justify-center items-center py-5 leading-loose tracking-wider h-full">
-		<h1 class="text-white font-plex text-4xl">{!! __('policy.privacy_policy') !!}</h1>
-		<h2 class="text-base font-exo text-white">{!! __('policy.text_1') !!}</h2>
-		</div>
-		
-	</div>
-</div>
-<!-- end -->
-<!-- start -->
-<div class="bg-white py-5 px-3 lg:px-0 md:px-0">
-	<div class="container mx-auto">
-		<div class="w-full lg:w-2/3 lg:mx-auto leading-loose py-2">
-			<h2 class="text-2xl text-gray-800 py-3 italic">{!! __('policy.text_2') !!}</h2>
-			<p class="text-base text-gray-700 my-2">{!! __('policy.text_3') !!}</p>
-			<p class="text-base text-gray-700 my-2">{!! __('policy.text_4') !!}</p>
-			<p class="text-base text-gray-700 my-2">{!! __('policy.text_5') !!}</p>
-			<h2 class="text-2xl text-gray-800 py-3">{!! __('policy.text_6') !!}</h2>
-			<p class="text-base text-gray-700 my-2">
-					{!! __('policy.text_7') !!}
-			</p>
-			<p class="text-base text-gray-700 my-2">
-				{!! __('policy.text_8') !!}
-			</p>
-			<p class="text-base text-gray-700 my-2">
-				{!! __('policy.text_9') !!}
-			</p>
-		<h2 class="text-2xl text-gray-800 py-3">{!! __('policy.text_10') !!}</h2>
-		<p class="text-base text-gray-700 my-2">
-			{!! __('policy.text_11') !!}
-		</p>
-		<p class="text-base text-gray-700 my-2">
-			{!! __('policy.text_12') !!}
-		</p>
-		</div>
-	</div>
-</div>
-<!-- end -->
-@endsection 
+@section('title', 'Privacy Policy — KlassApp')
 
+@section('content')
+<div class="bg-red-600 py-10">
+    <div class="container mx-auto text-center">
+        <h1 class="text-white font-plex text-4xl">{!! __('policy.title') !!}</h1>
+    </div>
+</div>
+
+<div class="bg-white py-6 px-3 lg:px-0">
+    <div class="container mx-auto">
+        <div class="w-full lg:w-2/3 lg:mx-auto leading-loose">
+
+            @if(config('app.legal_draft_banner'))
+            <p class="text-sm font-semibold text-amber-700 bg-amber-50 border border-amber-300 rounded px-4 py-2 mb-6" data-testid="legal-draft-banner">{{ config('app.legal_draft_banner') }}</p>
+            @endif
+
+            @foreach(range(1, 12) as $n)
+            @php $h = __('policy.s'.$n.'_heading'); $b = __('policy.s'.$n.'_body'); @endphp
+            @if($h !== 'policy.s'.$n.'_heading')
+            <h2 class="text-xl font-semibold text-gray-800 mt-6 mb-1">{{ $h }}</h2>
+            <div class="text-base text-gray-700 my-2">{!! $b !!}</div>
+            @endif
+            @endforeach
+
+        </div>
+    </div>
+</div>
+@endsection

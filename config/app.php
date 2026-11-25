@@ -270,4 +270,14 @@ return [
         'Calendar'=> App\Calendar\CalendarFacade::class,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Legal pages draft banner
+    |--------------------------------------------------------------------------
+    | Shown at the top of /privacy and /terms. Remove by setting this to an
+    | empty string (or clearing the env var) once Danson approves the text.
+    |
+    */
+    'legal_draft_banner' => env('LEGAL_DRAFT_BANNER', 'Draft effective 25 November 2026. Under review.'),
+
 ];
