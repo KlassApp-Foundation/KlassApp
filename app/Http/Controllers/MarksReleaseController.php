@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Academics\Exam;
 use App\Models\Academics\ExamMarksSubmission;
 use App\Models\MarksRelease;
+use App\Models\School;
 use App\Models\User;
 use App\Support\ClassLevelOrder;
 use App\Services\Marks\MarksSubmissionService;
@@ -471,6 +472,7 @@ class MarksReleaseController extends Controller
             'buttonLabel' => $action.' '.$examName.' marks to '.$classCount.' '.$classNoun,
             'releaseTo' => $who . ' (' . $count . ' ' . ($count === 1 ? 'student' : 'students') . ')',
             'releaseHistory' => $history,
+            'schoolIsTest' => (bool) School::query()->whereKey($user->school_id)->value('is_test'),
             'releaserNames' => $releaserNames,
             'releasedLock' => $this->lockFromHistory($history, $known ? $targets : [], $releaserNames),
         ];
