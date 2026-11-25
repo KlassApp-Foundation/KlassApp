@@ -1085,12 +1085,11 @@ class WhatsAppController extends Controller
         // Free-text name/school search removed — only KLS ID (above) or Request Link Flow.
         $sendButtons(
             "👋 *Welcome to KlassApp!* 🎓\n\n"
-            . "KlassApp is an education protocol that runs in the tools "
-            . "educationists already use. Admins manage school operations in Slack, "
-            . "teachers enter marks from spreadsheets, and parents receive their "
-            . "children's school updates on WhatsApp, all by chatting in natural "
-            . "language with Toshi, your school's AI assistant. We're in soft launch "
-            . "— demo accounts are open, school roll-out is by invitation.\n\n"
+            . "KlassApp is a school operations system — attendance, marks, fees, and "
+            . "parent updates, all in one place. Parents connect on WhatsApp, "
+            . "teachers enter marks from their spreadsheets, and Toshi, your school's "
+            . "AI assistant, handles the rest. We're in soft launch; school roll-out "
+            . "is by invitation.\n\n"
             . "Want your school to join? Reply JOIN.\n"
             . "Tap *Try Demo* to explore with sample data.\n"
             . "Tap *Link help* for KlassApp ID instructions, or *Request Link* "
