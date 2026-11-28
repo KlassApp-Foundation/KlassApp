@@ -56,7 +56,7 @@ class ParentProfileController extends Controller
     public function resetPassword(string $name, ParentProfileService $profiles)
     {
         $schoolId = (int) Auth::user()->school_id;
-        $parent = $profiles->find($schoolId, $name);
+        $parent = \App\Support\PersonByName::forWrite($name, $schoolId, [7], true);
         $this->resetPasswordToUser($parent);
         $key = filled($parent->name) ? $parent->name : $parent->id;
 

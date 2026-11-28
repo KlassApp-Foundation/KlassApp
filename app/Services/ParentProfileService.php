@@ -75,7 +75,7 @@ class ParentProfileService
 
     public function deactivate(int $schoolId, string $name): User
     {
-        $parent = $this->find($schoolId, $name);
+        $parent = \App\Support\PersonByName::forWrite($name, $schoolId, [7], true);
         $parent->status = 'inactive';
         $parent->save();
 
