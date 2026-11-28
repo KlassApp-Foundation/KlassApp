@@ -14,6 +14,7 @@ use App\Services\ExamAuthorization;
 use App\Services\Results\ResultsPolicy;
 use App\Support\AttendanceDays;
 use App\Support\DashboardGreeting;
+use App\Support\DisplayName;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
@@ -190,7 +191,8 @@ final class TeacherHomeBoard
                 ->count('student_id');
             $link = $links->first(fn (StandardLink $item) => (int) $item->section_id === (int) $exam->section_id);
             $expected = $link ? count($this->studentIds($schoolId, (int) $exam->academic_year_id, [(int) $link->id])) : 0;
-            $title = trim(($link ? $this->className($link) : (string) ($exam->section?->name ?? 'Class')).' '.($exam->subject?->name ?? '').' · '.($exam->examType?->name ?? 'Exam'));
+            $subjectLabel = DisplayName::proper($exam->subject?->name ?? '');
+            $title = trim(($link ? $this->className($link) : (string) ($exam->section?->name ?? 'Class')).' '.$subjectLabel.' · '.($exam->examType?->name ?? 'Exam'));
 
             if ($submission && ($submission->approval_status === 'rejected' || $submission->status === 'reopened')) {
                 $returned++;

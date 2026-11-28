@@ -380,7 +380,7 @@
                                 {{ strtoupper(substr($user->name, 0, 2)) }}
                             </div>
                             <div>
-                                <p class="text-sm font-semibold text-gray-800">{{ $user->displayName ?: $user->name }}</p>
+                                <p class="text-sm font-semibold text-gray-800">{{ \App\Support\DisplayName::proper($user->displayName ?: $user->name) }}</p>
                                 <p class="text-xs text-gray-500">
                                     {{ $user->school->name ?? 'No school' }}
                                     &middot; {{ $user->created_at->diffForHumans() }}

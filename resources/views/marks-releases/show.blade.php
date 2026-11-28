@@ -117,7 +117,7 @@
             <tbody>
             @foreach($release->result['messages'] as $m)
                 <tr>
-                    <td data-testid="release-student-name">{{ $m['name'] ?? $m['student'] }}@if(!empty($m['parent'])) · <span data-testid="release-recipient">{{ $m['parent'] }}</span>@endif</td>
+                    <td data-testid="release-student-name">{{ \App\Support\DisplayName::proper($m['name'] ?? $m['student']) }}@if(!empty($m['parent'])) · <span data-testid="release-recipient">{{ $m['parent'] }}</span>@endif</td>
                     <td data-testid="release-student-class">{{ ($m['class'] ?? '') !== '' ? $m['class'] : '–' }}</td>
                     <td>{{ $m['to'] ?? '–' }}</td>
                     <td>{{ match ($m['status']) { 'sent' => 'Sent', 'queued' => 'Sending…', 'retrying' => 'Retrying: '.$m['reason'], 'failed' => 'Failed: '.$m['reason'], default => 'Skipped: '.$m['reason'] } }}</td>
