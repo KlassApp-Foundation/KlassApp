@@ -17,6 +17,7 @@ use App\Models\Subject;
 use App\Models\User;
 use App\Services\ExamAuthorization;
 use App\Services\ExamMarksheetService;
+use App\Support\DisplayName;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -74,7 +75,8 @@ public function sections(){
         ])
             ->where('school_id', $schoolId)
             ->latest()
-            ->get();
+            ->paginate(20)
+            ->withQueryString();
 
         $marksByExam = Marks::where('school_id', $schoolId)
             ->whereIn('exam_id', $exams->pluck('id'))
@@ -96,11 +98,12 @@ public function sections(){
             // Always display the exam record's own subject/teacher — marks rows and
             // class teacherlinks are the wrong source (blank until marks exist, or
             // wrong teacher when multiple teachers share a class).
-            $exam->subjects_list = collect([$exam->subject?->name])->filter()->values();
+            $exam->subjects_list = collect([DisplayName::proper($exam->subject?->name)])->filter()->values();
 
-            $teacherLabel = $exam->teacher?->display_name
-                ?: $exam->teacher?->name
-                ?: $exam->teacher?->email;
+            $rawTeacher = $exam->teacher?->display_name ?: $exam->teacher?->name;
+            $teacherLabel = $rawTeacher
+                ? DisplayName::proper($rawTeacher)
+                : $exam->teacher?->email;
             $exam->teachers_list = collect([$teacherLabel])->filter()->values();
         }
 

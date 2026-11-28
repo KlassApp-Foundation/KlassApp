@@ -56,9 +56,9 @@ class SidebarActiveStateTest extends TestCase
             'Expected exactly one aria-current on /admin/marks/releases/new'
         );
         $this->assertMatchesRegularExpression(
-            '/aria-current="page"[^>]*>[^<]*<[^>]*>Marks Release/s',
+            '/aria-current="page"[^>]*>[^<]*<[^>]*>Release marks/s',
             $html,
-            '"Marks Release" should be the active child on /admin/marks/releases/new'
+            '"Release marks" should be the active child on /admin/marks/releases/new'
         );
         $this->assertDoesNotMatchRegularExpression(
             '/aria-current="page"[^>]*>[^<]*<[^>]*>Exams and marks/s',

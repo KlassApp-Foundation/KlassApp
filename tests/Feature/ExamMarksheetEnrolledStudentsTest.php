@@ -242,8 +242,8 @@ class ExamMarksheetEnrolledStudentsTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('admin.exams'));
 
         $response->assertOk();
-        $response->assertSee('MATHEMATICS', false);
-        // Teacher names render via the shared uppercase display-name convention.
-        $response->assertSee('JAMES OKELLO', false);
+        $response->assertSee('Mathematics', false);
+        // Teacher names render via DisplayName::proper() applied in the controller.
+        $response->assertSee('James Okello', false);
     }
 }

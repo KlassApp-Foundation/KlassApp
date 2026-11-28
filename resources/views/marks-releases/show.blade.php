@@ -11,13 +11,19 @@
 @php
     $tz = $release->timezone ?: 'Africa/Kampala';
     $fmt = fn ($t) => $t ? $t->setTimezone($tz)->format('D j M Y, H:i') : '–';
+    $tzLabel = match ($tz) {
+        'Africa/Kampala', 'Africa/Nairobi', 'Africa/Dar_es_Salaam', 'Africa/Addis_Ababa' => 'East Africa Time (EAT)',
+        'Africa/Lagos', 'Africa/Douala', 'Africa/Kinshasa' => 'West Africa Time (WAT)',
+        'Africa/Cairo', 'Africa/Johannesburg' => 'South Africa / Egypt Standard Time',
+        default => $tz,
+    };
 @endphp
 <div class="mr" data-testid="marks-release-show">
     @if(!empty($canReopen))
-        <input type="checkbox" id="ka-release-reopen" class="ka-sr ka-release-open" @checked(!empty($reopenOpen))>
+        <input type="checkbox" id="ka-release-reopen" class="ka-sr ka-release-open" aria-label="Toggle reopen-marks dialog" @checked(!empty($reopenOpen))>
     @endif
     <h1>Marks release</h1>
-    <p class="mr-sub">Times in {{ $tz }}.</p>
+    <p class="mr-sub">All times are {{ $tzLabel }}.</p>
     @if(session('status'))
         <div class="mr-card" role="status" data-testid="release-flash">{{ session('status') }}</div>
     @endif
@@ -117,7 +123,7 @@
             <tbody>
             @foreach($release->result['messages'] as $m)
                 <tr>
-                    <td data-testid="release-student-name">{{ $m['name'] ?? $m['student'] }}@if(!empty($m['parent'])) · <span data-testid="release-recipient">{{ $m['parent'] }}</span>@endif</td>
+                    <td data-testid="release-student-name">{{ \App\Support\DisplayName::proper($m['name'] ?? $m['student']) }}@if(!empty($m['parent'])) · <span data-testid="release-recipient">{{ $m['parent'] }}</span>@endif</td>
                     <td data-testid="release-student-class">{{ ($m['class'] ?? '') !== '' ? $m['class'] : '–' }}</td>
                     <td>{{ $m['to'] ?? '–' }}</td>
                     <td>{{ match ($m['status']) { 'sent' => 'Sent', 'queued' => 'Sending…', 'retrying' => 'Retrying: '.$m['reason'], 'failed' => 'Failed: '.$m['reason'], default => 'Skipped: '.$m['reason'] } }}</td>

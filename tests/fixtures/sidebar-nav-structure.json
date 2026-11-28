@@ -156,7 +156,7 @@
                                     ]
                                 },
                                 {
-                                    "label": "Marks Release",
+                                    "label": "Release marks",
                                     "url": "admin/marks/releases/new",
                                     "paths": [
                                         "admin/marks/releases*"
@@ -332,9 +332,9 @@
                     ]
                 },
                 {
-                    "label": "Mail List",
+                    "label": "Mail list",
                     "url": "superadmin/mail-list",
-                    "title": "Mail List",
+                    "title": "Mail list",
                     "paths": [
                         "superadmin/*/mail-list*"
                     ]
@@ -426,7 +426,7 @@
                     "condition": "class_teacher"
                 },
                 {
-                    "label": "Report Cards",
+                    "label": "Report cards",
                     "route": "teacher.reports.cards.index",
                     "active": [
                         "reports"
@@ -434,7 +434,7 @@
                     "condition": "class_teacher"
                 },
                 {
-                    "label": "Class Streams",
+                    "label": "Class streams",
                     "route": "teacher.class-stream.index",
                     "active": [
                         "class-streams"
@@ -655,7 +655,7 @@
                     ]
                 },
                 {
-                    "label": "Data Exports",
+                    "label": "Data exports",
                     "url": "library/activity",
                     "active": [
                         "reports",
@@ -741,7 +741,7 @@
                     ]
                 },
                 {
-                    "label": "Fees & Payments",
+                    "label": "Fees & payments",
                     "route": "accountant.fee-payments",
                     "active": [
                         "fees",
@@ -751,7 +751,7 @@
                     ]
                 },
                 {
-                    "label": "Data Exports",
+                    "label": "Data exports",
                     "route": "accountant.reports",
                     "active": [
                         "reports",
@@ -786,7 +786,7 @@
                             "url": "accountant/payroll/payslip"
                         },
                         {
-                            "label": "Batch Run",
+                            "label": "Batch run",
                             "url": "accountant/payroll/batch",
                             "active": [
                                 "payroll.batch"
@@ -815,7 +815,7 @@
                     ]
                 },
                 {
-                    "label": "My Marks",
+                    "label": "My marks",
                     "url": "alumni/marks",
                     "active": [
                         "marks",

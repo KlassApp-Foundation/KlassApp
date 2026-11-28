@@ -159,8 +159,8 @@ class ExamListDisplaysExamSubjectAndTeacherTest extends TestCase
         $response = $this->actingAs($admin)->get(route('admin.exams'));
 
         $response->assertOk();
-        $response->assertSee('ENGLISH LANGUAGE', false);
-        $response->assertSee('JAMES OKELLO', false);
-        $response->assertDontSee('GRACE NAMBOGO', false);
+        $response->assertSee('English Language', false);
+        $response->assertSee('James Okello', false);
+        $response->assertDontSee('Grace Nambogo', false);
     }
 }
