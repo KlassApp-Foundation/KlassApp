@@ -142,23 +142,23 @@ class ClassTeacherNavVisibilityTest extends TestCase
     public function test_homeroom_teacher_sees_both_conditioned_items(): void
     {
         $html = $this->sidebarFor($this->homeroomTeacher);
-        $this->assertStringContainsString('Report Cards', $html);
-        $this->assertStringContainsString('Class Streams', $html);
+        $this->assertStringContainsString('Report cards', $html);
+        $this->assertStringContainsString('Class streams', $html);
     }
 
     public function test_subject_only_teacher_sees_neither_conditioned_item(): void
     {
         $html = $this->sidebarFor($this->subjectOnlyTeacher);
-        $this->assertStringNotContainsString('Report Cards', $html);
-        $this->assertStringNotContainsString('Class Streams', $html);
+        $this->assertStringNotContainsString('Report cards', $html);
+        $this->assertStringNotContainsString('Class streams', $html);
         $this->assertStringContainsString('Attendance', $html);
     }
 
     public function test_section_level_class_teacher_sees_class_streams_but_not_report_cards(): void
     {
         $html = $this->sidebarFor($this->sectionTeacher);
-        $this->assertStringContainsString('Class Streams', $html, 'section-level class teacher must see Class Streams');
-        $this->assertStringNotContainsString('Report Cards', $html, 'Report Cards stays homeroom-only, matching its controller');
+        $this->assertStringContainsString('Class streams', $html, 'section-level class teacher must see Class streams');
+        $this->assertStringNotContainsString('Report cards', $html, 'Report cards stays homeroom-only, matching its controller');
     }
 
     public function test_attendance_scope_does_not_move_the_conditioned_items(): void
@@ -167,11 +167,11 @@ class ClassTeacherNavVisibilityTest extends TestCase
             $this->setScope($scope);
 
             $subjectHtml = $this->sidebarFor($this->subjectOnlyTeacher);
-            $this->assertStringNotContainsString('Report Cards', $subjectHtml, "scope {$scope} must not reveal Report Cards");
-            $this->assertStringNotContainsString('Class Streams', $subjectHtml, "scope {$scope} must not reveal Class Streams");
+            $this->assertStringNotContainsString('Report cards', $subjectHtml, "scope {$scope} must not reveal Report cards");
+            $this->assertStringNotContainsString('Class streams', $subjectHtml, "scope {$scope} must not reveal Class streams");
 
             $homeroomHtml = $this->sidebarFor($this->homeroomTeacher);
-            $this->assertStringContainsString('Report Cards', $homeroomHtml, "scope {$scope} must keep Report Cards for a homeroom teacher");
+            $this->assertStringContainsString('Report cards', $homeroomHtml, "scope {$scope} must keep Report cards for a homeroom teacher");
         }
     }
 
