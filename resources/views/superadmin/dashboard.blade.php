@@ -8,7 +8,7 @@
         <div>
             <h1 class="dashboard-section-title" style="font-size: 1.25rem;">Super Admin</h1>
             <p class="dashboard-subtitle" style="margin-top: 4px;">
-                Platform overview across {{ number_format($stats['totalSchools']) }} schools
+                Platform overview across {{ number_format($stats['totalSchools']) }} {{ $stats['totalSchools'] === 1 ? 'school' : 'schools' }}
                 &middot; stats updated
                 <span @if(!empty($stats['refreshedAtAbsolute']))title="{{ $stats['refreshedAtAbsolute'] }}" @endif>{{ $stats['refreshedAt'] ?? 'recently' }}</span>
             </p>

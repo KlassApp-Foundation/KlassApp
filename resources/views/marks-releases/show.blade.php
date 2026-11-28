@@ -20,7 +20,7 @@
 @endphp
 <div class="mr" data-testid="marks-release-show">
     @if(!empty($canReopen))
-        <input type="checkbox" id="ka-release-reopen" class="ka-sr ka-release-open" @checked(!empty($reopenOpen))>
+        <input type="checkbox" id="ka-release-reopen" class="ka-sr ka-release-open" aria-label="Toggle reopen-marks dialog" @checked(!empty($reopenOpen))>
     @endif
     <h1>Marks release</h1>
     <p class="mr-sub">All times are {{ $tzLabel }}.</p>
