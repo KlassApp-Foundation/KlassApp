@@ -75,7 +75,8 @@ public function sections(){
         ])
             ->where('school_id', $schoolId)
             ->latest()
-            ->get();
+            ->paginate(20)
+            ->withQueryString();
 
         $marksByExam = Marks::where('school_id', $schoolId)
             ->whereIn('exam_id', $exams->pluck('id'))

@@ -16,7 +16,7 @@
 <x-table :headers="$headers">
     @forelse ($exams as $exam)
     <tr>
-        <td>{{ $loop->iteration }}</td>
+        <td>{{ ($exams->currentPage() - 1) * $exams->perPage() + $loop->iteration }}</td>
         <td>{{ $exam->academicTerm->name }}</td>
         <td>{{ $exam->examType->name }}</td>
         <td>
@@ -56,6 +56,9 @@
     </tr>
     @endforelse
 </x-table>
+@if($exams->hasPages())
+    <div class="mt-4">{{ $exams->links() }}</div>
+@endif
 
 </div>
 
