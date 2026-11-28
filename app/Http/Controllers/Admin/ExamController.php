@@ -113,7 +113,7 @@ public function sections(){
             ->whereIn('usergroup_id', [3, 5])
             ->get();
 
-        $headers = ["No", "Term", "Type", "Status", "Level", "Class", "Subject", "Teacher", "Actions"];
+        $headers = ["No", "Exam", "Class", "Status", "Teacher", "Actions"];
 
         return view('admin.exams.index', compact(
             'exams', 'standards', 'subjects', 'teachers', 'headers'

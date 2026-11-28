@@ -76,11 +76,13 @@
                     <p>Nothing is waiting.</p>
                 @else
                     @foreach($markGroups as $markState => $markRows)
+                        @if(count($markRows) > 0)
+                            <h3 class="ka-marks-group-label">{{ $markState }} ({{ count($markRows) }})</h3>
+                        @endif
                         @foreach($markRows as $row)
                             <article class="ka-marks-row teacher-row" data-testid="teacher-marks-row" data-state="{{ $markState }}">
-                                <span class="ka-pill {{ $markState === 'Returned' ? 'ka-pill-red' : ($markState === 'In progress' ? 'ka-pill-blue' : 'ka-pill-muted') }}">{{ $markState }}</span>
                                 <div class="ka-marks-copy">
-                                    <h3>{{ $row['title'] }}</h3>
+                                    <p class="font-medium text-sm">{{ $row['title'] }}</p>
                                     <p class="{{ $markState === 'Returned' ? 'ka-marks-note' : 'ka-marks-detail' }}" @if($markState === 'Returned') data-testid="teacher-return-note" @endif>{{ $row['detail'] }}</p>
                                 </div>
                                 <a href="{{ $row['url'] }}" @if($markState === 'In progress') data-testid="teacher-marks-continue" @endif @if($markState === 'Not started') data-testid="teacher-marks-enter" @endif>{{ $row['action'] }}</a>
