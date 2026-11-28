@@ -134,8 +134,8 @@ class TeacherHomeMarksTilesTest extends TestCase
         $this->assertStringContainsString('exams to mark', $html);
         $this->assertMatchesRegularExpression('/data-testid="upcoming-exams-count">\s*1\s*</', $html);
         $this->assertStringContainsString('Upcoming exams', $html);
-        $this->assertStringContainsString('MATHEMATICS', $html);
-        $this->assertStringNotContainsString('ENGLISH', $html);
+        $this->assertStringContainsString('Mathematics', $html);
+        $this->assertStringNotContainsString('English Language', $html);
         $this->assertStringNotContainsString('data-testid="release-marks-button"', $html);
         $this->assertStringContainsString('data-testid="teacher-corrections-empty"', $html);
 
@@ -145,8 +145,8 @@ class TeacherHomeMarksTilesTest extends TestCase
         $this->assertStringContainsString('data-testid="release-marks-button"', $classHead);
         $this->assertStringContainsString('Marks Release', $classHead);
         $this->assertStringContainsString(route('teacher.attendance.register'), $classHead);
-        $this->assertStringContainsString('MATHEMATICS', $classHead);
-        $this->assertStringContainsString('ENGLISH', $classHead);
+        $this->assertStringContainsString('Mathematics', $classHead);
+        $this->assertStringContainsString('English', $classHead);
         $this->assertNotSame($past->id, 0);
     }
 
@@ -158,7 +158,7 @@ class TeacherHomeMarksTilesTest extends TestCase
 
         $this->assertMatchesRegularExpression('/data-testid="marks-needing-you-count">\s*0\s*</', $html);
         $this->assertMatchesRegularExpression('/data-testid="upcoming-exams-count">\s*0\s*</', $html);
-        $this->assertStringNotContainsString('MATHEMATICS', $html);
+        $this->assertStringNotContainsString('Mathematics', $html);
         $this->assertStringNotContainsString('data-testid="release-marks-button"', $html);
     }
 
@@ -191,7 +191,7 @@ class TeacherHomeMarksTilesTest extends TestCase
 
         $other = $this->page($this->englishTeacher);
         $this->assertStringNotContainsString('Recheck the totals.', $other);
-        $this->assertStringNotContainsString('MATHEMATICS', $other);
+        $this->assertStringNotContainsString('Mathematics', $other);
         $this->assertStringContainsString('data-testid="teacher-corrections-empty"', $other);
     }
 
@@ -253,12 +253,12 @@ class TeacherHomeMarksTilesTest extends TestCase
         ]));
 
         $home = $this->page($this->classHead);
-        $this->assertStringContainsString('MATHEMATICS', $home);
-        $this->assertStringNotContainsString('QUARANTINE SUBJECT', $home);
+        $this->assertStringContainsString('Mathematics', $home);
+        $this->assertStringNotContainsString('Quarantine Subject', $home);
 
         $away = $this->page($stranger);
-        $this->assertStringContainsString('QUARANTINE SUBJECT', $away);
-        $this->assertStringNotContainsString('MATHEMATICS', $away);
+        $this->assertStringContainsString('Quarantine Subject', $away);
+        $this->assertStringNotContainsString('Mathematics', $away);
         $this->assertStringNotContainsString('Recheck', $away);
         $this->assertStringContainsString('data-testid="release-marks-button"', $away);
     }
