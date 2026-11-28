@@ -115,7 +115,11 @@
                     <h2>Girls and boys</h2>
                     @foreach($board['streams'] as $stream)
                         <p class="family-fee-line"><span>{{ $stream['name'] }}</span><strong>{{ $stream['total'] }}</strong></p>
-                        <p>Girls {{ $stream['girls'] }} · Boys {{ $stream['boys'] }}</p>
+                        @if($stream['total'] > 0 && $stream['girls'] === 0 && $stream['boys'] === 0)
+                            <p class="family-fee-line--muted">Gender not recorded</p>
+                        @else
+                            <p>Girls {{ $stream['girls'] }} · Boys {{ $stream['boys'] }}</p>
+                        @endif
                     @endforeach
                 </section>
             @endif
