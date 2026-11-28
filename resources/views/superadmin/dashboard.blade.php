@@ -25,6 +25,14 @@
 
     @include('partials.message')
 
+    {{-- System health notices (platform-admin only) --}}
+    @if($stats['failedJobs'] > 0)
+        <div class="flex items-center gap-2 mb-4 px-4 py-3 rounded-lg text-sm font-medium" style="background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA;">
+            <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Background queue: {{ $stats['failedJobs'] }} failed job{{ $stats['failedJobs'] !== 1 ? 's' : '' }}. Check Laravel Horizon or the failed-jobs table.
+        </div>
+    @endif
+
     {{-- ════════════════════════════════════════════════
           ROW 1 — Primary KPIs (6 cards)
           ════════════════════════════════════════════════ --}}
@@ -202,14 +210,6 @@
                     </div>
                 @endforeach
             </div>
-            @if($stats['failedJobs'] > 0)
-                <div class="mt-4 pt-4 border-t" style="border-color: #E2E8F0;">
-                    <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-red-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                        <span class="text-xs text-red-600 font-semibold">{{ $stats['failedJobs'] }} failed job{{ $stats['failedJobs'] > 1 ? 's' : '' }}</span>
-                    </div>
-                </div>
-            @endif
         </div>
     </div>
 

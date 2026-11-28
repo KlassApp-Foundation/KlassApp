@@ -18,7 +18,7 @@
     <tr>
         <td>{{ $loop->iteration }}</td>
         <td>{{ $exam->academicTerm->name }}</td>
-        <td>{{ $exam->examType->code }}</td>
+        <td>{{ $exam->examType->name }}</td>
         <td>
             <span class="dt-badge {{ ($exam->submission_label ?? 'Not started') === 'Not started' ? 'dt-badge-pending' : 'dt-badge-active' }}" data-testid="exam-submission-state">
                 {{ $exam->submission_label ?? 'Not started' }}
